@@ -105,7 +105,7 @@ El menú público se entrega en **una sola petición HTML**, con un CSS pequeño
 
 ## 5. Modelo de datos
 
-MariaDB, InnoDB, cotejamiento `utf8mb4_unicode_ci`. El script completo (`esquema.sql`) no está incluido todavía en este repositorio.
+MariaDB 10.6+, InnoDB, cotejamiento `utf8mb4_unicode_ci`. El script DDL completo con las 14 tablas, índices, claves foráneas y datos iniciales de etiquetas se encuentra en [docs/esquema.sql](esquema.sql).
 
 ### 5.1 Diagrama entidad–relación
 
@@ -319,12 +319,111 @@ El QR apunta a `/q/{codigo}`. Así, si el restaurante cambia su `slug`, los QR y
 
 ## 6. Diagramas de flujo
 
-> Los diagramas de flujo del documento original (.docx) no venían en el texto exportado. Pendiente redactarlos en Mermaid:
+### 6.1 Comensal: consultar el menú y pedir por WhatsApp
 
-- [ ] 6.1 Comensal: consultar el menú y pedir por WhatsApp
-- [ ] 6.2 Propietario / Editor: modificar precio, platillo o contacto
-- [ ] 6.3 Alta de restaurante e invitación de usuarios
-- [ ] 6.4 Generación de códigos QR
+```mermaid
+flowchart TD
+    A([Comensal escanea el QR]) --> B["Abre /q/{codigo}"]
+    B --> C{¿El código QR existe<br/>y está activo?}
+    C -- No --> X[Página: Menú no disponible]
+    C -- Sí --> D["Redirige a /m/{slug}?mesa=N"]
+    D --> E{¿Restaurante existe<br/>y está activo?}
+    E -- No --> X
+    E -- Sí --> F{¿Idioma del navegador<br/>activo en el restaurante?}
+    F -- Sí --> G[Usar idioma del navegador]
+    F -- No --> H[Usar idioma principal]
+    G --> I[Mostrar menú desde caché<br/>categorías, platillos, precios, contactos]
+    H --> I
+    I --> J{¿Qué hace el comensal?}
+    J -- Ver contactos --> K[Llamar, abrir mapa,<br/>WhatsApp o redes sociales]
+    J -- Cambiar idioma --> I
+    J -- Ver platillo --> L[Detalle: foto, descripción,<br/>variantes, etiquetas]
+    L --> M{¿Pedidos activos,<br/>restaurante abierto<br/>y platillo disponible?}
+    M -- No --> I
+    M -- Sí --> N[Agregar al carrito<br/>variante, cantidad, nota]
+    N --> O{¿Seguir pidiendo?}
+    O -- Sí --> I
+    O -- No --> P[Revisar pedido y total]
+    P --> Q[Armar mensaje:<br/>platillos, mesa, notas, total]
+    Q --> R([Abrir WhatsApp con<br/>el mensaje ya escrito])
+```
+
+### 6.2 Propietario / Editor: modificar precio, platillo o contacto
+
+```mermaid
+flowchart TD
+    A([Usuario abre /admin]) --> B[Iniciar sesión]
+    B --> C{¿Credenciales correctas?}
+    C -- No --> D{¿Demasiados intentos?}
+    D -- Sí --> E[Bloqueo temporal]
+    D -- No --> B
+    C -- Sí --> F{¿Pertenece a<br/>varios restaurantes?}
+    F -- Sí --> G[Elegir restaurante]
+    F -- No --> H[Panel del restaurante]
+    G --> H
+    H --> I{¿Qué modifica?}
+    I -- Precio / disponibilidad --> J[Tabla de edición rápida]
+    I -- Platillo --> K[Formulario de platillo<br/>traducciones, variantes, foto]
+    I -- Contacto / horario --> L[Formulario de contacto u horario]
+    J --> M{¿Datos válidos?<br/>precio ≥ 0, nombre en<br/>idioma principal}
+    K --> M
+    L --> M
+    M -- No --> N[Mostrar errores] --> I
+    M -- Sí --> O{¿Su rol permite<br/>este cambio?}
+    O -- No --> P[Acceso denegado]
+    O -- Sí --> Q[Guardar en transacción]
+    Q --> R[Registrar en historial_cambios<br/>antes / después]
+    R --> S[Borrar caché Redis<br/>del restaurante]
+    S --> T[Cola: purgar caché<br/>de Cloudflare]
+    T --> U([Menú público actualizado<br/>en segundos])
+```
+
+### 6.3 Alta de restaurante e invitación de usuarios
+
+```mermaid
+flowchart TD
+    A([Superadmin]) --> B[Crear restaurante<br/>nombre, slug, moneda, idioma]
+    B --> C[Crear o vincular usuario<br/>con rol Propietario]
+    C --> D[Enviar correo de bienvenida]
+    D --> E[Propietario inicia sesión]
+    E --> F[Configurar logo, portada,<br/>idiomas, zona horaria, WhatsApp]
+    F --> G[Cargar contactos y horarios]
+    G --> H[Crear categorías y platillos]
+    H --> I[Generar códigos QR]
+    I --> J{¿Invitar a otros<br/>usuarios?}
+    J -- No --> Z([Restaurante listo])
+    J -- Sí --> K[Capturar email y rol]
+    K --> L[Crear invitación con token<br/>que caduca en 7 días]
+    L --> M[Enviar correo con enlace]
+    M --> N{¿El invitado abre<br/>el enlace a tiempo?}
+    N -- No --> O[Invitación caducada]
+    N -- Sí --> P{¿Ya tiene cuenta?}
+    P -- Sí --> Q[Iniciar sesión]
+    P -- No --> R[Crear contraseña]
+    Q --> S[Vincular al restaurante<br/>con su rol]
+    R --> S
+    S --> Z
+```
+
+### 6.4 Generación de códigos QR
+
+```mermaid
+flowchart TD
+    A([Propietario o Editor]) --> B[Sección Códigos QR]
+    B --> C{¿Tipo de QR?}
+    C -- General --> D[Nombre: General, sin mesa]
+    C -- Por mesa --> E[Capturar mesa o rango<br/>ej. 1 a 20]
+    D --> F[Crear registro en codigos_qr<br/>con código corto único]
+    E --> F
+    F --> G["Generar QR que apunta a /q/{codigo}"]
+    G --> H{¿Formato?}
+    H -- PNG --> I[Descargar imagen]
+    H -- SVG --> J[Descargar vector]
+    H -- PDF --> K[Hoja imprimible con logo,<br/>nombre y número de mesa]
+    I --> L([Imprimir y colocar en mesas])
+    J --> L
+    K --> L
+```
 
 ## 7. Alcance de la versión 1
 

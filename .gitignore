@@ -3,3 +3,14 @@ vendor/
 node_modules/
 storage/*.key
 .DS_Store
+
+# Office temporary files
+~$*.docx
+~$*.xlsx
+~$*.pptx
+*.tmp
+
+# OS & IDE temporary files
+Thumbs.db
+.idea/
+.vscode/
