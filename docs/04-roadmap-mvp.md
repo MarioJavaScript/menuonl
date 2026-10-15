@@ -4,11 +4,11 @@ Objetivo: tener 3 a 5 restaurantes reales usando el sistema lo antes posible y c
 
 ## Fase 0: Base del proyecto
 
-- [ ] Crear proyecto Laravel 11 + Filament 3
-- [ ] Configurar MariaDB, Redis y entorno local
-- [ ] Migraciones basadas en [docs/esquema.sql](esquema.sql): base inicial con `usuarios`, `restaurantes`, `restaurante_usuario` y seeders de etiquetas
-- [ ] Global Scope por `restaurante_id` + tests de aislamiento
-- [ ] CI básico (tests + `composer audit`)
+- [x] Crear proyecto Laravel + Filament 3
+- [x] Configurar MariaDB, Redis y entorno local (PHP 8.3, Composer 2, MariaDB/SQLite)
+- [x] Migraciones basadas en [docs/esquema.sql](esquema.sql): base inicial con `usuarios`, `restaurantes`, `restaurante_usuario`
+- [x] Global Scope por `restaurante_id` (`RestauranteScope` y `BelongsToRestaurante`) + tests de aislamiento
+- [x] CI básico (GitHub Actions con tests + `composer audit`)
 
 ## Fase 1: MVP (menú + QR)
 
