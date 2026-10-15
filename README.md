@@ -75,4 +75,4 @@ El código de la aplicación Laravel se agregará en la raíz cuando arranque la
 ## Autores
 
 - [@MarioJavaScript](https://github.com/MarioJavaScript)
-- [@Elproshaitron](https://github.com/Elproshaitron)
+- [@Elproshaitron-stack](https://github.com/elproshaitron-stack)
