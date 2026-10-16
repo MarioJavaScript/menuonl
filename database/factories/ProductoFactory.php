@@ -23,7 +23,9 @@ class ProductoFactory extends Factory
     {
         return [
             'restaurante_id' => Restaurante::factory(),
-            'categoria_id' => fn (array $attributes) => Categoria::factory()->create(['restaurante_id' => $attributes['restaurante_id']])->id,
+            'categoria_id' => fn (array $attributes) => Categoria::factory()->state([
+                'restaurante_id' => $attributes['restaurante_id'],
+            ]),
             'precio' => fake()->randomFloat(2, 50, 400),
             'precio_oferta' => null,
             'foto_url' => null,

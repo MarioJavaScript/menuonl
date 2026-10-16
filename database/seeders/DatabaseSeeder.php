@@ -14,9 +14,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call([
-            EtiquetaSeeder::class,
-            DemoRestaurantSeeder::class,
-        ]);
+        $this->call(EtiquetaSeeder::class);
+
+        if (app()->environment(['local', 'testing'])) {
+            $this->call(DemoRestauranteSeeder::class);
+        }
     }
 }

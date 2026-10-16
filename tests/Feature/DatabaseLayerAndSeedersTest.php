@@ -15,7 +15,7 @@ use App\Models\Restaurante;
 use App\Models\RestauranteIdioma;
 use App\Models\Scopes\RestauranteScope;
 use App\Models\User;
-use Database\Seeders\DatabaseSeeder;
+use Database\Seeders\DemoRestaurantSeeder;
 use Database\Seeders\EtiquetaSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -58,7 +58,10 @@ class DatabaseLayerAndSeedersTest extends TestCase
 
     public function test_database_seeder_executes_cleanly_and_creates_demo_restaurant_graph(): void
     {
-        $this->seed(DatabaseSeeder::class);
+        $this->seed([
+            EtiquetaSeeder::class,
+            DemoRestaurantSeeder::class,
+        ]);
 
         // Verify Demo Restaurant exists
         $restaurante = Restaurante::where('slug', 'la-trattoria-demo')->first();

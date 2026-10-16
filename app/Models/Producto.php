@@ -172,7 +172,7 @@ class Producto extends Model
                 $translation = $this->traducciones->firstWhere('idioma', $idiomaDefault);
             }
 
-            return $translation ?? $this->traducciones->first();
+            return $translation;
         }
 
         $translation = $this->traducciones()->where('idioma', $targetIdioma)->first();
@@ -181,7 +181,7 @@ class Producto extends Model
             $translation = $this->traducciones()->where('idioma', $idiomaDefault)->first();
         }
 
-        return $translation ?? $this->traducciones()->first();
+        return $translation;
     }
 
     /**

@@ -204,6 +204,9 @@ class Restaurante extends Model implements HasAvatar, HasCurrentTenantLabel, Has
 
     /**
      * Dynamically calculate whether the restaurant is currently open.
+     *
+     * Supports several shifts per day and overnight shifts (cierra <= abre closes the next day).
+     * A day flagged as `cerrado` ignores all of that day's shifts, including its overnight spill.
      */
     public function estaAbiertoAhora(?CarbonInterface $now = null): bool
     {
@@ -214,16 +217,17 @@ class Restaurante extends Model implements HasAvatar, HasCurrentTenantLabel, Has
         $zona = $this->zona_horaria ?: 'America/Mexico_City';
 
         try {
-            $currentTime = $now ? Carbon::instance($now)->setTimezone($zona) : Carbon::now($zona);
+            $ahora = $now ? Carbon::instance($now)->copy()->setTimezone($zona) : Carbon::now($zona);
         } catch (\Throwable) {
-            $currentTime = $now ? Carbon::instance($now) : Carbon::now();
+            $ahora = $now ? Carbon::instance($now)->copy() : Carbon::now();
         }
 
-        $diaHoy = $currentTime->dayOfWeek; // 0 = Sunday ... 6 = Saturday
-        $horaHoy = $currentTime->format('H:i:s');
-        $diaAyer = ($diaHoy + 6) % 7;
+        $hora = $ahora->format('H:i:s');
+        $hoy = $ahora->dayOfWeek; // 0 = Sunday ... 6 = Saturday
+        $ayer = ($hoy + 6) % 7;
 
         $horarios = $this->relationLoaded('horarios') ? $this->horarios : $this->horarios()->get();
+        $diasCerrados = $horarios->where('cerrado', true)->pluck('dia_semana');
 
         $normalize = function (?string $time): ?string {
             if (! $time) {
@@ -233,40 +237,22 @@ class Restaurante extends Model implements HasAvatar, HasCurrentTenantLabel, Has
             return strlen($time) === 5 ? "{$time}:00" : $time;
         };
 
-        // 1. Check today's shifts
-        $horariosHoy = $horarios->where('dia_semana', $diaHoy)->where('cerrado', false);
-        foreach ($horariosHoy as $horario) {
+        foreach ($horarios as $horario) {
             $abre = $normalize($horario->abre);
             $cierra = $normalize($horario->cierra);
 
-            if (! $abre || ! $cierra) {
+            if ($abre === null || $cierra === null || $diasCerrados->contains($horario->dia_semana)) {
                 continue;
             }
 
-            if ($abre <= $cierra) {
-                // Standard daytime shift
-                if ($horaHoy >= $abre && $horaHoy <= $cierra) {
-                    return true;
-                }
-            } else {
-                // Overnight shift: today's late evening portion
-                if ($horaHoy >= $abre) {
-                    return true;
-                }
+            $esNocturno = $cierra <= $abre;
+
+            if ($horario->dia_semana === $hoy && $hora >= $abre && ($esNocturno || $hora < $cierra)) {
+                return true;
             }
-        }
 
-        // 2. Check yesterday's overnight shifts that spill past midnight into today
-        $horariosAyer = $horarios->where('dia_semana', $diaAyer)->where('cerrado', false);
-        foreach ($horariosAyer as $horario) {
-            $abre = $normalize($horario->abre);
-            $cierra = $normalize($horario->cierra);
-
-            if ($abre && $cierra && $cierra < $abre) {
-                // Spilled portion from midnight until closing
-                if ($horaHoy <= $cierra) {
-                    return true;
-                }
+            if ($horario->dia_semana === $ayer && $esNocturno && $hora < $cierra) {
+                return true;
             }
         }
 

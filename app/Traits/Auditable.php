@@ -150,6 +150,10 @@ trait Auditable
      */
     public function recordAuditLog(string $accion, array $diff): ?HistorialCambio
     {
+        if ($this instanceof Restaurante && $accion === 'eliminar' && method_exists($this, 'isForceDeleting') && $this->isForceDeleting()) {
+            return null;
+        }
+
         $restauranteId = $this->getAuditRestauranteId();
         if (! $restauranteId) {
             return null;
