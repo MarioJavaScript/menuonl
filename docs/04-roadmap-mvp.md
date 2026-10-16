@@ -26,7 +26,7 @@ Objetivo: tener 3 a 5 restaurantes reales usando el sistema lo antes posible y c
 - [ ] Piloto con 3 a 5 restaurantes
 - [x] Pedido por WhatsApp (carrito en navegador con `localStorage` y deep-link estructurado `wa.me`)
 - [x] Platillos agotados y precio de oferta en BD, panel y visualización en menú público `/m/{slug}`
-- [ ] Respaldos diarios fuera del VPS
+- [ ] Respaldos diarios fuera del VPS (código listo, falta disco y prueba en VPS)
 
 ## Fase 3: Funcionalidades avanzadas v1.0
 

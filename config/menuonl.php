@@ -51,4 +51,41 @@ return [
         'carpetas' => ['logos', 'portadas', 'productos'],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Trusted proxies
+    |--------------------------------------------------------------------------
+    |
+    | IPs/CIDR (TRUSTED_PROXIES, separadas por comas) cuyos X-Forwarded-* se aceptan; de ellos
+    | sale $request->ip(). Vacío = no se confía en ningún proxy. Un comodín ('*', '**') se
+    | descarta siempre: permitiría falsificar la IP y evadir los límites de intentos
+    | (docs/02-seguridad.md §6). Ver los rangos de Cloudflare en .env.example.
+    |
+    */
+
+    'trusted_proxies' => array_values(array_filter(
+        array_map('trim', explode(',', (string) env('TRUSTED_PROXIES', ''))),
+        fn (string $proxy): bool => $proxy !== '' && ! in_array($proxy, ['*', '**'], true),
+    )),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Respaldos (RNF-06)
+    |--------------------------------------------------------------------------
+    |
+    | `menuonl:backup` genera un .zip cifrado (AES-256) con el volcado de la base y
+    | storage/app/public/restaurantes, lo sube al disco `backups` y borra los de más de
+    | `retencion_dias`. Nunca incluye .env ni secretos. Ver App\Services\RespaldoService.
+    |
+    */
+
+    'respaldos' => [
+        'disco' => env('BACKUP_DISK', 'backups'),
+        'password' => env('BACKUP_ARCHIVE_PASSWORD'),
+        'prefijo' => env('BACKUP_PREFIX', 'menuonl'),
+        'retencion_dias' => (int) env('BACKUP_RETENTION_DAYS', 14),
+        'mysqldump_path' => env('BACKUP_MYSQLDUMP_PATH', 'mysqldump'),
+        'timeout_segundos' => (int) env('BACKUP_TIMEOUT_SECONDS', 1800),
+    ],
+
 ];
