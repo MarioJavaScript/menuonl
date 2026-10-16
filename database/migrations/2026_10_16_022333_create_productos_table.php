@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -29,6 +30,11 @@ return new class extends Migration
             $table->index(['restaurante_id', 'orden']);
             $table->index(['categoria_id', 'orden']);
         });
+
+        if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+            DB::statement('ALTER TABLE productos ADD CONSTRAINT ck_productos_precio CHECK (precio >= 0)');
+            DB::statement('ALTER TABLE productos ADD CONSTRAINT ck_productos_oferta CHECK (precio_oferta IS NULL OR precio_oferta >= 0)');
+        }
     }
 
     /**
