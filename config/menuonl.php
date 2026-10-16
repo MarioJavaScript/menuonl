@@ -20,4 +20,35 @@ return [
     'requerir_2fa' => ! ($requerir2fa === false
         || (is_string($requerir2fa) && in_array(strtolower(trim($requerir2fa)), ['0', 'false', 'off', 'no'], true))),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Panel login attempt limit
+    |--------------------------------------------------------------------------
+    |
+    | Failed attempts per email + IP and per IP; reaching either blocks the login
+    | for `bloqueo_segundos` (see App\Filament\Pages\Auth\Login).
+    |
+    */
+
+    'login' => [
+        'max_intentos_cuenta' => (int) env('LOGIN_MAX_INTENTOS_CUENTA', 5),
+        'max_intentos_ip' => (int) env('LOGIN_MAX_INTENTOS_IP', 20),
+        'bloqueo_segundos' => (int) env('LOGIN_BLOQUEO_SEGUNDOS', 900),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Restaurant images (logo, cover, product photo)
+    |--------------------------------------------------------------------------
+    |
+    | `max_bytes` is checked on the uploaded file BEFORE it is decoded, so a huge file never
+    | reaches GD. Dimensions are capped separately (4096 px) by WebpImageService.
+    |
+    */
+
+    'imagenes' => [
+        'max_bytes' => (int) env('IMAGENES_MAX_BYTES', 2 * 1024 * 1024),
+        'carpetas' => ['logos', 'portadas', 'productos'],
+    ],
+
 ];

@@ -2,15 +2,17 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use App\Traits\BelongsToRestaurante;
 use Database\Factories\CodigoQrFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class CodigoQr extends Model
 {
     /** @use HasFactory<CodigoQrFactory> */
-    use BelongsToRestaurante, HasFactory;
+    use Auditable, BelongsToRestaurante, HasFactory;
 
     protected $table = 'codigos_qr';
 
@@ -27,5 +29,21 @@ class CodigoQr extends Model
         return [
             'activo' => 'boolean',
         ];
+    }
+
+    /**
+     * Scope to active QR codes.
+     */
+    public function scopeActivo(Builder $query): Builder
+    {
+        return $query->where('activo', true);
+    }
+
+    /**
+     * Whether the code belongs to a specific table.
+     */
+    public function esMesa(): bool
+    {
+        return filled($this->mesa);
     }
 }

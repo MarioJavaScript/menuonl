@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use App\Traits\BelongsToRestaurante;
 use Database\Factories\HorarioFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,7 +15,7 @@ use InvalidArgumentException;
 class Horario extends Model
 {
     /** @use HasFactory<HorarioFactory> */
-    use BelongsToRestaurante, HasFactory;
+    use Auditable, BelongsToRestaurante, HasFactory;
 
     protected $table = 'horarios';
 
@@ -69,5 +71,13 @@ class Horario extends Model
     protected static function normalizarHora(?string $value): ?string
     {
         return $value === null ? null : Carbon::parse($value)->format('H:i:s');
+    }
+
+    /**
+     * Scope to one day of the week (0 = Sunday ... 6 = Saturday).
+     */
+    public function scopeDelDia(Builder $query, int $dia): Builder
+    {
+        return $query->where('dia_semana', $dia);
     }
 }

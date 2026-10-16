@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\Tenancy;
 
+use App\Filament\Components\ImagenRestauranteUpload;
 use App\Services\Catalogos;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -12,7 +13,7 @@ use Filament\Schemas\Schema;
 
 /**
  * Restaurant settings (RF-19). Only propietario and superadmin reach it: canView() asks the
- * Restaurante policy for `update`. Logo and cover upload arrive in phase 3.
+ * Restaurante policy for `update`. Logo and cover go through WebpImageService.
  */
 class EditRestauranteProfile extends EditTenantProfile
 {
@@ -27,6 +28,8 @@ class EditRestauranteProfile extends EditTenantProfile
             ->components([
                 TextInput::make('nombre')->label('Nombre')->required()->maxLength(150),
                 TextInput::make('descripcion')->label('Descripción')->maxLength(500),
+                ImagenRestauranteUpload::make('logo', 'logos')->label('Logo'),
+                ImagenRestauranteUpload::make('portada', 'portadas')->label('Portada'),
                 Select::make('moneda')->label('Moneda')->options(Catalogos::monedas())->required(),
                 Select::make('idioma_default')->label('Idioma principal')->options(Catalogos::idiomas())->required(),
                 Select::make('zona_horaria')->label('Zona horaria')->options(Catalogos::zonasHorarias())->searchable()->required(),

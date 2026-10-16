@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
+use App\Traits\ProtegeImagenesDelRestaurante;
 use Carbon\Carbon;
 use Filament\Models\Contracts\HasName;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,7 +14,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Restaurante extends Model implements HasName
 {
-    use HasFactory, SoftDeletes;
+    use Auditable, HasFactory, ProtegeImagenesDelRestaurante, SoftDeletes;
 
     protected $table = 'restaurantes';
 
@@ -43,6 +45,21 @@ class Restaurante extends Model implements HasName
         'mostrar_agotados',
         'estado',
     ];
+
+    /**
+     * Image columns guarded by ProtegeImagenesDelRestaurante.
+     *
+     * @return array<int, string>
+     */
+    public function columnasDeImagen(): array
+    {
+        return ['logo', 'portada'];
+    }
+
+    public function restauranteIdDeImagenes(): ?int
+    {
+        return $this->exists ? (int) $this->getKey() : null;
+    }
 
     protected function casts(): array
     {

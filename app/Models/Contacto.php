@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use App\Traits\BelongsToRestaurante;
 use Database\Factories\ContactoFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 class Contacto extends Model
 {
     /** @use HasFactory<ContactoFactory> */
-    use BelongsToRestaurante, HasFactory;
+    use Auditable, BelongsToRestaurante, HasFactory;
 
     protected $table = 'contactos';
 

@@ -3,8 +3,12 @@
 namespace App\Models;
 
 use App\Models\Concerns\HasTraducciones;
+use App\Models\Scopes\RestauranteScope;
+use App\Traits\Auditable;
 use App\Traits\BelongsToRestaurante;
+use App\Traits\ProtegeImagenesDelRestaurante;
 use Database\Factories\ProductoFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,7 +20,7 @@ use InvalidArgumentException;
 class Producto extends Model
 {
     /** @use HasFactory<ProductoFactory> */
-    use BelongsToRestaurante, HasFactory, HasTraducciones, SoftDeletes;
+    use Auditable, BelongsToRestaurante, HasFactory, HasTraducciones, ProtegeImagenesDelRestaurante, SoftDeletes;
 
     protected $table = 'productos';
 
@@ -42,6 +46,26 @@ class Producto extends Model
             'destacado' => 'boolean',
             'orden' => 'integer',
         ];
+    }
+
+    /**
+     * Image columns guarded by ProtegeImagenesDelRestaurante.
+     *
+     * @return array<int, string>
+     */
+    public function columnasDeImagen(): array
+    {
+        return ['imagen'];
+    }
+
+    /**
+     * Owner of the images; while creating, the active restaurant (BelongsToRestaurante assigns it later).
+     */
+    public function restauranteIdDeImagenes(): ?int
+    {
+        $id = $this->restaurante_id ?: RestauranteScope::resolveRestauranteId();
+
+        return $id === null ? null : (int) $id;
     }
 
     /**
@@ -98,5 +122,61 @@ class Producto extends Model
     public function traduccion(?string $idioma = null): ?ProductoTraduccion
     {
         return $this->buscarTraduccion($idioma, $this->restaurante?->idioma_default);
+    }
+
+    /**
+     * Scope to visible records.
+     */
+    public function scopeVisible(Builder $query): Builder
+    {
+        return $query->where('visible', true);
+    }
+
+    /**
+     * Scope ordered by the custom position.
+     */
+    public function scopeOrdenado(Builder $query): Builder
+    {
+        return $query->orderBy('orden');
+    }
+
+    /**
+     * Scope to products that are not sold out.
+     */
+    public function scopeDisponible(Builder $query): Builder
+    {
+        return $query->where('disponible', true);
+    }
+
+    /**
+     * Scope to featured (recommended) products.
+     */
+    public function scopeDestacado(Builder $query): Builder
+    {
+        return $query->where('destacado', true);
+    }
+
+    /**
+     * Price a customer pays: the offer price when it is lower than the regular one.
+     */
+    public function precioVigente(): string
+    {
+        if ($this->precio_oferta !== null && (float) $this->precio_oferta < (float) $this->precio) {
+            return (string) $this->precio_oferta;
+        }
+
+        return (string) $this->precio;
+    }
+
+    /**
+     * Whether the product has variants (the menu then shows each variant's price).
+     */
+    public function tieneVariantes(): bool
+    {
+        if ($this->relationLoaded('variantes')) {
+            return $this->variantes->isNotEmpty();
+        }
+
+        return $this->variantes()->exists();
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Restaurantes\Schemas;
 
+use App\Filament\Components\ImagenRestauranteUpload;
 use App\Services\Catalogos;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -29,6 +30,8 @@ class RestauranteForm
                     ->in(['activo', 'suspendido'])
                     ->default('activo')
                     ->required(),
+                ImagenRestauranteUpload::make('logo', 'logos')->label('Logo')->visibleOn('edit'),
+                ImagenRestauranteUpload::make('portada', 'portadas')->label('Portada')->visibleOn('edit'),
                 TextInput::make('email_propietario')
                     ->label('Correo del propietario (recibe la invitación)')
                     ->email()

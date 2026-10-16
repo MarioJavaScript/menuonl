@@ -90,6 +90,16 @@ class PoliticasMatrizTest extends TestCase
     }
 
     /**
+     * Only the model names of matrices(): outsiders are denied every ability, so no matrix is needed.
+     *
+     * @return array<string, array{0: string}>
+     */
+    public static function modelos(): array
+    {
+        return array_map(fn (array $caso): array => [$caso[0]], self::matrices());
+    }
+
+    /**
      * @param  array<string, list<string>>  $permitidas
      */
     #[DataProvider('matrices')]
@@ -120,7 +130,7 @@ class PoliticasMatrizTest extends TestCase
         }
     }
 
-    #[DataProvider('matrices')]
+    #[DataProvider('modelos')]
     public function test_un_miembro_de_otro_restaurante_no_puede_nada_sobre_el_registro(string $modelo): void
     {
         $a = $this->crearRestaurante('a');

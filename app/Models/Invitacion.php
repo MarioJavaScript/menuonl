@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\BelongsToRestaurante;
 use Database\Factories\InvitacionFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -48,5 +49,29 @@ class Invitacion extends Model
     public function invitadoPor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'invitado_por');
+    }
+
+    /**
+     * Whether the invitation is past its expiry date.
+     */
+    public function isExpired(): bool
+    {
+        return $this->expira_en->isPast();
+    }
+
+    /**
+     * Whether the invitation has already been used.
+     */
+    public function isAccepted(): bool
+    {
+        return $this->aceptada_en !== null;
+    }
+
+    /**
+     * Scope to invitations that are neither accepted nor expired.
+     */
+    public function scopePendiente(Builder $query): Builder
+    {
+        return $query->whereNull('aceptada_en')->where('expira_en', '>', now());
     }
 }

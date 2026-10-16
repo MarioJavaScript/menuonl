@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Productos\Schemas;
 
+use App\Filament\Components\ImagenRestauranteUpload;
 use App\Filament\Components\TraduccionesRepeater;
 use App\Models\Categoria;
 use Filament\Facades\Filament;
@@ -33,6 +34,7 @@ class ProductoForm
                 TextInput::make('precio_oferta')
                     ->label('Precio de oferta')
                     ->numeric()->minValue(0)->maxValue(99999999.99)->step(0.01)->lte('precio'),
+                ImagenRestauranteUpload::make('imagen', 'productos')->label('Imagen'),
                 TextInput::make('orden')->label('Orden')->numeric()->integer()->minValue(0)->maxValue(1000000)->default(0)->required(),
                 Toggle::make('disponible')->label('Disponible')->default(true),
                 Toggle::make('visible')->label('Visible en el menú')->default(true),
