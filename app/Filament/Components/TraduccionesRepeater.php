@@ -29,17 +29,30 @@ class TraduccionesRepeater
                 ->in(fn (): array => array_keys(self::idiomasActivos()))
                 ->required()
                 ->distinct(),
-            TextInput::make('nombre')->label('Nombre')->required()->maxLength($maxNombre),
+            TextInput::make('nombre')
+                ->label('Nombre')
+                ->placeholder('Nombre en este idioma')
+                ->required()
+                ->maxLength($maxNombre),
         ];
 
         if ($conDescripcion) {
-            $campos[] = Textarea::make('descripcion')->label('Descripción')->maxLength(2000)->rows(2);
+            $campos[] = Textarea::make('descripcion')
+                ->label('Descripción')
+                ->placeholder('Descripción detallada, ingredientes o notas en este idioma...')
+                ->maxLength(2000)
+                ->rows(2);
         }
 
         return Repeater::make($relacion)
             ->label('Traducciones')
             ->relationship($relacion)
             ->schema($campos)
+            ->itemLabel(fn (array $state): ?string => isset($state['idioma'])
+                    ? (Catalogos::idiomas()[$state['idioma']] ?? $state['idioma']).
+                      (isset($state['nombre']) && filled($state['nombre']) ? " — {$state['nombre']}" : '')
+                    : null
+            )
             ->minItems(1)
             ->addActionLabel('Agregar idioma')
             ->rule(fn (): Closure => self::exigirIdiomaPrincipal());

@@ -16,7 +16,9 @@ class RestauranteForm
             ->components([
                 TextInput::make('nombre')->label('Nombre')->required()->maxLength(150),
                 TextInput::make('slug')
-                    ->label('Slug (URL pública /m/{slug})')
+                    ->label('Identificador URL (Slug)')
+                    ->placeholder('mi-restaurante')
+                    ->helperText('Identificador único para la URL del menú público (/m/{slug}). Solo letras minúsculas, números y guiones.')
                     ->required()
                     ->maxLength(80)
                     ->regex('/\A[a-z0-9]+(?:-[a-z0-9]+)*\z/')
@@ -33,7 +35,9 @@ class RestauranteForm
                 ImagenRestauranteUpload::make('logo', 'logos')->label('Logo')->visibleOn('edit'),
                 ImagenRestauranteUpload::make('portada', 'portadas')->label('Portada')->visibleOn('edit'),
                 TextInput::make('email_propietario')
-                    ->label('Correo del propietario (recibe la invitación)')
+                    ->label('Correo del propietario')
+                    ->placeholder('propietario@ejemplo.com')
+                    ->helperText('Se enviará una invitación por correo a esta dirección para acceder al panel.')
                     ->email()
                     ->maxLength(190)
                     ->required()

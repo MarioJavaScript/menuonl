@@ -2,7 +2,9 @@
 
 namespace App\Filament\Resources\Horarios\Tables;
 
+use App\Filament\Resources\Horarios\HorarioResource;
 use App\Services\Catalogos;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -26,6 +28,16 @@ class HorariosTable
             ->recordActions([
                 EditAction::make(),
                 DeleteAction::make(),
+            ])
+            ->emptyStateHeading('Sin horarios de atención configurados')
+            ->emptyStateDescription('Establece los días de la semana y turnos de atención para que tus comensales sepan cuándo ordenar.')
+            ->emptyStateIcon('heroicon-o-clock')
+            ->emptyStateActions([
+                Action::make('crear')
+                    ->label('Agregar horario')
+                    ->icon('heroicon-m-plus')
+                    ->button()
+                    ->url(fn (): string => HorarioResource::getUrl('create')),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

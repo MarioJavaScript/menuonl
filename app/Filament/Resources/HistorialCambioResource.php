@@ -19,11 +19,17 @@ class HistorialCambioResource extends Resource
 {
     protected static ?string $model = HistorialCambio::class;
 
+    protected static ?string $modelLabel = 'registro de auditoría';
+
+    protected static ?string $pluralModelLabel = 'registros de auditoría';
+
+    protected static ?string $navigationLabel = 'Historial de auditoría';
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedShieldCheck;
 
-    protected static UnitEnum|string|null $navigationGroup = 'Seguridad & Auditoría';
+    protected static UnitEnum|string|null $navigationGroup = 'Administración Global';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 90;
 
     public static function canCreate(): bool
     {
@@ -77,7 +83,7 @@ class HistorialCambioResource extends Resource
             ])
             ->recordActions([
                 Action::make('verCambios')
-                    ->label('Ver Cambios')
+                    ->label('Ver cambios')
                     ->icon('heroicon-o-eye')
                     ->modalHeading(fn (HistorialCambio $record) => "Auditoría: {$record->accion} en {$record->entidad} #{$record->entidad_id}")
                     ->modalSubmitAction(false)
@@ -103,6 +109,9 @@ class HistorialCambioResource extends Resource
                         return new HtmlString($html);
                     }),
             ])
+            ->emptyStateHeading('Sin eventos de auditoría')
+            ->emptyStateDescription('Las modificaciones realizadas en el sistema se registrarán aquí de forma automática.')
+            ->emptyStateIcon('heroicon-o-shield-check')
             ->toolbarActions([]);
     }
 

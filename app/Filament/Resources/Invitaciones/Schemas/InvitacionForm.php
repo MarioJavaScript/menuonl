@@ -15,13 +15,16 @@ class InvitacionForm
         return $schema
             ->components([
                 TextInput::make('email')
-                    ->label('Correo')
+                    ->label('Correo electrónico')
+                    ->placeholder('colaborador@ejemplo.com')
+                    ->helperText('Enviaremos un enlace único para que la persona acepte la invitación y configure su acceso.')
                     ->email()
                     ->required()
                     ->maxLength(190)
                     ->rule(fn (): \Closure => self::noEsMiembro()),
                 Select::make('rol')
-                    ->label('Rol')
+                    ->label('Rol asignado')
+                    ->helperText('Propietario: control total de configuración y equipo. Editor: gestión de menú, platillos, horarios y códigos QR.')
                     ->options(['editor' => 'Editor', 'propietario' => 'Propietario'])
                     ->in(['editor', 'propietario'])
                     ->default('editor')

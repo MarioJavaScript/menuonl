@@ -16,13 +16,27 @@ class HorarioForm
         return $schema
             ->components([
                 Select::make('dia_semana')
-                    ->label('Día')
+                    ->label('Día de la semana')
+                    ->placeholder('Selecciona un día')
                     ->options(Catalogos::diasSemana())
                     ->in(array_keys(Catalogos::diasSemana()))
                     ->required(),
-                Toggle::make('cerrado')->label('Cerrado todo el día')->live(),
-                TimePicker::make('abre')->label('Abre')->seconds(false)->required(fn (Get $get): bool => ! $get('cerrado')),
-                TimePicker::make('cierra')->label('Cierra (si es menor que la apertura, cierra al día siguiente)')->seconds(false)->required(fn (Get $get): bool => ! $get('cerrado')),
+                Toggle::make('cerrado')
+                    ->label('Cerrado todo el día')
+                    ->helperText('Marca esta opción si el restaurante no abre al público en este día.')
+                    ->live(),
+                TimePicker::make('abre')
+                    ->label('Hora de apertura')
+                    ->placeholder('09:00')
+                    ->helperText('Hora en que inicia el servicio.')
+                    ->seconds(false)
+                    ->required(fn (Get $get): bool => ! $get('cerrado')),
+                TimePicker::make('cierra')
+                    ->label('Hora de cierre')
+                    ->placeholder('23:00')
+                    ->helperText('Si la hora de cierre es menor que la de apertura (ej. 02:00), el turno cerrará al día siguiente.')
+                    ->seconds(false)
+                    ->required(fn (Get $get): bool => ! $get('cerrado')),
             ]);
     }
 }

@@ -907,4 +907,405 @@ class AdversarialPublicMenuTest extends TestCase
         $resp4->assertSee('id="cartModalBackdrop"', false);
         $resp4->assertDontSee('Este restaurante no tiene pedidos en línea activos actualmente');
     }
+
+    // =========================================================================
+    // Area 6: Edge Cases — Empty Menus & Zero Schedules
+    // =========================================================================
+
+    public function test_empty_menu_restaurant_with_zero_categories_and_dishes_renders_cleanly(): void
+    {
+        RestauranteScope::setRestauranteId(null);
+
+        $restaurante = Restaurante::factory()->create([
+            'nombre' => 'Restaurante Vacio',
+            'slug' => 'restaurante-vacio',
+            'estado' => 'activo',
+            'pedidos_activos' => true,
+            'whatsapp_pedidos' => '525512345678',
+        ]);
+
+        $response = $this->get(route('menu.publico', ['slug' => $restaurante->slug]));
+
+        $response->assertOk();
+        $response->assertViewIs('menu.publico');
+        $response->assertSee('Restaurante Vacio');
+        // Zero schedules -> restaurant is closed
+        $this->assertFalse($response->viewData('estaAbierto'));
+        $response->assertSee('Cerrado');
+        $response->assertDontSee('id="floatingCartBar"', false);
+        $this->assertEmpty($response->viewData('categorias'));
+        $this->assertEmpty($response->viewData('destacados'));
+        $this->assertEmpty($response->viewData('contactos'));
+        $this->assertEmpty($response->viewData('horarios'));
+    }
+
+    public function test_category_with_zero_products_renders_empty_state_without_crashing(): void
+    {
+        RestauranteScope::setRestauranteId(null);
+
+        $restaurante = Restaurante::factory()->create([
+            'nombre' => 'Bistro Con Categoria Vacia',
+            'slug' => 'bistro-cat-vacia',
+        ]);
+
+        $cat = Categoria::factory()->create([
+            'restaurante_id' => $restaurante->id,
+            'orden' => 1,
+            'visible' => true,
+        ]);
+        CategoriaTraduccion::factory()->create([
+            'categoria_id' => $cat->id,
+            'idioma' => 'es',
+            'nombre' => 'Bebidas Calientes',
+        ]);
+
+        $response = $this->get(route('menu.publico', ['slug' => $restaurante->slug]));
+
+        $response->assertOk();
+        $response->assertSee('Bebidas Calientes');
+        $response->assertSee('No hay platillos disponibles en esta categoría.');
+    }
+
+    // =========================================================================
+    // Area 7: Multi-Turn Schedules & Weekend Overnight Boundaries
+    // =========================================================================
+
+    public function test_schedule_overnight_shifts_on_weekend_boundary_saturday_to_sunday_and_sunday_to_monday(): void
+    {
+        $restaurante = Restaurante::factory()->create([
+            'zona_horaria' => 'UTC',
+        ]);
+
+        // Shift 1: Saturday (6) 22:00 to Sunday 03:00
+        Horario::factory()->create([
+            'restaurante_id' => $restaurante->id,
+            'dia_semana' => 6, // Saturday
+            'abre' => '22:00:00',
+            'cierra' => '03:00:00',
+            'cerrado' => false,
+        ]);
+
+        // Shift 2: Sunday (0) 21:00 to Monday 02:00
+        Horario::factory()->create([
+            'restaurante_id' => $restaurante->id,
+            'dia_semana' => 0, // Sunday
+            'abre' => '21:00:00',
+            'cierra' => '02:00:00',
+            'cerrado' => false,
+        ]);
+
+        $restaurante->load('horarios');
+
+        // Saturday 2026-10-17 21:59:59 -> CLOSED
+        $this->assertFalse($restaurante->estaAbiertoAhora(Carbon::parse('2026-10-17 21:59:59', 'UTC')));
+        // Saturday 2026-10-17 22:00:00 -> OPEN
+        $this->assertTrue($restaurante->estaAbiertoAhora(Carbon::parse('2026-10-17 22:00:00', 'UTC')));
+        // Sunday 2026-10-18 01:00:00 -> OPEN (Spillover from Saturday)
+        $this->assertTrue($restaurante->estaAbiertoAhora(Carbon::parse('2026-10-18 01:00:00', 'UTC')));
+        // Sunday 2026-10-18 02:59:59 -> OPEN (Spillover last second)
+        $this->assertTrue($restaurante->estaAbiertoAhora(Carbon::parse('2026-10-18 02:59:59', 'UTC')));
+        // Sunday 2026-10-18 03:00:00 -> CLOSED
+        $this->assertFalse($restaurante->estaAbiertoAhora(Carbon::parse('2026-10-18 03:00:00', 'UTC')));
+        // Sunday 2026-10-18 12:00:00 -> CLOSED
+        $this->assertFalse($restaurante->estaAbiertoAhora(Carbon::parse('2026-10-18 12:00:00', 'UTC')));
+
+        // Sunday 2026-10-18 20:59:59 -> CLOSED
+        $this->assertFalse($restaurante->estaAbiertoAhora(Carbon::parse('2026-10-18 20:59:59', 'UTC')));
+        // Sunday 2026-10-18 21:00:00 -> OPEN
+        $this->assertTrue($restaurante->estaAbiertoAhora(Carbon::parse('2026-10-18 21:00:00', 'UTC')));
+        // Monday 2026-10-19 01:00:00 -> OPEN (Spillover from Sunday to Monday)
+        $this->assertTrue($restaurante->estaAbiertoAhora(Carbon::parse('2026-10-19 01:00:00', 'UTC')));
+        // Monday 2026-10-19 02:00:00 -> CLOSED
+        $this->assertFalse($restaurante->estaAbiertoAhora(Carbon::parse('2026-10-19 02:00:00', 'UTC')));
+    }
+
+    public function test_schedule_triple_split_shifts_same_day(): void
+    {
+        $restaurante = Restaurante::factory()->create([
+            'zona_horaria' => 'UTC',
+        ]);
+
+        // Turno 1: Desayuno 08:00 - 11:00
+        Horario::factory()->create([
+            'restaurante_id' => $restaurante->id,
+            'dia_semana' => 3, // Miércoles
+            'abre' => '08:00:00',
+            'cierra' => '11:00:00',
+            'cerrado' => false,
+        ]);
+        // Turno 2: Comida 13:00 - 16:00
+        Horario::factory()->create([
+            'restaurante_id' => $restaurante->id,
+            'dia_semana' => 3,
+            'abre' => '13:00:00',
+            'cierra' => '16:00:00',
+            'cerrado' => false,
+        ]);
+        // Turno 3: Cena 19:00 - 23:00
+        Horario::factory()->create([
+            'restaurante_id' => $restaurante->id,
+            'dia_semana' => 3,
+            'abre' => '19:00:00',
+            'cierra' => '23:00:00',
+            'cerrado' => false,
+        ]);
+
+        $restaurante->load('horarios');
+        $baseDate = '2026-10-14'; // Miércoles
+
+        // Antes de turno 1
+        $this->assertFalse($restaurante->estaAbiertoAhora(Carbon::parse("$baseDate 07:59:59", 'UTC')));
+        // Durante turno 1
+        $this->assertTrue($restaurante->estaAbiertoAhora(Carbon::parse("$baseDate 08:00:00", 'UTC')));
+        $this->assertTrue($restaurante->estaAbiertoAhora(Carbon::parse("$baseDate 10:30:00", 'UTC')));
+        // Fin de turno 1
+        $this->assertFalse($restaurante->estaAbiertoAhora(Carbon::parse("$baseDate 11:00:00", 'UTC')));
+        // Entre turno 1 y 2
+        $this->assertFalse($restaurante->estaAbiertoAhora(Carbon::parse("$baseDate 12:00:00", 'UTC')));
+        // Durante turno 2
+        $this->assertTrue($restaurante->estaAbiertoAhora(Carbon::parse("$baseDate 13:00:00", 'UTC')));
+        $this->assertFalse($restaurante->estaAbiertoAhora(Carbon::parse("$baseDate 16:00:00", 'UTC')));
+        // Entre turno 2 y 3
+        $this->assertFalse($restaurante->estaAbiertoAhora(Carbon::parse("$baseDate 17:30:00", 'UTC')));
+        // Durante turno 3
+        $this->assertTrue($restaurante->estaAbiertoAhora(Carbon::parse("$baseDate 19:00:00", 'UTC')));
+        $this->assertTrue($restaurante->estaAbiertoAhora(Carbon::parse("$baseDate 22:59:59", 'UTC')));
+        $this->assertFalse($restaurante->estaAbiertoAhora(Carbon::parse("$baseDate 23:00:00", 'UTC')));
+    }
+
+    // =========================================================================
+    // Area 8: WCAG 2.2 AA Touch Targets, Focus & Escape Dismiss Behavior
+    // =========================================================================
+
+    public function test_wcag_touch_targets_on_all_interactive_elements_meet_minimum_44px(): void
+    {
+        RestauranteScope::setRestauranteId(null);
+
+        $restaurante = Restaurante::factory()->create([
+            'pedidos_activos' => true,
+            'whatsapp_pedidos' => '525511112222',
+            'zona_horaria' => 'UTC',
+        ]);
+        RestauranteIdioma::factory()->create(['restaurante_id' => $restaurante->id, 'idioma' => 'es']);
+        RestauranteIdioma::factory()->create(['restaurante_id' => $restaurante->id, 'idioma' => 'en']);
+
+        Horario::factory()->create([
+            'restaurante_id' => $restaurante->id,
+            'dia_semana' => Carbon::now()->dayOfWeek,
+            'abre' => '00:00:00',
+            'cierra' => '23:59:59',
+            'cerrado' => false,
+        ]);
+
+        $cat = Categoria::factory()->create(['restaurante_id' => $restaurante->id, 'visible' => true]);
+        CategoriaTraduccion::factory()->create([
+            'categoria_id' => $cat->id,
+            'idioma' => 'es',
+            'nombre' => 'Bebidas',
+        ]);
+
+        $prod = Producto::factory()->create([
+            'restaurante_id' => $restaurante->id,
+            'categoria_id' => $cat->id,
+            'precio' => 50.00,
+            'disponible' => true,
+            'visible' => true,
+        ]);
+        ProductoTraduccion::factory()->create([
+            'producto_id' => $prod->id,
+            'idioma' => 'es',
+            'nombre' => 'Agua Fresca',
+        ]);
+
+        $contacto = Contacto::factory()->create([
+            'restaurante_id' => $restaurante->id,
+            'tipo' => 'telefono',
+            'valor' => '5551234567',
+            'visible' => true,
+        ]);
+
+        $response = $this->get(route('menu.publico', ['slug' => $restaurante->slug]));
+        $response->assertOk();
+
+        $content = $response->getContent();
+
+        // 1. Selector de idiomas: min-h-[44px] min-w-[44px]
+        $this->assertStringContainsString('min-h-[44px]', $content);
+        $this->assertStringContainsString('min-w-[44px]', $content);
+
+        // 2. Botón cerrar modal carrito: min-w-[44px] min-h-[44px]
+        $this->assertStringContainsString('id="btnCloseCartModal"', $content);
+
+        // 3. Botones vaciar pedido confirmación y cancelación: min-h-[44px]
+        $this->assertStringContainsString('cartEjecutarVaciar()', $content);
+        $this->assertStringContainsString('cartCancelarVaciar()', $content);
+
+        // 4. Botón agregar al carrito: min-h-[44px] min-w-[44px]
+        $this->assertStringContainsString('btn-cart-add', $content);
+
+        // 5. Enlace de contacto: min-h-[44px]
+        $this->assertStringContainsString('tel:5551234567', $content);
+
+        // 6. Botón enviar pedido WhatsApp: min-h-[48px]
+        $this->assertStringContainsString('id="btnEnviarWhatsApp"', $content);
+        $this->assertStringContainsString('min-h-[48px]', $content);
+    }
+
+    public function test_wcag_escape_key_and_aria_attributes_on_cart_modal(): void
+    {
+        RestauranteScope::setRestauranteId(null);
+
+        $restaurante = Restaurante::factory()->create([
+            'pedidos_activos' => true,
+            'whatsapp_pedidos' => '525511112222',
+        ]);
+        Horario::factory()->create([
+            'restaurante_id' => $restaurante->id,
+            'dia_semana' => Carbon::now()->dayOfWeek,
+            'abre' => '00:00:00',
+            'cierra' => '23:59:59',
+            'cerrado' => false,
+        ]);
+
+        $response = $this->get(route('menu.publico', ['slug' => $restaurante->slug]));
+        $response->assertOk();
+
+        // ARIA attributes on modal and floating bar
+        $response->assertSee('aria-haspopup="dialog"', false);
+        $response->assertSee('aria-controls="cartModalBackdrop"', false);
+        $response->assertSee('id="cartModalBackdrop"', false);
+        $response->assertSee('role="dialog"', false);
+        $response->assertSee('aria-modal="true"', false);
+        $response->assertSee('aria-labelledby="cartDrawerTitle"', false);
+
+        // Escape key dismiss handler
+        $response->assertSee("e.key === 'Escape' || e.key === 'Esc'", false);
+        $response->assertSee('closeCartModal()', false);
+
+        // Focus management: moves focus to close button when opened, restores to bar when closed
+        $response->assertSee('closeBtn.focus()', false);
+        $response->assertSee('bar.focus()', false);
+    }
+
+    // =========================================================================
+    // Area 9: Adversarial XSS & Notes Injection Stress-Testing
+    // =========================================================================
+
+    public function test_notes_input_and_dish_notes_escaping_in_cart_and_whatsapp(): void
+    {
+        RestauranteScope::setRestauranteId(null);
+
+        $restaurante = Restaurante::factory()->create([
+            'pedidos_activos' => true,
+            'whatsapp_pedidos' => '525511112222',
+        ]);
+        Horario::factory()->create([
+            'restaurante_id' => $restaurante->id,
+            'dia_semana' => Carbon::now()->dayOfWeek,
+            'abre' => '00:00:00',
+            'cierra' => '23:59:59',
+            'cerrado' => false,
+        ]);
+
+        $response = $this->get(route('menu.publico', ['slug' => $restaurante->slug]));
+        $response->assertOk();
+
+        // Check that escapeHtml function is defined and correctly escapes &, <, >, ", '
+        $response->assertSee('function escapeHtml(str)', false);
+        $response->assertSee("replace(/'/g, '&#39;')", false);
+        $response->assertSee('replace(/"/g, \'&quot;\')', false);
+
+        // Check encodeURIComponent is used when constructing WhatsApp deep link
+        $response->assertSee('encodeURIComponent(msg)', false);
+    }
+
+    public function test_restaurant_name_template_literal_xss_in_script_tag(): void
+    {
+        RestauranteScope::setRestauranteId(null);
+
+        $payload = 'Tacos ${alert(1)}';
+        $restaurante = Restaurante::factory()->create([
+            'nombre' => $payload,
+            'pedidos_activos' => true,
+            'whatsapp_pedidos' => '525511112222',
+        ]);
+        Horario::factory()->create([
+            'restaurante_id' => $restaurante->id,
+            'dia_semana' => Carbon::now()->dayOfWeek,
+            'abre' => '00:00:00',
+            'cierra' => '23:59:59',
+            'cerrado' => false,
+        ]);
+
+        $response = $this->get(route('menu.publico', ['slug' => $restaurante->slug]));
+        $response->assertOk();
+
+        $content = $response->getContent();
+        $this->assertStringContainsString('Tacos ${alert(1)}', $content);
+    }
+
+    public function test_restaurant_name_backtick_injection_breaks_template_literal(): void
+    {
+        RestauranteScope::setRestauranteId(null);
+
+        $payload = 'Tacos`; alert(document.domain); let dummy=`';
+        $restaurante = Restaurante::factory()->create([
+            'nombre' => $payload,
+            'pedidos_activos' => true,
+            'whatsapp_pedidos' => '525511112222',
+        ]);
+        Horario::factory()->create([
+            'restaurante_id' => $restaurante->id,
+            'dia_semana' => Carbon::now()->dayOfWeek,
+            'abre' => '00:00:00',
+            'cierra' => '23:59:59',
+            'cerrado' => false,
+        ]);
+
+        $response = $this->get(route('menu.publico', ['slug' => $restaurante->slug]));
+        $response->assertOk();
+
+        $content = $response->getContent();
+        $this->assertStringContainsString('`¡Hola! Quiero hacer el siguiente pedido desde el menú digital de *Tacos`; alert(document.domain);', $content);
+    }
+
+    public function test_dish_name_with_newline_creates_unbroken_or_broken_js_string(): void
+    {
+        RestauranteScope::setRestauranteId(null);
+
+        $restaurante = Restaurante::factory()->create([
+            'pedidos_activos' => true,
+            'whatsapp_pedidos' => '525511112222',
+        ]);
+        Horario::factory()->create([
+            'restaurante_id' => $restaurante->id,
+            'dia_semana' => Carbon::now()->dayOfWeek,
+            'abre' => '00:00:00',
+            'cierra' => '23:59:59',
+            'cerrado' => false,
+        ]);
+
+        $cat = Categoria::factory()->create(['restaurante_id' => $restaurante->id, 'visible' => true]);
+        CategoriaTraduccion::factory()->create(['categoria_id' => $cat->id, 'idioma' => 'es', 'nombre' => 'Tacos']);
+
+        $prod = Producto::factory()->create([
+            'restaurante_id' => $restaurante->id,
+            'categoria_id' => $cat->id,
+            'precio' => 25.00,
+            'disponible' => true,
+            'visible' => true,
+        ]);
+        ProductoTraduccion::factory()->create([
+            'producto_id' => $prod->id,
+            'idioma' => 'es',
+            'nombre' => "Taco\nAl Pastor",
+        ]);
+
+        $response = $this->get(route('menu.publico', ['slug' => $restaurante->slug]));
+        $response->assertOk();
+
+        $content = $response->getContent();
+        // Check if raw newline exists inside the single quote onclick attribute:
+        $this->assertStringContainsString("nombre: 'Taco\nAl Pastor'", $content);
+    }
 }

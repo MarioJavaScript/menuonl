@@ -23,20 +23,26 @@ class ListCodigosQr extends ListRecords
             Action::make('generarLoteMesas')
                 ->label('Generar lote de mesas')
                 ->icon('heroicon-o-squares-plus')
+                ->modalHeading('Generar lote de códigos QR para mesas')
+                ->modalDescription('Crea de forma masiva códigos QR únicos para un rango continuo de mesas. Si alguna mesa ya existe para este restaurante, se conservará intacta.')
+                ->modalSubmitActionLabel('Generar códigos QR')
+                ->modalIcon('heroicon-o-squares-plus')
                 ->form([
                     TextInput::make('desde_mesa')
-                        ->label('Desde mesa')
+                        ->label('Mesa inicial')
                         ->numeric()
                         ->minValue(1)
                         ->default(1)
-                        ->required(),
+                        ->required()
+                        ->helperText('Número de la primera mesa del rango (ej. 1).'),
                     TextInput::make('hasta_mesa')
-                        ->label('Hasta mesa')
+                        ->label('Mesa final')
                         ->numeric()
                         ->minValue(1)
                         ->default(10)
                         ->required()
-                        ->gte('desde_mesa'),
+                        ->gte('desde_mesa')
+                        ->helperText('Número de la última mesa del rango (ej. 20).'),
                 ])
                 ->action(function (array $data): void {
                     $desde = (int) $data['desde_mesa'];

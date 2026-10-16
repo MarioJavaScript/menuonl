@@ -26,6 +26,10 @@ class ProductoResource extends Resource
 
     protected static ?string $slug = 'productos';
 
+    protected static \UnitEnum|string|null $navigationGroup = 'Menú y Carta';
+
+    protected static ?string $navigationLabel = 'Platillos';
+
     protected static ?int $navigationSort = 20;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCake;

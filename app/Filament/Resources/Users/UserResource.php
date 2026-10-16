@@ -28,6 +28,10 @@ class UserResource extends Resource
 
     protected static bool $isScopedToTenant = false;
 
+    protected static \UnitEnum|string|null $navigationGroup = 'Equipo y Acceso';
+
+    protected static ?string $navigationLabel = 'Miembros del equipo';
+
     protected static ?int $navigationSort = 70;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUsers;

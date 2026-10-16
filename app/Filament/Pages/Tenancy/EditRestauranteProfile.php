@@ -34,11 +34,17 @@ class EditRestauranteProfile extends EditTenantProfile
                 Select::make('idioma_default')->label('Idioma principal')->options(Catalogos::idiomas())->required(),
                 Select::make('zona_horaria')->label('Zona horaria')->options(Catalogos::zonasHorarias())->searchable()->required(),
                 TextInput::make('whatsapp_pedidos')
-                    ->label('WhatsApp para pedidos (formato internacional, solo dígitos)')
+                    ->label('WhatsApp para pedidos')
+                    ->placeholder('5215512345678')
+                    ->helperText('Número en formato internacional con código de país, solo dígitos (8 a 20 dígitos, sin espacios ni signos).')
                     ->regex('/^[0-9]{8,20}$/')
                     ->maxLength(20),
-                Toggle::make('pedidos_activos')->label('Activar pedidos por WhatsApp'),
-                Toggle::make('mostrar_agotados')->label('Mostrar platillos agotados'),
+                Toggle::make('pedidos_activos')
+                    ->label('Activar pedidos por WhatsApp')
+                    ->helperText('Habilita el carrito en el menú público para que los comensales envíen sus pedidos directo a WhatsApp.'),
+                Toggle::make('mostrar_agotados')
+                    ->label('Mostrar platillos agotados')
+                    ->helperText('Si se desmarca, los platillos no disponibles se ocultan por completo del menú público.'),
                 Repeater::make('idiomas')
                     ->label('Idiomas activos')
                     ->relationship('idiomas')

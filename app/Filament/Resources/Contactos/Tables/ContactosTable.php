@@ -2,7 +2,9 @@
 
 namespace App\Filament\Resources\Contactos\Tables;
 
+use App\Filament\Resources\Contactos\ContactoResource;
 use App\Services\Catalogos;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -28,6 +30,16 @@ class ContactosTable
             ->recordActions([
                 EditAction::make(),
                 DeleteAction::make(),
+            ])
+            ->emptyStateHeading('No hay canales de contacto registrados')
+            ->emptyStateDescription('Añade WhatsApp, teléfono, redes sociales o tu dirección para que los comensales puedan comunicarse directamente desde el menú.')
+            ->emptyStateIcon('heroicon-o-phone')
+            ->emptyStateActions([
+                Action::make('crear')
+                    ->label('Agregar canal de contacto')
+                    ->icon('heroicon-m-plus')
+                    ->button()
+                    ->url(fn (): string => ContactoResource::getUrl('create')),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

@@ -22,6 +22,7 @@ class ProductoForm
             ->components([
                 Select::make('categoria_id')
                     ->label('Categoría')
+                    ->placeholder('Selecciona una categoría')
                     ->options(fn (): array => self::categorias())
                     ->required()
                     ->searchable()
@@ -29,18 +30,35 @@ class ProductoForm
                         ->where('restaurante_id', Filament::getTenant()?->getKey())
                         ->whereNull('deleted_at')),
                 TextInput::make('precio')
-                    ->label('Precio')
+                    ->label('Precio regular')
+                    ->placeholder('0.00')
+                    ->helperText('Precio base del platillo.')
                     ->numeric()->minValue(0)->maxValue(99999999.99)->step(0.01)->required(),
                 TextInput::make('precio_oferta')
                     ->label('Precio de oferta')
+                    ->placeholder('0.00')
+                    ->helperText('Si se define, sustituye al precio regular y muestra el anterior tachado.')
                     ->numeric()->minValue(0)->maxValue(99999999.99)->step(0.01)->lte('precio'),
-                ImagenRestauranteUpload::make('imagen', 'productos')->label('Imagen'),
-                TextInput::make('orden')->label('Orden')->numeric()->integer()->minValue(0)->maxValue(1000000)->default(0)->required(),
-                Toggle::make('disponible')->label('Disponible')->default(true),
-                Toggle::make('visible')->label('Visible en el menú')->default(true),
-                Toggle::make('destacado')->label('Destacado (Recomendados)'),
+                ImagenRestauranteUpload::make('imagen', 'productos')->label('Fotografía del platillo'),
+                TextInput::make('orden')
+                    ->label('Orden de visualización')
+                    ->placeholder('0')
+                    ->helperText('Posición numérica para ordenar el platillo dentro de su categoría.')
+                    ->numeric()->integer()->minValue(0)->maxValue(1000000)->default(0)->required(),
+                Toggle::make('disponible')
+                    ->label('Disponible')
+                    ->helperText('Si se desmarca, el platillo se marca como agotado.')
+                    ->default(true),
+                Toggle::make('visible')
+                    ->label('Visible en el menú')
+                    ->helperText('Determina si el platillo aparece en la carta pública.')
+                    ->default(true),
+                Toggle::make('destacado')
+                    ->label('Recomendado del chef')
+                    ->helperText('Muestra este platillo en el carrusel de destacados del menú.'),
                 Select::make('etiquetas')
-                    ->label('Etiquetas')
+                    ->label('Etiquetas dietéticas')
+                    ->placeholder('Selecciona etiquetas dietéticas')
                     ->relationship('etiquetas', 'codigo')
                     ->multiple()
                     ->preload(),
@@ -52,8 +70,8 @@ class ProductoForm
                             ->label('Variantes')
                             ->relationship('variantes')
                             ->schema([
-                                TextInput::make('precio')->label('Precio')->numeric()->minValue(0)->maxValue(99999999.99)->step(0.01)->required(),
-                                TextInput::make('orden')->label('Orden')->numeric()->integer()->minValue(0)->maxValue(1000000)->default(0)->required(),
+                                TextInput::make('precio')->label('Precio')->placeholder('0.00')->numeric()->minValue(0)->maxValue(99999999.99)->step(0.01)->required(),
+                                TextInput::make('orden')->label('Orden')->placeholder('0')->numeric()->integer()->minValue(0)->maxValue(1000000)->default(0)->required(),
                                 Toggle::make('disponible')->label('Disponible')->default(true),
                                 TraduccionesRepeater::make('traducciones', 80, conDescripcion: false)->columnSpanFull(),
                             ])

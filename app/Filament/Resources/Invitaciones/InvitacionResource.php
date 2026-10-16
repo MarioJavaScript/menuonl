@@ -25,6 +25,10 @@ class InvitacionResource extends Resource
 
     protected static ?string $tenantRelationshipName = 'invitaciones';
 
+    protected static \UnitEnum|string|null $navigationGroup = 'Equipo y Acceso';
+
+    protected static ?string $navigationLabel = 'Invitaciones';
+
     protected static ?int $navigationSort = 60;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedEnvelope;

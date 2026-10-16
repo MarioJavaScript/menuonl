@@ -26,6 +26,7 @@ class ImagenRestauranteUpload
             ->image()
             ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
             ->maxSize((int) ceil((int) config('menuonl.imagenes.max_bytes') / 1024))
+            ->helperText('Formatos permitidos: JPG, PNG o WebP (máx. 5 MB). La imagen se optimiza y comprime automáticamente a formato WebP.')
             ->disk('public')
             ->visibility('public')
             ->preventFilePathTampering()

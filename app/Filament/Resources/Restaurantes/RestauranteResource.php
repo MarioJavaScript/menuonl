@@ -32,7 +32,11 @@ class RestauranteResource extends Resource
 
     protected static bool $isScopedToTenant = false;
 
-    protected static ?int $navigationSort = 90;
+    protected static \UnitEnum|string|null $navigationGroup = 'Administración Global';
+
+    protected static ?string $navigationLabel = 'Restaurantes';
+
+    protected static ?int $navigationSort = 80;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingStorefront;
 
