@@ -14,13 +14,10 @@ return new class extends Migration
         Schema::create('restaurante_idiomas', function (Blueprint $table) {
             $table->id();
             $table->foreignId('restaurante_id')->constrained('restaurantes')->cascadeOnDelete();
-            $table->string('codigo', 5);
-            $table->string('idioma', 5)->nullable();
-            $table->unsignedSmallInteger('orden')->default(0);
-            $table->boolean('activo')->default(true);
-            $table->timestamps();
+            $table->string('idioma', 5);
+            $table->smallInteger('orden')->default(0);
 
-            $table->unique(['restaurante_id', 'codigo']);
+            $table->unique(['restaurante_id', 'idioma']);
         });
     }
 

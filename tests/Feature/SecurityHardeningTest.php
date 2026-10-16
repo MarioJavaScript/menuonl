@@ -6,10 +6,12 @@ use App\Models\Contacto;
 use App\Models\Producto;
 use App\Models\ProductoVariante;
 use App\Models\Restaurante;
+use App\Rules\ValorContactoSeguro;
 use App\Services\WebpImageService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
@@ -24,7 +26,7 @@ class SecurityHardeningTest extends TestCase
         parent::setUp();
 
         $this->restaurante = Restaurante::create([
-            'nombre' => 'Bistró Seguro',
+            'nombre' => 'BistrÃ³ Seguro',
             'slug' => 'bistro-seguro',
         ]);
     }
@@ -44,7 +46,7 @@ class SecurityHardeningTest extends TestCase
         ];
 
         foreach ($maliciousUrls as $maliciousUrl) {
-            $isValid = Contacto::esUrlPermitida($maliciousUrl);
+            $isValid = Validator::make(['valor' => $maliciousUrl], ['valor' => [new ValorContactoSeguro('otro')]])->passes();
             $this->assertFalse(
                 $isValid,
                 "Dangerous scheme [{$maliciousUrl}] must be rejected by Contacto validation."
@@ -67,7 +69,7 @@ class SecurityHardeningTest extends TestCase
         ];
 
         foreach ($safeUrls as $safeUrl) {
-            $isValid = Contacto::esUrlPermitida($safeUrl);
+            $isValid = Validator::make(['valor' => $safeUrl], ['valor' => [new ValorContactoSeguro('otro')]])->passes();
             $this->assertTrue(
                 $isValid,
                 "Legitimate contact URL [{$safeUrl}] must be accepted by Contacto validation."

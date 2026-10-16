@@ -12,8 +12,6 @@ use Illuminate\Support\Str;
  */
 class CodigoQrFactory extends Factory
 {
-    protected $model = CodigoQr::class;
-
     /**
      * Define the model's default state.
      *
@@ -24,24 +22,34 @@ class CodigoQrFactory extends Factory
         return [
             'restaurante_id' => Restaurante::factory(),
             'nombre' => 'General',
-            'codigo' => Str::random(10),
-            'tipo' => 'general',
             'mesa' => null,
+            'codigo' => Str::random(10),
             'activo' => true,
-            'contador_escaneos' => 0,
-            'ultimo_escaneo_en' => null,
         ];
     }
 
     /**
-     * State for table-specific QR code.
+     * Indicate that the QR code belongs to a table.
      */
-    public function paraMesa(string $numeroMesa = '1'): static
+    public function deMesa(?string $mesa = null): static
+    {
+        return $this->state(function (array $attributes) use ($mesa) {
+            $mesa ??= (string) fake()->numberBetween(1, 30);
+
+            return [
+                'nombre' => "Mesa {$mesa}",
+                'mesa' => $mesa,
+            ];
+        });
+    }
+
+    /**
+     * Indicate that the QR code was deactivated.
+     */
+    public function inactivo(): static
     {
         return $this->state(fn (array $attributes) => [
-            'nombre' => "Mesa {$numeroMesa}",
-            'tipo' => 'mesa',
-            'mesa' => $numeroMesa,
+            'activo' => false,
         ]);
     }
 }

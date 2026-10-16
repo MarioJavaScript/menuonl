@@ -11,8 +11,6 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class ProductoVarianteFactory extends Factory
 {
-    protected $model = ProductoVariante::class;
-
     /**
      * Define the model's default state.
      *
@@ -22,22 +20,19 @@ class ProductoVarianteFactory extends Factory
     {
         return [
             'producto_id' => Producto::factory(),
-            'precio' => fake()->randomFloat(2, 50, 200),
+            'precio' => fake()->randomFloat(2, 30, 300),
             'disponible' => true,
-            'orden' => fake()->numberBetween(1, 5),
+            'orden' => fake()->numberBetween(0, 10),
         ];
     }
 
     /**
-     * Include a default translation.
+     * Indicate that the variant is sold out.
      */
-    public function withTranslation(string $nombre = 'Grande', string $idioma = 'es'): static
+    public function agotada(): static
     {
-        return $this->afterCreating(function (ProductoVariante $variante) use ($nombre, $idioma) {
-            $variante->traducciones()->create([
-                'idioma' => $idioma,
-                'nombre' => $nombre,
-            ]);
-        });
+        return $this->state(fn (array $attributes) => [
+            'disponible' => false,
+        ]);
     }
 }

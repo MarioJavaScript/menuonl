@@ -15,8 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('variante_id')->constrained('producto_variantes')->cascadeOnDelete();
             $table->string('idioma', 5);
-            $table->string('nombre', 100);
-            $table->timestamps();
+            $table->string('nombre', 80);
 
             $table->unique(['variante_id', 'idioma']);
         });

@@ -14,10 +14,10 @@ return new class extends Migration
         Schema::create('contactos', function (Blueprint $table) {
             $table->id();
             $table->foreignId('restaurante_id')->constrained('restaurantes')->cascadeOnDelete();
-            $table->string('tipo', 30);
+            $table->enum('tipo', ['telefono', 'whatsapp', 'email', 'direccion', 'instagram', 'facebook', 'tiktok', 'web', 'otro']);
             $table->string('etiqueta', 80)->nullable();
             $table->string('valor', 255);
-            $table->unsignedSmallInteger('orden')->default(0);
+            $table->integer('orden')->default(0);
             $table->boolean('visible')->default(true);
             $table->timestamps();
 

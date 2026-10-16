@@ -11,8 +11,6 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class ContactoFactory extends Factory
 {
-    protected $model = Contacto::class;
-
     /**
      * Define the model's default state.
      *
@@ -22,10 +20,10 @@ class ContactoFactory extends Factory
     {
         return [
             'restaurante_id' => Restaurante::factory(),
-            'tipo' => fake()->randomElement(['telefono', 'whatsapp', 'email', 'direccion', 'instagram']),
-            'etiqueta' => fake()->word(),
-            'valor' => fake()->phoneNumber(),
-            'orden' => fake()->numberBetween(1, 10),
+            'tipo' => 'telefono',
+            'etiqueta' => null,
+            'valor' => fake()->numerify('+52 55 #### ####'),
+            'orden' => fake()->numberBetween(0, 10),
             'visible' => true,
         ];
     }

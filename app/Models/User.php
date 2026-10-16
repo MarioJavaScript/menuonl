@@ -2,7 +2,10 @@
 
 namespace App\Models;
 
-use App\Models\Scopes\RestauranteScope;
+use Filament\Auth\MultiFactor\App\Concerns\InteractsWithAppAuthentication;
+use Filament\Auth\MultiFactor\App\Concerns\InteractsWithAppAuthenticationRecovery;
+use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthentication;
+use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthenticationRecovery;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Models\Contracts\HasTenants;
 use Filament\Panel;
@@ -12,16 +15,23 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
-class User extends Authenticatable implements FilamentUser, HasTenants
+class User extends Authenticatable implements FilamentUser, HasAppAuthentication, HasAppAuthenticationRecovery, HasTenants
 {
-    use HasFactory, Notifiable;
+    use HasFactory, InteractsWithAppAuthentication, InteractsWithAppAuthenticationRecovery, Notifiable;
+
+    /**
+     * Memoized restaurante_id => rol map for this instance.
+     *
+     * @var array<int, string>|null
+     */
+    protected ?array $rolesPorRestaurante = null;
 
     protected $fillable = [
         'name',
         'email',
         'password',
-        'es_superadmin',
         'activo',
         'ultimo_acceso',
     ];
@@ -47,38 +57,11 @@ class User extends Authenticatable implements FilamentUser, HasTenants
      */
     public function canAccessPanel(Panel $panel): bool
     {
-        return (bool) $this->activo;
-    }
-
-    /**
-     * Determine which restaurants this user can access in the panel.
-     */
-    public function getTenants(Panel $panel): array|Collection
-    {
-        if ($this->isSuperadmin()) {
-            return Restaurante::all();
-        }
-
-        return $this->restaurantes()->where('restaurantes.estado', 'activo')->get();
-    }
-
-    /**
-     * Determine if user can access a specific tenant restaurant.
-     */
-    public function canAccessTenant(Model $tenant): bool
-    {
-        if ($this->isSuperadmin()) {
-            return true;
-        }
-
-        if (! $tenant instanceof Restaurante) {
+        if (! $this->activo) {
             return false;
         }
 
-        return $this->restaurantes()
-            ->where('restaurantes.id', $tenant->id)
-            ->where('restaurantes.estado', 'activo')
-            ->exists();
+        return $this->isSuperadmin() || $this->restaurantes()->exists();
     }
 
     /**
@@ -92,129 +75,84 @@ class User extends Authenticatable implements FilamentUser, HasTenants
     }
 
     /**
+     * Restaurants the user can pick as the panel tenant.
+     */
+    public function getTenants(Panel $panel): Collection
+    {
+        return $this->isSuperadmin() ? Restaurante::all() : $this->restaurantes()->get();
+    }
+
+    /**
+     * Determine if the user can administer the given restaurant.
+     */
+    public function canAccessTenant(Model $tenant): bool
+    {
+        if (! $tenant instanceof Restaurante) {
+            return false;
+        }
+
+        return $this->isSuperadmin() || $this->restaurantes()->whereKey($tenant->getKey())->exists();
+    }
+
+    /**
+     * Role of the user in the given restaurant ('propietario' or 'editor'), or null when not a member.
+     *
+     * The superadmin flag is not a pivot role, so it never appears here.
+     */
+    public function rolEn(Restaurante|int|null $restaurante): ?string
+    {
+        if ($restaurante === null) {
+            return null;
+        }
+
+        $this->rolesPorRestaurante ??= DB::table('restaurante_usuario')
+            ->where('user_id', $this->getKey())
+            ->pluck('rol', 'restaurante_id')
+            ->all();
+
+        return $this->rolesPorRestaurante[$restaurante instanceof Restaurante ? $restaurante->getKey() : $restaurante] ?? null;
+    }
+
+    /**
+     * Whether the user is a propietario of the given restaurant.
+     */
+    public function esPropietarioDe(Restaurante|int|null $restaurante): bool
+    {
+        return $this->rolEn($restaurante) === 'propietario';
+    }
+
+    /**
+     * Whether the user is an editor of the given restaurant.
+     */
+    public function esEditorDe(Restaurante|int|null $restaurante): bool
+    {
+        return $this->rolEn($restaurante) === 'editor';
+    }
+
+    /**
+     * Whether this user must use two-factor authentication: superadmins and propietarios of any restaurant.
+     *
+     * Editors only are not required to (they may still enable it).
+     */
+    public function requiereDosFactores(): bool
+    {
+        return $this->isSuperadmin()
+            || $this->restaurantes()->wherePivot('rol', 'propietario')->exists();
+    }
+
+    /**
+     * Forget the memoized roles after changing the restaurant memberships.
+     */
+    public function olvidarRoles(): void
+    {
+        $this->rolesPorRestaurante = null;
+    }
+
+    /**
      * Check if user is superadmin.
      */
     public function isSuperadmin(): bool
     {
         return (bool) $this->es_superadmin;
-    }
-
-    /**
-     * Alias for isSuperadmin.
-     */
-    public function esSuperadmin(): bool
-    {
-        return $this->isSuperadmin();
-    }
-
-    /**
-     * Retrieve the pivot role of this user in the specified restaurant.
-     */
-    public function rolEn(Restaurante $r): ?string
-    {
-        if ($this->relationLoaded('restaurantes')) {
-            $restaurant = $this->restaurantes->firstWhere('id', $r->id);
-            if ($restaurant?->pivot?->rol) {
-                return $restaurant->pivot->rol;
-            }
-        }
-
-        return $this->restaurantes()
-            ->where('restaurantes.id', $r->id)
-            ->first()?->pivot?->rol;
-    }
-
-    /**
-     * Check if user is propietario of the given restaurant.
-     */
-    public function esPropietarioDe(Restaurante $r): bool
-    {
-        return $this->rolEn($r) === 'propietario';
-    }
-
-    /**
-     * Check if user is editor of the given restaurant.
-     */
-    public function esEditorDe(Restaurante $r): bool
-    {
-        return $this->rolEn($r) === 'editor';
-    }
-
-    /**
-     * Retrieve role in a specific restaurant or current scoped restaurant context.
-     */
-    public function rolEnRestaurante(?Restaurante $restaurante = null): ?string
-    {
-        if ($restaurante) {
-            return $this->rolEn($restaurante);
-        }
-
-        $restauranteId = RestauranteScope::getRestauranteId();
-        if (! $restauranteId) {
-            return null;
-        }
-
-        if ($this->relationLoaded('restaurantes')) {
-            $matched = $this->restaurantes->firstWhere('id', $restauranteId);
-            if ($matched?->pivot?->rol) {
-                return $matched->pivot->rol;
-            }
-        }
-
-        return $this->restaurantes()
-            ->where('restaurantes.id', $restauranteId)
-            ->first()?->pivot?->rol;
-    }
-
-    /**
-     * Check if user has propietario capabilities (in current context or specific restaurant).
-     */
-    public function esPropietario(?Restaurante $restaurante = null): bool
-    {
-        if ($this->isSuperadmin()) {
-            return true;
-        }
-
-        if ($restaurante) {
-            return $this->esPropietarioDe($restaurante);
-        }
-
-        $restauranteId = RestauranteScope::getRestauranteId();
-        if ($restauranteId) {
-            return $this->rolEnRestaurante() === 'propietario';
-        }
-
-        return $this->restaurantes()
-            ->where('restaurantes.estado', 'activo')
-            ->wherePivot('rol', 'propietario')
-            ->exists();
-    }
-
-    /**
-     * Check if user has editor (or higher) capabilities (in current context or specific restaurant).
-     */
-    public function esEditor(?Restaurante $restaurante = null): bool
-    {
-        if ($this->isSuperadmin()) {
-            return true;
-        }
-
-        if ($restaurante) {
-            $rol = $this->rolEn($restaurante);
-
-            return $rol === 'propietario' || $rol === 'editor';
-        }
-
-        $restauranteId = RestauranteScope::getRestauranteId();
-        if ($restauranteId) {
-            $rol = $this->rolEnRestaurante();
-
-            return $rol === 'propietario' || $rol === 'editor';
-        }
-
-        return $this->restaurantes()
-            ->where('restaurantes.estado', 'activo')
-            ->whereIn('restaurante_usuario.rol', ['propietario', 'editor'])
-            ->exists();
     }
 }

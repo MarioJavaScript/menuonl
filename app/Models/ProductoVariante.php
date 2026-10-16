@@ -2,18 +2,24 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasTraducciones;
 use App\Traits\Auditable;
+use Database\Factories\ProductoVarianteFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use InvalidArgumentException;
 
 class ProductoVariante extends Model
 {
-    use Auditable, HasFactory;
+    /** @use HasFactory<ProductoVarianteFactory> */
+    use Auditable, HasFactory, HasTraducciones;
 
     protected $table = 'producto_variantes';
+
+    public $timestamps = false;
 
     protected $fillable = [
         'producto_id',
@@ -22,23 +28,6 @@ class ProductoVariante extends Model
         'orden',
     ];
 
-    /**
-     * Boot model to enforce security constraints.
-     */
-    protected static function booted(): void
-    {
-        static::saving(function (ProductoVariante $variante) {
-            if ($variante->precio !== null && (float) $variante->precio < 0) {
-                throw new \InvalidArgumentException('El precio de la variante no puede ser negativo.');
-            }
-        });
-    }
-
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
@@ -49,15 +38,27 @@ class ProductoVariante extends Model
     }
 
     /**
-     * Parent product.
+     * Reject negative prices (mirrors the CHECK constraint, which SQLite lacks).
      */
-    public function producto(): BelongsTo
+    protected static function booted(): void
     {
-        return $this->belongsTo(Producto::class, 'producto_id');
+        static::saving(function (ProductoVariante $variante): void {
+            if ((float) $variante->precio < 0) {
+                throw new InvalidArgumentException('El precio de la variante no puede ser negativo.');
+            }
+        });
     }
 
     /**
-     * Variant translations.
+     * Product this variant belongs to.
+     */
+    public function producto(): BelongsTo
+    {
+        return $this->belongsTo(Producto::class);
+    }
+
+    /**
+     * Translations of the variant name.
      */
     public function traducciones(): HasMany
     {
@@ -65,7 +66,15 @@ class ProductoVariante extends Model
     }
 
     /**
-     * Scope to available variants.
+     * Translation for the given language, falling back to the restaurant's default language.
+     */
+    public function traduccion(?string $idioma = null): ?VarianteTraduccion
+    {
+        return $this->buscarTraduccion($idioma, $this->producto?->restaurante?->idioma_default);
+    }
+
+    /**
+     * Scope to variants that are not sold out.
      */
     public function scopeDisponible(Builder $query): Builder
     {
@@ -73,53 +82,10 @@ class ProductoVariante extends Model
     }
 
     /**
-     * Scope ordered by custom position.
+     * Scope ordered by the custom position.
      */
     public function scopeOrdenado(Builder $query): Builder
     {
         return $query->orderBy('orden');
-    }
-
-    /**
-     * Retrieve translation with fallback to restaurant's default language.
-     */
-    public function traduccion(?string $idioma = null): ?VarianteTraduccion
-    {
-        $idiomaDefault = $this->producto?->restaurante?->idioma_default ?? 'es';
-        $targetIdioma = $idioma ?: $idiomaDefault;
-
-        if ($this->relationLoaded('traducciones')) {
-            $translation = $this->traducciones->firstWhere('idioma', $targetIdioma);
-
-            if (! $translation && $targetIdioma !== $idiomaDefault) {
-                $translation = $this->traducciones->firstWhere('idioma', $idiomaDefault);
-            }
-
-            return $translation;
-        }
-
-        $translation = $this->traducciones()->where('idioma', $targetIdioma)->first();
-
-        if (! $translation && $targetIdioma !== $idiomaDefault) {
-            $translation = $this->traducciones()->where('idioma', $idiomaDefault)->first();
-        }
-
-        return $translation;
-    }
-
-    /**
-     * Helper to get translated name with fallback.
-     */
-    public function nombre(?string $idioma = null): ?string
-    {
-        return $this->traduccion($idioma)?->nombre;
-    }
-
-    /**
-     * Alias for nombre().
-     */
-    public function getNombre(?string $idioma = null): ?string
-    {
-        return $this->nombre($idioma);
     }
 }

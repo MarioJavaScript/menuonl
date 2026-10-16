@@ -14,13 +14,10 @@ return new class extends Migration
         Schema::create('codigos_qr', function (Blueprint $table) {
             $table->id();
             $table->foreignId('restaurante_id')->constrained('restaurantes')->cascadeOnDelete();
-            $table->string('nombre', 80)->nullable();
-            $table->string('codigo', 16)->unique();
-            $table->enum('tipo', ['general', 'mesa'])->default('general');
+            $table->string('nombre', 80);
             $table->string('mesa', 20)->nullable();
+            $table->string('codigo', 16)->unique();
             $table->boolean('activo')->default(true);
-            $table->unsignedInteger('contador_escaneos')->default(0);
-            $table->dateTime('ultimo_escaneo_en')->nullable();
             $table->timestamps();
 
             $table->index('restaurante_id');

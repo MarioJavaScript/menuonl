@@ -2,20 +2,25 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasTraducciones;
+use App\Models\Scopes\RestauranteScope;
 use App\Traits\Auditable;
 use App\Traits\BelongsToRestaurante;
+use App\Traits\ProtegeImagenesDelRestaurante;
+use Database\Factories\ProductoFactory;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use InvalidArgumentException;
 
 class Producto extends Model
 {
-    use Auditable, BelongsToRestaurante, HasFactory, SoftDeletes;
+    /** @use HasFactory<ProductoFactory> */
+    use Auditable, BelongsToRestaurante, HasFactory, HasTraducciones, ProtegeImagenesDelRestaurante, SoftDeletes;
 
     protected $table = 'productos';
 
@@ -24,7 +29,6 @@ class Producto extends Model
         'categoria_id',
         'precio',
         'precio_oferta',
-        'foto_url',
         'imagen',
         'disponible',
         'visible',
@@ -32,27 +36,6 @@ class Producto extends Model
         'orden',
     ];
 
-    /**
-     * Boot model to enforce security constraints.
-     */
-    protected static function booted(): void
-    {
-        static::saving(function (Producto $producto) {
-            if ($producto->precio !== null && (float) $producto->precio < 0) {
-                throw new \InvalidArgumentException('El precio del producto no puede ser negativo.');
-            }
-
-            if ($producto->precio_oferta !== null && (float) $producto->precio_oferta < 0) {
-                throw new \InvalidArgumentException('El precio de oferta no puede ser negativo.');
-            }
-        });
-    }
-
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
@@ -66,39 +49,83 @@ class Producto extends Model
     }
 
     /**
-     * Parent category.
+     * Image columns guarded by ProtegeImagenesDelRestaurante.
+     *
+     * @return array<int, string>
+     */
+    public function columnasDeImagen(): array
+    {
+        return ['imagen'];
+    }
+
+    /**
+     * Owner of the images; while creating, the active restaurant (BelongsToRestaurante assigns it later).
+     */
+    public function restauranteIdDeImagenes(): ?int
+    {
+        $id = $this->restaurante_id ?: RestauranteScope::resolveRestauranteId();
+
+        return $id === null ? null : (int) $id;
+    }
+
+    /**
+     * Reject negative prices (mirrors the CHECK constraints, which SQLite lacks).
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (Producto $producto): void {
+            if ((float) $producto->precio < 0) {
+                throw new InvalidArgumentException('El precio no puede ser negativo.');
+            }
+
+            if ($producto->precio_oferta !== null && (float) $producto->precio_oferta < 0) {
+                throw new InvalidArgumentException('El precio de oferta no puede ser negativo.');
+            }
+        });
+    }
+
+    /**
+     * Category this product belongs to.
      */
     public function categoria(): BelongsTo
     {
-        return $this->belongsTo(Categoria::class, 'categoria_id');
+        return $this->belongsTo(Categoria::class);
     }
 
     /**
-     * Product translations.
+     * Translations of the product name and description.
      */
     public function traducciones(): HasMany
     {
-        return $this->hasMany(ProductoTraduccion::class, 'producto_id');
+        return $this->hasMany(ProductoTraduccion::class);
     }
 
     /**
-     * Product variants (sizes, portions).
+     * Sizes or presentations, each with its own price.
      */
     public function variantes(): HasMany
     {
-        return $this->hasMany(ProductoVariante::class, 'producto_id');
+        return $this->hasMany(ProductoVariante::class);
     }
 
     /**
-     * Dietary and promotional tags.
+     * Dietary tags (vegano, picante, sin_gluten, ...).
      */
     public function etiquetas(): BelongsToMany
     {
-        return $this->belongsToMany(Etiqueta::class, 'producto_etiqueta', 'producto_id', 'etiqueta_id');
+        return $this->belongsToMany(Etiqueta::class, 'producto_etiqueta');
     }
 
     /**
-     * Scope to visible products.
+     * Translation for the given language, falling back to the restaurant's default language.
+     */
+    public function traduccion(?string $idioma = null): ?ProductoTraduccion
+    {
+        return $this->buscarTraduccion($idioma, $this->restaurante?->idioma_default);
+    }
+
+    /**
+     * Scope to visible records.
      */
     public function scopeVisible(Builder $query): Builder
     {
@@ -106,23 +133,7 @@ class Producto extends Model
     }
 
     /**
-     * Scope to available products.
-     */
-    public function scopeDisponible(Builder $query): Builder
-    {
-        return $query->where('disponible', true);
-    }
-
-    /**
-     * Scope to featured/recommended products.
-     */
-    public function scopeDestacado(Builder $query): Builder
-    {
-        return $query->where('destacado', true);
-    }
-
-    /**
-     * Scope ordered by custom position.
+     * Scope ordered by the custom position.
      */
     public function scopeOrdenado(Builder $query): Builder
     {
@@ -130,94 +141,23 @@ class Producto extends Model
     }
 
     /**
-     * Keep 'foto_url' and 'imagen' synced.
+     * Scope to products that are not sold out.
      */
-    protected function fotoUrl(): Attribute
+    public function scopeDisponible(Builder $query): Builder
     {
-        return Attribute::make(
-            get: fn (?string $value) => $value ?? $this->attributes['imagen'] ?? null,
-            set: fn (?string $value) => [
-                'foto_url' => $value,
-                'imagen' => $this->attributes['imagen'] ?? $value,
-            ]
-        );
+        return $query->where('disponible', true);
     }
 
     /**
-     * Keep 'imagen' and 'foto_url' synced.
+     * Scope to featured (recommended) products.
      */
-    protected function imagen(): Attribute
+    public function scopeDestacado(Builder $query): Builder
     {
-        return Attribute::make(
-            get: fn (?string $value) => $value ?? $this->attributes['foto_url'] ?? null,
-            set: fn (?string $value) => [
-                'imagen' => $value,
-                'foto_url' => $this->attributes['foto_url'] ?? $value,
-            ]
-        );
+        return $query->where('destacado', true);
     }
 
     /**
-     * Retrieve translation with fallback to restaurant's default language.
-     */
-    public function traduccion(?string $idioma = null): ?ProductoTraduccion
-    {
-        $idiomaDefault = $this->restaurante?->idioma_default ?? 'es';
-        $targetIdioma = $idioma ?: $idiomaDefault;
-
-        if ($this->relationLoaded('traducciones')) {
-            $translation = $this->traducciones->firstWhere('idioma', $targetIdioma);
-
-            if (! $translation && $targetIdioma !== $idiomaDefault) {
-                $translation = $this->traducciones->firstWhere('idioma', $idiomaDefault);
-            }
-
-            return $translation;
-        }
-
-        $translation = $this->traducciones()->where('idioma', $targetIdioma)->first();
-
-        if (! $translation && $targetIdioma !== $idiomaDefault) {
-            $translation = $this->traducciones()->where('idioma', $idiomaDefault)->first();
-        }
-
-        return $translation;
-    }
-
-    /**
-     * Helper to get translated name with fallback.
-     */
-    public function nombre(?string $idioma = null): ?string
-    {
-        return $this->traduccion($idioma)?->nombre;
-    }
-
-    /**
-     * Alias for nombre().
-     */
-    public function getNombre(?string $idioma = null): ?string
-    {
-        return $this->nombre($idioma);
-    }
-
-    /**
-     * Helper to get translated description with fallback.
-     */
-    public function descripcion(?string $idioma = null): ?string
-    {
-        return $this->traduccion($idioma)?->descripcion;
-    }
-
-    /**
-     * Alias for descripcion().
-     */
-    public function getDescripcion(?string $idioma = null): ?string
-    {
-        return $this->descripcion($idioma);
-    }
-
-    /**
-     * Returns effective active price (offer price if present and lower, else normal price).
+     * Price a customer pays: the offer price when it is lower than the regular one.
      */
     public function precioVigente(): string
     {
@@ -229,7 +169,7 @@ class Producto extends Model
     }
 
     /**
-     * Check if product has any variants configured.
+     * Whether the product has variants (the menu then shows each variant's price).
      */
     public function tieneVariantes(): bool
     {

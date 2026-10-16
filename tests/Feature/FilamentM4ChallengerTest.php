@@ -2,17 +2,20 @@
 
 namespace Tests\Feature;
 
-use App\Filament\Pages\ConfiguracionRestaurante;
-use App\Filament\Resources\ContactoResource\Pages\CreateContacto;
-use App\Filament\Resources\ProductoResource\Pages\ListProductos;
+use App\Filament\Pages\Tenancy\EditRestauranteProfile;
+use App\Filament\Resources\Contactos\Pages\CreateContacto;
+use App\Filament\Resources\Productos\Pages\CreateProducto;
 use App\Models\Categoria;
 use App\Models\Contacto;
 use App\Models\Producto;
 use App\Models\Restaurante;
 use App\Models\Scopes\RestauranteScope;
 use App\Models\User;
+use App\Rules\ValorContactoSeguro;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -61,15 +64,16 @@ class FilamentM4ChallengerTest extends TestCase
         $this->superadmin = User::create([
             'name' => 'Superadmin Admin',
             'email' => 'superadmin@menuonl.test',
-            'password' => bcrypt('password123'),
-            'es_superadmin' => true,
+            'password' => Hash::make('password123'),
             'activo' => true,
         ]);
+        // es_superadmin is not mass assignable (AsignacionMasivaUsuarioTest)
+        $this->superadmin->forceFill(['es_superadmin' => true])->save();
 
         $this->propietarioA = User::create([
             'name' => 'Owner A',
             'email' => 'owner_a@menuonl.test',
-            'password' => bcrypt('password123'),
+            'password' => Hash::make('password123'),
             'es_superadmin' => false,
             'activo' => true,
         ]);
@@ -78,7 +82,7 @@ class FilamentM4ChallengerTest extends TestCase
         $this->editorA = User::create([
             'name' => 'Editor A',
             'email' => 'editor_a@menuonl.test',
-            'password' => bcrypt('password123'),
+            'password' => Hash::make('password123'),
             'es_superadmin' => false,
             'activo' => true,
         ]);
@@ -87,7 +91,7 @@ class FilamentM4ChallengerTest extends TestCase
         $this->editorAPropietarioB = User::create([
             'name' => 'Cross Role User',
             'email' => 'cross_role@menuonl.test',
-            'password' => bcrypt('password123'),
+            'password' => Hash::make('password123'),
             'es_superadmin' => false,
             'activo' => true,
         ]);
@@ -114,193 +118,156 @@ class FilamentM4ChallengerTest extends TestCase
         ]);
     }
 
-    // =========================================================================
-    // 1. ConfiguracionRestaurante Authorization Tests
-    // =========================================================================
-
     /**
-     * Adversarial Test: Editor attempting HTTP GET to ConfiguracionRestaurante is denied 403.
+     * Context shared by the Livewire tests: the user inside the panel with restaurant A as active tenant.
      */
-    public function test_editor_http_access_to_configuracion_restaurante_returns_403_forbidden(): void
+    private function entrarComo(User $usuario): void
     {
-        $response = $this->actingAs($this->editorA)
-            ->get("/admin/{$this->restauranteA->slug}/configuracion-restaurante");
-
-        $response->assertStatus(403);
-    }
-
-    /**
-     * Adversarial Test: Cross-role user (Editor in Rest A, Propietario in Rest B)
-     * attempting to access Rest A's ConfiguracionRestaurante is denied 403.
-     */
-    public function test_cross_role_user_editor_in_tenant_cannot_access_settings_403(): void
-    {
-        $response = $this->actingAs($this->editorAPropietarioB)
-            ->get("/admin/{$this->restauranteA->slug}/configuracion-restaurante");
-
-        $response->assertStatus(403);
-    }
-
-    /**
-     * Adversarial Test: Editor mounting ConfiguracionRestaurante Livewire component is forbidden (403).
-     */
-    public function test_editor_mounting_configuracion_restaurante_throws_403_exception(): void
-    {
-        $this->actingAs($this->editorA);
+        $this->actingAs($usuario);
         Filament::setCurrentPanel(Filament::getPanel('admin'));
         Filament::setTenant($this->restauranteA, isQuiet: true);
+        Filament::bootCurrentPanel();
+        Filament::setServingStatus();
         RestauranteScope::setRestauranteId($this->restauranteA->id);
-
-        Livewire::test(ConfiguracionRestaurante::class)
-            ->assertForbidden();
     }
 
-    /**
-     * Verification Test: Propietario accessing ConfiguracionRestaurante.
-     * CHALLENGE: Uncovers fatal Error: Class "Filament\Forms\Components\Section" not found.
-     */
-    public function test_propietario_can_access_configuracion_restaurante(): void
+    // =========================================================================
+    // 1. Restaurant settings (EditRestauranteProfile) authorization
+    // =========================================================================
+
+    public function test_editor_http_access_to_restaurant_settings_is_hidden_with_404(): void
     {
-        $response = $this->actingAs($this->propietarioA)
-            ->get("/admin/{$this->restauranteA->slug}/configuracion-restaurante");
-
-        $response->assertStatus(200);
+        $this->actingAs($this->editorA)
+            ->get("/admin/{$this->restauranteA->slug}/profile")
+            ->assertNotFound();
     }
 
-    /**
-     * Verification Test: Superadmin accessing ConfiguracionRestaurante.
-     * CHALLENGE: Uncovers fatal Error: Class "Filament\Forms\Components\Section" not found.
-     */
-    public function test_superadmin_can_access_configuracion_restaurante(): void
+    public function test_cross_role_user_editor_in_tenant_cannot_access_its_settings(): void
     {
-        $response = $this->actingAs($this->superadmin)
-            ->get("/admin/{$this->restauranteA->slug}/configuracion-restaurante");
+        $this->actingAs($this->editorAPropietarioB)
+            ->get("/admin/{$this->restauranteA->slug}/profile")
+            ->assertNotFound();
 
-        $response->assertStatus(200);
+        $this->actingAs($this->editorAPropietarioB)
+            ->get("/admin/{$this->restauranteB->slug}/profile")
+            ->assertOk();
     }
 
-    /**
-     * Adversarial Test: Accessing Contacto create page.
-     * CHALLENGE: Uncovers fatal Error: Class "Filament\Forms\Components\Section" not found in ContactoResource.
-     */
+    public function test_editor_mounting_the_settings_page_is_denied(): void
+    {
+        $this->entrarComo($this->editorA);
+
+        Livewire::test(EditRestauranteProfile::class)->assertNotFound();
+    }
+
+    public function test_propietario_can_access_restaurant_settings(): void
+    {
+        $this->actingAs($this->propietarioA)
+            ->get("/admin/{$this->restauranteA->slug}/profile")
+            ->assertOk();
+    }
+
+    public function test_superadmin_can_access_restaurant_settings(): void
+    {
+        $this->actingAs($this->superadmin)
+            ->get("/admin/{$this->restauranteA->slug}/profile")
+            ->assertOk();
+    }
+
     public function test_contacto_create_page_renders_without_fatal_error(): void
     {
-        $response = $this->actingAs($this->propietarioA)
-            ->get("/admin/{$this->restauranteA->slug}/contactos/create");
-
-        $response->assertStatus(200);
+        $this->actingAs($this->propietarioA)
+            ->get("/admin/{$this->restauranteA->slug}/contactos/create")
+            ->assertOk();
     }
 
-    /**
-     * Adversarial Test: Accessing Producto create page.
-     * CHALLENGE: Uncovers fatal Error: Class "Filament\Forms\Components\Section" not found in ProductoResource.
-     */
     public function test_producto_create_page_renders_without_fatal_error(): void
     {
-        $response = $this->actingAs($this->propietarioA)
-            ->get("/admin/{$this->restauranteA->slug}/productos/create");
-
-        $response->assertStatus(200);
+        $this->actingAs($this->propietarioA)
+            ->get("/admin/{$this->restauranteA->slug}/productos/create")
+            ->assertOk();
     }
 
     // =========================================================================
-    // 2. Producto Quick-Edit Negative Price Validation Tests
+    // 2. Producto price validation in the panel form
     // =========================================================================
 
     /**
-     * Adversarial Test: Quick-edit negative 'precio' fails validation and does NOT update database.
+     * @param  array<string, mixed>  $precios
+     * @return array<string, mixed>
      */
-    public function test_quick_edit_negative_precio_fails_validation(): void
+    private function datosDeProducto(array $precios): array
     {
-        $this->actingAs($this->propietarioA);
-        Filament::setCurrentPanel(Filament::getPanel('admin'));
-        Filament::setTenant($this->restauranteA, isQuiet: true);
-        RestauranteScope::setRestauranteId($this->restauranteA->id);
-
-        $component = Livewire::test(ListProductos::class);
-
-        $result = $component->instance()->updateTableColumnState('precio', (string) $this->productoA->id, '-10.00');
-
-        $this->assertIsArray($result);
-        $this->assertArrayHasKey('error', $result);
-
-        $this->productoA->refresh();
-        $this->assertEquals('15.50', $this->productoA->precio);
+        return [
+            'categoria_id' => $this->categoriaA->id,
+            'orden' => 0,
+            'traducciones' => [['idioma' => 'es', 'nombre' => 'Platillo de prueba']],
+            ...$precios,
+        ];
     }
 
-    /**
-     * Adversarial Test: Quick-edit negative 'precio_oferta' fails validation and does NOT update database.
-     */
-    public function test_quick_edit_negative_precio_oferta_fails_validation(): void
+    public function test_product_form_rejects_negative_precio(): void
     {
-        $this->actingAs($this->propietarioA);
-        Filament::setCurrentPanel(Filament::getPanel('admin'));
-        Filament::setTenant($this->restauranteA, isQuiet: true);
-        RestauranteScope::setRestauranteId($this->restauranteA->id);
+        $this->entrarComo($this->propietarioA);
 
-        $component = Livewire::test(ListProductos::class);
+        Livewire::test(CreateProducto::class)
+            ->fillForm($this->datosDeProducto(['precio' => '-10.00']))
+            ->call('create')
+            ->assertHasFormErrors(['precio']);
 
-        $result = $component->instance()->updateTableColumnState('precio_oferta', (string) $this->productoA->id, '-5.99');
-
-        $this->assertIsArray($result);
-        $this->assertArrayHasKey('error', $result);
-
-        $this->productoA->refresh();
-        $this->assertEquals('12.00', $this->productoA->precio_oferta);
+        $this->assertSame(1, Producto::withoutGlobalScopes()->count());
     }
 
-    /**
-     * Adversarial Test: Quick-edit non-numeric 'precio' fails validation.
-     */
-    public function test_quick_edit_non_numeric_precio_fails_validation(): void
+    public function test_product_form_rejects_negative_precio_oferta(): void
     {
-        $this->actingAs($this->propietarioA);
-        Filament::setCurrentPanel(Filament::getPanel('admin'));
-        Filament::setTenant($this->restauranteA, isQuiet: true);
-        RestauranteScope::setRestauranteId($this->restauranteA->id);
+        $this->entrarComo($this->propietarioA);
 
-        $component = Livewire::test(ListProductos::class);
+        Livewire::test(CreateProducto::class)
+            ->fillForm($this->datosDeProducto(['precio' => '20.00', 'precio_oferta' => '-5.99']))
+            ->call('create')
+            ->assertHasFormErrors(['precio_oferta']);
 
-        $result = $component->instance()->updateTableColumnState('precio', (string) $this->productoA->id, 'not-a-price');
-
-        $this->assertIsArray($result);
-        $this->assertArrayHasKey('error', $result);
-
-        $this->productoA->refresh();
-        $this->assertEquals('15.50', $this->productoA->precio);
+        $this->assertSame(1, Producto::withoutGlobalScopes()->count());
     }
 
-    /**
-     * Verification Test: Quick-edit valid 'precio' and 'precio_oferta' succeeds and updates database.
-     */
-    public function test_quick_edit_valid_precio_succeeds(): void
+    public function test_product_form_rejects_non_numeric_precio(): void
     {
-        $this->actingAs($this->propietarioA);
-        Filament::setCurrentPanel(Filament::getPanel('admin'));
-        Filament::setTenant($this->restauranteA, isQuiet: true);
-        RestauranteScope::setRestauranteId($this->restauranteA->id);
+        $this->entrarComo($this->propietarioA);
 
-        $component = Livewire::test(ListProductos::class);
+        Livewire::test(CreateProducto::class)
+            ->fillForm($this->datosDeProducto(['precio' => 'not-a-price']))
+            ->call('create')
+            ->assertHasFormErrors(['precio']);
 
-        $component->instance()->updateTableColumnState('precio', (string) $this->productoA->id, '22.50');
+        $this->assertSame(1, Producto::withoutGlobalScopes()->count());
+    }
 
-        $this->productoA->refresh();
-        $this->assertEquals('22.50', $this->productoA->precio);
+    public function test_product_form_accepts_valid_precio_and_oferta(): void
+    {
+        $this->entrarComo($this->propietarioA);
 
-        $component->instance()->updateTableColumnState('precio_oferta', (string) $this->productoA->id, '18.00');
+        Livewire::test(CreateProducto::class)
+            ->fillForm($this->datosDeProducto(['precio' => '22.50', 'precio_oferta' => '18.00']))
+            ->call('create')
+            ->assertHasNoFormErrors();
 
-        $this->productoA->refresh();
-        $this->assertEquals('18.00', $this->productoA->precio_oferta);
+        $this->assertDatabaseHas('productos', [
+            'restaurante_id' => $this->restauranteA->id,
+            'precio' => '22.50',
+            'precio_oferta' => '18.00',
+        ]);
     }
 
     // =========================================================================
-    // 3. Contacto URL Validation & Dangerous Scheme Rejection Tests
+    // 3. Contacto value validation (ValorContactoSeguro) and form
     // =========================================================================
 
-    /**
-     * Adversarial Test: Contacto model static method rejects dangerous protocols.
-     */
-    public function test_contacto_model_es_url_permitida_rejects_evil_schemes(): void
+    private function pasaLaRegla(string $tipo, string $valor): bool
+    {
+        return Validator::make(['valor' => $valor], ['valor' => [new ValorContactoSeguro($tipo)]])->passes();
+    }
+
+    public function test_contacto_rule_rejects_evil_schemes_for_every_type(): void
     {
         $evilUrls = [
             'javascript:alert(1)',
@@ -314,95 +281,58 @@ class FilamentM4ChallengerTest extends TestCase
             'file:///etc/passwd',
         ];
 
-        foreach ($evilUrls as $evilUrl) {
-            $this->assertFalse(
-                Contacto::esUrlPermitida($evilUrl),
-                "Expected {$evilUrl} to be rejected by Contacto::esUrlPermitida"
-            );
+        foreach (['telefono', 'whatsapp', 'email', 'direccion', 'instagram', 'facebook', 'tiktok', 'web', 'otro'] as $tipo) {
+            foreach ($evilUrls as $evilUrl) {
+                $this->assertFalse($this->pasaLaRegla($tipo, $evilUrl), "{$tipo} accepted {$evilUrl}");
+            }
         }
     }
 
-    /**
-     * Verification Test: Contacto model static method allows legitimate protocols and contacts.
-     */
-    public function test_contacto_model_es_url_permitida_allows_safe_schemes(): void
+    public function test_contacto_rule_allows_legitimate_values(): void
     {
-        $safeUrls = [
-            'https://instagram.com/myrestaurant',
-            'http://restaurant.com/menu',
-            'tel:+34600112233',
-            'mailto:reservas@restaurant.com',
-            '+34 600 11 22 33',
-            'Calle Principal 123, Madrid',
+        $safe = [
+            ['instagram', 'https://instagram.com/myrestaurant'],
+            ['web', 'http://restaurant.com/menu'],
+            ['telefono', 'tel:+34600112233'],
+            ['email', 'mailto:reservas@restaurant.com'],
+            ['telefono', '+34 600 11 22 33'],
+            ['direccion', 'Calle Principal 123, Madrid'],
+            ['direccion', 'https://maps.google.com/?q=bistro'],
+            ['whatsapp', '5215512345678'],
         ];
 
-        foreach ($safeUrls as $safeUrl) {
-            $this->assertTrue(
-                Contacto::esUrlPermitida($safeUrl),
-                "Expected {$safeUrl} to be permitted by Contacto::esUrlPermitida"
-            );
+        foreach ($safe as [$tipo, $valor]) {
+            $this->assertTrue($this->pasaLaRegla($tipo, $valor), "{$tipo} rejected {$valor}");
         }
     }
 
-    /**
-     * Adversarial Test: Submitting javascript:alert(1) in Contacto form triggers validation failure.
-     */
     public function test_contacto_form_rejects_javascript_url(): void
     {
-        $this->actingAs($this->propietarioA);
-        Filament::setCurrentPanel(Filament::getPanel('admin'));
-        Filament::setTenant($this->restauranteA, isQuiet: true);
-        RestauranteScope::setRestauranteId($this->restauranteA->id);
+        $this->entrarComo($this->propietarioA);
 
         Livewire::test(CreateContacto::class)
-            ->fillForm([
-                'tipo' => 'web',
-                'valor' => 'javascript:alert(1)',
-                'orden' => 0,
-                'visible' => true,
-            ])
+            ->fillForm(['tipo' => 'web', 'valor' => 'javascript:alert(1)', 'orden' => 0, 'visible' => true])
             ->call('create')
             ->assertHasFormErrors(['valor']);
 
-        $this->assertDatabaseMissing('contactos', [
-            'valor' => 'javascript:alert(1)',
-        ]);
+        $this->assertDatabaseMissing('contactos', ['valor' => 'javascript:alert(1)']);
     }
 
-    /**
-     * Adversarial Test: Submitting data:text/html in Contacto form triggers validation failure.
-     */
     public function test_contacto_form_rejects_data_url(): void
     {
-        $this->actingAs($this->propietarioA);
-        Filament::setCurrentPanel(Filament::getPanel('admin'));
-        Filament::setTenant($this->restauranteA, isQuiet: true);
-        RestauranteScope::setRestauranteId($this->restauranteA->id);
+        $this->entrarComo($this->propietarioA);
 
         Livewire::test(CreateContacto::class)
-            ->fillForm([
-                'tipo' => 'web',
-                'valor' => 'data:text/html,<script>alert(1)</script>',
-                'orden' => 0,
-                'visible' => true,
-            ])
+            ->fillForm(['tipo' => 'web', 'valor' => 'data:text/html,<script>alert(1)</script>', 'orden' => 0, 'visible' => true])
             ->call('create')
             ->assertHasFormErrors(['valor']);
 
-        $this->assertDatabaseMissing('contactos', [
-            'valor' => 'data:text/html,<script>alert(1)</script>',
-        ]);
+        $this->assertDatabaseMissing('contactos', ['valor' => 'data:text/html,<script>alert(1)</script>']);
     }
 
-    /**
-     * Verification Test: Submitting a valid HTTPS contact in Contacto form succeeds.
-     */
     public function test_contacto_form_accepts_valid_url(): void
     {
-        $this->actingAs($this->propietarioA);
-        Filament::setCurrentPanel(Filament::getPanel('admin'));
-        Filament::setTenant($this->restauranteA, isQuiet: true);
-        RestauranteScope::setRestauranteId($this->restauranteA->id);
+        $this->entrarComo($this->propietarioA);
 
         Livewire::test(CreateContacto::class)
             ->fillForm([

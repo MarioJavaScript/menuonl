@@ -2,63 +2,70 @@
 
 namespace App\Policies;
 
+use App\Models\Scopes\RestauranteScope;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
+/**
+ * Users of the active restaurant: propietario and superadmin list them and revoke access (RF-13).
+ * Accounts are created through invitations, never from the panel, and are not edited here.
+ */
 class UserPolicy
 {
-    /**
-     * Determine whether the user can view any platform users.
-     */
-    public function viewAny(User $user): bool
+    public function viewAny(User $actor): bool
     {
-        return $user->isSuperadmin();
+        return $actor->isSuperadmin() || $actor->esPropietarioDe(RestauranteScope::resolveRestauranteId());
+    }
+
+    public function view(User $actor, User $objetivo): bool
+    {
+        return $this->viewAny($actor) && $this->esMiembroDelRestauranteActivo($objetivo);
+    }
+
+    public function create(User $actor): bool
+    {
+        return false;
+    }
+
+    public function update(User $actor, User $objetivo): bool
+    {
+        return false;
+    }
+
+    public function delete(User $actor, User $objetivo): bool
+    {
+        return false;
     }
 
     /**
-     * Determine whether the user can view a specific platform user.
+     * Remove the target's access to the active restaurant (the account itself is kept).
+     *
+     * You cannot revoke yourself, and the last propietario can never be removed.
      */
-    public function view(User $user, User $model): bool
+    public function revocarAcceso(User $actor, User $objetivo): bool
     {
-        return $user->isSuperadmin();
+        $restauranteId = RestauranteScope::resolveRestauranteId();
+
+        if ($restauranteId === null || $actor->is($objetivo) || ! $this->viewAny($actor)) {
+            return false;
+        }
+
+        if ($objetivo->rolEn($restauranteId) === null) {
+            return false;
+        }
+
+        if ($objetivo->esPropietarioDe($restauranteId)) {
+            return DB::table('restaurante_usuario')
+                ->where('restaurante_id', $restauranteId)
+                ->where('rol', 'propietario')
+                ->count() > 1;
+        }
+
+        return true;
     }
 
-    /**
-     * Determine whether the user can create users.
-     */
-    public function create(User $user): bool
+    private function esMiembroDelRestauranteActivo(User $objetivo): bool
     {
-        return $user->isSuperadmin();
-    }
-
-    /**
-     * Determine whether the user can update the user.
-     */
-    public function update(User $user, User $model): bool
-    {
-        return $user->isSuperadmin();
-    }
-
-    /**
-     * Determine whether the user can delete the user.
-     */
-    public function delete(User $user, User $model): bool
-    {
-        return $user->isSuperadmin();
-    }
-
-    /**
-     * Determine whether the user can restore the user.
-     */
-    public function restore(User $user, User $model): bool
-    {
-        return $user->isSuperadmin();
-    }
-
-    /**
-     * Determine whether the user can permanently delete the user.
-     */
-    public function forceDelete(User $user, User $model): bool
-    {
-        return $user->isSuperadmin();
+        return $objetivo->rolEn(RestauranteScope::resolveRestauranteId()) !== null;
     }
 }

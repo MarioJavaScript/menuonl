@@ -3,24 +3,33 @@
 namespace App\Models;
 
 use App\Traits\Auditable;
+use App\Traits\ProtegeImagenesDelRestaurante;
 use Carbon\Carbon;
-use Carbon\CarbonInterface;
-use Filament\Models\Contracts\HasAvatar;
-use Filament\Models\Contracts\HasCurrentTenantLabel;
 use Filament\Models\Contracts\HasName;
-use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Storage;
 
-class Restaurante extends Model implements HasAvatar, HasCurrentTenantLabel, HasName
+class Restaurante extends Model implements HasName
 {
-    use Auditable, HasFactory, SoftDeletes;
+    use Auditable, HasFactory, ProtegeImagenesDelRestaurante, SoftDeletes;
 
     protected $table = 'restaurantes';
+
+    /**
+     * Mirror of the column defaults, so freshly created models can resolve
+     * the time zone, default language and state without a refresh.
+     */
+    protected $attributes = [
+        'moneda' => 'MXN',
+        'idioma_default' => 'es',
+        'zona_horaria' => 'America/Mexico_City',
+        'pedidos_activos' => false,
+        'mostrar_agotados' => true,
+        'estado' => 'activo',
+    ];
 
     protected $fillable = [
         'nombre',
@@ -37,23 +46,35 @@ class Restaurante extends Model implements HasAvatar, HasCurrentTenantLabel, Has
         'estado',
     ];
 
-    protected $attributes = [
-        'estado' => 'activo',
-        'pedidos_activos' => false,
-        'mostrar_agotados' => true,
-    ];
-
     /**
-     * Get the attributes that should be cast.
+     * Image columns guarded by ProtegeImagenesDelRestaurante.
      *
-     * @return array<string, string>
+     * @return array<int, string>
      */
+    public function columnasDeImagen(): array
+    {
+        return ['logo', 'portada'];
+    }
+
+    public function restauranteIdDeImagenes(): ?int
+    {
+        return $this->exists ? (int) $this->getKey() : null;
+    }
+
     protected function casts(): array
     {
         return [
             'pedidos_activos' => 'boolean',
             'mostrar_agotados' => 'boolean',
         ];
+    }
+
+    /**
+     * Name shown in the panel's restaurant switcher (the column is `nombre`, not `name`).
+     */
+    public function getFilamentName(): string
+    {
+        return $this->nombre;
     }
 
     /**
@@ -67,35 +88,11 @@ class Restaurante extends Model implements HasAvatar, HasCurrentTenantLabel, Has
     }
 
     /**
-     * Active configured languages.
+     * Languages the public menu is published in.
      */
     public function idiomas(): HasMany
     {
-        return $this->hasMany(RestauranteIdioma::class, 'restaurante_id');
-    }
-
-    /**
-     * Alias for idiomas.
-     */
-    public function idioma(): HasMany
-    {
-        return $this->idiomas();
-    }
-
-    /**
-     * Public contact channels.
-     */
-    public function contactos(): HasMany
-    {
-        return $this->hasMany(Contacto::class, 'restaurante_id');
-    }
-
-    /**
-     * Operating hours and shifts.
-     */
-    public function horarios(): HasMany
-    {
-        return $this->hasMany(Horario::class, 'restaurante_id');
+        return $this->hasMany(RestauranteIdioma::class);
     }
 
     /**
@@ -103,95 +100,55 @@ class Restaurante extends Model implements HasAvatar, HasCurrentTenantLabel, Has
      */
     public function categorias(): HasMany
     {
-        return $this->hasMany(Categoria::class, 'restaurante_id');
+        return $this->hasMany(Categoria::class);
     }
 
     /**
-     * Dishes and products.
+     * Menu products (dishes).
      */
     public function productos(): HasMany
     {
-        return $this->hasMany(Producto::class, 'restaurante_id');
+        return $this->hasMany(Producto::class);
     }
 
     /**
-     * QR code access records.
+     * Contact entries (phone, WhatsApp, address, social networks).
+     */
+    public function contactos(): HasMany
+    {
+        return $this->hasMany(Contacto::class);
+    }
+
+    /**
+     * Opening hours; several rows per day mean several shifts.
+     */
+    public function horarios(): HasMany
+    {
+        return $this->hasMany(Horario::class);
+    }
+
+    /**
+     * QR codes (general and per table).
      */
     public function codigosQr(): HasMany
     {
-        return $this->hasMany(CodigoQr::class, 'restaurante_id');
+        return $this->hasMany(CodigoQr::class);
     }
 
     /**
-     * Alias for codigosQr.
-     */
-    public function codigos(): HasMany
-    {
-        return $this->codigosQr();
-    }
-
-    /**
-     * Relationship alias for Filament's default pluralization convention (CodigoQr -> codigoQrs).
-     */
-    public function codigoQrs(): HasMany
-    {
-        return $this->codigosQr();
-    }
-
-    /**
-     * Outstanding user invitations.
+     * Pending and accepted user invitations.
      */
     public function invitaciones(): HasMany
     {
-        return $this->hasMany(Invitacion::class, 'restaurante_id');
+        return $this->hasMany(Invitacion::class);
     }
 
     /**
-     * Relationship alias for Filament's default pluralization convention (Invitacion -> invitacions).
-     */
-    public function invitacions(): HasMany
-    {
-        return $this->invitaciones();
-    }
-
-    /**
-     * Filament multi-tenancy tenant display name.
-     */
-    public function getFilamentName(): string|Htmlable
-    {
-        return (string) $this->nombre;
-    }
-
-    /**
-     * Filament multi-tenancy tenant avatar / logo URL.
-     */
-    public function getFilamentAvatarUrl(): ?string
-    {
-        return $this->logo ? Storage::url($this->logo) : null;
-    }
-
-    /**
-     * Filament multi-tenancy current tenant badge label.
-     */
-    public function getCurrentTenantLabel(): string
-    {
-        return __('Restaurante');
-    }
-
-    /**
-     * Virtual name attribute accessor for generic property access.
-     */
-    public function getNameAttribute(): string
-    {
-        return (string) $this->nombre;
-    }
-
-    /**
-     * Forensic audit trail records.
+     * Audit log of panel changes.
      */
     public function historialCambios(): HasMany
     {
-        return $this->hasMany(HistorialCambio::class, 'restaurante_id');
+        return $this->hasMany(HistorialCambio::class);
     }
 
     /**
@@ -199,59 +156,36 @@ class Restaurante extends Model implements HasAvatar, HasCurrentTenantLabel, Has
      */
     public function isActivo(): bool
     {
-        return ($this->estado ?? 'activo') === 'activo';
+        return $this->estado === 'activo';
     }
 
     /**
-     * Dynamically calculate whether the restaurant is currently open.
+     * Determine if the restaurant is open at the given moment, in its own time zone.
      *
      * Supports several shifts per day and overnight shifts (cierra <= abre closes the next day).
      * A day flagged as `cerrado` ignores all of that day's shifts, including its overnight spill.
      */
-    public function estaAbiertoAhora(?CarbonInterface $now = null): bool
+    public function estaAbiertoAhora(?Carbon $now = null): bool
     {
-        if (! $this->isActivo()) {
-            return false;
-        }
-
-        $zona = $this->zona_horaria ?: 'America/Mexico_City';
-
-        try {
-            $ahora = $now ? Carbon::instance($now)->copy()->setTimezone($zona) : Carbon::now($zona);
-        } catch (\Throwable) {
-            $ahora = $now ? Carbon::instance($now)->copy() : Carbon::now();
-        }
-
+        $ahora = ($now ?? now())->copy()->setTimezone($this->zona_horaria);
         $hora = $ahora->format('H:i:s');
-        $hoy = $ahora->dayOfWeek; // 0 = Sunday ... 6 = Saturday
+        $hoy = $ahora->dayOfWeek;
         $ayer = ($hoy + 6) % 7;
 
-        $horarios = $this->relationLoaded('horarios') ? $this->horarios : $this->horarios()->get();
-        $diasCerrados = $horarios->where('cerrado', true)->pluck('dia_semana');
+        $diasCerrados = $this->horarios->where('cerrado', true)->pluck('dia_semana');
 
-        $normalize = function (?string $time): ?string {
-            if (! $time) {
-                return null;
-            }
-
-            return strlen($time) === 5 ? "{$time}:00" : $time;
-        };
-
-        foreach ($horarios as $horario) {
-            $abre = $normalize($horario->abre);
-            $cierra = $normalize($horario->cierra);
-
-            if ($abre === null || $cierra === null || $diasCerrados->contains($horario->dia_semana)) {
+        foreach ($this->horarios as $horario) {
+            if ($horario->abre === null || $horario->cierra === null || $diasCerrados->contains($horario->dia_semana)) {
                 continue;
             }
 
-            $esNocturno = $cierra <= $abre;
+            $esNocturno = $horario->cierra <= $horario->abre;
 
-            if ($horario->dia_semana === $hoy && $hora >= $abre && ($esNocturno || $hora < $cierra)) {
+            if ($horario->dia_semana === $hoy && $hora >= $horario->abre && ($esNocturno || $hora < $horario->cierra)) {
                 return true;
             }
 
-            if ($horario->dia_semana === $ayer && $esNocturno && $hora < $cierra) {
+            if ($horario->dia_semana === $ayer && $esNocturno && $hora < $horario->cierra) {
                 return true;
             }
         }

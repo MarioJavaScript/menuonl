@@ -4,7 +4,6 @@ namespace Database\Factories;
 
 use App\Models\Invitacion;
 use App\Models\Restaurante;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -13,8 +12,6 @@ use Illuminate\Support\Str;
  */
 class InvitacionFactory extends Factory
 {
-    protected $model = Invitacion::class;
-
     /**
      * Define the model's default state.
      *
@@ -26,15 +23,15 @@ class InvitacionFactory extends Factory
             'restaurante_id' => Restaurante::factory(),
             'email' => fake()->unique()->safeEmail(),
             'rol' => 'editor',
-            'token' => Str::random(64),
-            'invitado_por' => User::factory(),
+            'token' => hash('sha256', Str::random(40)),
+            'invitado_por' => null,
             'expira_en' => now()->addDays(7),
             'aceptada_en' => null,
         ];
     }
 
     /**
-     * State for expired invitation.
+     * Indicate that the invitation is past its expiration date.
      */
     public function expirada(): static
     {
@@ -44,7 +41,7 @@ class InvitacionFactory extends Factory
     }
 
     /**
-     * State for accepted invitation.
+     * Indicate that the invitation was already accepted.
      */
     public function aceptada(): static
     {

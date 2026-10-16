@@ -11,8 +11,6 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class HorarioFactory extends Factory
 {
-    protected $model = Horario::class;
-
     /**
      * Define the model's default state.
      *
@@ -23,15 +21,14 @@ class HorarioFactory extends Factory
         return [
             'restaurante_id' => Restaurante::factory(),
             'dia_semana' => fake()->numberBetween(0, 6),
-            'turno' => 1,
-            'abre' => '12:00:00',
-            'cierra' => '22:00:00',
+            'abre' => '09:00:00',
+            'cierra' => '18:00:00',
             'cerrado' => false,
         ];
     }
 
     /**
-     * State for closed day.
+     * Indicate that the restaurant does not open that day.
      */
     public function cerrado(): static
     {
@@ -39,18 +36,6 @@ class HorarioFactory extends Factory
             'abre' => null,
             'cierra' => null,
             'cerrado' => true,
-        ]);
-    }
-
-    /**
-     * State for overnight shift.
-     */
-    public function nocturno(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'abre' => '20:00:00',
-            'cierra' => '02:00:00',
-            'cerrado' => false,
         ]);
     }
 }

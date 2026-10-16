@@ -17,7 +17,6 @@ return new class extends Migration
             $table->string('idioma', 5);
             $table->string('nombre', 120);
             $table->text('descripcion')->nullable();
-            $table->timestamps();
 
             $table->unique(['categoria_id', 'idioma']);
         });

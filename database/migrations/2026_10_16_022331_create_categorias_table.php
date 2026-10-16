@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('categorias', function (Blueprint $table) {
             $table->id();
             $table->foreignId('restaurante_id')->constrained('restaurantes')->cascadeOnDelete();
-            $table->unsignedSmallInteger('orden')->default(0);
+            $table->integer('orden')->default(0);
             $table->boolean('visible')->default(true);
             $table->timestamps();
             $table->softDeletes();

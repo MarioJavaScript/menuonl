@@ -10,6 +10,9 @@ use App\Models\Producto;
 use App\Models\ProductoVariante;
 use App\Models\Restaurante;
 use App\Observers\AuditableObserver;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -27,6 +30,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        RateLimiter::for('invitaciones', fn (Request $request): Limit => Limit::perMinute(10)->by($request->ip()));
+
         Categoria::observe(AuditableObserver::class);
         Producto::observe(AuditableObserver::class);
         ProductoVariante::observe(AuditableObserver::class);

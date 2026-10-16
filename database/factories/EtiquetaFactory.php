@@ -4,15 +4,12 @@ namespace Database\Factories;
 
 use App\Models\Etiqueta;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Str;
 
 /**
  * @extends Factory<Etiqueta>
  */
 class EtiquetaFactory extends Factory
 {
-    protected $model = Etiqueta::class;
-
     /**
      * Define the model's default state.
      *
@@ -20,15 +17,9 @@ class EtiquetaFactory extends Factory
      */
     public function definition(): array
     {
-        $name = fake()->unique()->word();
-
         return [
-            'nombre' => ucfirst($name),
-            'slug' => Str::slug($name),
-            'codigo' => Str::slug($name),
+            'codigo' => fake()->unique()->lexify('etiqueta_??????'),
             'icono' => 'tag',
-            'color' => '#16a34a',
-            'activo' => true,
         ];
     }
 }

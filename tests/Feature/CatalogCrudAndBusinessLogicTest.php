@@ -212,12 +212,12 @@ class CatalogCrudAndBusinessLogicTest extends TestCase
         ]);
 
         // Exact match
-        $this->assertEquals('Paella Valenciana', $producto->getNombre('es'));
-        $this->assertEquals('Valencian Paella', $producto->getNombre('en'));
+        $this->assertEquals('Paella Valenciana', $producto->traduccion('es')?->nombre);
+        $this->assertEquals('Valencian Paella', $producto->traduccion('en')?->nombre);
 
         // Fallback to default language ('es') when requesting an unconfigured language (e.g. 'fr')
-        $this->assertEquals('Paella Valenciana', $producto->getNombre('fr'));
-        $this->assertEquals('Arroz tradicional con mariscos y azafrán.', $producto->getDescripcion('fr'));
+        $this->assertEquals('Paella Valenciana', $producto->traduccion('fr')?->nombre);
+        $this->assertEquals('Arroz tradicional con mariscos y azafrán.', $producto->traduccion('fr')?->descripcion);
     }
 
     /**

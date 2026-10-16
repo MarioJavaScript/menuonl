@@ -11,8 +11,6 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class CategoriaFactory extends Factory
 {
-    protected $model = Categoria::class;
-
     /**
      * Define the model's default state.
      *
@@ -22,22 +20,18 @@ class CategoriaFactory extends Factory
     {
         return [
             'restaurante_id' => Restaurante::factory(),
-            'orden' => fake()->numberBetween(1, 20),
+            'orden' => fake()->numberBetween(0, 100),
             'visible' => true,
         ];
     }
 
     /**
-     * Include a default Spanish translation.
+     * Indicate that the category is hidden from the public menu.
      */
-    public function withTranslation(string $nombre = 'Entradas', string $idioma = 'es'): static
+    public function oculta(): static
     {
-        return $this->afterCreating(function (Categoria $categoria) use ($nombre, $idioma) {
-            $categoria->traducciones()->create([
-                'idioma' => $idioma,
-                'nombre' => $nombre,
-                'descripcion' => fake()->sentence(),
-            ]);
-        });
+        return $this->state(fn (array $attributes) => [
+            'visible' => false,
+        ]);
     }
 }

@@ -41,8 +41,7 @@ return new class extends Migration
         Schema::create('restaurante_usuario', function (Blueprint $table) {
             $table->id();
             $table->foreignId('restaurante_id')->constrained('restaurantes')->cascadeOnDelete();
-            $table->foreignId('user_id')->nullable()->constrained('users')->cascadeOnDelete();
-            $table->foreignId('usuario_id')->nullable()->constrained('users')->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->enum('rol', ['propietario', 'editor'])->default('editor');
             $table->timestamps();
 

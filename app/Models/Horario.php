@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\Auditable;
 use App\Traits\BelongsToRestaurante;
+use Database\Factories\HorarioFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,43 +14,39 @@ use InvalidArgumentException;
 
 class Horario extends Model
 {
+    /** @use HasFactory<HorarioFactory> */
     use Auditable, BelongsToRestaurante, HasFactory;
 
     protected $table = 'horarios';
 
+    public $timestamps = false;
+
     protected $fillable = [
         'restaurante_id',
         'dia_semana',
-        'turno',
         'abre',
         'cierra',
         'cerrado',
     ];
 
-    /**
-     * Reject days outside 0 (domingo) .. 6 (sábado).
-     */
-    protected static function booted(): void
-    {
-        static::saving(function (Horario $horario): void {
-            if ($horario->dia_semana === null || $horario->dia_semana < 0 || $horario->dia_semana > 6) {
-                throw new InvalidArgumentException('El día de la semana debe estar entre 0 y 6.');
-            }
-        });
-    }
-
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
             'dia_semana' => 'integer',
-            'turno' => 'integer',
             'cerrado' => 'boolean',
         ];
+    }
+
+    /**
+     * Reject days outside 0 (domingo) .. 6 (sábado) (mirrors the CHECK constraint, which SQLite lacks).
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (Horario $horario): void {
+            if ($horario->dia_semana < 0 || $horario->dia_semana > 6) {
+                throw new InvalidArgumentException('El día de la semana debe estar entre 0 y 6.');
+            }
+        });
     }
 
     /**
@@ -61,7 +58,7 @@ class Horario extends Model
     }
 
     /**
-     * Closing time, stored as H:i:s.
+     * Closing time, stored as H:i:s. A value lower than `abre` means it closes the next day.
      */
     protected function cierra(): Attribute
     {
@@ -77,21 +74,10 @@ class Horario extends Model
     }
 
     /**
-     * Scope for a specific day of the week (0 = Sunday ... 6 = Saturday).
+     * Scope to one day of the week (0 = Sunday ... 6 = Saturday).
      */
     public function scopeDelDia(Builder $query, int $dia): Builder
     {
         return $query->where('dia_semana', $dia);
-    }
-
-    /**
-     * Check if this shift crosses midnight into the next day.
-     */
-    public function esNocturno(): bool
-    {
-        return ! $this->cerrado &&
-            $this->abre !== null &&
-            $this->cierra !== null &&
-            $this->cierra < $this->abre;
     }
 }

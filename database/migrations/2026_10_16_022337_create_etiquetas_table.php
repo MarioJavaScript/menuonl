@@ -13,13 +13,8 @@ return new class extends Migration
     {
         Schema::create('etiquetas', function (Blueprint $table) {
             $table->id();
-            $table->string('nombre', 50)->nullable();
-            $table->string('slug', 50)->unique();
-            $table->string('codigo', 50)->nullable()->unique();
-            $table->string('icono', 50)->nullable();
-            $table->string('color', 20)->nullable();
-            $table->boolean('activo')->default(true);
-            $table->timestamps();
+            $table->string('codigo', 40)->unique();
+            $table->string('icono', 40)->nullable();
         });
     }
 

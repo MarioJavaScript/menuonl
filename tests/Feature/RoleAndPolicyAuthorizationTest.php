@@ -8,6 +8,7 @@ use App\Models\HistorialCambio;
 use App\Models\Invitacion;
 use App\Models\Producto;
 use App\Models\Restaurante;
+use App\Models\Scopes\RestauranteScope;
 use App\Models\User;
 use Filament\Panel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -30,6 +31,13 @@ class RoleAndPolicyAuthorizationTest extends TestCase
 
     protected Restaurante $restauranteB;
 
+    protected function tearDown(): void
+    {
+        RestauranteScope::setRestauranteId(null);
+
+        parent::tearDown();
+    }
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -50,9 +58,10 @@ class RoleAndPolicyAuthorizationTest extends TestCase
             'name' => 'Superadmin User',
             'email' => 'superadmin@example.com',
             'password' => 'secret123',
-            'es_superadmin' => true,
             'activo' => true,
         ]);
+        // es_superadmin is not mass assignable (AsignacionMasivaUsuarioTest)
+        $this->superadmin->forceFill(['es_superadmin' => true])->save();
 
         $this->propietario = User::create([
             'name' => 'Propietario User',
@@ -126,6 +135,9 @@ class RoleAndPolicyAuthorizationTest extends TestCase
         // Propietario can update their own restaurant settings
         $this->assertTrue(Gate::forUser($this->propietario)->allows('update', $this->restauranteA));
 
+        // Abilities without a record are judged against the active restaurant
+        RestauranteScope::setRestauranteId($this->restauranteA->id);
+
         // Propietario can manage invitations
         $this->assertTrue(Gate::forUser($this->propietario)->allows('create', Invitacion::class));
 
@@ -149,6 +161,8 @@ class RoleAndPolicyAuthorizationTest extends TestCase
      */
     public function test_editor_can_manage_catalog_items(): void
     {
+        RestauranteScope::setRestauranteId($this->restauranteA->id);
+
         $this->assertTrue(Gate::forUser($this->editor)->allows('create', Categoria::class));
         $this->assertTrue(Gate::forUser($this->editor)->allows('create', Producto::class));
 

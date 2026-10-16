@@ -92,6 +92,70 @@ class WebpImageService
     }
 
     /**
+     * Process the upload and store only the generated WebP under restaurantes/{id}/{carpeta}/.
+     *
+     * The original upload is never written to the public disk.
+     *
+     * @throws ValidationException
+     */
+    public function storeForRestaurante(UploadedFile|string $file, int $restauranteId, string $carpeta, int $maxWidth = 1200, int $maxHeight = 1200): string
+    {
+        if (! in_array($carpeta, config('menuonl.imagenes.carpetas', []), true)) {
+            throw ValidationException::withMessages(['imagen' => 'Carpeta de imágenes no permitida.']);
+        }
+
+        return $this->processAndStore($file, "restaurantes/{$restauranteId}/{$carpeta}", $maxWidth, $maxHeight);
+    }
+
+    /**
+     * Whether the path is a plain relative path inside restaurantes/{id}/ (no traversal, no other tenant).
+     */
+    public function rutaPerteneceAlRestaurante(?string $ruta, int $restauranteId): bool
+    {
+        if ($ruta === null || $ruta === '' || str_contains($ruta, "\0") || str_contains($ruta, '\\')) {
+            return false;
+        }
+
+        $prefijo = "restaurantes/{$restauranteId}/";
+
+        if (! str_starts_with($ruta, $prefijo) || strlen($ruta) === strlen($prefijo)) {
+            return false;
+        }
+
+        foreach (explode('/', substr($ruta, strlen($prefijo))) as $segmento) {
+            if ($segmento === '' || $segmento === '.' || $segmento === '..') {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Reject (422) a path outside restaurantes/{id}/.
+     *
+     * @throws ValidationException
+     */
+    public function asegurarRutaDelRestaurante(?string $ruta, int $restauranteId, string $campo = 'imagen'): void
+    {
+        if (! $this->rutaPerteneceAlRestaurante($ruta, $restauranteId)) {
+            throw ValidationException::withMessages([$campo => 'La ruta de la imagen no pertenece a este restaurante.']);
+        }
+    }
+
+    /**
+     * Delete an image only when it lives inside the restaurant's own directory.
+     */
+    public function deleteFromRestaurante(?string $ruta, int $restauranteId): bool
+    {
+        if (! $this->rutaPerteneceAlRestaurante($ruta, $restauranteId)) {
+            return false;
+        }
+
+        return $this->deleteIfExists($ruta);
+    }
+
+    /**
      * Alias for processAndStore.
      */
     public function processImage(
@@ -116,6 +180,15 @@ class WebpImageService
         if (! file_exists($path) || ! is_readable($path)) {
             throw ValidationException::withMessages([
                 'imagen' => 'El archivo no existe o no se puede leer.',
+            ]);
+        }
+
+        // Size cap in bytes, before reading or decoding anything
+        $maxBytes = (int) config('menuonl.imagenes.max_bytes', 2 * 1024 * 1024);
+        $size = filesize($path);
+        if ($size === false || $size > $maxBytes) {
+            throw ValidationException::withMessages([
+                'imagen' => 'La imagen pesa más del máximo permitido ('.round($maxBytes / 1024 / 1024, 1).' MB).',
             ]);
         }
 
