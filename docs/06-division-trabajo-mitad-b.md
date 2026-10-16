@@ -9,7 +9,7 @@ Este documento define la frontera exacta entre **Mitad A** y **Mitad B** del pro
 | Bloque | Responsable | Alcance | Carpetas / Archivos Exclusivos |
 | --- | --- | --- | --- |
 | **Base Compartida + Mitad A (Completada en `main`)** | Compañero A (`@MarioJavaScript`) | - Las 14 tablas de [`docs/esquema.sql`](esquema.sql) (migraciones, modelos Eloquent, relaciones, scopes, factories y seeders).<br>- Panel administrativo completo en Filament 5 (`/admin`).<br>- Roles (`Superadmin`, `Propietario`, `Editor`), `MatrizPolicy` y 2FA (`ExigeDosFactores`).<br>- Invitaciones por correo (caducidad 7 días, token SHA-256).<br>- Conversión segura de imágenes a WebP (`WebpImageService`).<br>- Bitácora de auditoría (`historial_cambios` / trait `Auditable`) y disparo de purga de caché (`MenuCacheService`). | `database/migrations/*`<br>`database/seeders/*`<br>`database/factories/*`<br>`app/Models/*`<br>`app/Policies/*`<br>`app/Filament/*`<br>`app/Observers/*`<br>`app/Services/WebpImageService.php`<br>`app/Services/MenuCacheService.php`<br>`app/Services/InvitacionService.php` |
-| **Mitad B (Pendiente de Implementar)** | Compañero B (`@Elproshaitron-stack`) | - Menú público SSR `/m/{slug}` (y `?mesa=N`) en Blade + Tailwind CSS.<br>- Detección de idioma del navegador con fallback al `idioma_default` y selector de idioma.<br>- Visualización de horario y estado dinámico **Abierto / Cerrado**.<br>- Carrito de compras en el navegador y armado de enlace de pedido por WhatsApp (`wa.me`).<br>- Redirección corta `/q/{codigo}` → `/m/{slug}?mesa=N`.<br>- Generación y descarga de Códigos QR (PNG, SVG y hoja PDF/HTML imprimible).<br>- Lectura desde Caché L1 (`MenuCacheService`) y cabeceras HTTP para Cloudflare CDN (L2). | `app/Http/Controllers/MenuPublicoController.php`<br>`app/Http/Controllers/QrRedirectController.php`<br>`app/Http/Controllers/QrDownloadController.php`<br>`app/Services/QrGeneratorService.php`<br>`resources/views/menu/*`<br>`resources/views/qr/*`<br>`resources/js/*` / `resources/css/*`<br>`tests/Feature/MenuPublicoTest.php`<br>`tests/Feature/QrRedirectTest.php`<br>`tests/Feature/QrDownloadTest.php` |
+| **Mitad B (Completada y Verificada en `main`)** | Compañero B (`@Elproshaitron-stack`) | - Menú público SSR `/m/{slug}` (y `?mesa=N`) en Blade + Tailwind CSS.<br>- Detección de idioma del navegador con fallback al `idioma_default` y selector de idioma.<br>- Visualización de horario y estado dinámico **Abierto / Cerrado**.<br>- Carrito de compras en el navegador y armado de enlace de pedido por WhatsApp (`wa.me`).<br>- Redirección corta `/q/{codigo}` → `/m/{slug}?mesa=N`.<br>- Generación y descarga de Códigos QR (PNG, SVG y hoja PDF/HTML imprimible).<br>- Lectura desde Caché L1 (`MenuCacheService`) y cabeceras HTTP para Cloudflare CDN (L2). | `app/Http/Controllers/MenuPublicoController.php`<br>`app/Http/Controllers/QrRedirectController.php`<br>`app/Http/Controllers/QrDownloadController.php`<br>`app/Services/QrGeneratorService.php`<br>`resources/views/menu/*`<br>`resources/views/qr/*`<br>`resources/js/*` / `resources/css/*`<br>`tests/Feature/MenuPublicoTest.php`<br>`tests/Feature/QrRedirectTest.php`<br>`tests/Feature/QrDownloadTest.php` |
 
 > [!IMPORTANT]
 > **Regla de oro para evitar conflictos en Git:**
@@ -72,42 +72,42 @@ La **Mitad A** invalida automáticamente la caché cada vez que un propietario o
 ## 4. Checklist de Entregables para Completar la Mitad B
 
 ### B1. Redirección Corta de Códigos QR (`/q/{codigo}`) — RF-01, RF-20
-- [ ] Ruta `GET /q/{codigo}` (`name('qr.redirect')`).
-- [ ] Validar `codigo` con `App\Rules\CodigoQrValido` (`^[A-Za-z0-9_-]{1,16}$`).
-- [ ] Buscar en `CodigoQr::withoutGlobalScopes()->where('codigo', $codigo)->where('activo', true)->with('restaurante')->first()`.
-- [ ] Si no existe, está inactivo, o su restaurante no está `activo` (`! $restaurante->isActivo()`), mostrar la vista **"Menú no disponible"** (HTTP 404).
-- [ ] Si es válido:
+- [x] Ruta `GET /q/{codigo}` (`name('qr.redirect')`).
+- [x] Validar `codigo` con `App\Rules\CodigoQrValido` (`^[A-Za-z0-9_-]{1,16}$`).
+- [x] Buscar en `CodigoQr::withoutGlobalScopes()->where('codigo', $codigo)->where('activo', true)->with('restaurante')->first()`.
+- [x] Si no existe, está inactivo, o su restaurante no está `activo` (`! $restaurante->isActivo()`), mostrar la vista **"Menú no disponible"** (HTTP 404).
+- [x] Si es válido:
   - Si `$qr->esMesa()`, redirigir (302) a `route('menu.publico', ['slug' => $restaurante->slug, 'mesa' => $qr->mesa])`.
   - Si no tiene mesa, redirigir (302) a `route('menu.publico', ['slug' => $restaurante->slug])`.
 
 ### B2. Menú Público SSR (`/m/{slug}`) — RF-01 a RF-06, RNF-01, RNF-08
-- [ ] Ruta `GET /m/{slug}` (`name('menu.publico')`).
-- [ ] Resolver el idioma activo:
+- [x] Ruta `GET /m/{slug}` (`name('menu.publico')`).
+- [x] Resolver el idioma activo:
   1. Parámetro query `?lang=xx` si está en `restaurante_idiomas`.
   2. Idioma del header `Accept-Language` del navegador si está en `restaurante_idiomas`.
   3. Fallback a `$restaurante->idioma_default`.
-- [ ] Mostrar cabecera del restaurante: `nombre`, `descripcion`, `logo`, `portada`, selector de idiomas activos y badge dinámico **Abierto / Cerrado** calculado con `$restaurante->estaAbiertoAhora()`.
-- [ ] Mostrar sección de "Recomendados" (`Producto::visible()->destacado()->ordenado()`) y listado de `Categoria::visible()->ordenado()`.
-- [ ] Para cada platillo (`visible = true`, ordenado por `orden`):
+- [x] Mostrar cabecera del restaurante: `nombre`, `descripcion`, `logo`, `portada`, selector de idiomas activos y badge dinámico **Abierto / Cerrado** calculado con `$restaurante->estaAbiertoAhora()`.
+- [x] Mostrar sección de "Recomendados" (`Producto::visible()->destacado()->ordenado()`) y listado de `Categoria::visible()->ordenado()`.
+- [x] Para cada platillo (`visible = true`, ordenado por `orden`):
   - Si `disponible = false`: ocultarlo si `$restaurante->mostrar_agotados === false`, o mostrarlo con insignia **"Agotado"** y botón de agregar deshabilitado si `mostrar_agotados === true`.
   - Si `$producto->tieneVariantes()`, mostrar cada variante disponible con su propio precio (`RF-03`).
   - Si no tiene variantes y tiene `precio_oferta` menor a `precio`, mostrar `precio` tachado y resaltar `precio_oferta` (`$producto->precioVigente()`, `RF-02`).
   - Mostrar `etiquetas` dietéticas (vegano, picante, sin gluten, etc.) e imagen WebP con `loading="lazy"`.
-- [ ] Sección de Contactos (`Contacto::visible()->ordenado()`) y tabla de Horarios por día:
+- [x] Sección de Contactos (`Contacto::visible()->ordenado()`) y tabla de Horarios por día:
   - Enlaces seguros (`tel:`, `https://wa.me/`, `mailto:`, `https://maps.google.com/...` o URL validada).
   - Usar siempre `{{ }}` en Blade (nunca `{!! !!}`) para prevenir XSS (`docs/02-seguridad.md`).
-- [ ] Diseño móvil accesible (contraste AA, botones táctiles de mínimo `44x44 px`).
+- [x] Diseño móvil accesible (contraste AA, botones táctiles de mínimo `44x44 px`).
 
 ### B3. Carrito en Navegador y Pedido por WhatsApp — RF-07
-- [ ] Habilitar el carrito únicamente cuando `$restaurante->pedidos_activos === true` y el restaurante esté abierto (`$restaurante->estaAbiertoAhora()`).
-- [ ] Persistir el carrito en `localStorage` bajo una clave aislada por restaurante (`menuonl_cart_{slug}`), almacenando:
+- [x] Habilitar el carrito únicamente cuando `$restaurante->pedidos_activos === true` y el restaurante esté abierto (`$restaurante->estaAbiertoAhora()`).
+- [x] Persistir el carrito en `localStorage` bajo una clave aislada por restaurante (`menuonl_cart_{slug}`), almacenando:
   - Platillo, variante seleccionada (si aplica), precio unitario vigente, cantidad y nota opcional por platillo.
   - Número de mesa (`?mesa=N` prellenado desde la URL si viene de un QR de mesa, o editable por el comensal).
-- [ ] Generar el deep-link `https://wa.me/{whatsapp_pedidos}?text={urlencode($mensaje)}` con el desglose legible de platillos, variantes, cantidades, notas, mesa y **Total** formateado en `$restaurante->moneda`.
+- [x] Generar el deep-link `https://wa.me/{whatsapp_pedidos}?text={urlencode($mensaje)}` con el desglose legible de platillos, variantes, cantidades, notas, mesa y **Total** formateado en `$restaurante->moneda`.
 
 ### B4. Descarga de Códigos QR Imprimibles (PNG, SVG, PDF) — RF-20
-- [ ] Servicio y controlador autenticado para generar el QR apuntando a `url("/q/{$codigoQr->codigo}")` en formatos `svg`, `png` y hoja imprimible (`pdf` / vista de impresión con logo, nombre del restaurante y número de mesa), más acciones de descarga en `CodigosQrTable`.
+- [x] Servicio y controlador autenticado para generar el QR apuntando a `url("/q/{$codigoQr->codigo}")` en formatos `svg`, `png` y hoja imprimible (`pdf` / vista de impresión con logo, nombre del restaurante y número de mesa), más acciones de descarga en `CodigosQrTable`.
 
 ### B5. Pruebas Feature en PHPUnit (`tests/Feature/MenuPublicoTest.php`, `QrRedirectTest.php`, `QrDownloadTest.php`)
-- [ ] Verificar que `/q/{codigo}` redirige a `/m/{slug}?mesa=N` cuando está activo y devuelve página de no disponible cuando el QR o el restaurante están suspendidos.
-- [ ] Verificar que `/m/{slug}` muestra categorías/platillos ordenados, aplica fallback al `idioma_default`, respeta `mostrar_agotados`, usa `MenuCacheService` y escapa cualquier intento de XSS.
+- [x] Verificar que `/q/{codigo}` redirige a `/m/{slug}?mesa=N` cuando está activo y devuelve página de no disponible cuando el QR o el restaurante están suspendidos.
+- [x] Verificar que `/m/{slug}` muestra categorías/platillos ordenados, aplica fallback al `idioma_default`, respeta `mostrar_agotados`, usa `MenuCacheService` y escapa cualquier intento de XSS.

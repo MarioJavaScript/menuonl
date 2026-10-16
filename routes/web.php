@@ -18,12 +18,14 @@ use App\Http\Controllers\MenuPublicoController;
 use App\Http\Controllers\QrDownloadController;
 use App\Http\Controllers\QrRedirectController;
 
-Route::get('/q/{codigo}', [QrRedirectController::class, 'redirigir'])
-    ->where('codigo', '.*')
-    ->name('qr.redirect');
+Route::middleware('throttle:menu-publico')->group(function (): void {
+    Route::get('/q/{codigo}', [QrRedirectController::class, 'redirigir'])
+        ->where('codigo', '.*')
+        ->name('qr.redirect');
 
-Route::get('/m/{slug}', [MenuPublicoController::class, 'mostrar'])
-    ->name('menu.publico');
+    Route::get('/m/{slug}', [MenuPublicoController::class, 'mostrar'])
+        ->name('menu.publico');
+});
 
 Route::middleware('auth')
     ->get('/admin/codigos-qr/{codigoQr}/descargar/{formato}', [QrDownloadController::class, 'descargar'])
