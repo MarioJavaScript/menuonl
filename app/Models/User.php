@@ -2,6 +2,10 @@
 
 namespace App\Models;
 
+use Filament\Auth\MultiFactor\App\Concerns\InteractsWithAppAuthentication;
+use Filament\Auth\MultiFactor\App\Concerns\InteractsWithAppAuthenticationRecovery;
+use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthentication;
+use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthenticationRecovery;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Models\Contracts\HasTenants;
 use Filament\Panel;
@@ -11,16 +15,23 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
-class User extends Authenticatable implements FilamentUser, HasTenants
+class User extends Authenticatable implements FilamentUser, HasAppAuthentication, HasAppAuthenticationRecovery, HasTenants
 {
-    use HasFactory, Notifiable;
+    use HasFactory, InteractsWithAppAuthentication, InteractsWithAppAuthenticationRecovery, Notifiable;
+
+    /**
+     * Memoized restaurante_id => rol map for this instance.
+     *
+     * @var array<int, string>|null
+     */
+    protected ?array $rolesPorRestaurante = null;
 
     protected $fillable = [
         'name',
         'email',
         'password',
-        'es_superadmin',
         'activo',
         'ultimo_acceso',
     ];
@@ -46,7 +57,11 @@ class User extends Authenticatable implements FilamentUser, HasTenants
      */
     public function canAccessPanel(Panel $panel): bool
     {
-        return (bool) $this->activo;
+        if (! $this->activo) {
+            return false;
+        }
+
+        return $this->isSuperadmin() || $this->restaurantes()->exists();
     }
 
     /**
@@ -64,7 +79,7 @@ class User extends Authenticatable implements FilamentUser, HasTenants
      */
     public function getTenants(Panel $panel): Collection
     {
-        return $this->isSuperadmin() ? Restaurante::all() : $this->restaurantes;
+        return $this->isSuperadmin() ? Restaurante::all() : $this->restaurantes()->get();
     }
 
     /**
@@ -77,6 +92,60 @@ class User extends Authenticatable implements FilamentUser, HasTenants
         }
 
         return $this->isSuperadmin() || $this->restaurantes()->whereKey($tenant->getKey())->exists();
+    }
+
+    /**
+     * Role of the user in the given restaurant ('propietario' or 'editor'), or null when not a member.
+     *
+     * The superadmin flag is not a pivot role, so it never appears here.
+     */
+    public function rolEn(Restaurante|int|null $restaurante): ?string
+    {
+        if ($restaurante === null) {
+            return null;
+        }
+
+        $this->rolesPorRestaurante ??= DB::table('restaurante_usuario')
+            ->where('user_id', $this->getKey())
+            ->pluck('rol', 'restaurante_id')
+            ->all();
+
+        return $this->rolesPorRestaurante[$restaurante instanceof Restaurante ? $restaurante->getKey() : $restaurante] ?? null;
+    }
+
+    /**
+     * Whether the user is a propietario of the given restaurant.
+     */
+    public function esPropietarioDe(Restaurante|int|null $restaurante): bool
+    {
+        return $this->rolEn($restaurante) === 'propietario';
+    }
+
+    /**
+     * Whether the user is an editor of the given restaurant.
+     */
+    public function esEditorDe(Restaurante|int|null $restaurante): bool
+    {
+        return $this->rolEn($restaurante) === 'editor';
+    }
+
+    /**
+     * Whether this user must use two-factor authentication: superadmins and propietarios of any restaurant.
+     *
+     * Editors only are not required to (they may still enable it).
+     */
+    public function requiereDosFactores(): bool
+    {
+        return $this->isSuperadmin()
+            || $this->restaurantes()->wherePivot('rol', 'propietario')->exists();
+    }
+
+    /**
+     * Forget the memoized roles after changing the restaurant memberships.
+     */
+    public function olvidarRoles(): void
+    {
+        $this->rolesPorRestaurante = null;
     }
 
     /**

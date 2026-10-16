@@ -3,13 +3,14 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use Filament\Models\Contracts\HasName;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Restaurante extends Model
+class Restaurante extends Model implements HasName
 {
     use HasFactory, SoftDeletes;
 
@@ -49,6 +50,14 @@ class Restaurante extends Model
             'pedidos_activos' => 'boolean',
             'mostrar_agotados' => 'boolean',
         ];
+    }
+
+    /**
+     * Name shown in the panel's restaurant switcher (the column is `nombre`, not `name`).
+     */
+    public function getFilamentName(): string
+    {
+        return $this->nombre;
     }
 
     /**

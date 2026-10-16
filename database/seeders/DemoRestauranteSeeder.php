@@ -200,10 +200,11 @@ class DemoRestauranteSeeder extends Seeder
      */
     private function crearUsuarios(Restaurante $restaurante): void
     {
+        // es_superadmin is not mass assignable, so it is set explicitly.
         User::firstOrCreate(
             ['email' => 'superadmin@menuonl.test'],
-            ['name' => 'Superadmin', 'password' => 'password', 'es_superadmin' => true],
-        );
+            ['name' => 'Superadmin', 'password' => 'password'],
+        )->forceFill(['es_superadmin' => true])->save();
 
         $propietario = User::firstOrCreate(
             ['email' => 'propietario@menuonl.test'],
