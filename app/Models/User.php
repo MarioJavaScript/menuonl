@@ -3,13 +3,16 @@
 namespace App\Models;
 
 use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasTenants;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
 
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable implements FilamentUser, HasTenants
 {
     use HasFactory, Notifiable;
 
@@ -54,6 +57,26 @@ class User extends Authenticatable implements FilamentUser
         return $this->belongsToMany(Restaurante::class, 'restaurante_usuario')
             ->withPivot('rol')
             ->withTimestamps();
+    }
+
+    /**
+     * Restaurants the user can pick as the panel tenant.
+     */
+    public function getTenants(Panel $panel): Collection
+    {
+        return $this->isSuperadmin() ? Restaurante::all() : $this->restaurantes;
+    }
+
+    /**
+     * Determine if the user can administer the given restaurant.
+     */
+    public function canAccessTenant(Model $tenant): bool
+    {
+        if (! $tenant instanceof Restaurante) {
+            return false;
+        }
+
+        return $this->isSuperadmin() || $this->restaurantes()->whereKey($tenant->getKey())->exists();
     }
 
     /**

@@ -42,4 +42,14 @@ class UserFactory extends Factory
             'email_verified_at' => null,
         ]);
     }
+
+    /**
+     * Indicate that the user is a platform superadmin.
+     */
+    public function superadmin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'es_superadmin' => true,
+        ]);
+    }
 }
