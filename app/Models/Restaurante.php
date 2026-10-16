@@ -192,4 +192,12 @@ class Restaurante extends Model implements HasName
 
         return false;
     }
+
+    /**
+     * Translation fallback for Restaurante, which holds its nombre and descripcion directly.
+     */
+    public function traduccion(?string $idioma = null): self
+    {
+        return $this;
+    }
 }

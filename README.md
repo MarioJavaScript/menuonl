@@ -7,7 +7,7 @@ El comensal escanea un QR, ve el menú al instante sin instalar ninguna app y, s
 **Estado actual (16 de octubre de 2026):**
 - ✅ **Fase 0 y Base de Datos v1.0 completadas:** 14 tablas del esquema DDL migradas, modelos Eloquent con aislamiento multi-tenant (`BelongsToRestaurante` / `RestauranteScope`), factories y seeders (`EtiquetaSeeder`, `DemoRestauranteSeeder`).
 - ✅ **Mitad A completada (Panel Admin `/admin`, Seguridad y Servicios de Dominio):** CRUDs completos en Filament 5 (Categorías, Productos con edición rápida de precios/disponibilidad, Variantes, Traducciones multi-idioma, Etiquetas, Contactos, Horarios, Códigos QR, Restaurantes, Usuarios, Invitaciones e Historial de Cambios), Roles y Policies (`Superadmin`, `Propietario`, `Editor`), 2FA obligatorio para Propietario y Superadmin, rate-limiting de login, conversión segura de imágenes a WebP (`WebpImageService`), protección de archivos entre tenants, auditoría forense (`Auditable` / `AuditableObserver`) e invalidación de caché L1/L2 (`MenuCacheService` y `PurgarCacheRestauranteJob`).
-- 🚧 **Pendiente — Mitad B (Frente Público Comensal y Descarga QR):** Menú público SSR `/m/{slug}` con Blade + Tailwind CSS, selector de idioma, carrito en navegador con envío de pedido por WhatsApp (`wa.me`), redirección corta `/q/{codigo}` y exportación descargable de códigos QR (PNG, SVG y hoja PDF imprimible). Ver [docs/06-division-trabajo-mitad-b.md](docs/06-division-trabajo-mitad-b.md).
+- ✅ **Mitad B completada (Frente Público Comensal, Carrito WhatsApp y Descarga QR):** Menú público SSR `/m/{slug}` con Blade + Tailwind CSS v4, multi-idioma con autodetección (`?lang=`, `Accept-Language`, default), selector de variantes con precios propios, etiquetas dietéticas, cálculo dinámico de apertura/cierre en tiempo real según la zona horaria del restaurante, carrito en cliente persistido en `localStorage` con pedido estructurado a WhatsApp (`wa.me`), redirección corta `/q/{codigo}` con soporte de mesas, generador nativo de códigos QR en PHP 8.3 (SVG y PNG rasterizado con GD) y ficha imprimible PDF, y generación de mesas por lote en Filament 5. Todo cubierto con una suite de 476 pruebas automatizadas (475 pasadas, 0 fallos, 0 errores).
 
 ---
 
@@ -108,7 +108,7 @@ Al ejecutar `php artisan migrate:fresh --seed` en entorno `local`, se crea el re
 # Levantar servidor local + Vite + cola
 composer run dev
 
-# Ejecutar la suite completa de pruebas en PHPUnit
+# Ejecutar la suite completa de pruebas en PHPUnit (476 pruebas)
 php artisan test --compact
 
 # Formatear código con Laravel Pint
@@ -140,14 +140,14 @@ Todos los detalles técnicos y especificaciones funcionales se encuentran en la 
 menuonl/
 ├── app/
 │   ├── Filament/           # Panel administrativo multi-tenant (Resources, Schemas, Tables, Pages, Components)
-│   ├── Http/               # Controladores (Invitaciones) y Middleware (ExigeDosFactores)
+│   ├── Http/               # Controladores (MenuPublicoController, QrRedirectController, QrDownloadController, Invitaciones) y Middleware (ExigeDosFactores)
 │   ├── Jobs/               # PurgarCacheRestauranteJob (purga asíncrona L2 en Cloudflare)
 │   ├── Mail/               # InvitacionMail
 │   ├── Models/             # 14 Modelos Eloquent + HasTraducciones + RestauranteScope
 │   ├── Observers/          # AuditableObserver (bitácora forense e invalidación de caché)
 │   ├── Policies/           # MatrizPolicy y Policies por modelo (Superadmin / Propietario / Editor)
 │   ├── Rules/              # CodigoQrValido, ValorContactoSeguro
-│   ├── Services/           # WebpImageService, MenuCacheService, InvitacionService, Catalogos
+│   ├── Services/           # QrGeneratorService, WebpImageService, MenuCacheService, InvitacionService, Catalogos
 │   └── Traits/             # BelongsToRestaurante, Auditable, ProtegeImagenesDelRestaurante
 ├── config/
 │   └── menuonl.php         # Configuración de 2FA, límites de login y límites de imágenes
@@ -156,9 +156,9 @@ menuonl/
 │   ├── migrations/         # Esquema completo de 14 tablas + columnas 2FA
 │   └── seeders/            # EtiquetaSeeder y DemoRestauranteSeeder
 ├── docs/                   # Especificación, seguridad, roadmap, DDL y contrato Mitad B
-├── resources/views/        # Vistas de invitaciones, correos y menú público (Mitad B)
-├── routes/web.php          # Rutas web (/invitaciones/{token}, y próximamente /m/{slug} y /q/{codigo})
-└── tests/Feature/          # Suite de pruebas automatizadas en PHPUnit
+├── resources/views/        # Vistas de menú público (/m/{slug}), ficha imprimible QR, invitaciones y correos
+├── routes/web.php          # Rutas web (/m/{slug}, /q/{codigo}, /admin/codigos-qr/{id}/descargar/{formato}, /invitaciones/{token})
+└── tests/Feature/          # Suite completa de pruebas automatizadas en PHPUnit (476 pruebas)
 ```
 
 ---

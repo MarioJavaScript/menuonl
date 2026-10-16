@@ -46,4 +46,12 @@ class CodigoQr extends Model
     {
         return filled($this->mesa);
     }
+
+    /**
+     * Check if the QR code is active.
+     */
+    public function isActivo(): bool
+    {
+        return (bool) $this->activo;
+    }
 }
