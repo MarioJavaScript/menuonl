@@ -726,6 +726,7 @@ class MenuPublicoTest extends TestCase
 
     public function test_sold_out_variant_shows_agotado_and_disables_addition(): void
     {
+        $this->travelTo(Carbon::parse('2026-10-14 12:00:00', 'America/Mexico_City')); // miércoles al mediodía
         $restaurante = Restaurante::factory()->create([
             'pedidos_activos' => true,
             'whatsapp_pedidos' => '525512345678',

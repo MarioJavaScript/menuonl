@@ -32,7 +32,7 @@ class QrDownloadController extends Controller
 
         abort_unless(in_array($formato, ['svg', 'png', 'pdf'], true), 404);
 
-        $url = url("/q/{$codigoQr->codigo}");
+        $url = rtrim((string) config('app.url'), '/').route('qr.redirect', ['codigo' => $codigoQr->codigo], false);
 
         return match ($formato) {
             'svg' => response($qrService->svg($url), 200, [

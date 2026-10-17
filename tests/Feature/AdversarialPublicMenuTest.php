@@ -18,6 +18,7 @@ use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Js;
 use Tests\TestCase;
 
 class AdversarialPublicMenuTest extends TestCase
@@ -828,6 +829,7 @@ class AdversarialPublicMenuTest extends TestCase
 
     public function test_cart_order_eligibility_all_combinations(): void
     {
+        $this->travelTo(Carbon::parse('2026-10-14 12:00:00', 'America/Mexico_City')); // miércoles al mediodía
         // Reset scope before setting up factories
         RestauranteScope::setRestauranteId(null);
 
@@ -1153,6 +1155,7 @@ class AdversarialPublicMenuTest extends TestCase
 
     public function test_wcag_escape_key_and_aria_attributes_on_cart_modal(): void
     {
+        $this->travelTo(Carbon::parse('2026-10-14 12:00:00', 'America/Mexico_City')); // miércoles al mediodía
         RestauranteScope::setRestauranteId(null);
 
         $restaurante = Restaurante::factory()->create([
@@ -1266,11 +1269,16 @@ class AdversarialPublicMenuTest extends TestCase
         $response->assertOk();
 
         $content = $response->getContent();
-        $this->assertStringContainsString('`¡Hola! Quiero hacer el siguiente pedido desde el menú digital de *Tacos`; alert(document.domain);', $content);
+        preg_match_all('#<script>(.*?)</script>#s', $content, $bloques);
+        $script = implode('', $bloques[1]);
+
+        $this->assertStringContainsString('const NOMBRE = '.Js::from($payload)->toHtml().';', $script);
+        $this->assertStringNotContainsString('alert(document.domain);', str_replace(Js::from($payload)->toHtml(), '', $script));
     }
 
     public function test_dish_name_with_newline_creates_unbroken_or_broken_js_string(): void
     {
+        $this->travelTo(Carbon::parse('2026-10-14 12:00:00', 'America/Mexico_City')); // miércoles al mediodía
         RestauranteScope::setRestauranteId(null);
 
         $restaurante = Restaurante::factory()->create([
@@ -1305,7 +1313,8 @@ class AdversarialPublicMenuTest extends TestCase
         $response->assertOk();
 
         $content = $response->getContent();
-        // Check if raw newline exists inside the single quote onclick attribute:
-        $this->assertStringContainsString("nombre: 'Taco\nAl Pastor'", $content);
+        // The newline must be escaped as a JS literal, never raw inside the onclick attribute.
+        $this->assertStringContainsString('nombre: '.Js::from("Taco\nAl Pastor")->toHtml(), $content);
+        $this->assertStringNotContainsString("nombre: 'Taco\nAl Pastor'", $content);
     }
 }
