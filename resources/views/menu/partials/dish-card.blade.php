@@ -54,8 +54,8 @@
                                         onclick="cartAddItem({
                                             producto_id: {{ $prod->id }},
                                             variante_id: {{ $variante->id }},
-                                            nombre: '{{ addslashes($prodNom) }}',
-                                            variante_nombre: '{{ addslashes($varNom) }}',
+                                            nombre: @js($prodNom),
+                                            variante_nombre: @js($varNom),
                                             precio: {{ $variante->precio }}
                                         })"
                                         aria-label="Agregar {{ $prodNom }} ({{ $varNom }}) al pedido"
@@ -100,7 +100,7 @@
                         type="button"
                         onclick="cartAddItem({
                             producto_id: {{ $prod->id }},
-                            nombre: '{{ addslashes($prodNom) }}',
+                            nombre: @js($prodNom),
                             precio: {{ $prod->precioVigente() }}
                         })"
                         aria-label="Agregar {{ $prodNom }} al pedido"

@@ -662,10 +662,11 @@
         <!-- Client-Side Cart Script (Isolated under localStorage menuonl_cart_{slug}) -->
         <script>
             (function() {
-                const CART_KEY = 'menuonl_cart_{{ $restaurante->slug }}';
-                const MONEDA = '{{ $restaurante->moneda }}';
-                const WHATSAPP_NUM = '{{ preg_replace('/[^0-9]/', '', (string)$restaurante->whatsapp_pedidos) }}';
-                const PUEDE_PEDIR = {{ $puedePedir ? 'true' : 'false' }};
+                const NOMBRE = @js($restaurante->nombre);
+                const CART_KEY = @js('menuonl_cart_'.$restaurante->slug);
+                const MONEDA = @js($restaurante->moneda);
+                const WHATSAPP_NUM = @js(preg_replace('/[^0-9]/', '', (string) $restaurante->whatsapp_pedidos));
+                const PUEDE_PEDIR = @js((bool) $puedePedir);
                 let toastTimeout = null;
 
                 function escapeHtml(str) {
@@ -825,7 +826,7 @@
                         }
                     });
 
-                    let msg = `¡Hola! Quiero hacer el siguiente pedido desde el menú digital de *{{ addslashes($restaurante->nombre) }}*:\n\n`;
+                    let msg = `¡Hola! Quiero hacer el siguiente pedido desde el menú digital de *${NOMBRE}*:\n\n`;
                     msg += `*Ubicación/Mesa:* ${mesaText}\n\n`;
                     msg += `*Detalle del pedido:*\n${itemsText}\n`;
                     if (notasGenerales) {
@@ -880,6 +881,8 @@
                         } else {
                             let html = '';
                             cart.forEach((item, idx) => {
+                                const cantidad = parseInt(item.cantidad, 10) || 0;
+                                const precio = Number(item.precio) || 0;
                                 const vName = item.variante_nombre ? `<span class="text-xs text-slate-500 font-normal">(${escapeHtml(item.variante_nombre)})</span>` : '';
                                 const itemNombreEsc = escapeHtml(item.nombre);
                                 html += `
@@ -887,7 +890,7 @@
                                         <div class="flex items-center justify-between">
                                             <div>
                                                 <h4 class="text-sm font-bold text-slate-900">${itemNombreEsc} ${vName}</h4>
-                                                <span class="text-xs font-semibold text-slate-600">$${(item.precio * item.cantidad).toFixed(2)} ${MONEDA}</span>
+                                                <span class="text-xs font-semibold text-slate-600">$${(precio * cantidad).toFixed(2)} ${MONEDA}</span>
                                             </div>
                                             <div class="flex items-center gap-2">
                                                 <button
@@ -898,7 +901,7 @@
                                                 >
                                                     <span aria-hidden="true">-</span>
                                                 </button>
-                                                <span class="text-sm font-extrabold text-slate-900 px-2 min-w-[24px] text-center" aria-label="Cantidad: ${item.cantidad}">${item.cantidad}</span>
+                                                <span class="text-sm font-extrabold text-slate-900 px-2 min-w-[24px] text-center" aria-label="Cantidad: ${cantidad}">${cantidad}</span>
                                                 <button
                                                     type="button"
                                                     onclick="cartUpdateQty(${idx}, 1)"

@@ -21,3 +21,13 @@ Pasos que no se pueden comprobar en desarrollo y deben hacerse en el VPS antes d
 - [ ] Verificar la retención: tras 15 días no deben quedar respaldos con más de 14 días.
 
 RNF-06 se da por cumplido solo cuando los tres puntos de prueba (`menuonl:backup`, `menuonl:backup-verify` y la restauración manual) pasan en el VPS.
+## Dominio y claves
+
+- [ ] `APP_URL` debe ser el dominio real con `https://` (por ejemplo `https://menu.midominio.com`). Los QR descargables e impresos codifican esa URL, no el `Host` de la petición: si `APP_URL` está mal, todos los QR impresos apuntarán al dominio equivocado y habrá que reimprimirlos.
+- [ ] Guardar `APP_KEY` en el gestor de contraseñas, fuera del VPS. Con ella se cifran sesiones y datos; si se pierde o cambia, se invalidan las sesiones y lo cifrado con ella deja de poder leerse.
+
+## Respaldos: puntos adicionales
+
+- [ ] El respaldo arma el archivo en la carpeta temporal del sistema. Confirmar que ahí hay espacio suficiente para la base de datos y los archivos subidos, y que el usuario que ejecuta el cron puede escribir en ella.
+- [ ] Probar un respaldo con miles de archivos (imágenes de muchos restaurantes) y revisar tiempo, memoria y espacio temporal usados. Las pruebas de desarrollo solo usan unos pocos archivos.
+- [ ] Si la subida a R2/B2 falla por checksum (por ejemplo errores de `x-amz-checksum` o `Content-MD5`), revisar la compatibilidad de la versión del SDK de AWS con el proveedor: las versiones recientes envían checksums que R2/B2 pueden rechazar.

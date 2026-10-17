@@ -54,6 +54,30 @@ class QrRedirectYDescargaTest extends TestCase
     }
 
     /**
+     * The encoded QR URL comes from app.url, not from the request Host header.
+     */
+    public function test_downloaded_qr_url_uses_app_url_regardless_of_host_header(): void
+    {
+        config(['app.url' => 'https://menu.ejemplo.test']);
+
+        $restaurante = $this->crearRestaurante('host-seguro');
+        $usuario = $this->crearUsuario('propietario', $restaurante);
+
+        $qr = CodigoQr::factory()->create([
+            'restaurante_id' => $restaurante->id,
+            'codigo' => 'hostqr01',
+            'activo' => true,
+        ]);
+
+        $response = $this->actingAs($usuario)
+            ->call('GET', route('codigos-qr.descargar', ['codigoQr' => $qr, 'formato' => 'pdf'], false), [], [], [], ['HTTP_HOST' => 'evil.test']);
+
+        $response->assertOk();
+        $response->assertViewHas('url', 'https://menu.ejemplo.test/q/hostqr01');
+        $response->assertDontSee('evil.test');
+    }
+
+    /**
      * General QR redirects to /m/{slug} (302).
      */
     public function test_general_qr_redirects_to_public_menu_without_mesa_query(): void
