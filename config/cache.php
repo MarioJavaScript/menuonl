@@ -1,5 +1,17 @@
 <?php
 
+use App\Models\Categoria;
+use App\Models\CategoriaTraduccion;
+use App\Models\Contacto;
+use App\Models\Etiqueta;
+use App\Models\Horario;
+use App\Models\Producto;
+use App\Models\ProductoTraduccion;
+use App\Models\ProductoVariante;
+use App\Models\Restaurante;
+use App\Models\VarianteTraduccion;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Support\Str;
 
 return [
@@ -131,6 +143,20 @@ return [
     |
     */
 
-    'serializable_classes' => false,
+    'serializable_classes' => [
+        // Eloquent graph cached by MenuCacheService::rememberMenu() (public menu tree).
+        Collection::class,
+        Pivot::class,
+        Restaurante::class,
+        Categoria::class,
+        CategoriaTraduccion::class,
+        Producto::class,
+        ProductoTraduccion::class,
+        ProductoVariante::class,
+        VarianteTraduccion::class,
+        Etiqueta::class,
+        Contacto::class,
+        Horario::class,
+    ],
 
 ];
