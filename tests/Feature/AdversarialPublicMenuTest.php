@@ -577,6 +577,7 @@ class AdversarialPublicMenuTest extends TestCase
         ]);
         $cat = Categoria::factory()->create([
             'restaurante_id' => $restaurante->id,
+            'orden' => 1,
             'visible' => true,
         ]);
         CategoriaTraduccion::factory()->create([
