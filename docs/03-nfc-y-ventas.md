@@ -17,7 +17,9 @@ Una etiqueta NFC (NTAG213/215) guarda la misma URL corta `/q/{codigo}` que el QR
 3. En tu celular instala **NFC Tools** (o una app similar), elige *Escribir* → *Añadir un registro* → *URL/URI*, pega la URL copiada y acerca la etiqueta.
 4. Lee la etiqueta de vuelta para comprobar que abre el menú y, ya probada, **bloquéala en solo lectura** (*Otros* → *Bloquear etiqueta*). Es irreversible.
 5. Pega **siempre el QR al lado** como respaldo: no todos los celulares leen NFC.
+**Antes de bloquear una etiqueta, confirma el dominio definitivo.** La URL grabada no se puede cambiar una vez bloqueada, y si el dominio cambia hay que reemplazar todas las etiquetas. Esto importa porque el dominio de la plataforma aún está por definir. 
 6. Si alguien pega una etiqueta falsa encima, **desactiva ese código en el panel** (el escaneo mostrará un aviso de código no disponible), crea un código nuevo, programa una etiqueta nueva y reemplázala.
+
 
 ## Estrategia de venta
 
