@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\TipoCodigoAcceso;
 use App\Traits\Auditable;
 use App\Traits\BelongsToRestaurante;
 use Database\Factories\CodigoQrFactory;
@@ -20,6 +21,7 @@ class CodigoQr extends Model
         'restaurante_id',
         'nombre',
         'mesa',
+        'tipo',
         'codigo',
         'activo',
     ];
@@ -28,6 +30,7 @@ class CodigoQr extends Model
     {
         return [
             'activo' => 'boolean',
+            'tipo' => TipoCodigoAcceso::class,
         ];
     }
 
@@ -45,6 +48,22 @@ class CodigoQr extends Model
     public function esMesa(): bool
     {
         return filled($this->mesa);
+    }
+
+    /**
+     * Whether the code is written on an NFC tag instead of printed as a QR.
+     */
+    public function esNfc(): bool
+    {
+        return $this->tipo === TipoCodigoAcceso::Nfc;
+    }
+
+    /**
+     * Full short URL of the code, built from app.url so it never depends on the request Host.
+     */
+    public function urlCorta(): string
+    {
+        return rtrim((string) config('app.url'), '/').route('qr.redirect', ['codigo' => $this->codigo], false);
     }
 
     /**

@@ -2,12 +2,14 @@
 
 namespace App\Filament\Resources\CodigosQr\Pages;
 
+use App\Enums\TipoCodigoAcceso;
 use App\Filament\Resources\CodigosQr\CodigoQrResource;
 use App\Models\CodigoQr;
 use App\Models\Scopes\RestauranteScope;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Facades\Filament;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
@@ -43,10 +45,18 @@ class ListCodigosQr extends ListRecords
                         ->required()
                         ->gte('desde_mesa')
                         ->helperText('Número de la última mesa del rango (ej. 20).'),
+                    Select::make('tipo')
+                        ->label('Tipo de código')
+                        ->options(TipoCodigoAcceso::class)
+                        ->default(TipoCodigoAcceso::Qr->value)
+                        ->required()
+                        ->enum(TipoCodigoAcceso::class)
+                        ->native(false),
                 ])
                 ->action(function (array $data): void {
                     $desde = (int) $data['desde_mesa'];
                     $hasta = (int) $data['hasta_mesa'];
+                    $tipo = TipoCodigoAcceso::from($data['tipo'] instanceof TipoCodigoAcceso ? $data['tipo']->value : $data['tipo']);
                     $tenantId = Filament::getTenant()?->id ?? RestauranteScope::resolveRestauranteId();
 
                     $creadas = 0;
@@ -72,6 +82,7 @@ class ListCodigosQr extends ListRecords
                             'restaurante_id' => $tenantId,
                             'nombre' => "Mesa {$mesaStr}",
                             'mesa' => $mesaStr,
+                            'tipo' => $tipo,
                             'codigo' => $codigo,
                             'activo' => true,
                         ]);

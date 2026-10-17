@@ -4,11 +4,20 @@
 
 Una etiqueta NFC (NTAG213/215) guarda la misma URL corta `/q/{codigo}` que el QR, así que casi no cambia el sistema.
 
-- Renombrar `codigos_qr` a `codigos_acceso` y agregar un campo `tipo` (`qr` / `nfc`).
+- Se agregó un campo `tipo` (`qr` / `nfc`) a `codigos_qr`. **Decisión:** no se renombra la tabla a `codigos_acceso` y no se agrega `?src=` al redirect. La etiqueta y el QR comparten la misma URL `/q/{codigo}` y se tratan igual; renombrar solo costaría una migración riesgosa sin cambiar el comportamiento. El campo `tipo` basta para distinguirlos en el panel.
+- Las estadísticas por origen (`?src=nfc` / `?src=qr`) quedan fuera por ahora: exigirían que cada etiqueta lleve una URL distinta de su QR y se reconsideran cuando existan estadísticas. Si hace falta saber por dónde entran, se crea un código NFC y un código QR separados para la misma mesa.
 - Android lo lee directo; iPhone desde el XS en adelante, sin apps.
 - Bloquear las etiquetas en modo solo lectura y pegar siempre el QR junto al NFC como respaldo.
 - Riesgo principal: que alguien pegue una etiqueta falsa encima. Usar soportes difíciles de manipular y, como opción premium, etiquetas NTAG 424 DNA con URL firmada.
-- Agregar `?src=nfc` o `?src=qr` para estadísticas futuras.
+
+### Cómo programar una etiqueta
+
+1. En el panel, crea un código con tipo **Etiqueta NFC** (o cambia el tipo de uno existente) y copia su **URL corta** desde la tabla de códigos; es la URL completa con el dominio real, por ejemplo `https://menu.midominio.com/q/m1-barra`.
+2. Compra etiquetas **NTAG213** (suficientes para una URL corta).
+3. En tu celular instala **NFC Tools** (o una app similar), elige *Escribir* → *Añadir un registro* → *URL/URI*, pega la URL copiada y acerca la etiqueta.
+4. Lee la etiqueta de vuelta para comprobar que abre el menú y, ya probada, **bloquéala en solo lectura** (*Otros* → *Bloquear etiqueta*). Es irreversible.
+5. Pega **siempre el QR al lado** como respaldo: no todos los celulares leen NFC.
+6. Si alguien pega una etiqueta falsa encima, **desactiva ese código en el panel** (el escaneo mostrará un aviso de código no disponible), crea un código nuevo, programa una etiqueta nueva y reemplázala.
 
 ## Estrategia de venta
 

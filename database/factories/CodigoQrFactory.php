@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\TipoCodigoAcceso;
 use App\Models\CodigoQr;
 use App\Models\Restaurante;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -23,6 +24,7 @@ class CodigoQrFactory extends Factory
             'restaurante_id' => Restaurante::factory(),
             'nombre' => 'General',
             'mesa' => null,
+            'tipo' => TipoCodigoAcceso::Qr,
             'codigo' => Str::random(10),
             'activo' => true,
         ];
@@ -41,6 +43,16 @@ class CodigoQrFactory extends Factory
                 'mesa' => $mesa,
             ];
         });
+    }
+
+    /**
+     * Indicate that the code is written on an NFC tag.
+     */
+    public function nfc(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'tipo' => TipoCodigoAcceso::Nfc,
+        ]);
     }
 
     /**
