@@ -35,7 +35,7 @@ Objetivo: tener 3 a 5 restaurantes reales usando el sistema lo antes posible y c
 - [x] Etiquetas (`vegano`, `vegetariano`, `picante`, `sin_gluten`, `sin_lactosa`, `nuevo`, `recomendado`) en BD, seeder, panel y menú público
 - [x] Invitaciones por email (`InvitacionService`, `InvitacionAceptarController`) e historial de cambios (`Auditable`, `HistorialCambioResource`)
 - [x] Superadmin: alta y suspensión de restaurantes (`RestauranteResource`, `UserResource`)
-- [ ] NFC (`codigos_acceso` con `tipo`)
+- [x] NFC (campo `tipo` en `codigos_qr`)
 
 ## Fuera de alcance por ahora
 

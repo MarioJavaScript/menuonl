@@ -244,12 +244,14 @@ CREATE TABLE codigos_qr (
   restaurante_id  BIGINT UNSIGNED NOT NULL,
   nombre          VARCHAR(80)     NOT NULL,
   mesa            VARCHAR(20)     NULL,
+  tipo            VARCHAR(3)      NOT NULL DEFAULT 'qr',
   codigo          VARCHAR(16)     NOT NULL,
   activo          TINYINT(1)      NOT NULL DEFAULT 1,
   created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   UNIQUE KEY uq_qr_codigo (codigo),
+  CONSTRAINT ck_codigos_qr_tipo CHECK (tipo IN ('qr', 'nfc')),
   KEY ix_qr_restaurante (restaurante_id),
   CONSTRAINT fk_qr_restaurante FOREIGN KEY (restaurante_id) REFERENCES restaurantes (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

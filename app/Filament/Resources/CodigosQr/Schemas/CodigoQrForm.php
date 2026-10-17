@@ -2,7 +2,9 @@
 
 namespace App\Filament\Resources\CodigosQr\Schemas;
 
+use App\Enums\TipoCodigoAcceso;
 use App\Rules\CodigoQrValido;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
@@ -20,6 +22,14 @@ class CodigoQrForm
                     ->required()
                     ->maxLength(80)
                     ->helperText('Nombre descriptivo para identificar este código QR en el panel.'),
+                Select::make('tipo')
+                    ->label('Tipo de código')
+                    ->options(TipoCodigoAcceso::class)
+                    ->default(TipoCodigoAcceso::Qr->value)
+                    ->required()
+                    ->enum(TipoCodigoAcceso::class)
+                    ->native(false)
+                    ->helperText('Una etiqueta NFC guarda la misma URL corta que el QR; el tipo solo sirve para identificarla en el panel.'),
                 TextInput::make('mesa')
                     ->label('Número o identificador de mesa')
                     ->placeholder('1')

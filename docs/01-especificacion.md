@@ -290,6 +290,7 @@ Catálogo global (lo administra el superadmin). El nombre visible se traduce en 
 | restaurante_id | FK | |
 | nombre | VARCHAR(80) | ej. "General", "Mesa 5", "Terraza" |
 | mesa | VARCHAR(20) NULL | Se agrega a la URL y aparece en el pedido de WhatsApp |
+| tipo | VARCHAR(3) | `qr` (default) o `nfc`; solo identifica cómo se distribuye el código |
 | codigo | VARCHAR(16) | Único; URL corta `/q/{codigo}` que redirige al menú |
 | activo | TINYINT(1) | |
 | created_at / updated_at | DATETIME | |

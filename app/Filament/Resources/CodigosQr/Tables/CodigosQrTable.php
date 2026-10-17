@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\CodigosQr\Tables;
 
+use App\Enums\TipoCodigoAcceso;
 use App\Filament\Resources\CodigosQr\CodigoQrResource;
 use App\Models\CodigoQr;
 use Filament\Actions\Action;
@@ -11,6 +12,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class CodigosQrTable
@@ -21,14 +23,22 @@ class CodigosQrTable
             ->columns([
                 TextColumn::make('nombre')->label('Nombre')->searchable(),
                 TextColumn::make('mesa')->label('Mesa'),
+                TextColumn::make('tipo')->label('Tipo')->badge(),
                 TextColumn::make('codigo')->label('Código'),
                 TextColumn::make('url_corta')
                     ->label('URL Corta')
-                    ->state(fn (CodigoQr $record): string => url("/q/{$record->codigo}"))
-                    ->url(fn (CodigoQr $record): string => url("/q/{$record->codigo}"))
+                    ->state(fn (CodigoQr $record): string => $record->urlCorta())
+                    ->url(fn (CodigoQr $record): string => $record->urlCorta())
                     ->copyable()
+                    ->copyMessage('URL copiada')
+                    ->tooltip('Haz clic para copiar la URL que se escribe en la etiqueta NFC')
                     ->openUrlInNewTab(),
                 IconColumn::make('activo')->label('Activo')->boolean(),
+            ])
+            ->filters([
+                SelectFilter::make('tipo')
+                    ->label('Tipo de código')
+                    ->options(TipoCodigoAcceso::class),
             ])
             ->defaultSort('nombre')
             ->recordActions([
