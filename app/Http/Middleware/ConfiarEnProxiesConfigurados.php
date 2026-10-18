@@ -19,6 +19,8 @@ class ConfiarEnProxiesConfigurados extends TrustProxies
         $proxies = (array) config('menuonl.trusted_proxies', []);
 
         if ($proxies === []) {
+            $this->setTrustedProxyIpAddressesToSpecificIps($request, []);
+
             return;
         }
 

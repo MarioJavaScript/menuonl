@@ -105,7 +105,7 @@ class Producto extends Model
      */
     public function variantes(): HasMany
     {
-        return $this->hasMany(ProductoVariante::class);
+        return $this->hasMany(ProductoVariante::class)->chaperone();
     }
 
     /**
@@ -121,7 +121,7 @@ class Producto extends Model
      */
     public function traduccion(?string $idioma = null): ?ProductoTraduccion
     {
-        return $this->buscarTraduccion($idioma, $this->restaurante?->idioma_default);
+        return $this->buscarTraduccion($idioma, fn (): ?string => $this->restaurante?->idioma_default);
     }
 
     /**

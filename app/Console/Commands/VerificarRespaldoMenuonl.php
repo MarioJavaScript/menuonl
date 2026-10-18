@@ -11,6 +11,11 @@ class VerificarRespaldoMenuonl extends Command
 {
     protected $signature = 'menuonl:backup-verify {archivo? : Nombre del respaldo en el disco (por defecto, el más reciente)}';
 
+    /**
+     * @var array<int, string>
+     */
+    protected $aliases = ['menuonl:verificar-respaldo'];
+
     protected $description = 'Descarga un respaldo, lo descifra en un directorio temporal y comprueba que se pueda restaurar';
 
     public function handle(RespaldoService $respaldos): int

@@ -10,8 +10,10 @@ use App\Models\ProductoTraduccion;
 use App\Models\ProductoVariante;
 use App\Models\Restaurante;
 use App\Models\VarianteTraduccion;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\Pivot;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
 return [
@@ -157,6 +159,9 @@ return [
         Etiqueta::class,
         Contacto::class,
         Horario::class,
+        Carbon::class,
+        CarbonImmutable::class,
+        stdClass::class,
     ],
 
 ];

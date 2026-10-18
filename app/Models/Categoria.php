@@ -54,7 +54,7 @@ class Categoria extends Model
      */
     public function traduccion(?string $idioma = null): ?CategoriaTraduccion
     {
-        return $this->buscarTraduccion($idioma, $this->restaurante?->idioma_default);
+        return $this->buscarTraduccion($idioma, fn (): ?string => $this->restaurante?->idioma_default);
     }
 
     /**

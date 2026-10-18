@@ -70,7 +70,7 @@ class ProductoVariante extends Model
      */
     public function traduccion(?string $idioma = null): ?VarianteTraduccion
     {
-        return $this->buscarTraduccion($idioma, $this->producto?->restaurante?->idioma_default);
+        return $this->buscarTraduccion($idioma, fn (): ?string => $this->producto?->restaurante?->idioma_default);
     }
 
     /**

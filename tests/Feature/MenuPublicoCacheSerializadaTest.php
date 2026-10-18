@@ -12,6 +12,7 @@ use App\Models\ProductoTraduccion;
 use App\Models\ProductoVariante;
 use App\Models\Restaurante;
 use App\Models\Scopes\RestauranteScope;
+use App\Models\User;
 use App\Models\VarianteTraduccion;
 use App\Services\MenuCacheService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -122,4 +123,61 @@ class MenuPublicoCacheSerializadaTest extends TestCase
         $this->assertFalse(Cache::has("menu:{$restaurante->id}:es"));
         $this->get($url)->assertOk()->assertSee('Arrachera cacheada');
     }
+
+    /**
+     * Test that unwhitelisted classes (e.g. App\Models\User or arbitrary objects)
+     * deserialize strictly as __PHP_Incomplete_Class when cached.
+     */
+    public function test_deserializacion_de_clases_no_autorizadas_produce_php_incomplete_class_y_no_instancia_el_objeto(): void
+    {
+        // 1. Modelo User (no incluido en config('cache.serializable_classes'))
+        $usuario = new User(['name' => 'Usuario No Autorizado', 'email' => 'hacker@evil.test']);
+        Cache::store('file')->put('adversarial_user', $usuario, 60);
+
+        $recuperadoUsuario = Cache::store('file')->get('adversarial_user');
+        $this->assertInstanceOf(\__PHP_Incomplete_Class::class, $recuperadoUsuario);
+        $this->assertNotInstanceOf(User::class, $recuperadoUsuario);
+
+        // 2. Objeto arbitrario de clase no autorizada (no anónima)
+        $objetoArbitrario = new ObjetoNoAutorizadoPrueba;
+        Cache::store('file')->put('adversarial_anon', $objetoArbitrario, 60);
+
+        $recuperadoAnon = Cache::store('file')->get('adversarial_anon');
+        $this->assertInstanceOf(\__PHP_Incomplete_Class::class, $recuperadoAnon);
+        $this->assertNotInstanceOf(ObjetoNoAutorizadoPrueba::class, $recuperadoAnon);
+    }
+
+    /**
+     * Test that corrupted serialized cache payload recovers gracefully without HTTP 500.
+     */
+    public function test_recuperacion_transparente_y_sin_error_500_ante_payload_de_cache_corrupto(): void
+    {
+        $restaurante = $this->crearMenuCompleto();
+        $url = route('menu.publico', ['slug' => $restaurante->slug]);
+
+        // 1. Petición inicial para poblar la caché
+        $this->get($url)->assertOk()->assertSee('Arrachera cacheada');
+        $this->assertTrue(Cache::store('file')->has("menu:{$restaurante->id}:es"));
+
+        // 2. Corromper los archivos de caché generados en el directorio de prueba
+        $archivos = File::allFiles($this->directorioCache);
+        $this->assertNotEmpty($archivos, 'Se esperaba encontrar al menos un archivo de caché generado.');
+
+        foreach ($archivos as $archivo) {
+            if (! str_ends_with($archivo->getFilename(), '.lock')) {
+                file_put_contents($archivo->getRealPath(), (time() + 3600).'O:11:"Restaurante":999:{corrupt_payload_broken_bytes!!!');
+            }
+        }
+
+        // 3. La siguiente petición debe recuperarse de forma transparente y servir el menú sin HTTP 500
+        $respuesta = $this->get($url);
+        $respuesta->assertOk();
+        $respuesta->assertSee('Arrachera cacheada');
+        $respuesta->assertSee('Platos fuertes');
+    }
+}
+
+class ObjetoNoAutorizadoPrueba
+{
+    public string $payload = 'exploit_call';
 }

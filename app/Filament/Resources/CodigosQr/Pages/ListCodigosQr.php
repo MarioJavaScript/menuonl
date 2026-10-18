@@ -13,6 +13,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class ListCodigosQr extends ListRecords
@@ -41,6 +42,7 @@ class ListCodigosQr extends ListRecords
                         ->label('Mesa final')
                         ->numeric()
                         ->minValue(1)
+                        ->maxValue(500)
                         ->default(10)
                         ->required()
                         ->gte('desde_mesa')
@@ -56,39 +58,62 @@ class ListCodigosQr extends ListRecords
                 ->action(function (array $data): void {
                     $desde = (int) $data['desde_mesa'];
                     $hasta = (int) $data['hasta_mesa'];
+
+                    if ($hasta - $desde > 250) {
+                        Notification::make()
+                            ->danger()
+                            ->title('El tamaño máximo por lote es de 250 mesas a la vez.')
+                            ->send();
+
+                        return;
+                    }
+
                     $tipo = TipoCodigoAcceso::from($data['tipo'] instanceof TipoCodigoAcceso ? $data['tipo']->value : $data['tipo']);
                     $tenantId = Filament::getTenant()?->id ?? RestauranteScope::resolveRestauranteId();
 
-                    $creadas = 0;
-                    $omitidas = 0;
+                    if ($tenantId === null) {
+                        Notification::make()
+                            ->danger()
+                            ->title('No hay un restaurante activo seleccionado.')
+                            ->send();
 
-                    for ($m = $desde; $m <= $hasta; $m++) {
-                        $mesaStr = (string) $m;
-                        $existe = CodigoQr::where('restaurante_id', $tenantId)
-                            ->where('mesa', $mesaStr)
-                            ->exists();
-
-                        if ($existe) {
-                            $omitidas++;
-
-                            continue;
-                        }
-
-                        do {
-                            $codigo = Str::lower(Str::random(8));
-                        } while (CodigoQr::withoutGlobalScopes()->where('codigo', $codigo)->exists());
-
-                        CodigoQr::create([
-                            'restaurante_id' => $tenantId,
-                            'nombre' => "Mesa {$mesaStr}",
-                            'mesa' => $mesaStr,
-                            'tipo' => $tipo,
-                            'codigo' => $codigo,
-                            'activo' => true,
-                        ]);
-
-                        $creadas++;
+                        return;
                     }
+
+                    $mesasRango = array_map('strval', range($desde, $hasta));
+
+                    // Consulta en lote único: evita N consultas de existencia
+                    $mesasExistentes = CodigoQr::where('restaurante_id', $tenantId)
+                        ->whereIn('mesa', $mesasRango)
+                        ->pluck('mesa')
+                        ->flip()
+                        ->all();
+
+                    $creadas = 0;
+                    $omitidas = count($mesasExistentes);
+
+                    DB::transaction(function () use ($mesasRango, $mesasExistentes, $tenantId, $tipo, &$creadas): void {
+                        foreach ($mesasRango as $mesaStr) {
+                            if (isset($mesasExistentes[$mesaStr])) {
+                                continue;
+                            }
+
+                            do {
+                                $codigo = Str::lower(Str::random(8));
+                            } while (CodigoQr::withoutGlobalScopes()->where('codigo', $codigo)->exists());
+
+                            CodigoQr::create([
+                                'restaurante_id' => $tenantId,
+                                'nombre' => "Mesa {$mesaStr}",
+                                'mesa' => $mesaStr,
+                                'tipo' => $tipo,
+                                'codigo' => $codigo,
+                                'activo' => true,
+                            ]);
+
+                            $creadas++;
+                        }
+                    });
 
                     Notification::make()
                         ->success()

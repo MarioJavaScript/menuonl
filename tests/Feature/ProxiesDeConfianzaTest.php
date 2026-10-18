@@ -2,13 +2,20 @@
 
 namespace Tests\Feature;
 
+use App\Models\CodigoQr;
+use App\Models\Restaurante;
+use App\Models\Scopes\RestauranteScope;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 class ProxiesDeConfianzaTest extends TestCase
 {
+    use RefreshDatabase;
+
     private const IP_DEL_PROXY = '173.245.48.10';
 
     private const IP_FALSA = '6.6.6.6';
@@ -25,6 +32,13 @@ class ProxiesDeConfianzaTest extends TestCase
             'menu_publico' => RateLimiter::limiter('menu-publico')($request)->key,
             'invitaciones' => RateLimiter::limiter('invitaciones')($request)->key,
         ]);
+    }
+
+    protected function tearDown(): void
+    {
+        Cache::flush();
+        RestauranteScope::setRestauranteId(null);
+        parent::tearDown();
     }
 
     private function pedirDesde(string $remoto, string $forwardedFor): array
@@ -105,5 +119,106 @@ class ProxiesDeConfianzaTest extends TestCase
         } finally {
             putenv('TRUSTED_PROXIES');
         }
+    }
+
+    public function test_evasion_de_rate_limiter_con_x_forwarded_for_falsificado_en_menu_publico_es_bloqueada(): void
+    {
+        config(['menuonl.trusted_proxies' => ['173.245.48.0/20']]);
+
+        $restaurante = Restaurante::factory()->create(['slug' => 'resto-rate-limit-m']);
+        $remotoNoConfiable = '198.51.100.42';
+
+        for ($i = 1; $i <= 300; $i++) {
+            $ipRotativa = '10.0.'.intdiv($i, 256).'.'.($i % 256);
+            $res = $this->withServerVariables(['REMOTE_ADDR' => $remotoNoConfiable])
+                ->withHeaders(['X-Forwarded-For' => $ipRotativa])
+                ->get('/m/'.$restaurante->slug);
+
+            if ($i === 1 || $i === 300) {
+                $res->assertOk();
+            }
+        }
+
+        // Petición 301 con una nueva IP rotativa debe recibir HTTP 429
+        $res301 = $this->withServerVariables(['REMOTE_ADDR' => $remotoNoConfiable])
+            ->withHeaders(['X-Forwarded-For' => '10.0.1.45'])
+            ->get('/m/'.$restaurante->slug);
+
+        $res301->assertStatus(429);
+    }
+
+    public function test_evasion_de_rate_limiter_con_x_forwarded_for_falsificado_en_redireccion_qr_es_bloqueada(): void
+    {
+        config(['menuonl.trusted_proxies' => ['173.245.48.0/20']]);
+
+        $restaurante = Restaurante::factory()->create(['slug' => 'resto-rate-limit-q']);
+        $qr = CodigoQr::factory()->create([
+            'restaurante_id' => $restaurante->id,
+            'codigo' => 'ratelimitqr01',
+            'activo' => true,
+        ]);
+        $remotoNoConfiable = '198.51.100.43';
+
+        for ($i = 1; $i <= 300; $i++) {
+            $ipRotativa = '10.1.'.intdiv($i, 256).'.'.($i % 256);
+            $res = $this->withServerVariables(['REMOTE_ADDR' => $remotoNoConfiable])
+                ->withHeaders(['X-Forwarded-For' => $ipRotativa])
+                ->get('/q/'.$qr->codigo);
+
+            if ($i === 1 || $i === 300) {
+                $res->assertStatus(302);
+            }
+        }
+
+        // Petición 301 con nueva IP rotativa debe ser bloqueada con 429
+        $res301 = $this->withServerVariables(['REMOTE_ADDR' => $remotoNoConfiable])
+            ->withHeaders(['X-Forwarded-For' => '10.1.1.45'])
+            ->get('/q/'.$qr->codigo);
+
+        $res301->assertStatus(429);
+    }
+
+    public function test_proxy_confiable_permite_buckets_independientes_por_cada_ip_de_cliente_real(): void
+    {
+        config(['menuonl.trusted_proxies' => ['173.245.48.0/20']]);
+
+        $restaurante = Restaurante::factory()->create(['slug' => 'resto-proxy-buckets']);
+        $proxyConfiable = self::IP_DEL_PROXY;
+        $clienteA = '203.0.113.1';
+        $clienteB = '203.0.113.2';
+
+        // Cliente A agota su cuota de 300 peticiones
+        for ($i = 1; $i <= 300; $i++) {
+            $this->withServerVariables(['REMOTE_ADDR' => $proxyConfiable])
+                ->withHeaders(['X-Forwarded-For' => $clienteA])
+                ->get('/m/'.$restaurante->slug);
+        }
+
+        // Cliente A es bloqueado en la petición 301
+        $this->withServerVariables(['REMOTE_ADDR' => $proxyConfiable])
+            ->withHeaders(['X-Forwarded-For' => $clienteA])
+            ->get('/m/'.$restaurante->slug)
+            ->assertStatus(429);
+
+        // Cliente B a través del MISMO proxy confiable debe tener su propio bucket intacto
+        $this->withServerVariables(['REMOTE_ADDR' => $proxyConfiable])
+            ->withHeaders(['X-Forwarded-For' => $clienteB])
+            ->get('/m/'.$restaurante->slug)
+            ->assertOk();
+    }
+
+    public function test_configuracion_de_proxies_malformados_no_causa_error_fatal(): void
+    {
+        config(['menuonl.trusted_proxies' => ['not-an-ip', '999.999.999.999', '10.0.0.0/99', '']]);
+
+        $restaurante = Restaurante::factory()->create(['slug' => 'resto-malformed-proxy']);
+
+        $respuesta = $this->pedirDesde('198.51.100.99', '203.0.113.88');
+        $this->assertSame('198.51.100.99', $respuesta['ip']);
+
+        $this->withServerVariables(['REMOTE_ADDR' => '198.51.100.99'])
+            ->withHeaders(['X-Forwarded-For' => '203.0.113.88'])
+            ->get('/m/'.$restaurante->slug)
+            ->assertOk();
     }
 }

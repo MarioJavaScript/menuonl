@@ -65,7 +65,24 @@ return [
 
     'trusted_proxies' => array_values(array_filter(
         array_map('trim', explode(',', (string) env('TRUSTED_PROXIES', ''))),
-        fn (string $proxy): bool => $proxy !== '' && ! in_array($proxy, ['*', '**'], true),
+        function (string $proxy): bool {
+            if ($proxy === '' || in_array($proxy, ['*', '**', '0.0.0.0/0', '::/0', '0/0'], true)) {
+                return false;
+            }
+
+            if (str_contains($proxy, '/')) {
+                [$subnet, $mask] = explode('/', $proxy, 2);
+                if (! filter_var($subnet, FILTER_VALIDATE_IP) || ! ctype_digit($mask)) {
+                    return false;
+                }
+                $maskNum = (int) $mask;
+                $isIpv6 = str_contains($subnet, ':');
+
+                return $isIpv6 ? ($maskNum > 0 && $maskNum <= 128) : ($maskNum > 0 && $maskNum <= 32);
+            }
+
+            return (bool) filter_var($proxy, FILTER_VALIDATE_IP);
+        },
     )),
 
     /*

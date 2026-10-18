@@ -108,6 +108,13 @@ class RespaldoService
      */
     public function verificar(?string $nombre = null): array
     {
+        if ($nombre !== null) {
+            $patron = sprintf(self::PATRON_NOMBRE, preg_quote($this->prefijo(), '/'));
+            if (basename($nombre) !== $nombre || preg_match($patron, $nombre) !== 1) {
+                throw new RuntimeException("Nombre de respaldo inválido o con formato no permitido: {$nombre}.");
+            }
+        }
+
         $nombre ??= $this->listar()[0] ?? throw new RuntimeException('No hay respaldos en el disco.');
         $password = $this->password();
         $directorio = $this->crearDirectorioTemporal();
@@ -121,9 +128,17 @@ class RespaldoService
             }
 
             $destino = fopen($zipLocal, 'wb');
-            stream_copy_to_stream($flujo, $destino);
-            fclose($flujo);
-            fclose($destino);
+            if (! is_resource($destino)) {
+                fclose($flujo);
+                throw new RuntimeException('No se pudo crear el archivo temporal de descarga.');
+            }
+
+            try {
+                stream_copy_to_stream($flujo, $destino);
+            } finally {
+                fclose($flujo);
+                fclose($destino);
+            }
 
             $zip = new ZipArchive;
 
@@ -132,6 +147,41 @@ class RespaldoService
             }
 
             try {
+                // Validación contra Zip Slip y Zip Bombs antes de extraer
+                $totalDescomprimido = 0;
+                $maxDescomprimido = 2 * 1024 * 1024 * 1024; // Límite de 2 GB de seguridad
+
+                for ($i = 0; $i < $zip->numFiles; $i++) {
+                    $stat = $zip->statIndex($i);
+                    $nombreEntrada = (string) ($stat['name'] ?? '');
+                    $totalDescomprimido += (int) ($stat['size'] ?? 0);
+
+                    if ($totalDescomprimido > $maxDescomprimido) {
+                        throw new RuntimeException("El archivo {$nombre} supera el tamaño seguro de descompresión.");
+                    }
+
+                    if (
+                        str_contains($nombreEntrada, '..')
+                        || str_starts_with($nombreEntrada, '/')
+                        || str_starts_with($nombreEntrada, '\\')
+                        || preg_match('/^[a-zA-Z]:/', $nombreEntrada)
+                        || str_contains($nombreEntrada, "\0")
+                    ) {
+                        throw new RuntimeException("Ruta no autorizada en el archivo de respaldo: {$nombreEntrada}");
+                    }
+
+                    if (
+                        $nombreEntrada !== 'manifest.json'
+                        && ! preg_match('/^database\.(sql|sqlite)$/', $nombreEntrada)
+                        && ! str_starts_with($nombreEntrada, self::CARPETA_IMAGENES.'/')
+                        && ! str_starts_with($nombreEntrada, 'imagenes/')
+                        && $nombreEntrada !== self::CARPETA_IMAGENES
+                        && $nombreEntrada !== 'imagenes'
+                    ) {
+                        throw new RuntimeException("Entrada no reconocida en el respaldo: {$nombreEntrada}");
+                    }
+                }
+
                 $zip->setPassword($password);
                 $restaurado = $directorio.DIRECTORY_SEPARATOR.'restaurado';
 
@@ -192,6 +242,11 @@ class RespaldoService
         $destino = $directorio.DIRECTORY_SEPARATOR.'database.sql';
         $socket = (string) ($config['unix_socket'] ?? '');
 
+        $database = (string) ($config['database'] ?? '');
+        if ($database === '' || ! preg_match('/^[a-zA-Z0-9_]+$/', $database)) {
+            throw new RuntimeException("El nombre de la base de datos es inválido o no está definido: '{$database}'.");
+        }
+
         $comando = array_values(array_filter([
             (string) config('menuonl.respaldos.mysqldump_path'),
             '--single-transaction',
@@ -203,7 +258,8 @@ class RespaldoService
             $socket !== '' ? '--socket='.$socket : '--host='.($config['host'] ?? '127.0.0.1'),
             $socket !== '' ? null : '--port='.($config['port'] ?? '3306'),
             '--user='.($config['username'] ?? ''),
-            (string) ($config['database'] ?? ''),
+            '--',
+            $database,
         ]));
 
         // La contraseña va por entorno para que no aparezca en la lista de procesos.
@@ -310,7 +366,12 @@ class RespaldoService
             throw new RuntimeException('El respaldo no trae un manifest.json válido.');
         }
 
-        $volcado = $restaurado.DIRECTORY_SEPARATOR.(string) ($manifest['base_de_datos'] ?? '');
+        $nombreBase = (string) ($manifest['base_de_datos'] ?? '');
+        if (basename($nombreBase) !== $nombreBase || preg_match('/^database\.(sql|sqlite)$/', $nombreBase) !== 1) {
+            throw new RuntimeException('El manifest contiene un nombre de base de datos no permitido.');
+        }
+
+        $volcado = $restaurado.DIRECTORY_SEPARATOR.$nombreBase;
         $tablas = null;
 
         if (! is_file($volcado) || filesize($volcado) === 0) {

@@ -14,11 +14,23 @@ trait HasTraducciones
     /**
      * Find the translation for the requested language, falling back to the default language.
      */
-    protected function buscarTraduccion(?string $idioma, ?string $idiomaDefault): ?Model
+    protected function buscarTraduccion(?string $idioma, string|\Closure|null $idiomaDefault = null): ?Model
     {
-        $idioma ??= $idiomaDefault;
+        if ($idioma !== null) {
+            $traduccion = $this->traducciones->firstWhere('idioma', $idioma);
+            if ($traduccion !== null) {
+                return $traduccion;
+            }
+        }
+
+        $default = $idiomaDefault instanceof \Closure ? $idiomaDefault() : $idiomaDefault;
+        $idioma ??= $default;
+
+        if ($idioma === null) {
+            return null;
+        }
 
         return $this->traducciones->firstWhere('idioma', $idioma)
-            ?? $this->traducciones->firstWhere('idioma', $idiomaDefault);
+            ?? ($default !== null && $default !== $idioma ? $this->traducciones->firstWhere('idioma', $default) : null);
     }
 }

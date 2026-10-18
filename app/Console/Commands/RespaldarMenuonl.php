@@ -11,6 +11,11 @@ class RespaldarMenuonl extends Command
 {
     protected $signature = 'menuonl:backup';
 
+    /**
+     * @var array<int, string>
+     */
+    protected $aliases = ['menuonl:respaldar'];
+
     protected $description = 'Respalda la base y las imágenes en un zip cifrado fuera del VPS y aplica la retención (RNF-06)';
 
     public function handle(RespaldoService $respaldos): int

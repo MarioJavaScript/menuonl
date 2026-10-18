@@ -162,4 +162,94 @@ class MenuPublicoContextoJsTest extends TestCase
 
         $this->assertStringContainsString($literalVariante, implode('', $coincidencias[1]));
     }
+
+    /**
+     * @return array<string, array{0: string}>
+     */
+    public static function matrizAtaquesAtributosXss(): array
+    {
+        return [
+            'escape con comillas dobles y handler onmouseover' => ['" onmouseover="alert(1)'],
+            'escape de tag y script malicioso' => ['"><script>alert(1)</script><div class="'],
+            'salto de linea y comillas para romper atributo' => ["Platillo \n con salto de linea y \" onfocus=\"alert(1)"],
+            'separadores de linea unicode U+2028 y U+2029' => ["Unicode \u{2028} and \u{2029} test \" onclick=\"alert(1)"],
+            'apostrofos comillas y script anidado' => ['Tony\'s \' "Special" <script>alert(\'xss\')</script> \\'],
+            'autofocus y onfocus para ejecucion inmediata' => ['test" autofocus onfocus="alert(document.cookie)'],
+        ];
+    }
+
+    /**
+     * Test hostile attribute breakout XSS payload matrix on dish card buttons and onclick handlers
+     * (double quotes, newlines, line separators, scripts) confirming safe escaping.
+     */
+    #[DataProvider('matrizAtaquesAtributosXss')]
+    public function test_matriz_hostil_xss_en_onclick_y_atributos_dish_card(string $payload): void
+    {
+        $slug = 'xss-'.substr(md5($payload), 0, 8);
+        $restaurante = Restaurante::factory()->create([
+            'nombre' => 'Resto XSS Test',
+            'slug' => $slug,
+            'pedidos_activos' => true,
+            'whatsapp_pedidos' => '525512345678',
+        ]);
+        foreach (range(0, 6) as $dia) {
+            Horario::factory()->create([
+                'restaurante_id' => $restaurante->id,
+                'dia_semana' => $dia,
+                'abre' => '00:00:00',
+                'cierra' => '23:59:59',
+                'cerrado' => false,
+            ]);
+        }
+
+        $categoria = Categoria::factory()->create(['restaurante_id' => $restaurante->id]);
+        CategoriaTraduccion::factory()->create(['categoria_id' => $categoria->id, 'idioma' => 'es', 'nombre' => 'Entradas']);
+
+        // 1. Platillo simple
+        $simple = Producto::factory()->create([
+            'restaurante_id' => $restaurante->id,
+            'categoria_id' => $categoria->id,
+            'disponible' => true,
+            'visible' => true,
+            'precio' => 50,
+        ]);
+        ProductoTraduccion::factory()->create(['producto_id' => $simple->id, 'idioma' => 'es', 'nombre' => $payload]);
+
+        // 2. Platillo con variantes
+        $conVariante = Producto::factory()->create([
+            'restaurante_id' => $restaurante->id,
+            'categoria_id' => $categoria->id,
+            'disponible' => true,
+            'visible' => true,
+        ]);
+        ProductoTraduccion::factory()->create(['producto_id' => $conVariante->id, 'idioma' => 'es', 'nombre' => $payload]);
+        $var = ProductoVariante::factory()->create(['producto_id' => $conVariante->id, 'precio' => 75, 'disponible' => true]);
+        VarianteTraduccion::factory()->create(['variante_id' => $var->id, 'idioma' => 'es', 'nombre' => $payload]);
+
+        $respuesta = $this->get(route('menu.publico', ['slug' => $slug]));
+        $respuesta->assertOk();
+        $html = $respuesta->getContent();
+
+        // Verificar que ningún atributo malicioso rompió las comillas para inyectar un atributo HTML real
+        $this->assertDoesNotMatchRegularExpression('/"\s+(onmouseover|onfocus|autofocus)=/i', $html, 'No debe existir inyección de manejadores de eventos o autofocus fuera de atributos entrecomillados.');
+        $this->assertStringNotContainsString('onmouseover="', $html);
+        $this->assertStringNotContainsString('onfocus="', $html);
+
+        // Verificar que no existen tags <script> no autorizados
+        $this->assertStringNotContainsString('<script>alert(', $html);
+
+        // Verificar que los botones de agregar al pedido conservan su onclick intacto
+        preg_match_all('/onclick="(cartAddItem\([^"]*\))"/s', $html, $coincidencias);
+        $this->assertCount(2, $coincidencias[1], 'Los 2 botones deben tener atributos onclick bien cerrados sin ser partidos por comillas dobles.');
+
+        // Verificar que el literal Js::from fue emitido y escapa comillas correctamente
+        $literalJs = Js::from($payload)->toHtml();
+        $this->assertStringContainsString($literalJs, $html);
+
+        // Verificar que en atributos aria-label las comillas dobles están codificadas como entidades HTML
+        if (str_contains($payload, '"')) {
+            $this->assertStringNotContainsString('aria-label="Agregar '.$payload, $html);
+            $this->assertStringContainsString('&quot;', $html);
+        }
+    }
 }
