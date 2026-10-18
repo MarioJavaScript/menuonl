@@ -5,6 +5,9 @@
     'noindex' => false,
     'sinReferrer' => false,
     'htmlClass' => null,
+    'tema' => 'clasico',
+    'acento' => null,
+    'acentoTexto' => null,
 ])
 <!DOCTYPE html>
 <html lang="{{ $lang }}" @class([$htmlClass => filled($htmlClass)])>
@@ -29,7 +32,7 @@
         @endif
         {{ $head ?? '' }}
     </head>
-    <body {{ $attributes->class(['bg-fondo text-texto antialiased']) }}>
+    <body {{ $attributes->class(['bg-fondo text-texto antialiased'])->merge(['data-tema' => $tema]) }}@if ($acento) style="--mo-acento: {{ $acento }}; --mo-acento-texto: {{ $acentoTexto ?? '#ffffff' }};"@endif>
         {{ $slot }}
     </body>
 </html>

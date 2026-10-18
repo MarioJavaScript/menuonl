@@ -33,11 +33,13 @@ use App\Models\Restaurante;
 use App\Models\RestauranteIdioma;
 use App\Models\Scopes\RestauranteScope;
 use App\Models\VarianteTraduccion;
+use App\Services\Catalogos;
 use Carbon\Carbon;
 use Filament\Facades\Filament;
 use Filament\Support\Facades\FilamentView;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Livewire\Livewire;
 use Tests\Concerns\ArmaEscenarioDePanel;
@@ -607,9 +609,9 @@ class UxUiAccesibilidadTest extends TestCase
         }
     }
 
-    public function test_menu_publico_soporta_modo_oscuro_y_optimiza_la_imagen_de_portada(): void
+    public function test_menu_publico_muestra_hero_con_portada_prioritaria_y_logo_con_dimensiones(): void
     {
-        $restaurante = Restaurante::factory()->create(['estado' => 'activo']);
+        $restaurante = Restaurante::factory()->create(['estado' => 'activo', 'eslogan' => 'Cocina de brasa']);
         $restaurante->update([
             'portada' => "restaurantes/{$restaurante->id}/portada.webp",
             'logo' => "restaurantes/{$restaurante->id}/logo.webp",
@@ -619,11 +621,52 @@ class UxUiAccesibilidadTest extends TestCase
         $respuesta = $this->get(route('menu.publico', ['slug' => $restaurante->slug]));
 
         $respuesta->assertOk();
-        $respuesta->assertSee('dark:bg-slate-900', false);
-        $respuesta->assertSee('dark:text-slate-', false);
+        $respuesta->assertSee('hero--con-portada', false);
         $respuesta->assertSee('fetchpriority="high"', false);
-        $respuesta->assertSee('class="cover-img" width="768" height="192"', false);
-        $respuesta->assertSee('width="88" height="88"', false);
+        $respuesta->assertSee('width="72" height="72"', false);
+        $respuesta->assertSee('Cocina de brasa');
+        $respuesta->assertSee('href="#carta"', false);
+    }
+
+    public function test_cada_tema_se_aplica_en_el_menu_publico_y_un_tema_desconocido_cae_al_calido(): void
+    {
+        foreach (array_keys(Catalogos::temas()) as $tema) {
+            $restaurante = Restaurante::factory()->create(['estado' => 'activo', 'tema' => $tema]);
+
+            $this->get(route('menu.publico', ['slug' => $restaurante->slug]))
+                ->assertOk()
+                ->assertSee('data-tema="'.$tema.'"', false);
+        }
+
+        $raro = Restaurante::factory()->create(['estado' => 'activo']);
+        DB::table('restaurantes')->where('id', $raro->id)->update(['tema' => 'inventado']);
+
+        $this->get(route('menu.publico', ['slug' => $raro->slug]))->assertSee('data-tema="calido"', false);
+
+        $css = (string) file_get_contents(public_path('css/menuonl.css'));
+        foreach (['calido', 'editorial', 'rustico'] as $tema) {
+            $this->assertStringContainsString('[data-tema="'.$tema.'"]', $css);
+        }
+    }
+
+    public function test_color_de_acento_valido_se_imprime_y_uno_malicioso_se_descarta(): void
+    {
+        $valido = Restaurante::factory()->create(['estado' => 'activo', 'color_acento' => '#112233']);
+        $this->get(route('menu.publico', ['slug' => $valido->slug]))
+            ->assertSee('--mo-acento: #112233', false)
+            ->assertSee('--mo-acento-texto: #ffffff', false);
+
+        $claro = Restaurante::factory()->create(['estado' => 'activo', 'color_acento' => '#f5e6a8']);
+        $this->get(route('menu.publico', ['slug' => $claro->slug]))->assertSee('--mo-acento-texto: #17171e', false);
+
+        $malicioso = Restaurante::factory()->create(['estado' => 'activo']);
+        DB::table('restaurantes')->where('id', $malicioso->id)
+            ->update(['color_acento' => 'red;background:url(//x.test)']);
+
+        $respuesta = $this->get(route('menu.publico', ['slug' => $malicioso->slug]));
+        $respuesta->assertOk();
+        $respuesta->assertDontSee('url(//x.test)', false);
+        $respuesta->assertDontSee('--mo-acento:', false);
     }
 
     public function test_portada_usa_tokens_y_no_colores_fijos_ni_consultas_en_la_vista(): void

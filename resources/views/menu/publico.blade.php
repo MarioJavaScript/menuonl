@@ -1,85 +1,89 @@
 <x-layout.publico
     :titulo="$restaurante->traduccion($idioma)->nombre.' — Menú Digital'"
+    :descripcion="$restaurante->traduccion($idioma)->descripcion"
     :lang="str_replace('_', '-', app()->getLocale())"
     html-class="scroll-smooth"
     class="menu-publico"
+    :tema="$restaurante->temaVigente()"
+    :acento="$restaurante->colorAcentoSeguro()"
+    :acento-texto="$restaurante->colorAcentoTexto()"
 >
         <!-- Cart Toast Notification -->
         <div id="cartToast" role="status" aria-live="polite" class="cart-toast" aria-atomic="true">
-            <span class="text-emerald-400 dark:text-emerald-700 font-bold" aria-hidden="true">✓</span>
+            <span class="text-acento font-bold" aria-hidden="true">✓</span>
             <span id="cartToastMessage">Agregado al pedido</span>
         </div>
 
         @php
             $puedePedir = $restaurante->pedidos_activos && $estaAbierto && filled($restaurante->whatsapp_pedidos);
+            $diaHoy = (int) now($restaurante->zona_horaria)->dayOfWeek;
+            $turnosHoy = $horarios->where('dia_semana', $diaHoy)->where('cerrado', false);
+            $tienePortada = filled($restaurante->portada);
         @endphp
 
-        <!-- Header -->
-        <header class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
-            @if (filled($restaurante->portada))
-                <img src="{{ Storage::url($restaurante->portada) }}" alt="" class="cover-img" width="768" height="192" fetchpriority="high" decoding="async">
+        <!-- Hero -->
+        <header class="hero {{ $tienePortada ? 'hero--con-portada' : '' }}">
+            @if ($tienePortada)
+                <div class="hero-media">
+                    <img src="{{ Storage::url($restaurante->portada) }}" alt="" width="1280" height="720" fetchpriority="high" decoding="async">
+                </div>
             @endif
 
-            <div class="container mx-auto px-4 pb-4">
-                <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-                    <div class="flex items-start gap-4">
-                        @if (filled($restaurante->logo))
-                            <img src="{{ Storage::url($restaurante->logo) }}" alt="" class="logo-img {{ filled($restaurante->portada) ? '-mt-10' : 'mt-4' }}" width="88" height="88" decoding="async">
-                        @endif
+            <div class="contenedor hero-contenido">
+                @if (filled($restaurante->logo))
+                    <img src="{{ Storage::url($restaurante->logo) }}" alt="" class="hero-logo" width="72" height="72" decoding="async">
+                @endif
 
-                        <div class="pt-3">
-                            <h1 class="text-2xl font-extrabold text-slate-900 dark:text-slate-50 leading-tight">
-                                {{ $restaurante->traduccion($idioma)->nombre }}
-                            </h1>
-                            @if ($restDesc = $restaurante->traduccion($idioma)->descripcion)
-                                <p class="text-slate-600 dark:text-slate-300 text-sm mt-1 max-w-xl">
-                                    {{ $restDesc }}
-                                </p>
-                            @endif
+                <span class="regla-acento" aria-hidden="true"></span>
+                <p class="hero-kicker">{{ filled($restaurante->eslogan) ? $restaurante->eslogan : 'Menú digital' }}</p>
+                <h1 class="hero-titulo">{{ $restaurante->traduccion($idioma)->nombre }}</h1>
+                @if ($restDesc = $restaurante->traduccion($idioma)->descripcion)
+                    <p class="hero-descripcion">{{ $restDesc }}</p>
+                @endif
 
-                            <div class="flex flex-wrap items-center gap-2 mt-2">
-                                @if ($estaAbierto)
-                                    <span class="badge-open">
-                                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" aria-hidden="true"></span>
-                                        Abierto ahora
-                                    </span>
-                                @else
-                                    <span class="badge-closed">
-                                        <span class="w-2 h-2 rounded-full bg-rose-500" aria-hidden="true"></span>
-                                        Cerrado
-                                    </span>
-                                @endif
+                <div class="hero-datos">
+                    @if ($estaAbierto)
+                        <span class="badge-open">
+                            <span class="w-2 h-2 rounded-full bg-current animate-pulse" aria-hidden="true"></span>
+                            Abierto ahora
+                        </span>
+                    @else
+                        <span class="badge-closed">
+                            <span class="w-2 h-2 rounded-full bg-current" aria-hidden="true"></span>
+                            Cerrado
+                        </span>
+                    @endif
 
-                                @php
-                                    $diaHoy = (int) now($restaurante->zona_horaria)->dayOfWeek;
-                                    $turnosHoy = $horarios->where('dia_semana', $diaHoy)->where('cerrado', false);
-                                @endphp
-                                @if ($turnosHoy->isNotEmpty())
-                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300" aria-label="Horario de atención hoy">
-                                        <span aria-hidden="true">🕒</span>
-                                        Hoy:
-                                        @foreach ($turnosHoy as $t)
-                                            {{ substr($t->abre, 0, 5) }} - {{ substr($t->cierra, 0, 5) }}@if (! $loop->last), @endif
-                                        @endforeach
-                                    </span>
-                                @endif
+                    @if ($turnosHoy->isNotEmpty())
+                        <span class="badge-mesa" aria-label="Horario de atención hoy">
+                            <span aria-hidden="true">🕒</span>
+                            Hoy:
+                            @foreach ($turnosHoy as $t)
+                                {{ substr($t->abre, 0, 5) }} - {{ substr($t->cierra, 0, 5) }}@if (! $loop->last), @endif
+                            @endforeach
+                        </span>
+                    @endif
 
-                                @if ($mesa)
-                                    <span class="badge-mesa" aria-label="Ubicación asignada: Mesa {{ $mesa }}">
-                                        Mesa {{ $mesa }}
-                                    </span>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
+                    @if ($mesa)
+                        <span class="badge-mesa" aria-label="Ubicación asignada: Mesa {{ $mesa }}">
+                            Mesa {{ $mesa }}
+                        </span>
+                    @endif
+                </div>
+
+                <div class="hero-acciones">
+                    <a href="#carta" class="btn-cta focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none">Ver la carta</a>
+                    @if ($horarios->isNotEmpty())
+                        <a href="#horarios" class="btn-cta-secundario focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none">Horarios</a>
+                    @endif
 
                     <!-- Language selector -->
                     @if (count($idiomasDisponibles) > 1)
-                        <nav class="flex items-center gap-1.5 self-start sm:self-end pb-1" aria-label="Selector de idioma">
+                        <nav class="idiomas sm:ml-auto" aria-label="Selector de idioma">
                             @foreach ($idiomasDisponibles as $langOption)
                                 <a
                                     href="{{ request()->fullUrlWithQuery(['lang' => $langOption]) }}"
-                                    class="min-h-[44px] min-w-[44px] px-3 py-2 rounded-lg text-xs font-bold uppercase transition-all inline-flex items-center justify-center focus-visible:ring-2 focus-visible:ring-slate-900 dark:focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:outline-none {{ $idioma === $langOption ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-950 shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700' }}"
+                                    class="idioma-link min-h-[44px] min-w-[44px] focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none"
                                     aria-current="{{ $idioma === $langOption ? 'page' : 'false' }}"
                                     aria-label="Cambiar idioma a {{ strtoupper($langOption) }}"
                                 >
@@ -92,8 +96,8 @@
 
                 <!-- Order eligibility warning banner -->
                 @if (! $puedePedir)
-                    <div role="status" aria-live="polite" class="mt-4 p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-xl text-amber-800 dark:text-amber-200 text-xs font-medium flex items-center gap-2">
-                        <svg class="w-5 h-5 flex-shrink-0 text-amber-600 dark:text-amber-400" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div role="status" aria-live="polite" class="aviso mt-5 max-w-2xl">
+                        <svg class="w-5 h-5 shrink-0 text-acento" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                         <span>
@@ -112,39 +116,37 @@
 
         <!-- Sticky Category Navigation Bar -->
         <nav class="sticky-nav" aria-label="Categorías del menú">
-            <div class="nav-scroller container mx-auto px-4 flex items-center gap-2 overflow-x-auto">
+            <div class="nav-scroller contenedor flex items-center overflow-x-auto">
                 @if ($destacados->isNotEmpty())
-                    <a href="#destacados" class="nav-pill min-h-[44px] inline-flex items-center px-4 focus-visible:ring-2 focus-visible:ring-slate-900 dark:focus-visible:ring-white focus-visible:outline-none"><span aria-hidden="true" class="mr-1">⭐</span> Destacados</a>
+                    <a href="#destacados" class="nav-pill min-h-[44px] focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none"><span aria-hidden="true" class="mr-1">⭐</span> Destacados</a>
                 @endif
 
                 @foreach ($categorias as $cat)
                     @php
                         $catNom = $cat->traduccion($idioma)?->nombre ?? $cat->traduccion()?->nombre ?? 'Categoría';
                     @endphp
-                    <a href="#cat-{{ $cat->id }}" class="nav-pill min-h-[44px] inline-flex items-center px-4 focus-visible:ring-2 focus-visible:ring-slate-900 dark:focus-visible:ring-white focus-visible:outline-none">{{ $catNom }}</a>
+                    <a href="#cat-{{ $cat->id }}" class="nav-pill min-h-[44px] focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none">{{ $catNom }}</a>
                 @endforeach
 
                 @if ($horarios->isNotEmpty())
-                    <a href="#horarios" class="nav-pill min-h-[44px] inline-flex items-center px-4 focus-visible:ring-2 focus-visible:ring-slate-900 dark:focus-visible:ring-white focus-visible:outline-none"><span aria-hidden="true" class="mr-1">🕒</span> Horarios</a>
+                    <a href="#horarios" class="nav-pill min-h-[44px] focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none"><span aria-hidden="true" class="mr-1">🕒</span> Horarios</a>
                 @endif
 
                 @if ($contactos->isNotEmpty())
-                    <a href="#contacto" class="nav-pill min-h-[44px] inline-flex items-center px-4 focus-visible:ring-2 focus-visible:ring-slate-900 dark:focus-visible:ring-white focus-visible:outline-none"><span aria-hidden="true" class="mr-1">📞</span> Contacto</a>
+                    <a href="#contacto" class="nav-pill min-h-[44px] focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none"><span aria-hidden="true" class="mr-1">📞</span> Contacto</a>
                 @endif
             </div>
         </nav>
 
         <!-- Main Content -->
-        <main class="container mx-auto px-4 py-6">
+        <main id="carta" class="contenedor py-8">
 
             <!-- Featured Section -->
             @if ($destacados->isNotEmpty())
-                <section id="destacados" class="mb-10 scroll-mt-20">
-                    <h2 class="text-xl font-extrabold text-slate-900 dark:text-slate-50 mb-4 flex items-center gap-2">
-                        <span aria-hidden="true">⭐</span> Platillos Recomendados
-                    </h2>
+                <section id="destacados" class="seccion">
+                    <h2 class="seccion-titulo">Platillos Recomendados</h2>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="platos">
                         @foreach ($destacados as $prod)
                             @include('menu.partials.dish-card', ['prod' => $prod, 'restaurante' => $restaurante, 'idioma' => $idioma, 'puedePedir' => $puedePedir])
                         @endforeach
@@ -158,18 +160,16 @@
                     $catNom = $cat->traduccion($idioma)?->nombre ?? $cat->traduccion()?->nombre ?? 'Categoría';
                     $catDesc = $cat->traduccion($idioma)?->descripcion ?? $cat->traduccion()?->descripcion;
                 @endphp
-                <section id="cat-{{ $cat->id }}" class="mb-10 scroll-mt-20">
-                    <div class="mb-4">
-                        <h2 class="text-xl font-extrabold text-slate-900 dark:text-slate-50">{{ $catNom }}</h2>
-                        @if ($catDesc)
-                            <p class="text-slate-600 dark:text-slate-300 text-xs mt-0.5">{{ $catDesc }}</p>
-                        @endif
-                    </div>
+                <section id="cat-{{ $cat->id }}" class="seccion">
+                    <h2 class="seccion-titulo">{{ $catNom }}</h2>
+                    @if ($catDesc)
+                        <p class="seccion-descripcion">{{ $catDesc }}</p>
+                    @endif
 
                     @if ($cat->productos->isEmpty())
-                        <p class="text-slate-500 dark:text-slate-400 text-xs italic">No hay platillos disponibles en esta categoría.</p>
+                        <p class="text-texto-suave text-sm italic mt-4">No hay platillos disponibles en esta categoría.</p>
                     @else
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="platos">
                             @foreach ($cat->productos as $prod)
                                 @include('menu.partials.dish-card', ['prod' => $prod, 'restaurante' => $restaurante, 'idioma' => $idioma, 'puedePedir' => $puedePedir])
                             @endforeach
@@ -180,80 +180,76 @@
 
             <!-- Weekly Schedule Table -->
             @if ($horarios->isNotEmpty())
-                <section id="horarios" class="mb-10 scroll-mt-20">
-                    <div class="card bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-700">
-                        <h2 class="text-lg font-bold text-slate-900 dark:text-slate-50 mb-3 flex items-center gap-2">
-                            <span aria-hidden="true">🕒</span> Horarios de Atención
-                        </h2>
-                        @php
-                            $dias = \App\Services\Catalogos::diasSemana();
-                            $horariosPorDia = $horarios->groupBy('dia_semana');
-                        @endphp
-                        <div class="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
-                            @foreach ($dias as $numDia => $nombreDia)
-                                @php
-                                    $turnos = $horariosPorDia->get($numDia);
-                                @endphp
-                                <div class="py-2 flex items-center justify-between">
-                                    <span class="font-medium text-slate-700 dark:text-slate-300">{{ $nombreDia }}</span>
-                                    <span class="text-slate-600 dark:text-slate-300">
-                                        @if ($turnos && $turnos->where('cerrado', false)->isNotEmpty())
-                                            @foreach ($turnos->where('cerrado', false) as $t)
-                                                <span class="inline-block ml-1">
-                                                    {{ substr($t->abre, 0, 5) }} - {{ substr($t->cierra, 0, 5) }}
-                                                </span>
-                                            @endforeach
-                                        @else
-                                            <span class="text-slate-500 dark:text-slate-400 font-normal">Cerrado</span>
-                                        @endif
-                                    </span>
-                                </div>
-                            @endforeach
-                        </div>
+                <section id="horarios" class="seccion">
+                    <h2 class="seccion-titulo">Horarios de Atención</h2>
+                    @php
+                        $dias = \App\Services\Catalogos::diasSemana();
+                        $horariosPorDia = $horarios->groupBy('dia_semana');
+                    @endphp
+                    <div class="mt-3 max-w-xl text-sm">
+                        @foreach ($dias as $numDia => $nombreDia)
+                            @php
+                                $turnos = $horariosPorDia->get($numDia);
+                            @endphp
+                            <div class="py-2.5 flex items-center justify-between border-b divisor {{ $numDia === $diaHoy ? 'font-bold text-texto-fuerte' : 'text-texto-medio' }}">
+                                <span>{{ $nombreDia }}</span>
+                                <span>
+                                    @if ($turnos && $turnos->where('cerrado', false)->isNotEmpty())
+                                        @foreach ($turnos->where('cerrado', false) as $t)
+                                            <span class="inline-block ml-1">
+                                                {{ substr($t->abre, 0, 5) }} - {{ substr($t->cierra, 0, 5) }}
+                                            </span>
+                                        @endforeach
+                                    @else
+                                        <span class="text-texto-suave font-normal">Cerrado</span>
+                                    @endif
+                                </span>
+                            </div>
+                        @endforeach
                     </div>
                 </section>
             @endif
 
             <!-- Safe Contacts Section -->
             @if ($contactos->isNotEmpty())
-                <section id="contacto" class="mb-10 scroll-mt-20">
-                    <div class="card bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-700">
-                        <h2 class="text-lg font-bold text-slate-900 dark:text-slate-50 mb-3 flex items-center gap-2">
-                            <span aria-hidden="true">📞</span> Contacto y Ubicación
-                        </h2>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-                            @foreach ($contactos as $contacto)
-                                @php
-                                    $href = match ($contacto->tipo) {
-                                        'telefono' => str_starts_with($contacto->valor, 'tel:') ? $contacto->valor : 'tel:' . preg_replace('/[^0-9+]/', '', $contacto->valor),
-                                        'whatsapp' => 'https://wa.me/' . preg_replace('/[^0-9]/', '', $contacto->valor),
-                                        'email' => str_starts_with($contacto->valor, 'mailto:') ? $contacto->valor : 'mailto:' . $contacto->valor,
-                                        default => (str_starts_with($contacto->valor, 'http://') || str_starts_with($contacto->valor, 'https://')) ? $contacto->valor : 'https://' . $contacto->valor,
-                                    };
-                                @endphp
-                                <a
-                                    href="{{ $href }}"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    class="min-h-[44px] p-2.5 rounded-lg border border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-500 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center justify-between text-slate-700 dark:text-slate-300 focus-visible:ring-2 focus-visible:ring-slate-900 dark:focus-visible:ring-white focus-visible:outline-none"
-                                >
-                                    <span class="font-medium text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">{{ $contacto->etiqueta ?: (\App\Services\Catalogos::tiposContacto()[$contacto->tipo] ?? $contacto->tipo) }}</span>
-                                    <span class="font-semibold text-slate-900 dark:text-slate-50 text-xs truncate max-w-[200px]">{{ $contacto->valor }}</span>
-                                </a>
-                            @endforeach
-                        </div>
+                <section id="contacto" class="seccion">
+                    <h2 class="seccion-titulo">Contacto y Ubicación</h2>
+                    <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                        @foreach ($contactos as $contacto)
+                            @php
+                                $href = match ($contacto->tipo) {
+                                    'telefono' => str_starts_with($contacto->valor, 'tel:') ? $contacto->valor : 'tel:' . preg_replace('/[^0-9+]/', '', $contacto->valor),
+                                    'whatsapp' => 'https://wa.me/' . preg_replace('/[^0-9]/', '', $contacto->valor),
+                                    'email' => str_starts_with($contacto->valor, 'mailto:') ? $contacto->valor : 'mailto:' . $contacto->valor,
+                                    default => (str_starts_with($contacto->valor, 'http://') || str_starts_with($contacto->valor, 'https://')) ? $contacto->valor : 'https://' . $contacto->valor,
+                                };
+                            @endphp
+                            <a
+                                href="{{ $href }}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="min-h-[44px] px-4 py-2.5 rounded-lg border border-borde hover:border-acento bg-superficie transition-colors flex items-center justify-between gap-3 text-texto-medio focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none"
+                            >
+                                <span class="font-medium text-xs uppercase tracking-wider text-texto-suave">{{ $contacto->etiqueta ?: (\App\Services\Catalogos::tiposContacto()[$contacto->tipo] ?? $contacto->tipo) }}</span>
+                                <span class="font-semibold text-texto-fuerte text-sm truncate max-w-[200px]">{{ $contacto->valor }}</span>
+                            </a>
+                        @endforeach
                     </div>
                 </section>
             @endif
 
         </main>
 
+        <footer class="pie-publico">
+            <p>{{ $restaurante->traduccion($idioma)->nombre }} · Menú digital con MENUONL</p>
+        </footer>
+
         <!-- Floating Cart Bar (Enabled only if $puedePedir) -->
         @if ($puedePedir)
             <button
                 type="button"
                 id="floatingCartBar"
-                class="floating-cart-bar w-full focus-visible:ring-2 focus-visible:ring-slate-900 dark:focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:outline-none"
+                class="floating-cart-bar w-full focus-visible:ring-2 focus-visible:ring-foco focus-visible:ring-offset-2 focus-visible:outline-none"
                 style="display: none;"
                 onclick="openCartModal()"
                 aria-haspopup="dialog"
@@ -262,7 +258,7 @@
                 aria-label="Ver mi pedido"
             >
                 <div class="flex items-center gap-3">
-                    <span id="cartCountBadge" class="bg-emerald-700 text-white font-extrabold text-xs px-2.5 py-1 rounded-full min-w-[24px] text-center">
+                    <span id="cartCountBadge" class="bg-acento-texto text-acento font-extrabold text-xs px-2.5 py-1 rounded-full min-w-[24px] text-center">
                         0
                     </span>
                     <span class="font-bold text-sm">Ver mi pedido</span>
@@ -282,17 +278,17 @@
                 aria-labelledby="cartDrawerTitle"
             >
                 <div class="cart-drawer" onclick="event.stopPropagation()">
-                    <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
+                    <div class="flex items-center justify-between pb-3 border-b divisor mb-4">
                         <div class="flex items-center gap-2">
                             <span class="text-xl" aria-hidden="true">🛒</span>
-                            <h3 id="cartDrawerTitle" class="text-lg font-bold text-slate-900 dark:text-slate-50">Tu Pedido</h3>
+                            <h3 id="cartDrawerTitle" class="text-lg font-bold text-texto-fuerte" style="font-family: var(--mo-fuente-titulo)">Tu Pedido</h3>
                         </div>
                         <div class="flex items-center gap-2">
                             <button
                                 type="button"
                                 id="btnVaciarCarrito"
                                 onclick="cartConfirmarVaciar()"
-                                class="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/40 min-h-[44px] px-3 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-rose-600 focus-visible:outline-none"
+                                class="btn-texto focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none"
                                 aria-label="Vaciar todo el pedido"
                             >
                                 Vaciar pedido
@@ -301,7 +297,7 @@
                                 type="button"
                                 id="btnCloseCartModal"
                                 onclick="closeCartModal()"
-                                class="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center transition-colors focus-visible:ring-2 focus-visible:ring-slate-900 dark:focus-visible:ring-white focus-visible:outline-none"
+                                class="btn-icono min-w-[44px] min-h-[44px] focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none"
                                 aria-label="Cerrar pedido"
                             >
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -312,20 +308,20 @@
                     </div>
 
                     <!-- Inline Confirmation Banner for Vaciar Pedido (initially hidden) -->
-                    <div id="vaciarConfirmBanner" class="hidden mb-4 p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-xl text-rose-900 dark:text-rose-200 text-xs sm:text-sm">
+                    <div id="vaciarConfirmBanner" class="hidden mb-4 aviso aviso-peligro flex-col">
                         <p class="font-semibold mb-2">¿Seguro que deseas vaciar todos los platillos de tu pedido?</p>
                         <div class="flex items-center gap-2">
                             <button
                                 type="button"
                                 onclick="cartEjecutarVaciar()"
-                                class="btn-peligro focus-visible:ring-2 focus-visible:ring-rose-700 focus-visible:outline-none"
+                                class="btn-peligro focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none"
                             >
                                 Sí, vaciar
                             </button>
                             <button
                                 type="button"
                                 onclick="cartCancelarVaciar()"
-                                class="btn-neutro focus-visible:ring-2 focus-visible:ring-slate-900 dark:focus-visible:ring-white focus-visible:outline-none"
+                                class="btn-neutro focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none"
                             >
                                 Cancelar
                             </button>
@@ -333,23 +329,23 @@
                     </div>
 
                     <!-- Confirmation shown after handing the order to WhatsApp -->
-                    <div id="pedidoEnviadoBanner" class="hidden mb-4 p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 rounded-xl text-emerald-900 dark:text-emerald-200 text-sm" role="status" tabindex="-1">
+                    <div id="pedidoEnviadoBanner" class="hidden mb-4 aviso aviso-exito flex-col" role="status" tabindex="-1">
                         <p class="font-semibold mb-2">Abrimos WhatsApp con tu pedido. Envíalo desde ahí para que llegue al restaurante.</p>
                         <div class="flex flex-wrap items-center gap-2">
-                            <button type="button" onclick="cartPedidoEnviado(true)" class="btn-primario focus-visible:ring-2 focus-visible:ring-slate-900 dark:focus-visible:ring-white focus-visible:outline-none">Ya lo envié, vaciar pedido</button>
-                            <button type="button" onclick="cartPedidoEnviado(false)" class="btn-neutro focus-visible:ring-2 focus-visible:ring-slate-900 dark:focus-visible:ring-white focus-visible:outline-none">Conservar pedido</button>
+                            <button type="button" onclick="cartPedidoEnviado(true)" class="btn-primario focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none">Ya lo envié, vaciar pedido</button>
+                            <button type="button" onclick="cartPedidoEnviado(false)" class="btn-neutro focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none">Conservar pedido</button>
                         </div>
                     </div>
 
                     <!-- Cart items list -->
-                    <div id="cartItemsContainer" class="divide-y divide-slate-100 dark:divide-slate-800 mb-4">
+                    <div id="cartItemsContainer" class="mb-4">
                         <!-- Rendered dynamically by JS -->
                     </div>
 
                     <!-- Table & Notes Form -->
-                    <div class="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                    <div class="space-y-3 pt-3">
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1" for="inputMesa">
+                            <label class="etiqueta-campo" for="inputMesa">
                                 Mesa / Ubicación:
                             </label>
                             <input
@@ -357,24 +353,24 @@
                                 id="inputMesa"
                                 value="{{ $mesa ?? '' }}"
                                 placeholder="Ej. Mesa 4 o Para llevar"
-                                class="w-full text-base px-3 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white"
+                                class="campo"
                             />
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1" for="inputNotasGenerales">
+                            <label class="etiqueta-campo" for="inputNotasGenerales">
                                 Nota general para la cocina:
                             </label>
                             <textarea
                                 id="inputNotasGenerales"
                                 rows="2"
                                 placeholder="Indicaciones especiales, cubiertos, etc."
-                                class="w-full text-base px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white"
+                                class="campo"
                             ></textarea>
                         </div>
 
                         <!-- Summary -->
-                        <div class="flex items-center justify-between text-base font-extrabold text-slate-900 dark:text-slate-50 pt-2">
+                        <div class="flex items-center justify-between text-base font-extrabold text-texto-fuerte pt-2">
                             <span>Total:</span>
                             <span id="modalCartTotal">{{ \App\Services\FormatoMoneda::formatear(0, $restaurante->moneda, $idioma) }}</span>
                         </div>
@@ -384,10 +380,10 @@
                             type="button"
                             id="btnEnviarWhatsApp"
                             onclick="enviarPedidoWhatsApp()"
-                            class="btn-whatsapp w-full min-h-[48px] py-3 px-4 text-sm shadow-lg focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2 focus-visible:outline-none"
+                            class="btn-whatsapp w-full min-h-[48px] py-3 px-4 text-sm shadow-lg focus-visible:ring-2 focus-visible:ring-foco focus-visible:ring-offset-2 focus-visible:outline-none"
                         >
                             <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.187-2.59-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.06-2.155-.544-1.631-.674-2.732-2.317-2.825-2.433-.092-.116-.694-.925-.694-1.765 0-.84.44-1.254.597-1.428.156-.173.344-.216.459-.216.115 0 .23.001.33.006.106.005.25.04.39.376.144.348.49 1.198.533 1.285.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.353.101.174.45 1.743 1.968 2.091.246.056.442.062.607-.021.165-.084.536-.622.68-.838.144-.217.288-.174.483-.102.195.072 1.241.586 1.455.693.214.108.358.161.41.25.053.089.053.518-.091.923z"/>
+                                <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.187-2.59-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.06-2.155-.544-1.631-.674-2.732-2.317-2.825-2.433-.092-.116-.694-.925-.694-1.765 0-.84.44-1.254.597-1.428.156-.173.344-.216.459-.216.115 0 .23.001.33.006.106.005.25-.04.39.376.144.348.49 1.198.533 1.285.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.353.101.174.45 1.743 1.968 2.091.246.056.442.062.607-.021.165-.084.536-.622.68-.838.144-.217.288-.174.483-.102.195.072 1.241.586 1.455.693.214.108.358.161.41.25.053.089.053.518-.091.923z"/>
                             </svg>
                             <span>Enviar Pedido por WhatsApp</span>
                         </button>
@@ -395,7 +391,6 @@
                 </div>
             </div>
         @endif
-
 
         <!-- Client-Side Cart Script (Isolated under localStorage menuonl_cart_{slug}) -->
         <script>
@@ -668,20 +663,20 @@
                         const activo = document.activeElement;
                         const claveFoco = activo && itemsContainer.contains(activo) ? activo.dataset.qty : null;
                         if (cart.length === 0) {
-                            itemsContainer.innerHTML = '<p class="py-6 text-center text-slate-500 dark:text-slate-400 text-sm">Tu carrito está vacío.</p>';
+                            itemsContainer.innerHTML = '<p class="py-6 text-center text-texto-suave text-sm">Tu carrito está vacío.</p>';
                         } else {
                             let html = '';
                             cart.forEach((item, idx) => {
                                 const cantidad = parseInt(item.cantidad, 10) || 0;
                                 const precio = Number(item.precio) || 0;
-                                const vName = item.variante_nombre ? `<span class="text-xs text-slate-500 dark:text-slate-400 font-normal">(${escapeHtml(item.variante_nombre)})</span>` : '';
+                                const vName = item.variante_nombre ? `<span class="text-xs text-texto-suave font-normal">(${escapeHtml(item.variante_nombre)})</span>` : '';
                                 const itemNombreEsc = escapeHtml(item.nombre);
                                 html += `
-                                    <div class="py-3">
+                                    <div class="py-3 border-b divisor">
                                         <div class="flex items-center justify-between">
                                             <div>
-                                                <h4 class="text-sm font-bold text-slate-900 dark:text-slate-50">${itemNombreEsc} ${vName}</h4>
-                                                <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">${fmt(precio * cantidad)}</span>
+                                                <h4 class="text-sm font-bold text-texto-fuerte">${itemNombreEsc} ${vName}</h4>
+                                                <span class="text-xs font-semibold text-texto-medio">${fmt(precio * cantidad)}</span>
                                             </div>
                                             <div class="flex items-center gap-2">
                                                 <button
@@ -689,17 +684,17 @@
                                                     onclick="cartUpdateQty(${idx}, -1)"
                                                     data-qty="${idx}:-1"
                                                     aria-label="Disminuir cantidad de ${itemNombreEsc}"
-                                                    class="w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 font-extrabold flex items-center justify-center text-base focus-visible:ring-2 focus-visible:ring-slate-900 dark:focus-visible:ring-white focus-visible:outline-none"
+                                                    class="btn-cant min-w-[44px] min-h-[44px]"
                                                 >
                                                     <span aria-hidden="true">-</span>
                                                 </button>
-                                                <span class="text-sm font-extrabold text-slate-900 dark:text-slate-50 px-2 min-w-[24px] text-center"><span class="sr-only">Cantidad: </span>${cantidad}</span>
+                                                <span class="text-sm font-extrabold text-texto-fuerte px-2 min-w-[24px] text-center"><span class="sr-only">Cantidad: </span>${cantidad}</span>
                                                 <button
                                                     type="button"
                                                     onclick="cartUpdateQty(${idx}, 1)"
                                                     data-qty="${idx}:1"
                                                     aria-label="Aumentar cantidad de ${itemNombreEsc}"
-                                                    class="w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 font-extrabold flex items-center justify-center text-base focus-visible:ring-2 focus-visible:ring-slate-900 dark:focus-visible:ring-white focus-visible:outline-none"
+                                                    class="btn-cant min-w-[44px] min-h-[44px]"
                                                 >
                                                     <span aria-hidden="true">+</span>
                                                 </button>
@@ -713,7 +708,7 @@
                                                 value="${item.notas ? escapeHtml(item.notas) : ''}"
                                                 oninput="cartUpdateItemNotes(${idx}, this.value)"
                                                 onchange="cartUpdateItemNotes(${idx}, this.value)"
-                                                class="w-full text-base px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white"
+                                                class="campo"
                                             />
                                         </div>
                                     </div>

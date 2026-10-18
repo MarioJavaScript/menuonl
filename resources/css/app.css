@@ -30,4 +30,8 @@
     --color-peligro: var(--mo-peligro);
     --color-peligro-texto: var(--mo-peligro-texto);
     --color-foco: var(--mo-foco);
+    --color-acento: var(--mo-acento);
+    --color-acento-texto: var(--mo-acento-texto);
+    --color-oferta: var(--mo-oferta);
+    --font-titulo: var(--mo-fuente-titulo);
 }

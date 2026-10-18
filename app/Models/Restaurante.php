@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\Catalogos;
 use App\Traits\Auditable;
 use App\Traits\ProtegeImagenesDelRestaurante;
 use Carbon\Carbon;
@@ -29,14 +30,18 @@ class Restaurante extends Model implements HasName
         'pedidos_activos' => false,
         'mostrar_agotados' => true,
         'estado' => 'activo',
+        'tema' => 'calido',
     ];
 
     protected $fillable = [
         'nombre',
         'slug',
         'descripcion',
+        'eslogan',
         'logo',
         'portada',
+        'tema',
+        'color_acento',
         'moneda',
         'idioma_default',
         'zona_horaria',
@@ -67,6 +72,43 @@ class Restaurante extends Model implements HasName
             'pedidos_activos' => 'boolean',
             'mostrar_agotados' => 'boolean',
         ];
+    }
+
+    /**
+     * Tema vigente de la página pública; cualquier valor desconocido cae al tema por defecto.
+     */
+    public function temaVigente(): string
+    {
+        return array_key_exists((string) $this->tema, Catalogos::temas()) ? (string) $this->tema : 'calido';
+    }
+
+    /**
+     * Color de acento listo para imprimir en un atributo style: solo hex de 6 dígitos, nunca texto libre.
+     */
+    public function colorAcentoSeguro(): ?string
+    {
+        return preg_match('/\A#[0-9a-fA-F]{6}\z/', (string) $this->color_acento) === 1 ? (string) $this->color_acento : null;
+    }
+
+    /**
+     * Color de texto legible sobre el acento personalizado (blanco u oscuro según su luminosidad).
+     */
+    public function colorAcentoTexto(): ?string
+    {
+        $hex = $this->colorAcentoSeguro();
+
+        if ($hex === null) {
+            return null;
+        }
+
+        [$r, $g, $b] = array_map(
+            fn (string $par): float => hexdec($par) / 255,
+            str_split(ltrim($hex, '#'), 2)
+        );
+        $lineal = fn (float $c): float => $c <= 0.03928 ? $c / 12.92 : (($c + 0.055) / 1.055) ** 2.4;
+        $luminancia = 0.2126 * $lineal($r) + 0.7152 * $lineal($g) + 0.0722 * $lineal($b);
+
+        return $luminancia > 0.4 ? '#17171e' : '#ffffff';
     }
 
     /**
