@@ -4,6 +4,41 @@
 @source '../../storage/framework/views/*.php';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif,
+        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+
+    /* Tokens del menú público: una sola fuente de verdad para color y forma. */
+    --color-accion: #0f172a;
+    --color-accion-hover: #1e293b;
+    --color-whatsapp: #047857;
+    --color-whatsapp-hover: #065f46;
+    --color-peligro: #be123c;
+    --radius-control: 0.75rem;
+}
+
+/* Variantes de botón compartidas por tarjetas, carrito y avisos. */
+@layer components {
+    .btn-primario,
+    .btn-whatsapp,
+    .btn-peligro,
+    .btn-neutro {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        min-height: 44px;
+        min-width: 44px;
+        padding: 0.5rem 1rem;
+        border-radius: var(--radius-control);
+        font-weight: 700;
+        transition: background-color 0.15s, transform 0.1s;
+    }
+    .btn-primario { background-color: var(--color-accion); color: #fff; }
+    .btn-primario:hover { background-color: var(--color-accion-hover); }
+    .btn-whatsapp { background-color: var(--color-whatsapp); color: #fff; }
+    .btn-whatsapp:hover { background-color: var(--color-whatsapp-hover); }
+    .btn-peligro { background-color: var(--color-peligro); color: #fff; }
+    .btn-neutro { background-color: #f1f5f9; color: #1e293b; }
+    .btn-neutro:hover { background-color: #e2e8f0; }
+    .btn-whatsapp:disabled { opacity: 0.5; cursor: not-allowed; }
 }

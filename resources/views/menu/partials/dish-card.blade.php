@@ -2,11 +2,12 @@
     $prodNom = $prod->traduccion($idioma)?->nombre ?? $prod->traduccion()?->nombre ?? 'Platillo';
     $prodDesc = $prod->traduccion($idioma)?->descripcion ?? $prod->traduccion()?->descripcion;
     $esDestacado = (bool) ($prod->destacado ?? false);
+    $fmt = fn ($v) => \App\Services\FormatoMoneda::formatear($v, $restaurante->moneda, $idioma);
 @endphp
 
 <article class="card flex flex-col justify-between transition-shadow hover:shadow-md relative overflow-hidden" aria-labelledby="dish-title-{{ $prod->id }}">
     @if ($esDestacado)
-        <div class="inline-flex items-center gap-1 self-start mb-2 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-200" aria-label="Platillo recomendado">
+        <div class="inline-flex items-center gap-1 self-start mb-2 px-2.5 py-0.5 rounded-full text-xs font-extrabold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-200" aria-label="Platillo recomendado">
             <span aria-hidden="true">⭐</span> Recomendado
         </div>
     @endif
@@ -20,23 +21,23 @@
                 @endif
 
                 @if ($prod->etiquetas->isNotEmpty())
-                    <div class="flex flex-wrap gap-1 mt-2.5" role="list" aria-label="Etiquetas dietéticas de {{ $prodNom }}">
+                    <ul class="flex flex-wrap gap-1 mt-2.5 list-none" aria-label="Etiquetas dietéticas de {{ $prodNom }}">
                         @foreach ($prod->etiquetas as $etiqueta)
-                            <span class="tag inline-flex items-center text-[11px] font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200/60" role="listitem">#{{ $etiqueta->codigo }}</span>
+                            <li class="tag inline-flex items-center text-xs font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200/60">#{{ $etiqueta->codigo }}</li>
                         @endforeach
-                    </div>
+                    </ul>
                 @endif
             </div>
 
             @if (filled($prod->imagen))
-                <img src="{{ Storage::url($prod->imagen) }}" alt="{{ $prodNom }}" loading="lazy" class="dish-img w-20 h-20 sm:w-24 sm:h-24 rounded-xl object-cover shrink-0 bg-slate-100 border border-slate-100 shadow-xs">
+                <img src="{{ Storage::url($prod->imagen) }}" alt="" loading="lazy" width="96" height="96" class="dish-img w-20 h-20 sm:w-24 sm:h-24 rounded-xl object-cover shrink-0 bg-slate-100 border border-slate-100 shadow-xs">
             @endif
         </div>
 
         <!-- Variants presentation if present -->
         @if ($prod->tieneVariantes())
             <div class="mt-3 pt-3 border-t border-slate-100 space-y-2">
-                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-600 block">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-600 block">
                     Opciones disponibles:
                 </span>
                 @foreach ($prod->variantes as $variante)
@@ -46,7 +47,7 @@
                     <div class="flex items-center justify-between text-xs sm:text-sm py-1.5 px-2 rounded-lg hover:bg-slate-50 transition-colors">
                         <span class="font-medium text-slate-700">{{ $varNom }}</span>
                         <div class="flex items-center gap-2">
-                            <span class="font-bold text-slate-900">${{ number_format((float)$variante->precio, 2) }} {{ $restaurante->moneda }}</span>
+                            <span class="font-bold text-slate-900">{{ $fmt($variante->precio) }}</span>
                             @if ($puedePedir)
                                 @if ($variante->disponible)
                                     <button
@@ -64,7 +65,7 @@
                                         <span aria-hidden="true" class="text-sm font-bold">+</span>
                                     </button>
                                 @else
-                                    <span class="text-rose-700 bg-rose-50 border border-rose-200 px-2 py-1 rounded text-[11px] font-bold uppercase" aria-label="{{ $varNom }} agotado">Agotado</span>
+                                    <span class="text-rose-700 bg-rose-50 border border-rose-200 px-2 py-1 rounded text-xs font-bold uppercase" aria-label="{{ $varNom }} agotado">Agotado</span>
                                 @endif
                             @endif
                         </div>
@@ -80,15 +81,15 @@
             <div class="flex items-center flex-wrap gap-1.5">
                 @if ($prod->precio_oferta !== null && (float)$prod->precio_oferta < (float)$prod->precio)
                     <span class="sr-only">Precio original:</span>
-                    <span class="dish-price-old">${{ number_format((float)$prod->precio, 2) }}</span>
+                    <span class="dish-price-old">{{ $fmt($prod->precio) }}</span>
                     <span class="sr-only">Precio de oferta:</span>
-                    <span class="dish-price-offer">${{ number_format((float)$prod->precio_oferta, 2) }} {{ $restaurante->moneda }}</span>
+                    <span class="dish-price-offer">{{ $fmt($prod->precio_oferta) }}</span>
                 @else
-                    <span class="dish-price">${{ number_format((float)$prod->precio, 2) }} {{ $restaurante->moneda }}</span>
+                    <span class="dish-price">{{ $fmt($prod->precio) }}</span>
                 @endif
 
                 @if (! $prod->disponible)
-                    <span class="ml-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800 uppercase">
+                    <span class="ml-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800 uppercase">
                         Agotado
                     </span>
                 @endif

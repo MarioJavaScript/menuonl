@@ -249,8 +249,8 @@ class UxUiAccesibilidadTest extends TestCase
         $response->assertSee('Mesa 7');
 
         // Etiquetas dietéticas con semántica de lista accesible
-        $response->assertSee('role="list"', false);
-        $response->assertSee('role="listitem"', false);
+        $response->assertSee('<ul class="flex flex-wrap gap-1 mt-2.5 list-none" aria-label="Etiquetas dietéticas', false);
+        $response->assertSee('<li class="tag', false);
 
         // Insignia accesible para platillo recomendado
         $response->assertSee('Recomendado');
