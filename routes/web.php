@@ -1,11 +1,10 @@
 <?php
 
 use App\Http\Controllers\InvitacionAceptarController;
+use App\Http\Controllers\PortadaController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', PortadaController::class)->name('portada');
 
 // Invitations (Mitad A). /m and /q belong to Mitad B.
 Route::middleware('throttle:invitaciones')->prefix('invitaciones')->group(function (): void {

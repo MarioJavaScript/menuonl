@@ -1,0 +1,352 @@
+/*
+ * MENUONL: tokens y componentes compartidos por las páginas públicas.
+ * Es una hoja estática (cacheable por el navegador) que funciona con o sin build de Vite.
+ * Las capas se declaran aquí primero para que las utilidades de Tailwind siempre ganen.
+ */
+@layer theme, base, components, utilities;
+
+@layer base {
+    :root {
+        --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+        /* Color: superficies y texto */
+        --mo-fondo: #f8fafc;
+        --mo-superficie: #ffffff;
+        --mo-superficie-2: #f1f5f9;
+        --mo-borde: #e2e8f0;
+        --mo-texto: #1e293b;
+        --mo-texto-fuerte: #0f172a;
+        --mo-texto-medio: #475569;
+        --mo-texto-suave: #64748b;
+
+        /* Color: acciones y estados */
+        --mo-accion: #0f172a;
+        --mo-accion-hover: #1e293b;
+        --mo-accion-texto: #ffffff;
+        --mo-foco: #0f172a;
+        --mo-whatsapp: #047857;
+        --mo-whatsapp-hover: #065f46;
+        --mo-peligro: #be123c;
+        --mo-peligro-texto: #be123c;
+        --mo-oferta: #be123c;
+        --mo-abierto-fondo: #dcfce7;
+        --mo-abierto-texto: #15803d;
+        --mo-cerrado-fondo: #fee2e2;
+        --mo-cerrado-texto: #b91c1c;
+        --mo-mesa-fondo: #e0e7ff;
+        --mo-mesa-texto: #3730a3;
+        --mo-desactivado-fondo: #e2e8f0;
+        --mo-desactivado-texto: #475569;
+        --mo-velo: rgba(15, 23, 42, 0.6);
+
+        /* Forma, elevación y movimiento */
+        --mo-radio-control: 0.75rem;
+        --mo-radio-tarjeta: 1rem;
+        --mo-radio-hoja: 1.5rem;
+        --mo-sombra-suave: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+        --mo-sombra-flotante: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        --mo-duracion: 0.15s;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --mo-fondo: #020617;
+            --mo-superficie: #0f172a;
+            --mo-superficie-2: #1e293b;
+            --mo-borde: #334155;
+            --mo-texto: #e2e8f0;
+            --mo-texto-fuerte: #f8fafc;
+            --mo-texto-medio: #cbd5e1;
+            --mo-texto-suave: #94a3b8;
+
+            --mo-accion: #f8fafc;
+            --mo-accion-hover: #e2e8f0;
+            --mo-accion-texto: #0f172a;
+            --mo-foco: #f8fafc;
+            --mo-peligro-texto: #fda4af;
+            --mo-oferta: #fda4af;
+            --mo-abierto-fondo: #052e16;
+            --mo-abierto-texto: #86efac;
+            --mo-cerrado-fondo: #450a0a;
+            --mo-cerrado-texto: #fca5a5;
+            --mo-mesa-fondo: #1e1b4b;
+            --mo-mesa-texto: #c7d2fe;
+            --mo-desactivado-fondo: #1e293b;
+            --mo-desactivado-texto: #94a3b8;
+            --mo-velo: rgba(2, 6, 23, 0.75);
+            --mo-sombra-suave: 0 1px 3px 0 rgba(0, 0, 0, 0.4);
+            color-scheme: dark;
+        }
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+        margin: 0;
+        font-family: var(--font-sans);
+        background-color: var(--mo-fondo);
+        color: var(--mo-texto);
+        line-height: 1.5;
+    }
+    :focus-visible {
+        outline: 2px solid var(--mo-foco);
+        outline-offset: 2px;
+    }
+}
+
+@layer components {
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border-width: 0;
+    }
+
+    /* Botones compartidos por tarjetas, carrito, avisos y páginas de acceso */
+    .btn-primario,
+    .btn-whatsapp,
+    .btn-peligro,
+    .btn-neutro {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        min-height: 44px;
+        min-width: 44px;
+        padding: 0.5rem 1rem;
+        border: 0;
+        border-radius: var(--mo-radio-control);
+        font-weight: 700;
+        font-family: inherit;
+        text-decoration: none;
+        cursor: pointer;
+        transition: background-color var(--mo-duracion), transform 0.1s;
+    }
+    .btn-primario { background-color: var(--mo-accion); color: var(--mo-accion-texto); }
+    .btn-primario:hover { background-color: var(--mo-accion-hover); }
+    .btn-whatsapp { background-color: var(--mo-whatsapp); color: #fff; }
+    .btn-whatsapp:hover { background-color: var(--mo-whatsapp-hover); }
+    .btn-peligro { background-color: var(--mo-peligro); color: #fff; }
+    .btn-neutro { background-color: var(--mo-superficie-2); color: var(--mo-texto); }
+    .btn-neutro:hover { background-color: var(--mo-borde); }
+    .btn-primario:active,
+    .btn-whatsapp:active,
+    .btn-peligro:active { transform: scale(0.98); }
+    .btn-whatsapp:disabled,
+    .btn-primario:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* Tarjeta y piezas del menú público */
+    .container {
+        max-width: 48rem;
+        margin-left: auto;
+        margin-right: auto;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    .menu-publico { padding-bottom: 6rem; }
+    .cover-img {
+        width: 100%;
+        height: 12rem;
+        object-fit: cover;
+        background-color: var(--mo-borde);
+    }
+    .logo-img {
+        width: 5.5rem;
+        height: 5.5rem;
+        border-radius: var(--mo-radio-tarjeta);
+        border: 4px solid var(--mo-superficie);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        object-fit: cover;
+        background-color: var(--mo-superficie);
+    }
+    .badge-open,
+    .badge-closed,
+    .badge-mesa {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.25rem 0.65rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+    .badge-open { background-color: var(--mo-abierto-fondo); color: var(--mo-abierto-texto); }
+    .badge-closed { background-color: var(--mo-cerrado-fondo); color: var(--mo-cerrado-texto); }
+    .badge-mesa { background-color: var(--mo-mesa-fondo); color: var(--mo-mesa-texto); }
+
+    .sticky-nav {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        background-color: color-mix(in srgb, var(--mo-superficie) 95%, transparent);
+        backdrop-filter: blur(8px);
+        border-bottom: 1px solid var(--mo-borde);
+        padding: 0.75rem 0;
+        overflow-x: auto;
+        white-space: nowrap;
+        scrollbar-width: none;
+    }
+    .sticky-nav::-webkit-scrollbar { display: none; }
+    .nav-scroller {
+        scrollbar-width: none;
+        -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 1.75rem), transparent);
+        mask-image: linear-gradient(to right, #000 calc(100% - 1.75rem), transparent);
+    }
+    .nav-scroller::-webkit-scrollbar { display: none; }
+    .nav-pill {
+        display: inline-block;
+        padding: 0.4rem 0.85rem;
+        border-radius: 9999px;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: var(--mo-texto-medio);
+        text-decoration: none;
+        margin-right: 0.5rem;
+        background-color: var(--mo-superficie-2);
+        transition: background-color var(--mo-duracion), color var(--mo-duracion);
+    }
+    .nav-pill[aria-current="true"],
+    .nav-pill:hover,
+    .nav-pill:focus {
+        background-color: var(--mo-accion);
+        color: var(--mo-accion-texto);
+    }
+
+    .card {
+        background: var(--mo-superficie);
+        border-radius: var(--mo-radio-tarjeta);
+        border: 1px solid var(--mo-borde);
+        padding: 1.25rem;
+        box-shadow: var(--mo-sombra-suave);
+        margin-bottom: 1rem;
+    }
+    .dish-img {
+        width: 5.5rem;
+        height: 5.5rem;
+        border-radius: var(--mo-radio-control);
+        object-fit: cover;
+        flex-shrink: 0;
+    }
+    .dish-title { font-size: 1rem; font-weight: 700; color: var(--mo-texto-fuerte); }
+    .dish-desc { font-size: 0.8125rem; color: var(--mo-texto-suave); margin-top: 0.25rem; line-height: 1.4; }
+    .dish-price { font-size: 0.9375rem; font-weight: 700; color: var(--mo-texto-fuerte); }
+    .dish-price-old { font-size: 0.8125rem; color: var(--mo-texto-suave); text-decoration: line-through; margin-right: 0.35rem; }
+    .dish-price-offer { font-size: 0.9375rem; font-weight: 700; color: var(--mo-oferta); }
+    .tag {
+        display: inline-block;
+        padding: 0.15rem 0.5rem;
+        border-radius: 0.375rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        background-color: var(--mo-superficie-2);
+        color: var(--mo-texto-medio);
+        margin-right: 0.25rem;
+        margin-top: 0.35rem;
+    }
+    .btn-cart-add {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.35rem;
+        min-height: 44px;
+        min-width: 44px;
+        padding: 0.5rem 1rem;
+        border-radius: var(--mo-radio-control);
+        font-size: 0.8125rem;
+        font-weight: 700;
+        background-color: var(--mo-accion);
+        color: var(--mo-accion-texto);
+        border: none;
+        cursor: pointer;
+        transition: background-color var(--mo-duracion), transform 0.1s;
+    }
+    .btn-cart-add:hover { background-color: var(--mo-accion-hover); }
+    .btn-cart-add:active { transform: scale(0.98); }
+    .btn-cart-add:disabled {
+        background-color: var(--mo-desactivado-fondo);
+        color: var(--mo-desactivado-texto);
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .floating-cart-bar {
+        position: fixed;
+        bottom: 1rem;
+        left: 1rem;
+        right: 1rem;
+        max-width: 46rem;
+        margin-left: auto;
+        margin-right: auto;
+        background-color: var(--mo-accion);
+        color: var(--mo-accion-texto);
+        border: none;
+        font-family: inherit;
+        font-size: inherit;
+        border-radius: var(--mo-radio-tarjeta);
+        padding: 0.85rem 1.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: var(--mo-sombra-flotante);
+        z-index: 40;
+        cursor: pointer;
+        text-align: left;
+        transition: transform var(--mo-duracion) ease, background-color var(--mo-duracion);
+    }
+    .floating-cart-bar:hover { background-color: var(--mo-accion-hover); }
+    .floating-cart-bar:focus-visible { outline: 2px solid var(--mo-accion-texto); outline-offset: 2px; }
+
+    .cart-toast {
+        position: fixed;
+        top: 1.25rem;
+        left: 50%;
+        transform: translateX(-50%) translateY(-20px);
+        background-color: var(--mo-accion);
+        color: var(--mo-accion-texto);
+        padding: 0.65rem 1.25rem;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        box-shadow: var(--mo-sombra-flotante);
+        z-index: 60;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+    .cart-toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
+
+    .cart-modal-backdrop {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background-color: var(--mo-velo);
+        z-index: 50;
+        align-items: flex-end;
+        justify-content: center;
+    }
+    .cart-modal-backdrop.open { display: flex; }
+    .cart-drawer {
+        background: var(--mo-superficie);
+        color: var(--mo-texto);
+        width: 100%;
+        max-width: 48rem;
+        max-height: 90vh;
+        overflow-y: auto;
+        border-top-left-radius: var(--mo-radio-hoja);
+        border-top-right-radius: var(--mo-radio-hoja);
+        padding: 1.5rem;
+    }
+
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto !important; }
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+}

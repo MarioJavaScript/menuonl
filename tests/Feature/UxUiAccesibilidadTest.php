@@ -569,4 +569,105 @@ class UxUiAccesibilidadTest extends TestCase
         $this->assertStringContainsString('Ver menú público', (string) $renderedHook);
         $this->assertStringContainsString(route('menu.publico', ['slug' => 'los-arcos']), (string) $renderedHook);
     }
+
+    // =========================================================================
+    // Sistema de diseño compartido: tokens, modo oscuro, layout y marca
+    // =========================================================================
+
+    public function test_hoja_de_tokens_compartida_define_modo_oscuro_y_movimiento_reducido(): void
+    {
+        $css = (string) file_get_contents(public_path('css/menuonl.css'));
+
+        $this->assertStringContainsString('@media (prefers-color-scheme: dark)', $css);
+        $this->assertStringContainsString('--mo-superficie:', $css);
+        $this->assertStringContainsString('@media (prefers-reduced-motion: reduce)', $css);
+        $this->assertFileExists(public_path('favicon.svg'));
+        $this->assertGreaterThan(0, filesize(public_path('favicon.svg')));
+    }
+
+    public function test_paginas_publicas_comparten_layout_con_hoja_externa_favicon_y_esquema_de_color(): void
+    {
+        $restaurante = Restaurante::factory()->create(['estado' => 'activo']);
+        RestauranteIdioma::factory()->create(['restaurante_id' => $restaurante->id, 'idioma' => 'es']);
+
+        $urls = [
+            '/',
+            route('menu.publico', ['slug' => $restaurante->slug]),
+            route('menu.publico', ['slug' => 'no-existe']),
+            route('invitaciones.mostrar', ['token' => 'token-invalido']),
+        ];
+
+        foreach ($urls as $url) {
+            $respuesta = $this->get($url);
+
+            $respuesta->assertSee('css/menuonl.css', false);
+            $respuesta->assertSee('favicon.svg', false);
+            $respuesta->assertSee('<meta name="color-scheme" content="light dark">', false);
+            $this->assertStringNotContainsString('<style>', $respuesta->getContent(), "$url no debe llevar CSS en línea duplicado.");
+        }
+    }
+
+    public function test_menu_publico_soporta_modo_oscuro_y_optimiza_la_imagen_de_portada(): void
+    {
+        $restaurante = Restaurante::factory()->create(['estado' => 'activo']);
+        $restaurante->update([
+            'portada' => "restaurantes/{$restaurante->id}/portada.webp",
+            'logo' => "restaurantes/{$restaurante->id}/logo.webp",
+        ]);
+        RestauranteIdioma::factory()->create(['restaurante_id' => $restaurante->id, 'idioma' => 'es']);
+
+        $respuesta = $this->get(route('menu.publico', ['slug' => $restaurante->slug]));
+
+        $respuesta->assertOk();
+        $respuesta->assertSee('dark:bg-slate-900', false);
+        $respuesta->assertSee('dark:text-slate-', false);
+        $respuesta->assertSee('fetchpriority="high"', false);
+        $respuesta->assertSee('class="cover-img" width="768" height="192"', false);
+        $respuesta->assertSee('width="88" height="88"', false);
+    }
+
+    public function test_portada_usa_tokens_y_no_colores_fijos_ni_consultas_en_la_vista(): void
+    {
+        $respuesta = $this->get('/');
+
+        $respuesta->assertOk();
+        $respuesta->assertSee('bg-fondo', false);
+        $respuesta->assertDontSee('#FBFBFD', false);
+        $respuesta->assertDontSee('#1D1D1F', false);
+
+        $vista = (string) file_get_contents(resource_path('views/welcome.blade.php'));
+        $this->assertStringNotContainsString('Schema::', $vista);
+        $this->assertStringNotContainsString('Restaurante::', $vista);
+    }
+
+    public function test_panel_tiene_marca_propia_favicon_y_boton_de_menu_publico_con_componentes_filament(): void
+    {
+        $restaurante = $this->crearRestaurante('marca-propia');
+        $propietario = $this->crearUsuario('propietario', $restaurante);
+        $this->entrarAlPanel($propietario, $restaurante);
+
+        $panel = Filament::getPanel('admin');
+
+        $this->assertSame('MENUONL', $panel->getBrandName());
+        $this->assertStringContainsString('favicon.svg', (string) $panel->getFavicon());
+
+        $boton = (string) FilamentView::renderHook(PanelsRenderHook::USER_MENU_BEFORE);
+        $this->assertStringContainsString('fi-btn', $boton);
+        $this->assertStringContainsString('target="_blank"', $boton);
+        $this->assertStringContainsString('rel="noopener noreferrer"', $boton);
+    }
+
+    public function test_detalle_de_historial_se_renderiza_con_componentes_filament_y_escapa_valores(): void
+    {
+        $html = view('filament.historial.cambios', [
+            'cambios' => ['nombre' => ['antes' => '<b>viejo</b>', 'despues' => 'nuevo']],
+        ])->render();
+
+        $this->assertStringContainsString('Antes', $html);
+        $this->assertStringContainsString('Después', $html);
+        $this->assertStringNotContainsString('<b>viejo</b>', $html);
+
+        $vacio = view('filament.historial.cambios', ['cambios' => []])->render();
+        $this->assertStringContainsString('Sin detalles de cambios registrados.', $vacio);
+    }
 }

@@ -12,7 +12,6 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\HtmlString;
 use UnitEnum;
 
 class HistorialCambioResource extends Resource
@@ -88,26 +87,9 @@ class HistorialCambioResource extends Resource
                     ->modalHeading(fn (HistorialCambio $record) => "Auditoría: {$record->accion} en {$record->entidad} #{$record->entidad_id}")
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Cerrar')
-                    ->modalContent(function (HistorialCambio $record): HtmlString {
-                        $cambios = $record->cambios;
-                        if (empty($cambios)) {
-                            return new HtmlString('<p class="text-sm text-gray-500">Sin detalles de cambios registrados.</p>');
-                        }
-
-                        $html = '<div class="space-y-3 font-mono text-xs">';
-                        foreach ($cambios as $campo => $diff) {
-                            $antes = is_array($diff) && array_key_exists('antes', $diff) ? json_encode($diff['antes'], JSON_UNESCAPED_UNICODE) : '-';
-                            $despues = is_array($diff) && array_key_exists('despues', $diff) ? json_encode($diff['despues'], JSON_UNESCAPED_UNICODE) : '-';
-                            $html .= '<div class="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">';
-                            $html .= '<div class="font-bold text-sm text-gray-900 dark:text-gray-100 mb-1">'.htmlspecialchars((string) $campo).'</div>';
-                            $html .= '<div class="text-red-600 dark:text-red-400"><strong>Antes:</strong> '.htmlspecialchars((string) $antes).'</div>';
-                            $html .= '<div class="text-green-600 dark:text-green-400"><strong>Después:</strong> '.htmlspecialchars((string) $despues).'</div>';
-                            $html .= '</div>';
-                        }
-                        $html .= '</div>';
-
-                        return new HtmlString($html);
-                    }),
+                    ->modalContent(fn (HistorialCambio $record): View => view('filament.historial.cambios', [
+                        'cambios' => $record->cambios ?? [],
+                    ])),
             ])
             ->emptyStateHeading('Sin eventos de auditoría')
             ->emptyStateDescription('Las modificaciones realizadas en el sistema se registrarán aquí de forma automática.')

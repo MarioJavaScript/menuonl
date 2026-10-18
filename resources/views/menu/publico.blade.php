@@ -1,297 +1,12 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="scroll-smooth">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>{{ $restaurante->traduccion($idioma)->nombre }} — Menú Digital</title>
-        <style>
-            /* Respaldo sin Vite: va en capas declaradas antes que Tailwind para que sus utilidades siempre ganen. */
-            @layer theme, base, components, utilities;
-            @layer base {
-            :root {
-                --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            }
-            * { box-sizing: border-box; margin: 0; padding: 0; }
-            }
-            @layer components {
-            body {
-                font-family: var(--font-sans);
-                background-color: #f8fafc;
-                color: #1e293b;
-                line-height: 1.5;
-                padding-bottom: 6rem;
-            }
-            .container {
-                max-width: 48rem;
-                margin-left: auto;
-                margin-right: auto;
-                padding-left: 1rem;
-                padding-right: 1rem;
-            }
-            .cover-img {
-                width: 100%;
-                height: 12rem;
-                object-fit: cover;
-                background-color: #e2e8f0;
-            }
-            .logo-img {
-                width: 5.5rem;
-                height: 5.5rem;
-                border-radius: 1rem;
-                border: 4px solid #ffffff;
-                box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-                object-fit: cover;
-                background-color: #ffffff;
-            }
-            .badge-open {
-                display: inline-flex;
-                align-items: center;
-                gap: 0.35rem;
-                padding: 0.25rem 0.65rem;
-                border-radius: 9999px;
-                font-size: 0.75rem;
-                font-weight: 700;
-                background-color: #dcfce7;
-                color: #15803d;
-            }
-            .badge-closed {
-                display: inline-flex;
-                align-items: center;
-                gap: 0.35rem;
-                padding: 0.25rem 0.65rem;
-                border-radius: 9999px;
-                font-size: 0.75rem;
-                font-weight: 700;
-                background-color: #fee2e2;
-                color: #b91c1c;
-            }
-            .badge-mesa {
-                display: inline-flex;
-                align-items: center;
-                gap: 0.35rem;
-                padding: 0.25rem 0.65rem;
-                border-radius: 9999px;
-                font-size: 0.75rem;
-                font-weight: 700;
-                background-color: #e0e7ff;
-                color: #3730a3;
-            }
-            .sticky-nav {
-                position: sticky;
-                top: 0;
-                z-index: 30;
-                background-color: rgba(255, 255, 255, 0.95);
-                backdrop-filter: blur(8px);
-                border-bottom: 1px solid #e2e8f0;
-                padding: 0.75rem 0;
-                overflow-x: auto;
-                white-space: nowrap;
-                scrollbar-width: none;
-            }
-            .sticky-nav::-webkit-scrollbar { display: none; }
-            .nav-scroller {
-                scrollbar-width: none;
-                -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 1.75rem), transparent);
-                mask-image: linear-gradient(to right, #000 calc(100% - 1.75rem), transparent);
-            }
-            .nav-scroller::-webkit-scrollbar { display: none; }
-            .nav-pill {
-                display: inline-block;
-                padding: 0.4rem 0.85rem;
-                border-radius: 9999px;
-                font-size: 0.8125rem;
-                font-weight: 600;
-                color: #475569;
-                text-decoration: none;
-                margin-right: 0.5rem;
-                background-color: #f1f5f9;
-                transition: background-color 0.15s, color 0.15s;
-            }
-            .nav-pill[aria-current="true"], .nav-pill:hover, .nav-pill:focus {
-                background-color: #0f172a;
-                color: #ffffff;
-            }
-            .card {
-                background: #ffffff;
-                border-radius: 1rem;
-                border: 1px solid #e2e8f0;
-                padding: 1.25rem;
-                box-shadow: 0 1px 3px 0 rgba(0,0,0,0.05);
-                margin-bottom: 1rem;
-            }
-            .dish-img {
-                width: 5.5rem;
-                height: 5.5rem;
-                border-radius: 0.75rem;
-                object-fit: cover;
-                flex-shrink: 0;
-            }
-            .dish-title {
-                font-size: 1rem;
-                font-weight: 700;
-                color: #0f172a;
-            }
-            .dish-desc {
-                font-size: 0.8125rem;
-                color: #64748b;
-                margin-top: 0.25rem;
-                line-height: 1.4;
-            }
-            .dish-price {
-                font-size: 0.9375rem;
-                font-weight: 700;
-                color: #0f172a;
-            }
-            .dish-price-old {
-                font-size: 0.8125rem;
-                color: #64748b;
-                text-decoration: line-through;
-                margin-right: 0.35rem;
-            }
-            .dish-price-offer {
-                font-size: 0.9375rem;
-                font-weight: 700;
-                color: #be123c;
-            }
-            .tag {
-                display: inline-block;
-                padding: 0.15rem 0.5rem;
-                border-radius: 0.375rem;
-                font-size: 0.6875rem;
-                font-weight: 600;
-                background-color: #f1f5f9;
-                color: #475569;
-                margin-right: 0.25rem;
-                margin-top: 0.35rem;
-            }
-            .btn-cart-add {
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                gap: 0.35rem;
-                min-height: 44px;
-                min-width: 44px;
-                padding: 0.5rem 1rem;
-                border-radius: 0.75rem;
-                font-size: 0.8125rem;
-                font-weight: 700;
-                background-color: #0f172a;
-                color: #ffffff;
-                border: none;
-                cursor: pointer;
-                transition: background-color 0.15s, transform 0.1s;
-            }
-            .btn-cart-add:hover { background-color: #1e293b; }
-            .btn-cart-add:active { transform: scale(0.98); }
-            .btn-cart-add:disabled {
-                background-color: #e2e8f0;
-                color: #475569;
-                cursor: not-allowed;
-                transform: none;
-            }
-            .floating-cart-bar {
-                position: fixed;
-                bottom: 1rem;
-                left: 1rem;
-                right: 1rem;
-                max-width: 46rem;
-                margin-left: auto;
-                margin-right: auto;
-                background-color: #0f172a;
-                color: #ffffff;
-                border: none;
-                font-family: inherit;
-                font-size: inherit;
-                border-radius: 1rem;
-                padding: 0.85rem 1.25rem;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
-                z-index: 40;
-                cursor: pointer;
-                text-align: left;
-                transition: transform 0.15s ease, background-color 0.15s;
-            }
-            .floating-cart-bar:hover { background-color: #1e293b; }
-            .floating-cart-bar:focus-visible {
-                outline: 2px solid #ffffff;
-                outline-offset: 2px;
-            }
-            :focus-visible {
-                outline: 2px solid #0f172a;
-                outline-offset: 2px;
-            }
-            .cart-toast {
-                position: fixed;
-                top: 1.25rem;
-                left: 50%;
-                transform: translateX(-50%) translateY(-20px);
-                background-color: #0f172a;
-                color: #ffffff;
-                padding: 0.65rem 1.25rem;
-                border-radius: 9999px;
-                font-size: 0.875rem;
-                font-weight: 600;
-                box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
-                z-index: 60;
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-                opacity: 0;
-                pointer-events: none;
-                transition: opacity 0.25s ease, transform 0.25s ease;
-            }
-            .cart-toast.visible {
-                opacity: 1;
-                transform: translateX(-50%) translateY(0);
-                pointer-events: auto;
-            }
-            .sr-only {
-                position: absolute;
-                width: 1px;
-                height: 1px;
-                padding: 0;
-                margin: -1px;
-                overflow: hidden;
-                clip: rect(0, 0, 0, 0);
-                white-space: nowrap;
-                border-width: 0;
-            }
-            .cart-modal-backdrop {
-                display: none;
-                position: fixed;
-                inset: 0;
-                background-color: rgba(15, 23, 42, 0.6);
-                z-index: 50;
-                align-items: flex-end;
-                justify-content: center;
-            }
-            .cart-modal-backdrop.open { display: flex; }
-            .cart-drawer {
-                background: #ffffff;
-                width: 100%;
-                max-width: 48rem;
-                max-height: 90vh;
-                overflow-y: auto;
-                border-top-left-radius: 1.5rem;
-                border-top-right-radius: 1.5rem;
-                padding: 1.5rem;
-            }
-            }
-            @media (prefers-reduced-motion: reduce) {
-                html { scroll-behavior: auto !important; }
-                *, *::before, *::after { animation: none !important; transition: none !important; }
-            }
-        </style>
-        @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
-            @vite(['resources/css/app.css', 'resources/js/app.js'])
-        @endif
-    </head>
-    <body class="bg-slate-50 text-slate-800">
+<x-layout.publico
+    :titulo="$restaurante->traduccion($idioma)->nombre.' — Menú Digital'"
+    :lang="str_replace('_', '-', app()->getLocale())"
+    html-class="scroll-smooth"
+    class="menu-publico"
+>
         <!-- Cart Toast Notification -->
         <div id="cartToast" role="status" aria-live="polite" class="cart-toast" aria-atomic="true">
-            <span class="text-emerald-400 font-bold" aria-hidden="true">✓</span>
+            <span class="text-emerald-400 dark:text-emerald-700 font-bold" aria-hidden="true">✓</span>
             <span id="cartToastMessage">Agregado al pedido</span>
         </div>
 
@@ -300,36 +15,36 @@
         @endphp
 
         <!-- Header -->
-        <header class="bg-white border-b border-slate-200">
+        <header class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
             @if (filled($restaurante->portada))
-                <img src="{{ Storage::url($restaurante->portada) }}" alt="" class="cover-img w-full h-48 object-cover bg-slate-200">
+                <img src="{{ Storage::url($restaurante->portada) }}" alt="" class="cover-img" width="768" height="192" fetchpriority="high" decoding="async">
             @endif
 
             <div class="container mx-auto px-4 pb-4">
                 <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
                     <div class="flex items-start gap-4">
                         @if (filled($restaurante->logo))
-                            <img src="{{ Storage::url($restaurante->logo) }}" alt="" class="logo-img w-20 h-20 rounded-2xl border-4 border-white shadow-md object-cover bg-white {{ filled($restaurante->portada) ? '-mt-10' : 'mt-4' }}">
+                            <img src="{{ Storage::url($restaurante->logo) }}" alt="" class="logo-img {{ filled($restaurante->portada) ? '-mt-10' : 'mt-4' }}" width="88" height="88" decoding="async">
                         @endif
 
                         <div class="pt-3">
-                            <h1 class="text-2xl font-extrabold text-slate-900 leading-tight">
+                            <h1 class="text-2xl font-extrabold text-slate-900 dark:text-slate-50 leading-tight">
                                 {{ $restaurante->traduccion($idioma)->nombre }}
                             </h1>
                             @if ($restDesc = $restaurante->traduccion($idioma)->descripcion)
-                                <p class="text-slate-600 text-sm mt-1 max-w-xl">
+                                <p class="text-slate-600 dark:text-slate-300 text-sm mt-1 max-w-xl">
                                     {{ $restDesc }}
                                 </p>
                             @endif
 
                             <div class="flex flex-wrap items-center gap-2 mt-2">
                                 @if ($estaAbierto)
-                                    <span class="badge-open inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
+                                    <span class="badge-open">
                                         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" aria-hidden="true"></span>
                                         Abierto ahora
                                     </span>
                                 @else
-                                    <span class="badge-closed inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800">
+                                    <span class="badge-closed">
                                         <span class="w-2 h-2 rounded-full bg-rose-500" aria-hidden="true"></span>
                                         Cerrado
                                     </span>
@@ -340,7 +55,7 @@
                                     $turnosHoy = $horarios->where('dia_semana', $diaHoy)->where('cerrado', false);
                                 @endphp
                                 @if ($turnosHoy->isNotEmpty())
-                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700" aria-label="Horario de atención hoy">
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300" aria-label="Horario de atención hoy">
                                         <span aria-hidden="true">🕒</span>
                                         Hoy:
                                         @foreach ($turnosHoy as $t)
@@ -350,7 +65,7 @@
                                 @endif
 
                                 @if ($mesa)
-                                    <span class="badge-mesa inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-100 text-indigo-800" aria-label="Ubicación asignada: Mesa {{ $mesa }}">
+                                    <span class="badge-mesa" aria-label="Ubicación asignada: Mesa {{ $mesa }}">
                                         Mesa {{ $mesa }}
                                     </span>
                                 @endif
@@ -364,7 +79,7 @@
                             @foreach ($idiomasDisponibles as $langOption)
                                 <a
                                     href="{{ request()->fullUrlWithQuery(['lang' => $langOption]) }}"
-                                    class="min-h-[44px] min-w-[44px] px-3 py-2 rounded-lg text-xs font-bold uppercase transition-all inline-flex items-center justify-center focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 focus-visible:outline-none {{ $idioma === $langOption ? 'bg-slate-900 text-white shadow-xs' : 'bg-slate-100 text-slate-700 hover:bg-slate-200' }}"
+                                    class="min-h-[44px] min-w-[44px] px-3 py-2 rounded-lg text-xs font-bold uppercase transition-all inline-flex items-center justify-center focus-visible:ring-2 focus-visible:ring-slate-900 dark:focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:outline-none {{ $idioma === $langOption ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-950 shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700' }}"
                                     aria-current="{{ $idioma === $langOption ? 'page' : 'false' }}"
                                     aria-label="Cambiar idioma a {{ strtoupper($langOption) }}"
                                 >
@@ -377,8 +92,8 @@
 
                 <!-- Order eligibility warning banner -->
                 @if (! $puedePedir)
-                    <div role="status" aria-live="polite" class="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-xs font-medium flex items-center gap-2">
-                        <svg class="w-5 h-5 flex-shrink-0 text-amber-600" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div role="status" aria-live="polite" class="mt-4 p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-xl text-amber-800 dark:text-amber-200 text-xs font-medium flex items-center gap-2">
+                        <svg class="w-5 h-5 flex-shrink-0 text-amber-600 dark:text-amber-400" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                         <span>
@@ -396,25 +111,25 @@
         </header>
 
         <!-- Sticky Category Navigation Bar -->
-        <nav class="sticky-nav bg-white/95 backdrop-blur-md border-b border-slate-200" aria-label="Categorías del menú">
+        <nav class="sticky-nav" aria-label="Categorías del menú">
             <div class="nav-scroller container mx-auto px-4 flex items-center gap-2 overflow-x-auto">
                 @if ($destacados->isNotEmpty())
-                    <a href="#destacados" class="nav-pill min-h-[44px] inline-flex items-center px-4 focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:outline-none"><span aria-hidden="true" class="mr-1">⭐</span> Destacados</a>
+                    <a href="#destacados" class="nav-pill min-h-[44px] inline-flex items-center px-4 focus-visible:ring-2 focus-visible:ring-slate-900 dark:focus-visible:ring-white focus-visible:outline-none"><span aria-hidden="true" class="mr-1">⭐</span> Destacados</a>
                 @endif
 
                 @foreach ($categorias as $cat)
                     @php
                         $catNom = $cat->traduccion($idioma)?->nombre ?? $cat->traduccion()?->nombre ?? 'Categoría';
                     @endphp
-                    <a href="#cat-{{ $cat->id }}" class="nav-pill min-h-[44px] inline-flex items-center px-4 focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:outline-none">{{ $catNom }}</a>
+                    <a href="#cat-{{ $cat->id }}" class="nav-pill min-h-[44px] inline-flex items-center px-4 focus-visible:ring-2 focus-visible:ring-slate-900 dark:focus-visible:ring-white focus-visible:outline-none">{{ $catNom }}</a>
                 @endforeach
 
                 @if ($horarios->isNotEmpty())
-                    <a href="#horarios" class="nav-pill min-h-[44px] inline-flex items-center px-4 focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:outline-none"><span aria-hidden="true" class="mr-1">🕒</span> Horarios</a>
+                    <a href="#horarios" class="nav-pill min-h-[44px] inline-flex items-center px-4 focus-visible:ring-2 focus-visible:ring-slate-900 dark:focus-visible:ring-white focus-visible:outline-none"><span aria-hidden="true" class="mr-1">🕒</span> Horarios</a>
                 @endif
 
                 @if ($contactos->isNotEmpty())
-                    <a href="#contacto" class="nav-pill min-h-[44px] inline-flex items-center px-4 focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:outline-none"><span aria-hidden="true" class="mr-1">📞</span> Contacto</a>
+                    <a href="#contacto" class="nav-pill min-h-[44px] inline-flex items-center px-4 focus-visible:ring-2 focus-visible:ring-slate-900 dark:focus-visible:ring-white focus-visible:outline-none"><span aria-hidden="true" class="mr-1">📞</span> Contacto</a>
                 @endif
             </div>
         </nav>
@@ -425,7 +140,7 @@
             <!-- Featured Section -->
             @if ($destacados->isNotEmpty())
                 <section id="destacados" class="mb-10 scroll-mt-20">
-                    <h2 class="text-xl font-extrabold text-slate-900 mb-4 flex items-center gap-2">
+                    <h2 class="text-xl font-extrabold text-slate-900 dark:text-slate-50 mb-4 flex items-center gap-2">
                         <span aria-hidden="true">⭐</span> Platillos Recomendados
                     </h2>
 
@@ -445,14 +160,14 @@
                 @endphp
                 <section id="cat-{{ $cat->id }}" class="mb-10 scroll-mt-20">
                     <div class="mb-4">
-                        <h2 class="text-xl font-extrabold text-slate-900">{{ $catNom }}</h2>
+                        <h2 class="text-xl font-extrabold text-slate-900 dark:text-slate-50">{{ $catNom }}</h2>
                         @if ($catDesc)
-                            <p class="text-slate-600 text-xs mt-0.5">{{ $catDesc }}</p>
+                            <p class="text-slate-600 dark:text-slate-300 text-xs mt-0.5">{{ $catDesc }}</p>
                         @endif
                     </div>
 
                     @if ($cat->productos->isEmpty())
-                        <p class="text-slate-500 text-xs italic">No hay platillos disponibles en esta categoría.</p>
+                        <p class="text-slate-500 dark:text-slate-400 text-xs italic">No hay platillos disponibles en esta categoría.</p>
                     @else
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             @foreach ($cat->productos as $prod)
@@ -466,22 +181,22 @@
             <!-- Weekly Schedule Table -->
             @if ($horarios->isNotEmpty())
                 <section id="horarios" class="mb-10 scroll-mt-20">
-                    <div class="card bg-white rounded-2xl p-5 border border-slate-200">
-                        <h2 class="text-lg font-bold text-slate-900 mb-3 flex items-center gap-2">
+                    <div class="card bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-700">
+                        <h2 class="text-lg font-bold text-slate-900 dark:text-slate-50 mb-3 flex items-center gap-2">
                             <span aria-hidden="true">🕒</span> Horarios de Atención
                         </h2>
                         @php
                             $dias = \App\Services\Catalogos::diasSemana();
                             $horariosPorDia = $horarios->groupBy('dia_semana');
                         @endphp
-                        <div class="divide-y divide-slate-100 text-sm">
+                        <div class="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
                             @foreach ($dias as $numDia => $nombreDia)
                                 @php
                                     $turnos = $horariosPorDia->get($numDia);
                                 @endphp
                                 <div class="py-2 flex items-center justify-between">
-                                    <span class="font-medium text-slate-700">{{ $nombreDia }}</span>
-                                    <span class="text-slate-600">
+                                    <span class="font-medium text-slate-700 dark:text-slate-300">{{ $nombreDia }}</span>
+                                    <span class="text-slate-600 dark:text-slate-300">
                                         @if ($turnos && $turnos->where('cerrado', false)->isNotEmpty())
                                             @foreach ($turnos->where('cerrado', false) as $t)
                                                 <span class="inline-block ml-1">
@@ -489,7 +204,7 @@
                                                 </span>
                                             @endforeach
                                         @else
-                                            <span class="text-slate-500 font-normal">Cerrado</span>
+                                            <span class="text-slate-500 dark:text-slate-400 font-normal">Cerrado</span>
                                         @endif
                                     </span>
                                 </div>
@@ -502,8 +217,8 @@
             <!-- Safe Contacts Section -->
             @if ($contactos->isNotEmpty())
                 <section id="contacto" class="mb-10 scroll-mt-20">
-                    <div class="card bg-white rounded-2xl p-5 border border-slate-200">
-                        <h2 class="text-lg font-bold text-slate-900 mb-3 flex items-center gap-2">
+                    <div class="card bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-700">
+                        <h2 class="text-lg font-bold text-slate-900 dark:text-slate-50 mb-3 flex items-center gap-2">
                             <span aria-hidden="true">📞</span> Contacto y Ubicación
                         </h2>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
@@ -520,10 +235,10 @@
                                     href="{{ $href }}"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    class="min-h-[44px] p-2.5 rounded-lg border border-slate-100 hover:border-slate-300 bg-slate-50 hover:bg-slate-100 transition-colors flex items-center justify-between text-slate-700 focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:outline-none"
+                                    class="min-h-[44px] p-2.5 rounded-lg border border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-500 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center justify-between text-slate-700 dark:text-slate-300 focus-visible:ring-2 focus-visible:ring-slate-900 dark:focus-visible:ring-white focus-visible:outline-none"
                                 >
-                                    <span class="font-medium text-xs uppercase tracking-wider text-slate-500">{{ $contacto->etiqueta ?: (\App\Services\Catalogos::tiposContacto()[$contacto->tipo] ?? $contacto->tipo) }}</span>
-                                    <span class="font-semibold text-slate-900 text-xs truncate max-w-[200px]">{{ $contacto->valor }}</span>
+                                    <span class="font-medium text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">{{ $contacto->etiqueta ?: (\App\Services\Catalogos::tiposContacto()[$contacto->tipo] ?? $contacto->tipo) }}</span>
+                                    <span class="font-semibold text-slate-900 dark:text-slate-50 text-xs truncate max-w-[200px]">{{ $contacto->valor }}</span>
                                 </a>
                             @endforeach
                         </div>
@@ -538,7 +253,7 @@
             <button
                 type="button"
                 id="floatingCartBar"
-                class="floating-cart-bar w-full focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 focus-visible:outline-none"
+                class="floating-cart-bar w-full focus-visible:ring-2 focus-visible:ring-slate-900 dark:focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:outline-none"
                 style="display: none;"
                 onclick="openCartModal()"
                 aria-haspopup="dialog"
@@ -567,17 +282,17 @@
                 aria-labelledby="cartDrawerTitle"
             >
                 <div class="cart-drawer" onclick="event.stopPropagation()">
-                    <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
                         <div class="flex items-center gap-2">
                             <span class="text-xl" aria-hidden="true">🛒</span>
-                            <h3 id="cartDrawerTitle" class="text-lg font-bold text-slate-900">Tu Pedido</h3>
+                            <h3 id="cartDrawerTitle" class="text-lg font-bold text-slate-900 dark:text-slate-50">Tu Pedido</h3>
                         </div>
                         <div class="flex items-center gap-2">
                             <button
                                 type="button"
                                 id="btnVaciarCarrito"
                                 onclick="cartConfirmarVaciar()"
-                                class="text-xs font-semibold text-rose-600 hover:text-rose-800 hover:bg-rose-50 min-h-[44px] px-3 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-rose-600 focus-visible:outline-none"
+                                class="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/40 min-h-[44px] px-3 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-rose-600 focus-visible:outline-none"
                                 aria-label="Vaciar todo el pedido"
                             >
                                 Vaciar pedido
@@ -586,7 +301,7 @@
                                 type="button"
                                 id="btnCloseCartModal"
                                 onclick="closeCartModal()"
-                                class="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center justify-center transition-colors focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:outline-none"
+                                class="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-center transition-colors focus-visible:ring-2 focus-visible:ring-slate-900 dark:focus-visible:ring-white focus-visible:outline-none"
                                 aria-label="Cerrar pedido"
                             >
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -597,7 +312,7 @@
                     </div>
 
                     <!-- Inline Confirmation Banner for Vaciar Pedido (initially hidden) -->
-                    <div id="vaciarConfirmBanner" class="hidden mb-4 p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-900 text-xs sm:text-sm">
+                    <div id="vaciarConfirmBanner" class="hidden mb-4 p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-xl text-rose-900 dark:text-rose-200 text-xs sm:text-sm">
                         <p class="font-semibold mb-2">¿Seguro que deseas vaciar todos los platillos de tu pedido?</p>
                         <div class="flex items-center gap-2">
                             <button
@@ -610,7 +325,7 @@
                             <button
                                 type="button"
                                 onclick="cartCancelarVaciar()"
-                                class="btn-neutro focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:outline-none"
+                                class="btn-neutro focus-visible:ring-2 focus-visible:ring-slate-900 dark:focus-visible:ring-white focus-visible:outline-none"
                             >
                                 Cancelar
                             </button>
@@ -618,23 +333,23 @@
                     </div>
 
                     <!-- Confirmation shown after handing the order to WhatsApp -->
-                    <div id="pedidoEnviadoBanner" class="hidden mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-900 text-sm" role="status" tabindex="-1">
+                    <div id="pedidoEnviadoBanner" class="hidden mb-4 p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 rounded-xl text-emerald-900 dark:text-emerald-200 text-sm" role="status" tabindex="-1">
                         <p class="font-semibold mb-2">Abrimos WhatsApp con tu pedido. Envíalo desde ahí para que llegue al restaurante.</p>
                         <div class="flex flex-wrap items-center gap-2">
-                            <button type="button" onclick="cartPedidoEnviado(true)" class="btn-primario focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:outline-none">Ya lo envié, vaciar pedido</button>
-                            <button type="button" onclick="cartPedidoEnviado(false)" class="btn-neutro focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:outline-none">Conservar pedido</button>
+                            <button type="button" onclick="cartPedidoEnviado(true)" class="btn-primario focus-visible:ring-2 focus-visible:ring-slate-900 dark:focus-visible:ring-white focus-visible:outline-none">Ya lo envié, vaciar pedido</button>
+                            <button type="button" onclick="cartPedidoEnviado(false)" class="btn-neutro focus-visible:ring-2 focus-visible:ring-slate-900 dark:focus-visible:ring-white focus-visible:outline-none">Conservar pedido</button>
                         </div>
                     </div>
 
                     <!-- Cart items list -->
-                    <div id="cartItemsContainer" class="divide-y divide-slate-100 mb-4">
+                    <div id="cartItemsContainer" class="divide-y divide-slate-100 dark:divide-slate-800 mb-4">
                         <!-- Rendered dynamically by JS -->
                     </div>
 
                     <!-- Table & Notes Form -->
-                    <div class="space-y-3 pt-3 border-t border-slate-100">
+                    <div class="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800">
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1" for="inputMesa">
+                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1" for="inputMesa">
                                 Mesa / Ubicación:
                             </label>
                             <input
@@ -642,24 +357,24 @@
                                 id="inputMesa"
                                 value="{{ $mesa ?? '' }}"
                                 placeholder="Ej. Mesa 4 o Para llevar"
-                                class="w-full text-base px-3 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
+                                class="w-full text-base px-3 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white"
                             />
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1" for="inputNotasGenerales">
+                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1" for="inputNotasGenerales">
                                 Nota general para la cocina:
                             </label>
                             <textarea
                                 id="inputNotasGenerales"
                                 rows="2"
                                 placeholder="Indicaciones especiales, cubiertos, etc."
-                                class="w-full text-base px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
+                                class="w-full text-base px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white"
                             ></textarea>
                         </div>
 
                         <!-- Summary -->
-                        <div class="flex items-center justify-between text-base font-extrabold text-slate-900 pt-2">
+                        <div class="flex items-center justify-between text-base font-extrabold text-slate-900 dark:text-slate-50 pt-2">
                             <span>Total:</span>
                             <span id="modalCartTotal">{{ \App\Services\FormatoMoneda::formatear(0, $restaurante->moneda, $idioma) }}</span>
                         </div>
@@ -680,6 +395,7 @@
                 </div>
             </div>
         @endif
+
 
         <!-- Client-Side Cart Script (Isolated under localStorage menuonl_cart_{slug}) -->
         <script>
@@ -952,20 +668,20 @@
                         const activo = document.activeElement;
                         const claveFoco = activo && itemsContainer.contains(activo) ? activo.dataset.qty : null;
                         if (cart.length === 0) {
-                            itemsContainer.innerHTML = '<p class="py-6 text-center text-slate-400 text-sm">Tu carrito está vacío.</p>';
+                            itemsContainer.innerHTML = '<p class="py-6 text-center text-slate-500 dark:text-slate-400 text-sm">Tu carrito está vacío.</p>';
                         } else {
                             let html = '';
                             cart.forEach((item, idx) => {
                                 const cantidad = parseInt(item.cantidad, 10) || 0;
                                 const precio = Number(item.precio) || 0;
-                                const vName = item.variante_nombre ? `<span class="text-xs text-slate-500 font-normal">(${escapeHtml(item.variante_nombre)})</span>` : '';
+                                const vName = item.variante_nombre ? `<span class="text-xs text-slate-500 dark:text-slate-400 font-normal">(${escapeHtml(item.variante_nombre)})</span>` : '';
                                 const itemNombreEsc = escapeHtml(item.nombre);
                                 html += `
                                     <div class="py-3">
                                         <div class="flex items-center justify-between">
                                             <div>
-                                                <h4 class="text-sm font-bold text-slate-900">${itemNombreEsc} ${vName}</h4>
-                                                <span class="text-xs font-semibold text-slate-600">${fmt(precio * cantidad)}</span>
+                                                <h4 class="text-sm font-bold text-slate-900 dark:text-slate-50">${itemNombreEsc} ${vName}</h4>
+                                                <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">${fmt(precio * cantidad)}</span>
                                             </div>
                                             <div class="flex items-center gap-2">
                                                 <button
@@ -973,17 +689,17 @@
                                                     onclick="cartUpdateQty(${idx}, -1)"
                                                     data-qty="${idx}:-1"
                                                     aria-label="Disminuir cantidad de ${itemNombreEsc}"
-                                                    class="w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold flex items-center justify-center text-base focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:outline-none"
+                                                    class="w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 font-extrabold flex items-center justify-center text-base focus-visible:ring-2 focus-visible:ring-slate-900 dark:focus-visible:ring-white focus-visible:outline-none"
                                                 >
                                                     <span aria-hidden="true">-</span>
                                                 </button>
-                                                <span class="text-sm font-extrabold text-slate-900 px-2 min-w-[24px] text-center"><span class="sr-only">Cantidad: </span>${cantidad}</span>
+                                                <span class="text-sm font-extrabold text-slate-900 dark:text-slate-50 px-2 min-w-[24px] text-center"><span class="sr-only">Cantidad: </span>${cantidad}</span>
                                                 <button
                                                     type="button"
                                                     onclick="cartUpdateQty(${idx}, 1)"
                                                     data-qty="${idx}:1"
                                                     aria-label="Aumentar cantidad de ${itemNombreEsc}"
-                                                    class="w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold flex items-center justify-center text-base focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:outline-none"
+                                                    class="w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 font-extrabold flex items-center justify-center text-base focus-visible:ring-2 focus-visible:ring-slate-900 dark:focus-visible:ring-white focus-visible:outline-none"
                                                 >
                                                     <span aria-hidden="true">+</span>
                                                 </button>
@@ -997,7 +713,7 @@
                                                 value="${item.notas ? escapeHtml(item.notas) : ''}"
                                                 oninput="cartUpdateItemNotes(${idx}, this.value)"
                                                 onchange="cartUpdateItemNotes(${idx}, this.value)"
-                                                class="w-full text-base px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
+                                                class="w-full text-base px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white"
                                             />
                                         </div>
                                     </div>
@@ -1043,5 +759,4 @@
                 });
             })();
         </script>
-    </body>
-</html>
+</x-layout.publico>

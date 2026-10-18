@@ -31,3 +31,10 @@ RNF-06 se da por cumplido solo cuando los tres puntos de prueba (`menuonl:backup
 - [ ] El respaldo arma el archivo en la carpeta temporal del sistema. Confirmar que ahí hay espacio suficiente para la base de datos y los archivos subidos, y que el usuario que ejecuta el cron puede escribir en ella.
 - [ ] Probar un respaldo con miles de archivos (imágenes de muchos restaurantes) y revisar tiempo, memoria y espacio temporal usados. Las pruebas de desarrollo solo usan unos pocos archivos.
 - [ ] Si la subida a R2/B2 falla por checksum (por ejemplo errores de `x-amz-checksum` o `Content-MD5`), revisar la compatibilidad de la versión del SDK de AWS con el proveedor: las versiones recientes envían checksums que R2/B2 pueden rechazar.
+
+## Interfaz (CSS y marca)
+
+- [ ] Correr `npm ci && npm run build` en cada despliegue. Sin `public/build` las utilidades de Tailwind no existen y las páginas públicas se ven sin estilos (`public/css/menuonl.css` solo cubre los tokens, el modo oscuro y los componentes propios).
+- [ ] Definir `APP_NAME=MENUONL` en el `.env` de producción: lo usan el título del navegador y el pie de los correos.
+- [ ] Servir `public/css/menuonl.css` y `public/favicon.svg` con caché larga en el CDN, y purgar el CDN si cambian.
+

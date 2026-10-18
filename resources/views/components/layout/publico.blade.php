@@ -1,0 +1,35 @@
+@props([
+    'titulo',
+    'descripcion' => null,
+    'lang' => 'es',
+    'noindex' => false,
+    'sinReferrer' => false,
+    'htmlClass' => null,
+])
+<!DOCTYPE html>
+<html lang="{{ $lang }}" @class([$htmlClass => filled($htmlClass)])>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="color-scheme" content="light dark">
+        @if ($noindex)
+            <meta name="robots" content="noindex">
+        @endif
+        @if ($sinReferrer)
+            <meta name="referrer" content="no-referrer">
+        @endif
+        <title>{{ $titulo }}</title>
+        @if (filled($descripcion))
+            <meta name="description" content="{{ $descripcion }}">
+        @endif
+        <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+        <link rel="stylesheet" href="{{ asset('css/menuonl.css').'?v='.filemtime(public_path('css/menuonl.css')) }}">
+        @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
+            @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @endif
+        {{ $head ?? '' }}
+    </head>
+    <body {{ $attributes->class(['bg-fondo text-texto antialiased']) }}>
+        {{ $slot }}
+    </body>
+</html>
