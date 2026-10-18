@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Pages\Inicio;
 use App\Filament\Resources\Categorias\CategoriaResource;
 use App\Filament\Resources\Categorias\Pages\ListCategorias;
 use App\Filament\Resources\CodigosQr\CodigoQrResource;
@@ -565,6 +566,68 @@ class UxUiAccesibilidadTest extends TestCase
         $this->assertStringContainsString('target="_blank"', (string) $renderedHook);
     }
 
+    public function test_panel_navegacion_e_inicio_usan_termino_inicio_y_no_escritorio(): void
+    {
+        $this->assertSame('Inicio', Inicio::getNavigationLabel());
+        $this->assertNotSame('Escritorio', Inicio::getNavigationLabel());
+        $this->assertNotSame('Dashboard', Inicio::getNavigationLabel());
+        $this->assertSame('Inicio', __('filament-panels::pages/dashboard.title'));
+
+        $restaurante = $this->crearRestaurante('tacos-el-guero');
+        $propietario = $this->crearUsuario('propietario', $restaurante);
+        $this->entrarAlPanel($propietario, $restaurante);
+
+        $respuesta = $this->get(Inicio::getUrl());
+        $respuesta->assertOk();
+        $respuesta->assertSee('Inicio');
+        $respuesta->assertSee("Lo que necesita tu atención hoy en {$restaurante->nombre}.");
+        $respuesta->assertDontSee('Escritorio');
+    }
+
+    public function test_tabla_platillos_accion_deshacer_eliminar_restaura_el_registro(): void
+    {
+        $restaurante = $this->crearRestaurante('rest-deshacer');
+        $propietario = $this->crearUsuario('propietario', $restaurante);
+        $this->entrarAlPanel($propietario, $restaurante);
+
+        $categoria = Categoria::factory()->create(['restaurante_id' => $restaurante->id]);
+        $producto = Producto::factory()->create([
+            'restaurante_id' => $restaurante->id,
+            'categoria_id' => $categoria->id,
+        ]);
+        ProductoTraduccion::factory()->create([
+            'producto_id' => $producto->id,
+            'idioma' => 'es',
+            'nombre' => 'Taco al Pastor',
+        ]);
+
+        $producto->delete();
+        $this->assertSoftDeleted('productos', ['id' => $producto->id]);
+
+        Livewire::test(ListProductos::class)
+            ->dispatch('deshacer-eliminar-platillo', id: $producto->id)
+            ->assertNotified('Taco al Pastor volvió a tu menú');
+
+        $this->assertNotSoftDeleted('productos', ['id' => $producto->id]);
+    }
+
+    public function test_tabla_platillos_deshacer_eliminar_respeta_aislamiento_entre_restaurantes(): void
+    {
+        $tenantA = $this->crearRestaurante('tenant-undo-a');
+        $tenantB = $this->crearRestaurante('tenant-undo-b');
+
+        $prodB = Producto::factory()->create(['restaurante_id' => $tenantB->id]);
+        $prodB->delete();
+
+        $propietarioA = $this->crearUsuario('propietario', $tenantA);
+        $this->entrarAlPanel($propietarioA, $tenantA);
+
+        Livewire::test(ListProductos::class)
+            ->dispatch('deshacer-eliminar-platillo', id: $prodB->id);
+
+        $this->assertSoftDeleted('productos', ['id' => $prodB->id]);
+    }
+
     // =========================================================================
     // Sistema de diseño compartido: tokens, modo oscuro, layout y marca
     // =========================================================================
@@ -660,6 +723,29 @@ class UxUiAccesibilidadTest extends TestCase
         $respuesta->assertOk();
         $respuesta->assertDontSee('url(//x.test)', false);
         $respuesta->assertDontSee('--mo-acento:', false);
+    }
+
+    public function test_menu_publico_incluye_control_de_apariencia_y_script_de_persistencia(): void
+    {
+        $restaurante = Restaurante::factory()->create(['estado' => 'activo']);
+        RestauranteIdioma::factory()->create(['restaurante_id' => $restaurante->id, 'idioma' => 'es']);
+
+        $respuesta = $this->get(route('menu.publico', ['slug' => $restaurante->slug]));
+
+        $respuesta->assertOk();
+        $respuesta->assertSee('class="pie-publico"', false);
+        $respuesta->assertSee('segmentado');
+        $respuesta->assertSee('<legend>Apariencia</legend>', false);
+        $respuesta->assertSee('data-apariencia-opcion', false);
+        $respuesta->assertSee('value="system"', false);
+        $respuesta->assertSee('value="light"', false);
+        $respuesta->assertSee('value="dark"', false);
+        $respuesta->assertSee('Automático');
+        $respuesta->assertSee('Claro');
+        $respuesta->assertSee('Oscuro');
+
+        $respuesta->assertSee("var clave = 'filament:theme:mode';", false);
+        $respuesta->assertSee("document.documentElement.setAttribute('data-apariencia', modo);", false);
     }
 
     public function test_portada_usa_tokens_y_no_colores_fijos_ni_consultas_en_la_vista(): void
