@@ -35,6 +35,8 @@
             <div class="contenedor hero-contenido">
                 @if (filled($restaurante->logo))
                     <img src="{{ Storage::url($restaurante->logo) }}" alt="" class="hero-logo" width="72" height="72" decoding="async">
+                @else
+                    <div class="hero-logo hero-monograma" aria-hidden="true">{{ mb_strtoupper(mb_substr($restaurante->nombre, 0, 1)) }}</div>
                 @endif
 
                 <span class="regla-acento" aria-hidden="true"></span>
@@ -124,6 +126,8 @@
             <div class="contenedor flex items-center gap-3">
                 @if (filled($restaurante->logo))
                     <img src="{{ Storage::url($restaurante->logo) }}" alt="" class="barra-logo" width="28" height="28" decoding="async">
+                @else
+                    <span class="barra-logo barra-monograma" aria-hidden="true">{{ mb_strtoupper(mb_substr($restaurante->nombre, 0, 1)) }}</span>
                 @endif
                 <span class="barra-nombre">{{ $restaurante->traduccion($idioma)->nombre }}</span>
                 <span class="{{ $estaAbierto ? 'badge-open' : 'badge-closed' }} ml-auto">{{ $estaAbierto ? 'Abierto' : 'Cerrado' }}</span>
@@ -164,7 +168,7 @@
 
                     <div class="platos">
                         @foreach ($destacados as $prod)
-                            @include('menu.partials.dish-card', ['indice' => $loop->index, 'prod' => $prod, 'restaurante' => $restaurante, 'idioma' => $idioma, 'puedePedir' => $puedePedir])
+                            @include('menu.partials.dish-card', ['indice' => $loop->index, 'prod' => $prod, 'restaurante' => $restaurante, 'idioma' => $idioma, 'puedePedir' => $puedePedir, 'esDestacado' => true])
                         @endforeach
                     </div>
                 </section>
@@ -237,6 +241,7 @@
                                     'telefono' => str_starts_with($contacto->valor, 'tel:') ? $contacto->valor : 'tel:' . preg_replace('/[^0-9+]/', '', $contacto->valor),
                                     'whatsapp' => 'https://wa.me/' . preg_replace('/[^0-9]/', '', $contacto->valor),
                                     'email' => str_starts_with($contacto->valor, 'mailto:') ? $contacto->valor : 'mailto:' . $contacto->valor,
+                                    'direccion' => str_starts_with($contacto->valor, 'http') ? $contacto->valor : 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($contacto->valor),
                                     default => (str_starts_with($contacto->valor, 'http://') || str_starts_with($contacto->valor, 'https://')) ? $contacto->valor : 'https://' . $contacto->valor,
                                 };
                             @endphp
@@ -244,10 +249,10 @@
                                 href="{{ $href }}"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                class="min-h-[44px] px-4 py-2.5 rounded-lg border border-borde hover:border-acento bg-superficie transition-colors flex items-center justify-between gap-3 text-texto-medio focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none"
+                                class="min-h-[44px] px-4 py-3 rounded-lg border border-borde hover:border-acento bg-superficie transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-3 text-texto-medio focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none"
                             >
-                                <span class="font-medium text-xs uppercase tracking-wider text-texto-suave">{{ $contacto->etiqueta ?: (\App\Services\Catalogos::tiposContacto()[$contacto->tipo] ?? $contacto->tipo) }}</span>
-                                <span class="font-semibold text-texto-fuerte text-sm truncate max-w-[200px]">{{ $contacto->valor }}</span>
+                                <span class="font-medium text-xs uppercase tracking-wider text-texto-suave shrink-0">{{ $contacto->etiqueta ?: (\App\Services\Catalogos::tiposContacto()[$contacto->tipo] ?? $contacto->tipo) }}</span>
+                                <span class="font-semibold text-texto-fuerte text-sm line-clamp-2 break-words text-left">{{ $contacto->valor }}</span>
                             </a>
                         @endforeach
                     </div>
@@ -259,6 +264,39 @@
         <footer class="pie-publico">
             <p>{{ $restaurante->traduccion($idioma)->nombre }} · Menú digital con MENUONL</p>
         </footer>
+
+        <!-- Detalle del plato (hoja inferior) -->
+        <div
+            id="platoHojaFondo"
+            class="cart-modal-backdrop"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="platoHojaTitulo"
+            x-data="detallePlato"
+            @click.window="clic"
+            @click="cerrarFondo"
+            @keydown.window="teclas"
+            @hoja-cerrar="cerrar"
+        >
+            <div class="cart-drawer plato-hoja" x-data="hoja" :style="estilo">
+                <div class="hoja-cabecera flex items-center justify-between gap-2 pb-3 mb-2" @pointerdown="empezar" @pointermove="mover" @pointerup="soltar" @pointercancel="soltar">
+                    <span class="hoja-asa" aria-hidden="true"></span>
+                    <h3 id="platoHojaTitulo" class="plato-hoja-titulo" x-text="nombre"></h3>
+                    <button type="button" x-ref="cerrar" @click="cerrar" class="btn-icono min-w-[44px] min-h-[44px] focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none" aria-label="Cerrar detalle del platillo">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <figure class="plato-hoja-figura" x-show="imagen">
+                    <img x-ref="imagen" :src="imagenSrc" alt="" width="640" height="480" class="plato-hoja-imagen">
+                </figure>
+                <p class="dish-desc" x-show="descripcion" x-text="descripcion"></p>
+                <div x-ref="etiquetas" class="mt-2"></div>
+                <div x-ref="compra" class="mt-3"></div>
+            </div>
+        </div>
 
         <!-- Floating Cart Bar (Enabled only if $puedePedir) -->
         @if ($puedePedir)
@@ -289,6 +327,7 @@
                 id="cartModalBackdrop"
                 class="cart-modal-backdrop"
                 onclick="closeCartModal(event)"
+                @hoja-cerrar="closeCartModal(null, true)"
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="cartDrawerTitle"
@@ -766,7 +805,10 @@
                         if (primero) {
                             const a = porId.get(primero);
                             a.setAttribute('aria-current', 'true');
-                            a.scrollIntoView({ block: 'nearest', inline: 'center' });
+                            const scroller = a.closest('.nav-scroller');
+                            if (scroller) {
+                                scroller.scrollTo({ left: Math.max(0, a.offsetLeft - (scroller.clientWidth / 2) + (a.offsetWidth / 2)), behavior: 'smooth' });
+                            }
                         }
                     };
                     const obs = new IntersectionObserver(function(entradas) {

@@ -20,9 +20,11 @@ use App\Filament\Resources\Restaurantes\Pages\ListRestaurantes;
 use App\Filament\Resources\Restaurantes\RestauranteResource;
 use App\Filament\Resources\Users\Pages\ListUsers;
 use App\Filament\Resources\Users\UserResource;
+use App\Filament\Widgets\ResumenRestauranteWidget;
 use App\Models\Categoria;
 use App\Models\CategoriaTraduccion;
 use App\Models\CodigoQr;
+use App\Models\Contacto;
 use App\Models\Etiqueta;
 use App\Models\Horario;
 use App\Models\Invitacion;
@@ -787,7 +789,7 @@ class UxUiAccesibilidadTest extends TestCase
         $respuesta = $this->get(route('menu.publico', ['slug' => $restaurante->slug]));
 
         $respuesta->assertOk();
-        $respuesta->assertSee('class="plato" style="--i: 0"', false);
+        $respuesta->assertSee('class="plato" data-plato="'.$plato->id.'" style="--i: 0"', false);
         $respuesta->assertSee('class="plato-imagen"', false);
         $respuesta->assertSee('loading="lazy" decoding="async" width="96" height="96"', false);
         $respuesta->assertSee('class="plato-precio"', false);
@@ -797,5 +799,111 @@ class UxUiAccesibilidadTest extends TestCase
         $this->assertStringContainsString('@supports (animation-timeline: view())', $css);
         $this->assertStringContainsString('.plato:active', $css);
         $this->assertStringContainsString('prefers-reduced-motion: no-preference', $css);
+    }
+
+    public function test_detalle_del_plato_es_dialogo_accesible_con_transiciones_y_fallback(): void
+    {
+        $restaurante = Restaurante::factory()->create(['estado' => 'activo']);
+        RestauranteIdioma::factory()->create(['restaurante_id' => $restaurante->id, 'idioma' => 'es']);
+        $categoria = Categoria::factory()->create(['restaurante_id' => $restaurante->id]);
+        CategoriaTraduccion::factory()->create(['categoria_id' => $categoria->id, 'idioma' => 'es', 'nombre' => 'Postres']);
+        $plato = Producto::factory()->create(['restaurante_id' => $restaurante->id, 'categoria_id' => $categoria->id, 'disponible' => true, 'visible' => true]);
+        ProductoTraduccion::factory()->create(['producto_id' => $plato->id, 'idioma' => 'es', 'nombre' => 'Flan casero']);
+
+        $respuesta = $this->get(route('menu.publico', ['slug' => $restaurante->slug]));
+
+        $respuesta->assertOk();
+        $respuesta->assertSee('id="platoHojaFondo"', false);
+        $respuesta->assertSee('aria-labelledby="platoHojaTitulo"', false);
+        $respuesta->assertSee('x-data="detallePlato"', false);
+        $respuesta->assertSee('aria-label="Cerrar detalle del platillo"', false);
+        $respuesta->assertSee('data-abrir-plato aria-haspopup="dialog">Flan casero</button>', false);
+
+        $js = (string) file_get_contents(resource_path('js/menu.js'));
+        $this->assertStringContainsString('document.startViewTransition', $js);
+        $this->assertStringContainsString("typeof document.startViewTransition === 'function'", $js, 'Debe haber fallback sin View Transitions.');
+        $this->assertStringContainsString("evento.key === 'Escape'", $js);
+        $this->assertStringContainsString("evento.key !== 'Tab'", $js);
+        $this->assertStringContainsString('viewTransitionName = nombreVt', $js);
+
+        $css = (string) file_get_contents(public_path('css/menuonl.css'));
+        $this->assertStringContainsString('::view-transition-group(*)', $css);
+        $this->assertStringContainsString('aspect-ratio: 4 / 3', $css);
+    }
+
+    public function test_widget_resumen_restaurante_muestra_estado_acciones_directas_y_avisos_reales(): void
+    {
+        $restaurante = $this->crearRestaurante('casa-oaxaca');
+        $restaurante->update([
+            'nombre' => 'Casa Oaxaca',
+            'eslogan' => 'Cocina tradicional oaxaqueña',
+            'tema' => 'rustico',
+            'pedidos_activos' => true,
+            'whatsapp_pedidos' => null,
+        ]);
+
+        $propietario = $this->crearUsuario('propietario', $restaurante);
+        $this->entrarAlPanel($propietario, $restaurante);
+
+        Livewire::test(ResumenRestauranteWidget::class)
+            ->assertSee('Casa Oaxaca')
+            ->assertSee('Cocina tradicional oaxaqueña')
+            ->assertSee('Publicado')
+            ->assertSee('Cerrado en este momento')
+            ->assertSee('Estilo: Rústico')
+            ->assertSee('Agregar producto')
+            ->assertSee('Tus productos')
+            ->assertSee('Categorías')
+            ->assertSee('Diseño del menú y datos')
+            ->assertSee('Códigos QR para compartir')
+            ->assertSee('Ver menú')
+            ->assertSee('Aún no tienes categorías. Crea la primera para organizar tus productos.')
+            ->assertSee('No has configurado horarios de apertura.')
+            ->assertSee('Los pedidos están activos pero falta el número de WhatsApp.');
+    }
+
+    public function test_menu_publico_muestra_etiquetas_en_espanol_monograma_sin_logo_y_enlace_mapa(): void
+    {
+        $restaurante = Restaurante::factory()->create([
+            'nombre' => 'Bosque de Agua',
+            'slug' => 'bosque-de-agua',
+            'logo' => null,
+            'estado' => 'activo',
+        ]);
+        RestauranteIdioma::factory()->create(['restaurante_id' => $restaurante->id, 'idioma' => 'es']);
+
+        Contacto::factory()->create([
+            'restaurante_id' => $restaurante->id,
+            'tipo' => 'direccion',
+            'etiqueta' => 'Ubicación',
+            'valor' => 'Av. Álvaro Obregón 120, Roma Norte',
+            'visible' => true,
+        ]);
+
+        $categoria = Categoria::factory()->create(['restaurante_id' => $restaurante->id, 'visible' => true]);
+        CategoriaTraduccion::factory()->create(['categoria_id' => $categoria->id, 'idioma' => 'es', 'nombre' => 'Especialidades']);
+
+        $plato = Producto::factory()->create([
+            'restaurante_id' => $restaurante->id,
+            'categoria_id' => $categoria->id,
+            'precio' => 240,
+            'destacado' => true,
+            'disponible' => true,
+            'visible' => true,
+        ]);
+        ProductoTraduccion::factory()->create(['producto_id' => $plato->id, 'idioma' => 'es', 'nombre' => 'Mole negro']);
+
+        $etiqueta = Etiqueta::firstOrCreate(['codigo' => 'sin_gluten'], ['icono' => 'wheat-off']);
+        $plato->etiquetas()->attach($etiqueta);
+
+        $respuesta = $this->get(route('menu.publico', ['slug' => $restaurante->slug]));
+
+        $respuesta->assertOk();
+        $respuesta->assertSee('hero-monograma', false);
+        $respuesta->assertSee('Sin gluten');
+        $respuesta->assertSee('#sin_gluten');
+        $respuesta->assertSee('https://www.google.com/maps/search/?api=1&amp;query=', false);
+        $respuesta->assertSee('id="destacado-dish-title-'.$plato->id.'"', false);
+        $respuesta->assertSee('id="dish-title-'.$plato->id.'"', false);
     }
 }

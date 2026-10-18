@@ -13,16 +13,23 @@ class CategoriaForm
     {
         return $schema
             ->components([
+                TraduccionesRepeater::make('traducciones', 120)
+                    ->label('Nombre y descripción')
+                    ->columnSpanFull(),
                 Toggle::make('visible')
-                    ->label('Visible en el menú')
+                    ->label('Mostrar en el menú público')
                     ->helperText('Determina si la categoría y sus platillos se muestran en el menú público.')
                     ->default(true),
                 TextInput::make('orden')
-                    ->label('Orden de visualización')
+                    ->label('Orden de aparición')
                     ->placeholder('0')
-                    ->numeric()->integer()->minValue(0)->maxValue(1000000)->default(0)->required()
+                    ->numeric()
+                    ->integer()
+                    ->minValue(0)
+                    ->maxValue(1000000)
+                    ->default(0)
+                    ->required()
                     ->helperText('Posición numérica para ordenar las secciones del menú público.'),
-                TraduccionesRepeater::make('traducciones', 120)->columnSpanFull(),
             ]);
     }
 }

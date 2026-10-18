@@ -81,10 +81,13 @@
 
     /* Acento y tipografía de título: el tema o el restaurante los redefinen */
     :root {
+        --mo-superficie-elevada: var(--mo-superficie);
         --mo-acento: var(--mo-accion);
         --mo-acento-texto: var(--mo-accion-texto);
         --mo-fuente-titulo: var(--font-sans);
         --mo-radio-boton: var(--mo-radio-control);
+        --mo-radio-md: var(--mo-radio-control);
+        --mo-radio-lg: var(--mo-radio-tarjeta);
         --mo-mayusculas: none;
         --mo-espaciado-titulo: 0;
     }
@@ -493,6 +496,18 @@
         box-shadow: 0 6px 16px -6px rgba(0, 0, 0, 0.35);
         margin-bottom: 1rem;
     }
+    .hero-monograma {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-family: var(--mo-fuente-titulo);
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--mo-acento);
+        background-color: color-mix(in srgb, var(--mo-acento) 12%, var(--mo-superficie));
+        border-color: color-mix(in srgb, var(--mo-acento) 28%, var(--mo-borde));
+        user-select: none;
+    }
     .regla-acento { display: block; width: 3rem; height: 2px; background-color: var(--mo-acento); margin-bottom: 0.9rem; }
     .hero-kicker {
         font-size: 0.75rem;
@@ -621,7 +636,7 @@
     [data-tema="clasico"] .nav-pill:focus { background-color: var(--mo-accion); color: var(--mo-accion-texto); }
 
     /* Secciones y platillos */
-    .seccion { margin-bottom: 3rem; scroll-margin-top: 4.5rem; }
+    .seccion { margin-bottom: 3rem; scroll-margin-top: 7.5rem; }
     .seccion-titulo {
         display: flex;
         align-items: center;
@@ -832,6 +847,18 @@
         transition: transform 0.25s ease, opacity 0.25s ease;
     }
     .barra-logo { width: 1.75rem; height: 1.75rem; border-radius: var(--mo-radio-control); object-fit: cover; }
+    .barra-monograma {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-family: var(--mo-fuente-titulo);
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: var(--mo-acento);
+        background-color: color-mix(in srgb, var(--mo-acento) 14%, var(--mo-superficie));
+        border: 1px solid color-mix(in srgb, var(--mo-acento) 28%, var(--mo-borde));
+        user-select: none;
+    }
     .barra-nombre {
         font-family: var(--mo-fuente-titulo);
         font-size: 1rem;
@@ -848,13 +875,15 @@
     .sticky-nav { transition: transform 0.25s ease; }
     .cabecera-compacta .barra-compacta { transform: none; opacity: 1; }
     .cabecera-compacta .sticky-nav { transform: translate3d(0, 2.75rem, 0); }
+    #carta { padding-top: 3.75rem; }
     .seccion { scroll-margin-top: 7.5rem; }
 
     .seccion-titulo { display: block; padding-bottom: 0.6rem; border-bottom: 1px solid var(--mo-borde); overflow-wrap: anywhere; }
     .seccion-titulo::after { content: none; }
 
     /* ---- Tarjetas de platos ---- */
-    .plato { border-radius: var(--mo-radio-control); transition: background-color var(--mo-duracion), scale 0.12s ease; -webkit-tap-highlight-color: transparent; }
+    .plato { padding: 1.35rem 0.5rem; border-radius: var(--mo-radio-control); transition: background-color var(--mo-duracion), border-color var(--mo-duracion), scale 0.12s ease; -webkit-tap-highlight-color: transparent; }
+    .plato:hover { background-color: color-mix(in srgb, var(--mo-superficie-2) 38%, transparent); }
     .plato:active { scale: 0.985; background-color: color-mix(in srgb, var(--mo-superficie-2) 60%, transparent); }
     .plato .dish-title { font-size: 1.25rem; line-height: 1.2; }
     .plato-precio { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.3rem; }
@@ -862,6 +891,24 @@
     .plato .dish-price-offer { font-size: 1.125rem; }
     .plato .dish-desc { margin-top: 0.4rem; }
     .plato-pie { display: flex; justify-content: flex-end; margin-top: 0.75rem; }
+
+    #destacados .platos { gap: 1.25rem; margin-top: 1.25rem; }
+    #destacados .plato {
+        background-color: var(--mo-superficie-elevada);
+        border: 1px solid var(--mo-borde);
+        border-radius: var(--mo-radio-lg);
+        padding: 1.25rem;
+        box-shadow: var(--mo-sombra-suave);
+    }
+    #destacados .plato:hover {
+        border-color: color-mix(in srgb, var(--mo-acento) 45%, var(--mo-borde));
+        background-color: var(--mo-superficie-elevada);
+    }
+    #destacados .plato-imagen {
+        width: 6.75rem;
+        height: 6.75rem;
+        border-radius: var(--mo-radio-md);
+    }
 
     .plato-imagen {
         position: relative;
@@ -871,6 +918,7 @@
         overflow: hidden;
         border-radius: var(--mo-radio-tarjeta);
         background-color: var(--mo-superficie-2);
+        cursor: pointer;
     }
     .plato-imagen::before {
         content: '';
@@ -878,7 +926,8 @@
         inset: 0;
         background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--mo-texto) 12%, transparent), transparent);
         transform: translate3d(-100%, 0, 0);
-        animation: plato-brillo 1.4s ease-in-out 6;
+        animation: plato-brillo 1.4s ease-in-out 1 forwards;
+        animation-iteration-count: 1;
     }
     .plato-imagen .dish-img { position: relative; z-index: 1; width: 100%; height: 100%; border: 0; border-radius: 0; display: block; }
     @keyframes plato-brillo { to { transform: translate3d(100%, 0, 0); } }
@@ -893,9 +942,57 @@
             .plato {
                 animation: plato-entra linear both;
                 animation-timeline: view();
-                animation-range: entry calc(var(--i, 0) * 4%) entry calc(55% + var(--i, 0) * 4%);
+                animation-range: entry 0% entry 35%;
             }
         }
+    }
+
+    /* ---- Detalle del plato ---- */
+    .plato-abrir {
+        display: inline-flex;
+        align-items: center;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        letter-spacing: inherit;
+        text-align: left;
+        cursor: pointer;
+    }
+    .plato-abrir:hover { color: var(--mo-acento); }
+    .plato-hoja-titulo {
+        flex: 1;
+        font-family: var(--mo-fuente-titulo);
+        font-size: 1.375rem;
+        font-weight: 600;
+        line-height: 1.2;
+        color: var(--mo-texto-fuerte);
+    }
+    .plato-hoja-figura {
+        margin: 0 0 1rem;
+        overflow: hidden;
+        border-radius: var(--mo-radio-tarjeta);
+        background-color: var(--mo-superficie-2);
+    }
+    .plato-hoja-imagen { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+    .plato-hoja .dish-desc { font-size: 1rem; line-height: 1.55; color: var(--mo-texto-medio); }
+    .plato-hoja .dish-price { color: var(--mo-acento); font-size: 1.25rem; font-weight: 700; }
+    .plato-hoja .dish-price-offer { font-size: 1.25rem; font-weight: 700; }
+    .plato-hoja .plato-precio { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.35rem; }
+    .plato-hoja .tag { border: 1px solid var(--mo-borde); border-radius: 9999px; padding: 0.1rem 0.6rem; font-size: 0.75rem; background: transparent; }
+    .plato-hoja .plato-pie { margin-top: 1rem; }
+    .plato-hoja .plato-pie .btn-cart-add { width: 100%; min-height: 48px; }
+    .con-transicion .cart-drawer { animation: none !important; }
+
+    /* View Transitions: solo se mueve la imagen del plato; el resto de la página queda quieta */
+    ::view-transition-old(root),
+    ::view-transition-new(root) { animation: none; }
+    ::view-transition-group(*) { animation-duration: 0.32s; animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1); }
+    @media (prefers-reduced-motion: reduce) {
+        ::view-transition-group(*),
+        ::view-transition-old(*),
+        ::view-transition-new(*) { animation: none !important; }
     }
 }
 

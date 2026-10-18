@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Filament\Pages\Auth\Login;
 use App\Filament\Pages\Tenancy\EditRestauranteProfile;
+use App\Filament\Widgets\ResumenRestauranteWidget;
 use App\Http\Middleware\ExigeDosFactores;
 use App\Models\Restaurante;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
@@ -76,6 +77,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
+                ResumenRestauranteWidget::class,
                 AccountWidget::class,
             ])
             ->middleware([

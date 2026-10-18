@@ -99,4 +99,30 @@ class Catalogos
     {
         return array_map(fn (array $tema): string => $tema['nombre'], self::temas());
     }
+
+    /**
+     * Nombres en español natural para las etiquetas dietéticas y de estado.
+     *
+     * @return array<string, string>
+     */
+    public static function etiquetas(): array
+    {
+        return [
+            'vegano' => 'Vegano',
+            'vegetariano' => 'Vegetariano',
+            'picante' => 'Picante',
+            'sin_gluten' => 'Sin gluten',
+            'sin_lactosa' => 'Sin lactosa',
+            'nuevo' => 'Nuevo',
+            'recomendado' => 'Recomendado',
+        ];
+    }
+
+    /**
+     * Devuelve el nombre legible en español de una etiqueta dietética.
+     */
+    public static function nombreEtiqueta(string $codigo): string
+    {
+        return self::etiquetas()[$codigo] ?? ucfirst(str_replace('_', ' ', $codigo));
+    }
 }

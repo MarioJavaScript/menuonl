@@ -16,7 +16,7 @@ class RestaurantesTable
         return $table
             ->columns([
                 TextColumn::make('nombre')->label('Nombre')->searchable()->sortable(),
-                TextColumn::make('slug')->label('Slug')->searchable(),
+                TextColumn::make('slug')->label('Enlace')->searchable(),
                 TextColumn::make('estado')
                     ->label('Estado')
                     ->badge()

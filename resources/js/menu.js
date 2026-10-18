@@ -66,9 +66,204 @@ Alpine.data('hoja', () => ({
     cerrarArrastrado(alto) {
         this.desplazamiento = alto;
         setTimeout(() => {
-            window.closeCartModal(null, true);
+            this.$dispatch('hoja-cerrar');
+            if (this.$el.closest('#cartModalBackdrop') && typeof window.closeCartModal === 'function') {
+                window.closeCartModal(null, true);
+            }
             this.desplazamiento = 0;
         }, sinMovimiento() ? 0 : 200);
+    },
+
+    closeCartModal() {
+        if (typeof window.closeCartModal === 'function') {
+            window.closeCartModal(null, true);
+        }
+    },
+}));
+
+/**
+ * Detalle del plato en una hoja inferior. Si el navegador soporta View Transitions, la imagen de la
+ * tarjeta se transforma en la imagen del detalle (y viceversa); si no, solo se anima la hoja.
+ */
+Alpine.data('detallePlato', () => ({
+    abierto: false,
+    nombre: '',
+    descripcion: '',
+    imagen: '',
+    idPlato: '',
+    boton: null,
+    imagenOrigen: null,
+
+    get raiz() {
+        return document.getElementById('platoHojaFondo');
+    },
+
+    ref(nombre) {
+        return this.raiz.querySelector(`[x-ref="${nombre}"]`);
+    },
+
+    get imagenSrc() {
+        return this.imagen || 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+    },
+
+    clic(evento) {
+        if (this.abierto && evento.target.closest('.btn-cart-add')) {
+            setTimeout(() => this.cerrar(), 150);
+
+            return;
+        }
+
+        const disparador = evento.target.closest('[data-abrir-plato], .plato-imagen');
+
+        if (!disparador || this.raiz.contains(evento.target)) {
+            return;
+        }
+
+        const articulo = disparador.closest('.plato');
+        const boton = articulo ? articulo.querySelector('[data-abrir-plato]') : null;
+
+        if (boton) {
+            this.abrir(articulo, boton);
+        }
+    },
+
+    abrir(articulo, boton) {
+        this.boton = boton;
+        this.idPlato = articulo.dataset.plato || '';
+        this.nombre = boton.textContent.trim();
+        this.descripcion = (articulo.querySelector('.dish-desc')?.textContent ?? '').trim();
+
+        const imagenTarjeta = articulo.querySelector('.plato-imagen img');
+        this.imagen = imagenTarjeta ? imagenTarjeta.getAttribute('src') : '';
+        this.imagenOrigen = imagenTarjeta;
+
+        this.copiar(this.ref('etiquetas'), articulo.querySelector('ul'));
+        this.copiar(this.ref('compra'), articulo.querySelector('.plato-precio'), articulo.querySelector('.plato-variantes'), articulo.querySelector('.plato-pie'));
+
+        const mostrar = () => {
+            this.abierto = true;
+            this.raiz.classList.remove('cerrando');
+            this.raiz.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        };
+
+        if (imagenTarjeta && this.puedeTransicionar()) {
+            const nombreVt = `plato-${this.idPlato}`;
+
+            imagenTarjeta.style.viewTransitionName = nombreVt;
+            this.raiz.classList.add('con-transicion');
+
+            const transicion = document.startViewTransition(async () => {
+                imagenTarjeta.style.viewTransitionName = '';
+                mostrar();
+                await this.$nextTick();
+                this.ref('imagen').style.viewTransitionName = nombreVt;
+            });
+
+            transicion.finished.finally(() => {
+                this.ref('imagen').style.viewTransitionName = '';
+                this.raiz.classList.remove('con-transicion');
+                this.enfocar();
+            });
+
+            return;
+        }
+
+        mostrar();
+        this.enfocar();
+    },
+
+    cerrar() {
+        if (!this.abierto) {
+            return;
+        }
+
+        const ocultar = () => {
+            this.abierto = false;
+            this.raiz.classList.remove('open', 'cerrando');
+            document.body.style.overflow = '';
+            this.boton?.focus();
+        };
+
+        if (this.imagen && this.imagenOrigen && this.puedeTransicionar()) {
+            const nombreVt = `plato-${this.idPlato}`;
+
+            this.ref('imagen').style.viewTransitionName = nombreVt;
+            this.raiz.classList.add('con-transicion');
+
+            const transicion = document.startViewTransition(async () => {
+                this.ref('imagen').style.viewTransitionName = '';
+                ocultar();
+                this.imagenOrigen.style.viewTransitionName = nombreVt;
+            });
+
+            transicion.finished.finally(() => {
+                this.imagenOrigen.style.viewTransitionName = '';
+                this.raiz.classList.remove('con-transicion');
+            });
+
+            return;
+        }
+
+        if (sinMovimiento()) {
+            ocultar();
+
+            return;
+        }
+
+        this.raiz.classList.add('cerrando');
+        setTimeout(ocultar, 200);
+    },
+
+    cerrarFondo(evento) {
+        if (evento.target === this.raiz) {
+            this.cerrar();
+        }
+    },
+
+    teclas(evento) {
+        if (!this.abierto) {
+            return;
+        }
+
+        if (evento.key === 'Escape') {
+            this.cerrar();
+
+            return;
+        }
+
+        if (evento.key !== 'Tab') {
+            return;
+        }
+
+        const enfocables = [...this.raiz.querySelectorAll('button, a[href], input, textarea')].filter((el) => !el.disabled && el.offsetParent !== null);
+
+        if (!enfocables.length) {
+            return;
+        }
+
+        const primero = enfocables[0];
+        const ultimo = enfocables[enfocables.length - 1];
+
+        if (evento.shiftKey && (document.activeElement === primero || !this.raiz.contains(document.activeElement))) {
+            evento.preventDefault();
+            ultimo.focus();
+        } else if (!evento.shiftKey && (document.activeElement === ultimo || !this.raiz.contains(document.activeElement))) {
+            evento.preventDefault();
+            primero.focus();
+        }
+    },
+
+    copiar(destino, ...origenes) {
+        destino.replaceChildren(...origenes.filter(Boolean).map((nodo) => nodo.cloneNode(true)));
+    },
+
+    enfocar() {
+        this.ref('cerrar')?.focus();
+    },
+
+    puedeTransicionar() {
+        return typeof document.startViewTransition === 'function' && !sinMovimiento();
     },
 }));
 
@@ -89,6 +284,12 @@ Alpine.data('cabecera', () => ({
 
             this.$root.classList.toggle('cabecera-compacta', compacta);
         }).observe(centinela);
+    },
+
+    closeCartModal() {
+        if (typeof window.closeCartModal === 'function') {
+            window.closeCartModal(null, true);
+        }
     },
 }));
 

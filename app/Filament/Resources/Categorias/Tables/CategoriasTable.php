@@ -28,6 +28,9 @@ class CategoriasTable
                     ->label('Nombre')
                     ->state(fn (Categoria $record): ?string => $record->traduccion()?->nombre)
                     ->searchable(query: fn (Builder $query, string $search): Builder => $query->whereHas('traducciones', fn (Builder $q): Builder => $q->where('nombre', 'like', "%{$search}%"))),
+                TextColumn::make('productos_count')
+                    ->counts('productos')
+                    ->label('Productos'),
                 IconColumn::make('visible')->label('Visible')->boolean(),
                 TextColumn::make('orden')->label('Orden')->sortable(),
             ])

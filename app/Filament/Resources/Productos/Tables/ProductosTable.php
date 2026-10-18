@@ -12,6 +12,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
+use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\TextInputColumn;
 use Filament\Tables\Columns\ToggleColumn;
@@ -27,6 +28,11 @@ class ProductosTable
         return $table
             ->modifyQueryUsing(fn (Builder $query): Builder => $query->with(['traducciones', 'restaurante', 'categoria.traducciones']))
             ->columns([
+                ImageColumn::make('imagen')
+                    ->label('Fotografía')
+                    ->disk('public')
+                    ->square()
+                    ->size(48),
                 TextColumn::make('nombre')
                     ->label('Nombre')
                     ->state(fn (Producto $record): ?string => $record->traduccion()?->nombre)

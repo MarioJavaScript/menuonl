@@ -30,12 +30,14 @@ class HorarioForm
                     ->placeholder('09:00')
                     ->helperText('Hora en que inicia el servicio.')
                     ->seconds(false)
+                    ->disabled(fn (Get $get): bool => (bool) $get('cerrado'))
                     ->required(fn (Get $get): bool => ! $get('cerrado')),
                 TimePicker::make('cierra')
                     ->label('Hora de cierre')
                     ->placeholder('23:00')
                     ->helperText('Si la hora de cierre es menor que la de apertura (ej. 02:00), el turno cerrará al día siguiente.')
                     ->seconds(false)
+                    ->disabled(fn (Get $get): bool => (bool) $get('cerrado'))
                     ->required(fn (Get $get): bool => ! $get('cerrado')),
             ]);
     }

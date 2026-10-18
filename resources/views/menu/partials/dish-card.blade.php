@@ -1,12 +1,14 @@
 @php
     $prodNom = $prod->traduccion($idioma)?->nombre ?? $prod->traduccion()?->nombre ?? 'Platillo';
     $prodDesc = $prod->traduccion($idioma)?->descripcion ?? $prod->traduccion()?->descripcion;
-    $esDestacado = (bool) ($prod->destacado ?? false);
+    $enSeccionDestacados = ! empty($esDestacado);
+    $mostrarRecomendado = (bool) ($prod->destacado ?? false) || $enSeccionDestacados;
+    $headingId = $enSeccionDestacados ? 'destacado-dish-title-'.$prod->id : 'dish-title-'.$prod->id;
     $fmt = fn ($v) => \App\Services\FormatoMoneda::formatear($v, $restaurante->moneda, $idioma);
 @endphp
 
-<article class="plato" style="--i: {{ ($indice ?? 0) % 6 }}" aria-labelledby="dish-title-{{ $prod->id }}">
-    @if ($esDestacado)
+<article class="plato" data-plato="{{ $prod->id }}" style="--i: {{ ($indice ?? 0) % 6 }}" aria-labelledby="{{ $headingId }}">
+    @if ($mostrarRecomendado)
         <div class="chip-recomendado" aria-label="Platillo recomendado">
             <span aria-hidden="true">⭐</span> Recomendado
         </div>
@@ -15,7 +17,7 @@
     <div>
         <div class="flex items-start justify-between gap-4">
             <div class="flex-1">
-                <h3 id="dish-title-{{ $prod->id }}" class="dish-title">{{ $prodNom }}</h3>
+                <h3 id="{{ $headingId }}" class="dish-title"><button type="button" class="plato-abrir min-h-[44px] focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none" data-abrir-plato aria-haspopup="dialog">{{ $prodNom }}</button></h3>
                 @if (! $prod->tieneVariantes())
                     <p class="plato-precio">
                         @if ($prod->precio_oferta !== null && (float)$prod->precio_oferta < (float)$prod->precio)
@@ -41,7 +43,7 @@
                 @if ($prod->etiquetas->isNotEmpty())
                     <ul class="flex flex-wrap gap-1 mt-2.5 list-none" aria-label="Etiquetas dietéticas de {{ $prodNom }}">
                         @foreach ($prod->etiquetas as $etiqueta)
-                            <li class="tag inline-flex items-center">#{{ $etiqueta->codigo }}</li>
+                            <li class="tag inline-flex items-center"><span class="sr-only">#{{ $etiqueta->codigo }}</span>{{ \App\Services\Catalogos::nombreEtiqueta($etiqueta->codigo) }}</li>
                         @endforeach
                     </ul>
                 @endif
@@ -56,7 +58,7 @@
 
         <!-- Variants presentation if present -->
         @if ($prod->tieneVariantes())
-            <div class="mt-3">
+            <div class="plato-variantes mt-3">
                 <span class="text-xs font-bold uppercase tracking-wider text-texto-suave block mb-1">
                     Opciones disponibles:
                 </span>
