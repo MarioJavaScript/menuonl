@@ -713,4 +713,45 @@ class UxUiAccesibilidadTest extends TestCase
         $vacio = view('filament.historial.cambios', ['cambios' => []])->render();
         $this->assertStringContainsString('Sin detalles de cambios registrados.', $vacio);
     }
+
+    // =========================================================================
+    // Hoja inferior, cabecera dinámica, tarjetas y View Transitions
+    // =========================================================================
+
+    public function test_hoja_del_carrito_es_un_dialogo_accesible_arrastrable_con_alpine(): void
+    {
+        $restaurante = Restaurante::factory()->create(['estado' => 'activo', 'pedidos_activos' => true, 'whatsapp_pedidos' => '5215555555555']);
+        RestauranteIdioma::factory()->create(['restaurante_id' => $restaurante->id, 'idioma' => 'es']);
+        Horario::factory()->create(['restaurante_id' => $restaurante->id, 'dia_semana' => now($restaurante->zona_horaria)->dayOfWeek, 'abre' => '00:00:00', 'cierra' => '23:59:00']);
+
+        $respuesta = $this->get(route('menu.publico', ['slug' => $restaurante->slug]));
+
+        $respuesta->assertOk();
+        $respuesta->assertSee('id="cartModalBackdrop"', false);
+        $respuesta->assertSee('role="dialog"', false);
+        $respuesta->assertSee('aria-modal="true"', false);
+        $respuesta->assertSee('aria-labelledby="cartDrawerTitle"', false);
+        $respuesta->assertSee('x-data="hoja"', false);
+        $respuesta->assertSee('class="hoja-asa" aria-hidden="true"', false);
+        $respuesta->assertSee('min-w-[44px] min-h-[44px]', false);
+        $respuesta->assertSee("e.key === 'Escape' || e.key === 'Esc'", false);
+    }
+
+    public function test_solo_el_menu_publico_carga_alpine_y_sin_dependencias_de_animacion(): void
+    {
+        $paquete = json_decode((string) file_get_contents(base_path('package.json')), true);
+        $dependencias = array_keys(($paquete['dependencies'] ?? []) + ($paquete['devDependencies'] ?? []));
+
+        $this->assertContains('@alpinejs/csp', $dependencias, 'Alpine debe usar la compilación CSP: la política no permite unsafe-eval.');
+        $this->assertNotContains('alpinejs', $dependencias);
+        foreach (['gsap', 'framer-motion', 'animejs', 'aos', 'motion', 'lottie-web'] as $libreria) {
+            $this->assertNotContains($libreria, $dependencias, "No se permiten librerías de animación ($libreria).");
+        }
+
+        $vite = (string) file_get_contents(base_path('vite.config.js'));
+        $this->assertStringContainsString('resources/js/menu.js', $vite);
+        $this->assertSame('', trim((string) file_get_contents(resource_path('js/app.js')), '/ 
+'));
+        $this->assertStringContainsString('@alpinejs/csp', (string) file_get_contents(resource_path('js/menu.js')));
+    }
 }

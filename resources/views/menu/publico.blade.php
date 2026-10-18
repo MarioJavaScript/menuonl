@@ -7,6 +7,7 @@
     :tema="$restaurante->temaVigente()"
     :acento="$restaurante->colorAcentoSeguro()"
     :acento-texto="$restaurante->colorAcentoTexto()"
+    js="resources/js/menu.js"
 >
         <!-- Cart Toast Notification -->
         <div id="cartToast" role="status" aria-live="polite" class="cart-toast" aria-atomic="true">
@@ -277,8 +278,9 @@
                 aria-modal="true"
                 aria-labelledby="cartDrawerTitle"
             >
-                <div class="cart-drawer" onclick="event.stopPropagation()">
-                    <div class="flex items-center justify-between pb-3 border-b divisor mb-4">
+                <div class="cart-drawer" onclick="event.stopPropagation()" x-data="hoja" :style="estilo">
+                    <div class="hoja-cabecera flex items-center justify-between pb-3 border-b divisor mb-4" @pointerdown="empezar" @pointermove="mover" @pointerup="soltar" @pointercancel="soltar">
+                        <span class="hoja-asa" aria-hidden="true"></span>
                         <div class="flex items-center gap-2">
                             <span class="text-xl" aria-hidden="true">🛒</span>
                             <h3 id="cartDrawerTitle" class="text-lg font-bold text-texto-fuerte" style="font-family: var(--mo-fuente-titulo)">Tu Pedido</h3>
@@ -513,6 +515,7 @@
 
                 window.openCartModal = function() {
                     const modal = document.getElementById('cartModalBackdrop');
+                    if (modal) modal.classList.remove('cerrando');
                     if (modal) modal.classList.add('open');
                     const bar = document.getElementById('floatingCartBar');
                     if (bar) bar.setAttribute('aria-expanded', 'true');
@@ -521,13 +524,21 @@
                     if (closeBtn) closeBtn.focus();
                 };
 
-                window.closeCartModal = function(e) {
+                window.closeCartModal = function(e, inmediato) {
                     if (e && e.target && e.target !== document.getElementById('cartModalBackdrop')) {
                         return;
                     }
                     const modal = document.getElementById('cartModalBackdrop');
-                    if (modal) modal.classList.remove('open');
                     const bar = document.getElementById('floatingCartBar');
+                    const terminar = function() {
+                        if (modal) modal.classList.remove('open', 'cerrando');
+                    };
+                    if (modal && modal.classList.contains('open') && !inmediato && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                        modal.classList.add('cerrando');
+                        setTimeout(terminar, 200);
+                    } else {
+                        terminar();
+                    }
                     if (bar) bar.setAttribute('aria-expanded', 'false');
                     document.body.style.overflow = '';
                     cartCancelarVaciar();

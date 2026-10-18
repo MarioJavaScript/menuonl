@@ -765,6 +765,52 @@
 
     .pie-publico { border-top: 1px solid var(--mo-borde); padding: 2rem 0; text-align: center; font-size: 0.8125rem; color: var(--mo-texto-suave); }
     .pie-publico a { color: var(--mo-texto-medio); }
+
+    /* ---- Hoja inferior (carrito y detalle del plato) ---- */
+    .cart-modal-backdrop {
+        -webkit-backdrop-filter: blur(6px);
+        backdrop-filter: blur(6px);
+        overscroll-behavior: contain;
+    }
+    .cart-modal-backdrop.open { animation: hoja-fundir-entra 0.2s ease-out; }
+    .cart-modal-backdrop.cerrando { animation: hoja-fundir-sale 0.2s ease-in forwards; }
+    .cart-drawer {
+        overscroll-behavior: contain;
+        will-change: transform;
+        padding-top: 0.75rem;
+        box-shadow: 0 -12px 40px -12px rgba(0, 0, 0, 0.45);
+    }
+    .cart-modal-backdrop.open .cart-drawer { animation: hoja-sube 0.28s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    .cart-modal-backdrop.cerrando .cart-drawer { animation: hoja-baja 0.2s ease-in forwards; }
+    .hoja-cabecera { position: relative; padding-top: 1rem; touch-action: none; cursor: grab; }
+    .hoja-asa {
+        position: absolute;
+        top: 0.15rem;
+        left: 50%;
+        width: 2.5rem;
+        height: 4px;
+        margin-left: -1.25rem;
+        border-radius: 9999px;
+        background-color: var(--mo-borde);
+    }
+    @media (min-width: 48rem) {
+        .cart-modal-backdrop { align-items: center; padding: 1.5rem; }
+        .cart-drawer {
+            max-width: 34rem;
+            border-radius: var(--mo-radio-hoja, 1rem);
+            max-height: 85vh;
+        }
+        .hoja-asa { display: none; }
+        .hoja-cabecera { cursor: default; padding-top: 0; touch-action: auto; }
+        .cart-modal-backdrop.open .cart-drawer { animation-name: hoja-aparece; }
+        .cart-modal-backdrop.cerrando .cart-drawer { animation-name: hoja-desaparece; }
+    }
+    @keyframes hoja-fundir-entra { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes hoja-fundir-sale { from { opacity: 1; } to { opacity: 0; } }
+    @keyframes hoja-sube { from { transform: translate3d(0, 100%, 0); } to { transform: translate3d(0, 0, 0); } }
+    @keyframes hoja-baja { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(0, 100%, 0); } }
+    @keyframes hoja-aparece { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+    @keyframes hoja-desaparece { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.96); } }
 }
 
 @media (prefers-reduced-motion: reduce) {
