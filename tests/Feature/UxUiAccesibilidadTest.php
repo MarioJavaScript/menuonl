@@ -754,4 +754,23 @@ class UxUiAccesibilidadTest extends TestCase
 '));
         $this->assertStringContainsString('@alpinejs/csp', (string) file_get_contents(resource_path('js/menu.js')));
     }
+
+    public function test_cabecera_dinamica_tiene_centinela_barra_decorativa_y_navegacion_etiquetada(): void
+    {
+        $restaurante = Restaurante::factory()->create(['estado' => 'activo']);
+        RestauranteIdioma::factory()->create(['restaurante_id' => $restaurante->id, 'idioma' => 'es']);
+
+        $respuesta = $this->get(route('menu.publico', ['slug' => $restaurante->slug]));
+
+        $respuesta->assertOk();
+        $respuesta->assertSee('x-data="cabecera"', false);
+        $respuesta->assertSee('x-init="iniciar"', false);
+        $respuesta->assertSee('data-centinela', false);
+        $respuesta->assertSee('class="barra-compacta" aria-hidden="true"', false);
+        $respuesta->assertSee('aria-label="Categorías del menú"', false);
+
+        $css = (string) file_get_contents(public_path('css/menuonl.css'));
+        $this->assertStringContainsString('.cabecera-compacta .sticky-nav', $css);
+        $this->assertStringContainsString('@media (prefers-reduced-motion: reduce)', $css);
+    }
 }

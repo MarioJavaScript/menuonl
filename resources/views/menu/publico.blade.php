@@ -4,6 +4,8 @@
     :lang="str_replace('_', '-', app()->getLocale())"
     html-class="scroll-smooth"
     class="menu-publico"
+    x-data="cabecera"
+    x-init="iniciar"
     :tema="$restaurante->temaVigente()"
     :acento="$restaurante->colorAcentoSeguro()"
     :acento-texto="$restaurante->colorAcentoTexto()"
@@ -114,6 +116,19 @@
                 @endif
             </div>
         </header>
+
+        <div data-centinela aria-hidden="true"></div>
+
+        <!-- Barra compacta: aparece al salir el hero -->
+        <div class="barra-compacta" aria-hidden="true">
+            <div class="contenedor flex items-center gap-3">
+                @if (filled($restaurante->logo))
+                    <img src="{{ Storage::url($restaurante->logo) }}" alt="" class="barra-logo" width="28" height="28" decoding="async">
+                @endif
+                <span class="barra-nombre">{{ $restaurante->traduccion($idioma)->nombre }}</span>
+                <span class="{{ $estaAbierto ? 'badge-open' : 'badge-closed' }} ml-auto">{{ $estaAbierto ? 'Abierto' : 'Cerrado' }}</span>
+            </div>
+        </div>
 
         <!-- Sticky Category Navigation Bar -->
         <nav class="sticky-nav" aria-label="Categorías del menú">

@@ -72,5 +72,25 @@ Alpine.data('hoja', () => ({
     },
 }));
 
+/**
+ * Cabecera dinámica: cuando el hero sale de la pantalla se muestra la barra compacta
+ * (logo y nombre reducidos) y la navegación de categorías baja a ocupar su lugar.
+ */
+Alpine.data('cabecera', () => ({
+    iniciar() {
+        const centinela = this.$root.querySelector('[data-centinela]');
+
+        if (!centinela || !('IntersectionObserver' in window)) {
+            return;
+        }
+
+        new IntersectionObserver(([entrada]) => {
+            const compacta = !entrada.isIntersecting && entrada.boundingClientRect.top < 0;
+
+            this.$root.classList.toggle('cabecera-compacta', compacta);
+        }).observe(centinela);
+    },
+}));
+
 window.Alpine = Alpine;
 Alpine.start();
