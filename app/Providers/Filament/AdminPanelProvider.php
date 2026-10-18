@@ -30,9 +30,11 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AdminPanelProvider extends PanelProvider
 {
+    private const TEMA = 'resources/css/filament/admin/theme.css';
+
     public function panel(Panel $panel): Panel
     {
-        return $panel
+        $panel = $panel
             ->default()
             ->id('admin')
             ->path('admin')
@@ -69,6 +71,7 @@ class AdminPanelProvider extends PanelProvider
             ->favicon(asset('favicon.svg'))
             ->colors([
                 'primary' => Color::Amber,
+                'gray' => Color::Zinc,
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
@@ -98,5 +101,26 @@ class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 ExigeDosFactores::class,
             ], isPersistent: true);
+
+        if (self::temaCompilado()) {
+            $panel->viteTheme(self::TEMA);
+        }
+
+        return $panel;
+    }
+
+    /**
+     * The theme is only registered when Vite can serve it (dev server or a build that includes it), so the
+     * panel still renders in CI and tests, where assets are not compiled.
+     */
+    private static function temaCompilado(): bool
+    {
+        if (is_file(public_path('hot'))) {
+            return true;
+        }
+
+        $manifiesto = public_path('build/manifest.json');
+
+        return is_file($manifiesto) && str_contains((string) file_get_contents($manifiesto), self::TEMA);
     }
 }
