@@ -249,6 +249,12 @@ class UxUiAccesibilidadTest extends TestCase
         $response->assertSee('Vaciar pedido');
         $response->assertSee('Conservar');
 
+        // Textos del modal de pedido y botón de WhatsApp
+        $response->assertSee('Mandar pedido por WhatsApp');
+        $response->assertDontSee('Enviar Pedido por WhatsApp');
+        $response->assertSee('Tu pedido está vacío. Toca "Agregar" en un platillo.', false);
+        $response->assertDontSee('Tu carrito está vacío.');
+
         // Transparencia de estado: abierto ahora y mesa activa
         $response->assertSee('Abierto ahora');
         $response->assertSee('Mesa 7');

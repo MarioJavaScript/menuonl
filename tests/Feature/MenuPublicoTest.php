@@ -98,6 +98,8 @@ class MenuPublicoTest extends TestCase
         $response->assertSee('Taco de Pastor con Todo');
         $response->assertSee('Tortilla de maíz recién hecha con piña y cilantro');
         $response->assertSee('$45.00');
+        $response->assertDontSee('45.00 MXN');
+        $response->assertDontSee('$45.00 MXN');
     }
 
     public function test_offer_price_displayed_with_regular_price_struck_through(): void
@@ -127,8 +129,10 @@ class MenuPublicoTest extends TestCase
         $response = $this->get(route('menu.publico', ['slug' => $restaurante->slug]));
 
         $response->assertOk();
-        $response->assertSee('89.00');
-        $response->assertSee('120.00');
+        $response->assertSee('$89.00');
+        $response->assertSee('$120.00');
+        $response->assertDontSee('89.00 MXN');
+        $response->assertDontSee('120.00 MXN');
         $response->assertSee('class="dish-price-old"', false);
         $response->assertSee('class="dish-price-offer"', false);
     }
@@ -168,9 +172,11 @@ class MenuPublicoTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Mediana');
-        $response->assertSee('75.00');
+        $response->assertSee('$75.00');
         $response->assertSee('Familiar');
-        $response->assertSee('135.00');
+        $response->assertSee('$135.00');
+        $response->assertDontSee('75.00 MXN');
+        $response->assertDontSee('135.00 MXN');
     }
 
     public function test_dietary_tags_rendered_with_dish(): void
@@ -604,6 +610,28 @@ class MenuPublicoTest extends TestCase
         $response->assertOk();
         $response->assertSee('Estamos cerrados.');
         $this->assertFalse($response->viewData('estaAbierto'));
+    }
+
+    public function test_cart_and_whatsapp_ordering_blocked_when_whatsapp_is_empty(): void
+    {
+        $restaurante = Restaurante::factory()->create([
+            'pedidos_activos' => true,
+            'whatsapp_pedidos' => null,
+            'zona_horaria' => 'America/Mexico_City',
+        ]);
+        Horario::factory()->create([
+            'restaurante_id' => $restaurante->id,
+            'dia_semana' => now('America/Mexico_City')->dayOfWeek,
+            'abre' => '00:00:00',
+            'cierra' => '23:59:59',
+            'cerrado' => false,
+        ]);
+
+        $response = $this->get(route('menu.publico', ['slug' => $restaurante->slug]));
+
+        $response->assertOk();
+        $response->assertSee('Por ahora no recibimos pedidos aquí. Pídele a tu mesero.');
+        $response->assertDontSee('id="floatingCartBar"', false);
     }
 
     public function test_cart_and_whatsapp_deep_link_markup_when_open_and_active(): void

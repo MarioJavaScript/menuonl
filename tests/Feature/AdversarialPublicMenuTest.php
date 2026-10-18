@@ -937,6 +937,8 @@ class AdversarialPublicMenuTest extends TestCase
         // Zero schedules -> restaurant is closed
         $this->assertFalse($response->viewData('estaAbierto'));
         $response->assertSee('Cerrado');
+        $response->assertSee('Este menú se está preparando');
+        $response->assertSee('Pídele la carta a tu mesero.');
         $response->assertDontSee('id="floatingCartBar"', false);
         $this->assertEmpty($response->viewData('categorias'));
         $this->assertEmpty($response->viewData('destacados'));
