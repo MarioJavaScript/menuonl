@@ -164,7 +164,7 @@
 
                     <div class="platos">
                         @foreach ($destacados as $prod)
-                            @include('menu.partials.dish-card', ['prod' => $prod, 'restaurante' => $restaurante, 'idioma' => $idioma, 'puedePedir' => $puedePedir])
+                            @include('menu.partials.dish-card', ['indice' => $loop->index, 'prod' => $prod, 'restaurante' => $restaurante, 'idioma' => $idioma, 'puedePedir' => $puedePedir])
                         @endforeach
                     </div>
                 </section>
@@ -187,7 +187,7 @@
                     @else
                         <div class="platos">
                             @foreach ($cat->productos as $prod)
-                                @include('menu.partials.dish-card', ['prod' => $prod, 'restaurante' => $restaurante, 'idioma' => $idioma, 'puedePedir' => $puedePedir])
+                                @include('menu.partials.dish-card', ['indice' => $loop->index, 'prod' => $prod, 'restaurante' => $restaurante, 'idioma' => $idioma, 'puedePedir' => $puedePedir])
                             @endforeach
                         </div>
                     @endif

@@ -5,7 +5,7 @@
     $fmt = fn ($v) => \App\Services\FormatoMoneda::formatear($v, $restaurante->moneda, $idioma);
 @endphp
 
-<article class="plato" aria-labelledby="dish-title-{{ $prod->id }}">
+<article class="plato" style="--i: {{ ($indice ?? 0) % 6 }}" aria-labelledby="dish-title-{{ $prod->id }}">
     @if ($esDestacado)
         <div class="chip-recomendado" aria-label="Platillo recomendado">
             <span aria-hidden="true">⭐</span> Recomendado
@@ -16,6 +16,24 @@
         <div class="flex items-start justify-between gap-4">
             <div class="flex-1">
                 <h3 id="dish-title-{{ $prod->id }}" class="dish-title">{{ $prodNom }}</h3>
+                @if (! $prod->tieneVariantes())
+                    <p class="plato-precio">
+                        @if ($prod->precio_oferta !== null && (float)$prod->precio_oferta < (float)$prod->precio)
+                            <span class="sr-only">Precio original:</span>
+                            <span class="dish-price-old">{{ $fmt($prod->precio) }}</span>
+                            <span class="sr-only">Precio de oferta:</span>
+                            <span class="dish-price-offer">{{ $fmt($prod->precio_oferta) }}</span>
+                        @else
+                            <span class="dish-price">{{ $fmt($prod->precio) }}</span>
+                        @endif
+
+                        @if (! $prod->disponible)
+                            <span class="etiqueta-agotado ml-1">
+                                Agotado
+                            </span>
+                        @endif
+                    </p>
+                @endif
                 @if ($prodDesc)
                     <p class="dish-desc mt-1">{{ $prodDesc }}</p>
                 @endif
@@ -30,7 +48,9 @@
             </div>
 
             @if (filled($prod->imagen))
-                <img src="{{ Storage::url($prod->imagen) }}" alt="" loading="lazy" decoding="async" width="96" height="96" class="dish-img">
+                <div class="plato-imagen">
+                    <img src="{{ Storage::url($prod->imagen) }}" alt="" loading="lazy" decoding="async" width="96" height="96" class="dish-img">
+                </div>
             @endif
         </div>
 
@@ -75,48 +95,29 @@
         @endif
     </div>
 
-    <!-- Regular price and single add to cart if no variants -->
-    @if (! $prod->tieneVariantes())
-        <div class="flex items-center justify-between mt-4">
-            <div class="flex items-center flex-wrap gap-1.5">
-                @if ($prod->precio_oferta !== null && (float)$prod->precio_oferta < (float)$prod->precio)
-                    <span class="sr-only">Precio original:</span>
-                    <span class="dish-price-old">{{ $fmt($prod->precio) }}</span>
-                    <span class="sr-only">Precio de oferta:</span>
-                    <span class="dish-price-offer">{{ $fmt($prod->precio_oferta) }}</span>
-                @else
-                    <span class="dish-price">{{ $fmt($prod->precio) }}</span>
-                @endif
-
-                @if (! $prod->disponible)
-                    <span class="etiqueta-agotado ml-1">
-                        Agotado
-                    </span>
-                @endif
-            </div>
-
-            @if ($puedePedir)
-                @if ($prod->disponible)
-                    <button
-                        type="button"
-                        onclick="cartAddItem({
-                            producto_id: {{ $prod->id }},
-                            nombre: @js($prodNom),
-                            precio: {{ $prod->precioVigente() }}
-                        })"
-                        aria-label="Agregar {{ $prodNom }} al pedido"
-                        class="btn-cart-add min-h-[44px] min-w-[44px] px-4 py-2.5 text-xs sm:text-sm gap-2 focus-visible:ring-2 focus-visible:ring-foco focus-visible:ring-offset-2 focus-visible:outline-none"
-                    >
-                        <span>Agregar</span>
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                        </svg>
-                    </button>
-                @else
-                    <button type="button" disabled aria-disabled="true" class="btn-cart-add min-h-[44px] min-w-[44px] px-4 py-2.5 text-xs sm:text-sm">
-                        Agotado
-                    </button>
-                @endif
+    <!-- Single add to cart if no variants -->
+    @if (! $prod->tieneVariantes() && $puedePedir)
+        <div class="plato-pie">
+            @if ($prod->disponible)
+                <button
+                    type="button"
+                    onclick="cartAddItem({
+                        producto_id: {{ $prod->id }},
+                        nombre: @js($prodNom),
+                        precio: {{ $prod->precioVigente() }}
+                    })"
+                    aria-label="Agregar {{ $prodNom }} al pedido"
+                    class="btn-cart-add min-h-[44px] min-w-[44px] px-4 py-2.5 text-xs sm:text-sm gap-2 focus-visible:ring-2 focus-visible:ring-foco focus-visible:ring-offset-2 focus-visible:outline-none"
+                >
+                    <span>Agregar</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                </button>
+            @else
+                <button type="button" disabled aria-disabled="true" class="btn-cart-add min-h-[44px] min-w-[44px] px-4 py-2.5 text-xs sm:text-sm">
+                    Agotado
+                </button>
             @endif
         </div>
     @endif

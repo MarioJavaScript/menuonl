@@ -852,6 +852,51 @@
 
     .seccion-titulo { display: block; padding-bottom: 0.6rem; border-bottom: 1px solid var(--mo-borde); overflow-wrap: anywhere; }
     .seccion-titulo::after { content: none; }
+
+    /* ---- Tarjetas de platos ---- */
+    .plato { border-radius: var(--mo-radio-control); transition: background-color var(--mo-duracion), scale 0.12s ease; -webkit-tap-highlight-color: transparent; }
+    .plato:active { scale: 0.985; background-color: color-mix(in srgb, var(--mo-superficie-2) 60%, transparent); }
+    .plato .dish-title { font-size: 1.25rem; line-height: 1.2; }
+    .plato-precio { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.3rem; }
+    .plato .dish-price { color: var(--mo-acento); font-size: 1.125rem; }
+    .plato .dish-price-offer { font-size: 1.125rem; }
+    .plato .dish-desc { margin-top: 0.4rem; }
+    .plato-pie { display: flex; justify-content: flex-end; margin-top: 0.75rem; }
+
+    .plato-imagen {
+        position: relative;
+        flex-shrink: 0;
+        width: 6rem;
+        height: 6rem;
+        overflow: hidden;
+        border-radius: var(--mo-radio-tarjeta);
+        background-color: var(--mo-superficie-2);
+    }
+    .plato-imagen::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--mo-texto) 12%, transparent), transparent);
+        transform: translate3d(-100%, 0, 0);
+        animation: plato-brillo 1.4s ease-in-out 6;
+    }
+    .plato-imagen .dish-img { position: relative; z-index: 1; width: 100%; height: 100%; border: 0; border-radius: 0; display: block; }
+    @keyframes plato-brillo { to { transform: translate3d(100%, 0, 0); } }
+
+    /* Entrada escalonada al hacer scroll (solo donde hay animaciones guiadas por scroll) */
+    @keyframes plato-entra {
+        from { opacity: 0; transform: translate3d(0, 18px, 0); }
+        to { opacity: 1; transform: translate3d(0, 0, 0); }
+    }
+    @supports (animation-timeline: view()) {
+        @media (prefers-reduced-motion: no-preference) {
+            .plato {
+                animation: plato-entra linear both;
+                animation-timeline: view();
+                animation-range: entry calc(var(--i, 0) * 4%) entry calc(55% + var(--i, 0) * 4%);
+            }
+        }
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {

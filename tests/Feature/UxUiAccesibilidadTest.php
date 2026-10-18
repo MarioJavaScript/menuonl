@@ -773,4 +773,29 @@ class UxUiAccesibilidadTest extends TestCase
         $this->assertStringContainsString('.cabecera-compacta .sticky-nav', $css);
         $this->assertStringContainsString('@media (prefers-reduced-motion: reduce)', $css);
     }
+
+    public function test_tarjeta_de_plato_tiene_jerarquia_imagen_con_marco_y_entrada_escalonada(): void
+    {
+        $restaurante = Restaurante::factory()->create(['estado' => 'activo']);
+        RestauranteIdioma::factory()->create(['restaurante_id' => $restaurante->id, 'idioma' => 'es']);
+        $categoria = Categoria::factory()->create(['restaurante_id' => $restaurante->id]);
+        CategoriaTraduccion::factory()->create(['categoria_id' => $categoria->id, 'idioma' => 'es', 'nombre' => 'Fuertes']);
+        $plato = Producto::factory()->create(['restaurante_id' => $restaurante->id, 'categoria_id' => $categoria->id, 'precio' => 120, 'disponible' => true, 'visible' => true]);
+        $plato->update(['imagen' => "restaurantes/{$restaurante->id}/productos/a.webp"]);
+        ProductoTraduccion::factory()->create(['producto_id' => $plato->id, 'idioma' => 'es', 'nombre' => 'Pulpo a la brasa']);
+
+        $respuesta = $this->get(route('menu.publico', ['slug' => $restaurante->slug]));
+
+        $respuesta->assertOk();
+        $respuesta->assertSee('class="plato" style="--i: 0"', false);
+        $respuesta->assertSee('class="plato-imagen"', false);
+        $respuesta->assertSee('loading="lazy" decoding="async" width="96" height="96"', false);
+        $respuesta->assertSee('class="plato-precio"', false);
+
+        $css = (string) file_get_contents(public_path('css/menuonl.css'));
+        $this->assertStringContainsString('animation-timeline: view()', $css);
+        $this->assertStringContainsString('@supports (animation-timeline: view())', $css);
+        $this->assertStringContainsString('.plato:active', $css);
+        $this->assertStringContainsString('prefers-reduced-motion: no-preference', $css);
+    }
 }
