@@ -628,6 +628,79 @@ class UxUiAccesibilidadTest extends TestCase
         $this->assertSoftDeleted('productos', ['id' => $prodB->id]);
     }
 
+    public function test_tabla_platillos_configura_columnas_responsivas_acciones_y_estados_vacios(): void
+    {
+        $restaurante = $this->crearRestaurante('rest-tabla-platillos');
+        $propietario = $this->crearUsuario('propietario', $restaurante);
+        $this->entrarAlPanel($propietario, $restaurante);
+
+        $livewire = Livewire::test(ListProductos::class);
+        /** @var ListProductos $page */
+        $page = $livewire->instance();
+        $this->assertSame('Cambia precios y marca lo que se agotó, sin entrar a cada uno.', $page->getSubheading());
+
+        $table = $page->getTable();
+        $this->assertTrue($table->isStackedOnMobile());
+
+        // Columnas y responsividad (sm)
+        $colImagen = $table->getColumn('imagen');
+        $this->assertNotNull($colImagen);
+        $this->assertSame('Foto', $colImagen->getLabel());
+        $this->assertSame('sm', $colImagen->getVisibleFrom());
+
+        $colNombre = $table->getColumn('nombre');
+        $this->assertNotNull($colNombre);
+        $this->assertSame('Platillo', $colNombre->getLabel());
+        $this->assertTrue($colNombre->isSearchable());
+
+        $colPrecio = $table->getColumn('precio');
+        $this->assertNotNull($colPrecio);
+        $this->assertSame('Precio', $colPrecio->getLabel());
+        $this->assertSame('$', $colPrecio->getPrefixLabel());
+
+        $colDisponible = $table->getColumn('disponible');
+        $this->assertNotNull($colDisponible);
+        $this->assertSame('Disponible', $colDisponible->getLabel());
+
+        $colVisible = $table->getColumn('visible');
+        $this->assertNotNull($colVisible);
+        $this->assertSame('En el menú', $colVisible->getLabel());
+
+        // Estado vacío
+        $this->assertSame('Todavía no tienes platillos', $table->getEmptyStateHeading());
+        $this->assertSame('Agrega el primero; puedes completar la foto y las opciones después.', $table->getEmptyStateDescription());
+        $this->assertSame('heroicon-o-cake', $table->getEmptyStateIcon());
+
+        $emptyActions = $table->getEmptyStateActions();
+        $this->assertNotEmpty($emptyActions);
+        $crearAction = collect($emptyActions)->first(fn ($a) => $a->getName() === 'crear');
+        $this->assertNotNull($crearAction);
+        $this->assertSame('Agregar platillo', $crearAction->getLabel());
+        $this->assertSame(ProductoResource::getUrl('create'), $crearAction->getUrl());
+    }
+
+    public function test_panel_render_hook_barra_inferior_movil_aislamiento_y_estructura(): void
+    {
+        $restaurante = $this->crearRestaurante('rest-barra-movil');
+        $propietario = $this->crearUsuario('propietario', $restaurante);
+        $this->entrarAlPanel($propietario, $restaurante);
+
+        $hook = (string) FilamentView::renderHook(PanelsRenderHook::BODY_END);
+        $this->assertStringContainsString('class="mo-barra-inferior"', $hook);
+        $this->assertStringContainsString('aria-label="Accesos rápidos"', $hook);
+        $this->assertStringContainsString('Inicio', $hook);
+        $this->assertStringContainsString('Platillos', $hook);
+        $this->assertStringContainsString('Categorías', $hook);
+        $this->assertStringContainsString('Horario', $hook);
+        $this->assertStringContainsString('Más', $hook);
+        $this->assertStringContainsString('aria-label="Más opciones del menú"', $hook);
+
+        // Aislamiento: con tenant nulo retorna cadena vacía sin errores
+        Filament::setTenant(null);
+        $hookNulo = (string) FilamentView::renderHook(PanelsRenderHook::BODY_END);
+        $this->assertSame('', trim($hookNulo), 'Render hook BODY_END debe retornar vacío cuando tenant es nulo.');
+    }
+
     // =========================================================================
     // Sistema de diseño compartido: tokens, modo oscuro, layout y marca
     // =========================================================================

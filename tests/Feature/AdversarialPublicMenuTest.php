@@ -908,7 +908,9 @@ class AdversarialPublicMenuTest extends TestCase
         $resp4->assertOk();
         $resp4->assertSee('id="floatingCartBar"', false);
         $resp4->assertSee('id="cartModalBackdrop"', false);
-        $resp4->assertDontSee('Este restaurante no tiene pedidos en línea activos actualmente');
+        $resp4->assertDontSee('Para ordenar, pídele a tu mesero.');
+        $resp4->assertDontSee('Estamos cerrados.');
+        $resp4->assertDontSee('Por ahora no recibimos pedidos aquí. Pídele a tu mesero.');
     }
 
     // =========================================================================
