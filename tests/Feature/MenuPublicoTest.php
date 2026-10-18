@@ -97,8 +97,7 @@ class MenuPublicoTest extends TestCase
         $response->assertSee('Recetas con más de 50 años');
         $response->assertSee('Taco de Pastor con Todo');
         $response->assertSee('Tortilla de maíz recién hecha con piña y cilantro');
-        $response->assertSee('45.00');
-        $response->assertSee('MXN');
+        $response->assertSee('$45.00');
     }
 
     public function test_offer_price_displayed_with_regular_price_struck_through(): void
@@ -195,8 +194,10 @@ class MenuPublicoTest extends TestCase
         $response = $this->get(route('menu.publico', ['slug' => $restaurante->slug]));
 
         $response->assertOk();
-        $response->assertSee('#vegano');
-        $response->assertSee('#sin_gluten');
+        $response->assertSee('data-etiqueta="vegano"', false);
+        $response->assertSee('data-etiqueta="sin_gluten"', false);
+        $response->assertSee('Vegano');
+        $response->assertSee('Sin gluten');
     }
 
     public function test_safe_contact_links_rendered(): void
@@ -256,8 +257,8 @@ class MenuPublicoTest extends TestCase
         $response->assertOk();
         $response->assertSee('Domingo');
         $response->assertSee('Lunes');
-        $response->assertSee('10:00');
-        $response->assertSee('22:00');
+        $response->assertSee('10:00 a. m.');
+        $response->assertSee('10:00 p. m.');
         $response->assertSee('Cerrado');
     }
 
@@ -586,7 +587,7 @@ class MenuPublicoTest extends TestCase
         $response = $this->get(route('menu.publico', ['slug' => $restaurante->slug]));
 
         $response->assertOk();
-        $response->assertSee('Este restaurante no tiene pedidos en línea activos actualmente');
+        $response->assertSee('Para ordenar, pídele a tu mesero.');
         $response->assertDontSee('id="floatingCartBar"', false);
     }
 
@@ -601,7 +602,7 @@ class MenuPublicoTest extends TestCase
         $response = $this->get(route('menu.publico', ['slug' => $restaurante->slug]));
 
         $response->assertOk();
-        $response->assertSee('El restaurante se encuentra cerrado en este momento');
+        $response->assertSee('Estamos cerrados.');
         $this->assertFalse($response->viewData('estaAbierto'));
     }
 
@@ -785,7 +786,7 @@ class MenuPublicoTest extends TestCase
         $response = $this->get(route('menu.publico', ['slug' => $restaurante->slug]));
 
         $response->assertOk();
-        $response->assertSee('Platillos Recomendados');
+        $response->assertSee('Recomendados');
         $response->assertSee('Platillo Estrella');
     }
 }

@@ -135,7 +135,7 @@ class MenuPublicoContextoJsTest extends TestCase
         $this->assertStringNotContainsString('tony&#039;s', $script);
         $this->assertStringNotContainsString('Tony&quot;', $script);
         $this->assertStringContainsString(Js::from('Tony\'s "Special"')->toHtml(), $script);
-        $this->assertStringContainsString('de *${NOMBRE}*', $script);
+        $this->assertStringContainsString('en *${NOMBRE}*', $script);
     }
 
     public function test_los_onclick_de_agregar_al_carrito_no_se_rompen_con_nombres_hostiles(): void

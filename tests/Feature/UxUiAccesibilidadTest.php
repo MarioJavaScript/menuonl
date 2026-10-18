@@ -244,21 +244,21 @@ class UxUiAccesibilidadTest extends TestCase
 
         // Banner de confirmación en línea para vaciar pedido
         $response->assertSee('id="vaciarConfirmBanner"', false);
-        $response->assertSee('¿Seguro que deseas vaciar todos los platillos de tu pedido?');
-        $response->assertSee('Sí, vaciar');
-        $response->assertSee('Cancelar');
+        $response->assertSee('¿Quitar todo de tu pedido?');
+        $response->assertSee('Vaciar pedido');
+        $response->assertSee('Conservar');
 
         // Transparencia de estado: abierto ahora y mesa activa
         $response->assertSee('Abierto ahora');
         $response->assertSee('Mesa 7');
 
-        // Etiquetas dietéticas con semántica de lista accesible
-        $response->assertSee('<ul class="flex flex-wrap gap-1 mt-2.5 list-none" aria-label="Etiquetas dietéticas', false);
+        // Etiquetas con semántica de lista accesible
+        $response->assertSee('<ul class="flex flex-wrap gap-1 mt-2.5 list-none" aria-label="Etiquetas de', false);
         $response->assertSee('<li class="tag', false);
 
         // Insignia accesible para platillo recomendado
         $response->assertSee('Recomendado');
-        $response->assertSee('aria-label="Platillo recomendado"', false);
+        $response->assertSee('class="chip-recomendado"', false);
 
         // Platillo agotado con estado accesible deshabilitado
         $response->assertSee('Agotado');
@@ -288,7 +288,7 @@ class UxUiAccesibilidadTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('Cerrado');
-        $response->assertSee('El restaurante se encuentra cerrado en este momento. Los pedidos están pausados hasta su próxima apertura.');
+        $response->assertSee('Estamos cerrados.');
         $response->assertDontSee('id="floatingCartBar"', false);
     }
 
@@ -312,7 +312,7 @@ class UxUiAccesibilidadTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('aria-label="Selector de idioma"', false);
-        $response->assertSee('aria-label="Cambiar idioma a EN"', false);
+        $response->assertSee('aria-label="Ver el menú en English"', false);
         $response->assertSee('min-h-[44px]');
         $response->assertSee('min-w-[44px]');
     }
@@ -511,22 +511,22 @@ class UxUiAccesibilidadTest extends TestCase
 
     public function test_filament_recursos_tienen_grupos_de_navegacion_estandarizados_en_espanol(): void
     {
-        // Menú y Carta
-        $this->assertSame('Menú y Carta', CategoriaResource::getNavigationGroup());
-        $this->assertSame('Menú y Carta', ProductoResource::getNavigationGroup());
+        // Menú
+        $this->assertSame('Menú', CategoriaResource::getNavigationGroup());
+        $this->assertSame('Menú', ProductoResource::getNavigationGroup());
 
-        // Operación del Local
-        $this->assertSame('Operación del Local', CodigoQrResource::getNavigationGroup());
-        $this->assertSame('Operación del Local', HorarioResource::getNavigationGroup());
-        $this->assertSame('Operación del Local', ContactoResource::getNavigationGroup());
+        // Restaurante
+        $this->assertSame('Restaurante', CodigoQrResource::getNavigationGroup());
+        $this->assertSame('Restaurante', HorarioResource::getNavigationGroup());
+        $this->assertSame('Restaurante', ContactoResource::getNavigationGroup());
 
-        // Equipo y Acceso
-        $this->assertSame('Equipo y Acceso', UserResource::getNavigationGroup());
-        $this->assertSame('Equipo y Acceso', InvitacionResource::getNavigationGroup());
+        // Administración
+        $this->assertSame('Administración', UserResource::getNavigationGroup());
+        $this->assertSame('Administración', InvitacionResource::getNavigationGroup());
+        $this->assertSame('Administración', HistorialCambioResource::getNavigationGroup());
 
-        // Administración Global
-        $this->assertSame('Administración Global', RestauranteResource::getNavigationGroup());
-        $this->assertSame('Administración Global', HistorialCambioResource::getNavigationGroup());
+        // Plataforma
+        $this->assertSame('Plataforma', RestauranteResource::getNavigationGroup());
     }
 
     public function test_filament_tablas_tienen_encabezados_de_estado_vacio_en_espanol(): void
@@ -540,7 +540,7 @@ class UxUiAccesibilidadTest extends TestCase
         $this->assertSame('Sin códigos QR generados', Livewire::test(ListCodigosQr::class)->instance()->getTable()->getEmptyStateHeading());
         $this->assertSame('Sin horarios de atención configurados', Livewire::test(ListHorarios::class)->instance()->getTable()->getEmptyStateHeading());
         $this->assertSame('No hay canales de contacto registrados', Livewire::test(ListContactos::class)->instance()->getTable()->getEmptyStateHeading());
-        $this->assertSame('No hay platillos en el menú', Livewire::test(ListProductos::class)->instance()->getTable()->getEmptyStateHeading());
+        $this->assertSame('Todavía no tienes platillos', Livewire::test(ListProductos::class)->instance()->getTable()->getEmptyStateHeading());
         $this->assertSame('No hay invitaciones enviadas', Livewire::test(ListInvitaciones::class)->instance()->getTable()->getEmptyStateHeading());
         $this->assertSame('No hay miembros adicionales en el equipo', Livewire::test(ListUsers::class)->instance()->getTable()->getEmptyStateHeading());
         $this->assertSame('Sin eventos de auditoría', Livewire::test(ListHistorialCambios::class)->instance()->getTable()->getEmptyStateHeading());
@@ -552,26 +552,17 @@ class UxUiAccesibilidadTest extends TestCase
         $this->assertSame('No hay restaurantes registrados', Livewire::test(ListRestaurantes::class)->instance()->getTable()->getEmptyStateHeading());
     }
 
-    public function test_filament_panel_registra_acceso_directo_a_menu_publico_en_tenant_menu_y_render_hook(): void
+    public function test_filament_panel_registra_acceso_directo_a_menu_publico_en_render_hook(): void
     {
         $restaurante = $this->crearRestaurante('los-arcos');
         $propietario = $this->crearUsuario('propietario', $restaurante);
         $this->entrarAlPanel($propietario, $restaurante);
 
-        $panel = Filament::getPanel('admin');
-        $tenantItems = $panel->getTenantMenuItems();
-
-        $this->assertNotEmpty($tenantItems, 'El panel no tiene configurado tenantMenuItems.');
-
-        $publicMenuItem = collect($tenantItems)->first(fn ($item) => $item->getLabel() === 'Ver menú público');
-        $this->assertNotNull($publicMenuItem, 'El panel no tiene registrado el ítem "Ver menú público" en tenantMenuItems.');
-        $this->assertTrue($publicMenuItem->shouldOpenUrlInNewTab(), 'El ítem "Ver menú público" debe abrirse en pestaña nueva.');
-        $this->assertSame(route('menu.publico', ['slug' => 'los-arcos']), $publicMenuItem->getUrl());
-
-        // Render Hook: PanelsRenderHook::USER_MENU_BEFORE
+        // Render Hook en cabecera: PanelsRenderHook::USER_MENU_BEFORE
         $renderedHook = FilamentView::renderHook(PanelsRenderHook::USER_MENU_BEFORE);
-        $this->assertStringContainsString('Ver menú público', (string) $renderedHook);
+        $this->assertStringContainsString('Ver mi menú', (string) $renderedHook);
         $this->assertStringContainsString(route('menu.publico', ['slug' => 'los-arcos']), (string) $renderedHook);
+        $this->assertStringContainsString('target="_blank"', (string) $renderedHook);
     }
 
     // =========================================================================
@@ -846,20 +837,17 @@ class UxUiAccesibilidadTest extends TestCase
         $this->entrarAlPanel($propietario, $restaurante);
 
         Livewire::test(ResumenRestauranteWidget::class)
-            ->assertSee('Casa Oaxaca')
-            ->assertSee('Cocina tradicional oaxaqueña')
-            ->assertSee('Publicado')
-            ->assertSee('Cerrado en este momento')
-            ->assertSee('Estilo: Rústico')
-            ->assertSee('Agregar producto')
-            ->assertSee('Tus productos')
-            ->assertSee('Categorías')
-            ->assertSee('Diseño del menú y datos')
-            ->assertSee('Códigos QR para compartir')
-            ->assertSee('Ver menú')
-            ->assertSee('Aún no tienes categorías. Crea la primera para organizar tus productos.')
-            ->assertSee('No has configurado horarios de apertura.')
-            ->assertSee('Los pedidos están activos pero falta el número de WhatsApp.');
+            ->assertSee('Tu menú está en línea')
+            ->assertSee('Cerrado ahora')
+            ->assertSee('Hoy no abres')
+            ->assertSee('Agregar platillo')
+            ->assertSee('Pendientes')
+            ->assertSee('Crea tu primera categoría, por ejemplo "Tacos" o "Bebidas".')
+            ->assertSee('Crear categoría')
+            ->assertSee('Activaste los pedidos, pero falta tu WhatsApp. Sin él no te llegan.')
+            ->assertSee('Agregar WhatsApp')
+            ->assertSee('Agrega tu horario para que tus clientes sepan cuándo abres.')
+            ->assertSee('Agregar horario');
     }
 
     public function test_menu_publico_muestra_etiquetas_en_espanol_monograma_sin_logo_y_enlace_mapa(): void
@@ -901,7 +889,7 @@ class UxUiAccesibilidadTest extends TestCase
         $respuesta->assertOk();
         $respuesta->assertSee('hero-monograma', false);
         $respuesta->assertSee('Sin gluten');
-        $respuesta->assertSee('#sin_gluten');
+        $respuesta->assertSee('data-etiqueta="sin_gluten"', false);
         $respuesta->assertSee('https://www.google.com/maps/search/?api=1&amp;query=', false);
         $respuesta->assertSee('id="destacado-dish-title-'.$plato->id.'"', false);
         $respuesta->assertSee('id="dish-title-'.$plato->id.'"', false);
