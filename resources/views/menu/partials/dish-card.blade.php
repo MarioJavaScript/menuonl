@@ -9,8 +9,9 @@
 
 <article class="plato" data-plato="{{ $prod->id }}" style="--i: {{ ($indice ?? 0) % 6 }}" aria-labelledby="{{ $headingId }}">
     @if ($mostrarRecomendado)
-        <div class="chip-recomendado" aria-label="Platillo recomendado">
-            <span aria-hidden="true">⭐</span> Recomendado
+        <div class="chip-recomendado">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg>
+            Recomendado
         </div>
     @endif
 
@@ -41,9 +42,9 @@
                 @endif
 
                 @if ($prod->etiquetas->isNotEmpty())
-                    <ul class="flex flex-wrap gap-1 mt-2.5 list-none" aria-label="Etiquetas dietéticas de {{ $prodNom }}">
+                    <ul class="flex flex-wrap gap-1 mt-2.5 list-none" aria-label="Etiquetas de {{ $prodNom }}">
                         @foreach ($prod->etiquetas as $etiqueta)
-                            <li class="tag inline-flex items-center"><span class="sr-only">#{{ $etiqueta->codigo }}</span>{{ \App\Services\Catalogos::nombreEtiqueta($etiqueta->codigo) }}</li>
+                            <li class="tag inline-flex items-center" data-etiqueta="{{ $etiqueta->codigo }}">{{ \App\Services\Catalogos::nombreEtiqueta($etiqueta->codigo) }}</li>
                         @endforeach
                     </ul>
                 @endif
@@ -60,7 +61,7 @@
         @if ($prod->tieneVariantes())
             <div class="plato-variantes mt-3">
                 <span class="text-xs font-bold uppercase tracking-wider text-texto-suave block mb-1">
-                    Opciones disponibles:
+                    Opciones
                 </span>
                 @foreach ($prod->variantes as $variante)
                     @php

@@ -26,11 +26,11 @@ class CategoriaResource extends Resource
 
     protected static ?string $slug = 'categorias';
 
-    protected static \UnitEnum|string|null $navigationGroup = 'Menú y Carta';
+    protected static \UnitEnum|string|null $navigationGroup = 'Menú';
 
     protected static ?string $navigationLabel = 'Categorías';
 
-    protected static ?int $navigationSort = 10;
+    protected static ?int $navigationSort = 20;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 

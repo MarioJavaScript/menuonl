@@ -24,9 +24,9 @@ class HorarioResource extends Resource
 
     protected static ?string $slug = 'horarios';
 
-    protected static \UnitEnum|string|null $navigationGroup = 'Operación del Local';
+    protected static \UnitEnum|string|null $navigationGroup = 'Restaurante';
 
-    protected static ?string $navigationLabel = 'Horarios de atención';
+    protected static ?string $navigationLabel = 'Horario';
 
     protected static ?int $navigationSort = 30;
 

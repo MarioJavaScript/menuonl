@@ -26,9 +26,9 @@ class CodigoQrResource extends Resource
 
     protected static ?string $tenantRelationshipName = 'codigosQr';
 
-    protected static \UnitEnum|string|null $navigationGroup = 'Operación del Local';
+    protected static \UnitEnum|string|null $navigationGroup = 'Restaurante';
 
-    protected static ?string $navigationLabel = 'Códigos QR y mesas';
+    protected static ?string $navigationLabel = 'Códigos QR';
 
     protected static ?int $navigationSort = 40;
 

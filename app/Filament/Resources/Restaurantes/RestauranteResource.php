@@ -32,7 +32,7 @@ class RestauranteResource extends Resource
 
     protected static bool $isScopedToTenant = false;
 
-    protected static \UnitEnum|string|null $navigationGroup = 'Administración Global';
+    protected static \UnitEnum|string|null $navigationGroup = 'Plataforma';
 
     protected static ?string $navigationLabel = 'Restaurantes';
 

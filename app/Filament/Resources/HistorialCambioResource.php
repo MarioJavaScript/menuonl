@@ -22,11 +22,11 @@ class HistorialCambioResource extends Resource
 
     protected static ?string $pluralModelLabel = 'registros de auditoría';
 
-    protected static ?string $navigationLabel = 'Historial de auditoría';
+    protected static ?string $navigationLabel = 'Historial de cambios';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedShieldCheck;
 
-    protected static UnitEnum|string|null $navigationGroup = 'Administración Global';
+    protected static UnitEnum|string|null $navigationGroup = 'Administración';
 
     protected static ?int $navigationSort = 90;
 

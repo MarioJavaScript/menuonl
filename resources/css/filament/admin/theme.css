@@ -120,7 +120,7 @@ html:root {
         position: fixed;
         inset-inline: 0;
         bottom: 0;
-        z-index: 30;
+        z-index: 20;
         display: grid;
         grid-template-columns: repeat(5, minmax(0, 1fr));
         padding-bottom: env(safe-area-inset-bottom);
@@ -169,7 +169,7 @@ html:root {
     }
 
     @media (max-width: 63.99rem) {
-        .fi-body.mo-con-barra-inferior .fi-main {
+        .fi-body:has(.mo-barra-inferior) .fi-main {
             padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
         }
     }

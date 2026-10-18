@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Pages\Auth\Login;
+use App\Filament\Pages\Inicio;
 use App\Filament\Pages\Tenancy\EditRestauranteProfile;
 use App\Filament\Widgets\ResumenRestauranteWidget;
 use App\Http\Middleware\ExigeDosFactores;
@@ -13,13 +14,12 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Navigation\MenuItem;
-use Filament\Pages\Dashboard;
+use Filament\Navigation\NavigationItem;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Support\Icons\Heroicon;
 use Filament\View\PanelsRenderHook;
-use Filament\Widgets\AccountWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -44,13 +44,6 @@ class AdminPanelProvider extends PanelProvider
             ->multiFactorAuthentication([AppAuthentication::make()->recoverable()])
             ->tenant(Restaurante::class, slugAttribute: 'slug')
             ->tenantProfile(EditRestauranteProfile::class)
-            ->tenantMenuItems([
-                MenuItem::make()
-                    ->label('Ver menú público')
-                    ->icon('heroicon-o-arrow-top-right-on-square')
-                    ->url(fn (): ?string => Filament::getTenant() ? route('menu.publico', ['slug' => Filament::getTenant()->slug]) : null)
-                    ->openUrlInNewTab(),
-            ])
             ->renderHook(
                 PanelsRenderHook::USER_MENU_BEFORE,
                 function (): HtmlString|string {
@@ -65,6 +58,10 @@ class AdminPanelProvider extends PanelProvider
                     ])->render());
                 }
             )
+            ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn (): string => Filament::getTenant() ? view('filament.hooks.barra-inferior')->render() : '',
+            )
             ->brandName('MENUONL')
             ->brandLogo(fn () => view('filament.logo'))
             ->brandLogoHeight('2rem')
@@ -76,12 +73,20 @@ class AdminPanelProvider extends PanelProvider
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
-                Dashboard::class,
+                Inicio::class,
+            ])
+            ->navigationItems([
+                NavigationItem::make('Mi restaurante')
+                    ->group('Restaurante')
+                    ->icon(Heroicon::OutlinedBuildingStorefront)
+                    ->sort(60)
+                    ->url(fn (): string => EditRestauranteProfile::getUrl())
+                    ->isActiveWhen(fn (): bool => request()->routeIs(EditRestauranteProfile::getRouteName()))
+                    ->visible(fn (): bool => Filament::getTenant() !== null && EditRestauranteProfile::canView(Filament::getTenant())),
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
                 ResumenRestauranteWidget::class,
-                AccountWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,

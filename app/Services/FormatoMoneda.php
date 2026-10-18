@@ -30,7 +30,8 @@ class FormatoMoneda
 
     /**
      * Formatea un importe con el símbolo y los separadores propios de la moneda y el idioma.
-     * Si el símbolo es un "$" desnudo (ambiguo entre pesos y dólares) se añade el código.
+     * Si el símbolo es un "$" desnudo (ambiguo entre pesos y dólares) se añade el código, salvo en pesos
+     * mexicanos, donde "$" es el símbolo esperado: $1,234.50.
      */
     public static function formatear(float|string|null $importe, string $moneda, string $idioma = 'es'): string
     {
@@ -42,10 +43,12 @@ class FormatoMoneda
                 ->formatCurrency($valor, $moneda);
 
             if ($formateado !== false) {
-                return preg_match('/(?<![A-Za-z])\$/', $formateado) ? $formateado.' '.$moneda : $formateado;
+                $simboloAmbiguo = $moneda !== 'MXN' && preg_match('/(?<![A-Za-z])\$/', $formateado) === 1;
+
+                return $simboloAmbiguo ? $formateado.' '.$moneda : $formateado;
             }
         }
 
-        return number_format($valor, 2).' '.$moneda;
+        return $moneda === 'MXN' ? '$'.number_format($valor, 2) : number_format($valor, 2).' '.$moneda;
     }
 }

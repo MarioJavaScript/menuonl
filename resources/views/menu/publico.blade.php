@@ -1,5 +1,5 @@
 <x-layout.publico
-    :titulo="$restaurante->traduccion($idioma)->nombre.' — Menú Digital'"
+    :titulo="$restaurante->traduccion($idioma)->nombre.' · Menú'"
     :descripcion="$restaurante->traduccion($idioma)->descripcion"
     :lang="str_replace('_', '-', app()->getLocale())"
     html-class="scroll-smooth"
@@ -13,15 +13,38 @@
 >
         <!-- Cart Toast Notification -->
         <div id="cartToast" role="status" aria-live="polite" class="cart-toast" aria-atomic="true">
-            <span class="text-acento font-bold" aria-hidden="true">✓</span>
-            <span id="cartToastMessage">Agregado al pedido</span>
+            <svg class="w-5 h-5 shrink-0 text-exito-texto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="m8 12.5 2.5 2.5L16 9.5"/></svg>
+            <span id="cartToastMessage">Platillo agregado</span>
         </div>
 
         @php
             $puedePedir = $restaurante->pedidos_activos && $estaAbierto && filled($restaurante->whatsapp_pedidos);
-            $diaHoy = (int) now($restaurante->zona_horaria)->dayOfWeek;
-            $turnosHoy = $horarios->where('dia_semana', $diaHoy)->where('cerrado', false);
+            $ahora = now($restaurante->zona_horaria);
+            $diaHoy = (int) $ahora->dayOfWeek;
+            $turnosHoy = $horarios->where('dia_semana', $diaHoy)->where('cerrado', false)->sortBy('abre');
             $tienePortada = filled($restaurante->portada);
+            $nombresDias = \App\Services\Catalogos::diasSemana();
+
+            // Próxima apertura, solo para el aviso de "cerrado" (texto; no afecta si se puede pedir).
+            $proximaApertura = null;
+            if (! $estaAbierto) {
+                for ($desplazamiento = 0; $desplazamiento < 7 && $proximaApertura === null; $desplazamiento++) {
+                    $fecha = $ahora->copy()->addDays($desplazamiento);
+                    foreach ($horarios->where('dia_semana', (int) $fecha->dayOfWeek)->where('cerrado', false)->sortBy('abre') as $turno) {
+                        if ($desplazamiento === 0 && substr((string) $turno->abre, 0, 5) <= $ahora->format('H:i')) {
+                            continue;
+                        }
+                        $cuando = match ($desplazamiento) {
+                            0 => 'hoy',
+                            1 => 'mañana',
+                            default => 'el '.mb_strtolower($nombresDias[(int) $fecha->dayOfWeek]),
+                        };
+                        $hora = \App\Services\FormatoFecha::hora($turno->abre);
+                        $proximaApertura = $cuando.(str_starts_with($hora, '1:') ? ' a la ' : ' a las ').$hora;
+                        break;
+                    }
+                }
+            }
         @endphp
 
         <!-- Hero -->
@@ -40,7 +63,9 @@
                 @endif
 
                 <span class="regla-acento" aria-hidden="true"></span>
-                <p class="hero-kicker">{{ filled($restaurante->eslogan) ? $restaurante->eslogan : 'Menú digital' }}</p>
+                @if (filled($restaurante->eslogan))
+                    <p class="hero-kicker">{{ $restaurante->eslogan }}</p>
+                @endif
                 <h1 class="hero-titulo">{{ $restaurante->traduccion($idioma)->nombre }}</h1>
                 @if ($restDesc = $restaurante->traduccion($idioma)->descripcion)
                     <p class="hero-descripcion">{{ $restDesc }}</p>
@@ -60,26 +85,23 @@
                     @endif
 
                     @if ($turnosHoy->isNotEmpty())
-                        <span class="badge-mesa" aria-label="Horario de atención hoy">
-                            <span aria-hidden="true">🕒</span>
-                            Hoy:
-                            @foreach ($turnosHoy as $t)
-                                {{ substr($t->abre, 0, 5) }} - {{ substr($t->cierra, 0, 5) }}@if (! $loop->last), @endif
-                            @endforeach
+                        <span class="badge-mesa">
+                            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 7v5l3 2"/></svg>
+                            <span>Hoy: @foreach ($turnosHoy as $t)<span class="whitespace-nowrap">{{ \App\Services\FormatoFecha::rango($t->abre, $t->cierra) }}</span>@if (! $loop->last) y @endif @endforeach</span>
                         </span>
                     @endif
 
                     @if ($mesa)
-                        <span class="badge-mesa" aria-label="Ubicación asignada: Mesa {{ $mesa }}">
+                        <span class="badge-mesa">
                             Mesa {{ $mesa }}
                         </span>
                     @endif
                 </div>
 
                 <div class="hero-acciones">
-                    <a href="#carta" class="btn-cta focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none">Ver la carta</a>
+                    <a href="#carta" class="btn-cta focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none">Ver menú</a>
                     @if ($horarios->isNotEmpty())
-                        <a href="#horarios" class="btn-cta-secundario focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none">Horarios</a>
+                        <a href="#horarios" class="btn-cta-secundario focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none">Horario</a>
                     @endif
 
                     <!-- Language selector -->
@@ -90,7 +112,7 @@
                                     href="{{ request()->fullUrlWithQuery(['lang' => $langOption]) }}"
                                     class="idioma-link min-h-[44px] min-w-[44px] focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none"
                                     aria-current="{{ $idioma === $langOption ? 'page' : 'false' }}"
-                                    aria-label="Cambiar idioma a {{ strtoupper($langOption) }}"
+                                    aria-label="Ver el menú en {{ \App\Services\Catalogos::idiomas()[$langOption] ?? strtoupper($langOption) }}"
                                 >
                                     {{ $langOption }}
                                 </a>
@@ -102,16 +124,16 @@
                 <!-- Order eligibility warning banner -->
                 @if (! $puedePedir)
                     <div role="status" aria-live="polite" class="aviso mt-5 max-w-2xl">
-                        <svg class="w-5 h-5 shrink-0 text-acento" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 shrink-0 text-texto-medio" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                         <span>
                             @if (! $restaurante->pedidos_activos)
-                                Este restaurante no tiene pedidos en línea activos actualmente. Puedes consultar el menú digital libremente.
+                                Para ordenar, pídele a tu mesero.
                             @elseif (! $estaAbierto)
-                                El restaurante se encuentra cerrado en este momento. Los pedidos están pausados hasta su próxima apertura.
+                                Estamos cerrados.@if ($proximaApertura) Abrimos {{ $proximaApertura }}.@endif Puedes ver el menú; los pedidos se activan al abrir.
                             @elseif (! filled($restaurante->whatsapp_pedidos))
-                                Servicio de pedidos temporalmente no disponible por WhatsApp.
+                                Por ahora no recibimos pedidos aquí. Pídele a tu mesero.
                             @endif
                         </span>
                     </div>
@@ -130,7 +152,7 @@
                     <span class="barra-logo barra-monograma" aria-hidden="true">{{ mb_strtoupper(mb_substr($restaurante->nombre, 0, 1)) }}</span>
                 @endif
                 <span class="barra-nombre">{{ $restaurante->traduccion($idioma)->nombre }}</span>
-                <span class="{{ $estaAbierto ? 'badge-open' : 'badge-closed' }} ml-auto">{{ $estaAbierto ? 'Abierto' : 'Cerrado' }}</span>
+                <span class="{{ $estaAbierto ? 'badge-open' : 'badge-closed' }} ml-auto">{{ $estaAbierto ? 'Abierto ahora' : 'Cerrado' }}</span>
             </div>
         </div>
 
@@ -138,7 +160,7 @@
         <nav class="sticky-nav" aria-label="Categorías del menú">
             <div class="nav-scroller contenedor flex items-center overflow-x-auto">
                 @if ($destacados->isNotEmpty())
-                    <a href="#destacados" class="nav-pill min-h-[44px] focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none"><span aria-hidden="true" class="mr-1">⭐</span> Destacados</a>
+                    <a href="#destacados" class="nav-pill min-h-[44px] focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none">Recomendados</a>
                 @endif
 
                 @foreach ($categorias as $cat)
@@ -149,11 +171,11 @@
                 @endforeach
 
                 @if ($horarios->isNotEmpty())
-                    <a href="#horarios" class="nav-pill min-h-[44px] focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none"><span aria-hidden="true" class="mr-1">🕒</span> Horarios</a>
+                    <a href="#horarios" class="nav-pill min-h-[44px] focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none">Horario</a>
                 @endif
 
                 @if ($contactos->isNotEmpty())
-                    <a href="#contacto" class="nav-pill min-h-[44px] focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none"><span aria-hidden="true" class="mr-1">📞</span> Contacto</a>
+                    <a href="#contacto" class="nav-pill min-h-[44px] focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none">Contacto</a>
                 @endif
             </div>
         </nav>
@@ -161,10 +183,18 @@
         <!-- Main Content -->
         <main id="carta" class="contenedor py-8">
 
+            @if ($categorias->isEmpty() && $destacados->isEmpty())
+                <div class="vacio">
+                    <span class="vacio-icono"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h10"/></svg></span>
+                    <h2 class="vacio-titulo">Este menú se está preparando</h2>
+                    <p>Pídele la carta a tu mesero.</p>
+                </div>
+            @endif
+
             <!-- Featured Section -->
             @if ($destacados->isNotEmpty())
                 <section id="destacados" class="seccion">
-                    <h2 class="seccion-titulo">Platillos Recomendados</h2>
+                    <h2 class="seccion-titulo">Recomendados</h2>
 
                     <div class="platos">
                         @foreach ($destacados as $prod)
@@ -187,7 +217,7 @@
                     @endif
 
                     @if ($cat->productos->isEmpty())
-                        <p class="text-texto-suave text-sm italic mt-4">No hay platillos disponibles en esta categoría.</p>
+                        <p class="text-texto-suave text-sm italic mt-4">Pronto habrá platillos aquí.</p>
                     @else
                         <div class="platos">
                             @foreach ($cat->productos as $prod)
@@ -201,7 +231,7 @@
             <!-- Weekly Schedule Table -->
             @if ($horarios->isNotEmpty())
                 <section id="horarios" class="seccion">
-                    <h2 class="seccion-titulo">Horarios de Atención</h2>
+                    <h2 class="seccion-titulo">Horario</h2>
                     @php
                         $dias = \App\Services\Catalogos::diasSemana();
                         $horariosPorDia = $horarios->groupBy('dia_semana');
@@ -215,11 +245,7 @@
                                 <span>{{ $nombreDia }}</span>
                                 <span>
                                     @if ($turnos && $turnos->where('cerrado', false)->isNotEmpty())
-                                        @foreach ($turnos->where('cerrado', false) as $t)
-                                            <span class="inline-block ml-1">
-                                                {{ substr($t->abre, 0, 5) }} - {{ substr($t->cierra, 0, 5) }}
-                                            </span>
-                                        @endforeach
+                                        {{ $turnos->where('cerrado', false)->sortBy('abre')->map(fn ($t) => \App\Services\FormatoFecha::rango($t->abre, $t->cierra))->implode(' y ') }}
                                     @else
                                         <span class="text-texto-suave font-normal">Cerrado</span>
                                     @endif
@@ -233,7 +259,7 @@
             <!-- Safe Contacts Section -->
             @if ($contactos->isNotEmpty())
                 <section id="contacto" class="seccion">
-                    <h2 class="seccion-titulo">Contacto y Ubicación</h2>
+                    <h2 class="seccion-titulo">Contacto</h2>
                     <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                         @foreach ($contactos as $contacto)
                             @php
@@ -262,7 +288,10 @@
         </main>
 
         <footer class="pie-publico">
-            <p>{{ $restaurante->traduccion($idioma)->nombre }} · Menú digital con MENUONL</p>
+            <div class="contenedor flex flex-col items-center gap-4">
+                <x-apariencia />
+                <p>Hecho con MENUONL</p>
+            </div>
         </footer>
 
         <!-- Detalle del plato (hoja inferior) -->
@@ -303,19 +332,19 @@
             <button
                 type="button"
                 id="floatingCartBar"
-                class="floating-cart-bar w-full focus-visible:ring-2 focus-visible:ring-foco focus-visible:ring-offset-2 focus-visible:outline-none"
+                class="floating-cart-bar focus-visible:ring-2 focus-visible:ring-foco focus-visible:ring-offset-2 focus-visible:outline-none"
                 style="display: none;"
                 onclick="openCartModal()"
                 aria-haspopup="dialog"
                 aria-expanded="false"
                 aria-controls="cartModalBackdrop"
-                aria-label="Ver mi pedido"
+                aria-label="Ver pedido"
             >
                 <div class="flex items-center gap-3">
                     <span id="cartCountBadge" class="bg-acento-texto text-acento font-extrabold text-xs px-2.5 py-1 rounded-full min-w-[24px] text-center">
                         0
                     </span>
-                    <span class="font-bold text-sm">Ver mi pedido</span>
+                    <span class="font-bold text-sm">Ver pedido</span>
                 </div>
                 <div class="font-extrabold text-base">
                     <span id="cartTotalSummary">{{ \App\Services\FormatoMoneda::formatear(0, $restaurante->moneda, $idioma) }}</span>
@@ -335,17 +364,13 @@
                 <div class="cart-drawer" onclick="event.stopPropagation()" x-data="hoja" :style="estilo">
                     <div class="hoja-cabecera flex items-center justify-between pb-3 border-b divisor mb-4" @pointerdown="empezar" @pointermove="mover" @pointerup="soltar" @pointercancel="soltar">
                         <span class="hoja-asa" aria-hidden="true"></span>
-                        <div class="flex items-center gap-2">
-                            <span class="text-xl" aria-hidden="true">🛒</span>
-                            <h3 id="cartDrawerTitle" class="text-lg font-bold text-texto-fuerte" style="font-family: var(--mo-fuente-titulo)">Tu Pedido</h3>
-                        </div>
+                        <h3 id="cartDrawerTitle" class="text-lg font-bold text-texto-fuerte" style="font-family: var(--mo-fuente-titulo)">Tu pedido</h3>
                         <div class="flex items-center gap-2">
                             <button
                                 type="button"
                                 id="btnVaciarCarrito"
                                 onclick="cartConfirmarVaciar()"
                                 class="btn-texto focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none"
-                                aria-label="Vaciar todo el pedido"
                             >
                                 Vaciar pedido
                             </button>
@@ -364,32 +389,32 @@
                     </div>
 
                     <!-- Inline Confirmation Banner for Vaciar Pedido (initially hidden) -->
-                    <div id="vaciarConfirmBanner" class="hidden mb-4 aviso aviso-peligro flex-col">
-                        <p class="font-semibold mb-2">¿Seguro que deseas vaciar todos los platillos de tu pedido?</p>
-                        <div class="flex items-center gap-2">
+                    <div id="vaciarConfirmBanner" class="hidden mb-4 aviso aviso-peligro flex-col" role="alertdialog" aria-labelledby="vaciarConfirmTitulo">
+                        <p id="vaciarConfirmTitulo" class="aviso-titulo mb-2">¿Quitar todo de tu pedido?</p>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button
+                                type="button"
+                                onclick="cartCancelarVaciar()"
+                                class="btn-secundario focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none"
+                            >
+                                Conservar
+                            </button>
                             <button
                                 type="button"
                                 onclick="cartEjecutarVaciar()"
                                 class="btn-peligro focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none"
                             >
-                                Sí, vaciar
-                            </button>
-                            <button
-                                type="button"
-                                onclick="cartCancelarVaciar()"
-                                class="btn-neutro focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none"
-                            >
-                                Cancelar
+                                Vaciar pedido
                             </button>
                         </div>
                     </div>
 
                     <!-- Confirmation shown after handing the order to WhatsApp -->
                     <div id="pedidoEnviadoBanner" class="hidden mb-4 aviso aviso-exito flex-col" role="status" tabindex="-1">
-                        <p class="font-semibold mb-2">Abrimos WhatsApp con tu pedido. Envíalo desde ahí para que llegue al restaurante.</p>
+                        <p class="mb-2"><span class="aviso-titulo">Abrimos WhatsApp con tu pedido.</span> Tócale enviar ahí para que nos llegue.</p>
                         <div class="flex flex-wrap items-center gap-2">
-                            <button type="button" onclick="cartPedidoEnviado(true)" class="btn-primario focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none">Ya lo envié, vaciar pedido</button>
-                            <button type="button" onclick="cartPedidoEnviado(false)" class="btn-neutro focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none">Conservar pedido</button>
+                            <button type="button" onclick="cartPedidoEnviado(true)" class="btn-primario focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none">Ya lo mandé</button>
+                            <button type="button" onclick="cartPedidoEnviado(false)" class="btn-secundario focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none">Todavía no</button>
                         </div>
                     </div>
 
@@ -402,32 +427,32 @@
                     <div class="space-y-3 pt-3">
                         <div>
                             <label class="etiqueta-campo" for="inputMesa">
-                                Mesa / Ubicación:
+                                Mesa
                             </label>
                             <input
                                 type="text"
                                 id="inputMesa"
                                 value="{{ $mesa ?? '' }}"
-                                placeholder="Ej. Mesa 4 o Para llevar"
+                                placeholder='Ej. 4, o escribe "Para llevar"'
                                 class="campo"
                             />
                         </div>
 
                         <div>
                             <label class="etiqueta-campo" for="inputNotasGenerales">
-                                Nota general para la cocina:
+                                Nota para la cocina (opcional)
                             </label>
                             <textarea
                                 id="inputNotasGenerales"
                                 rows="2"
-                                placeholder="Indicaciones especiales, cubiertos, etc."
-                                class="campo"
+                                placeholder="Ej. Sin cebolla, con cubiertos"
+                                class="campo campo-area"
                             ></textarea>
                         </div>
 
                         <!-- Summary -->
                         <div class="flex items-center justify-between text-base font-extrabold text-texto-fuerte pt-2">
-                            <span>Total:</span>
+                            <span>Total</span>
                             <span id="modalCartTotal">{{ \App\Services\FormatoMoneda::formatear(0, $restaurante->moneda, $idioma) }}</span>
                         </div>
 
@@ -441,7 +466,7 @@
                             <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24" aria-hidden="true">
                                 <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.187-2.59-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.06-2.155-.544-1.631-.674-2.732-2.317-2.825-2.433-.092-.116-.694-.925-.694-1.765 0-.84.44-1.254.597-1.428.156-.173.344-.216.459-.216.115 0 .23.001.33.006.106.005.25-.04.39.376.144.348.49 1.198.533 1.285.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.353.101.174.45 1.743 1.968 2.091.246.056.442.062.607-.021.165-.084.536-.622.68-.838.144-.217.288-.174.483-.102.195.072 1.241.586 1.455.693.214.108.358.161.41.25.053.089.053.518-.091.923z"/>
                             </svg>
-                            <span>Enviar Pedido por WhatsApp</span>
+                            <span>Mandar pedido por WhatsApp</span>
                         </button>
                     </div>
                 </div>
@@ -466,7 +491,7 @@
                 function fmt(valor) {
                     if (!formateador) return Number(valor).toFixed(2) + ' ' + escapeHtml(MONEDA);
                     const partes = formateador.formatToParts(valor);
-                    const simboloAmbiguo = partes.some(p => p.type === 'currency' && p.value === '$');
+                    const simboloAmbiguo = MONEDA !== 'MXN' && partes.some(p => p.type === 'currency' && p.value === '$');
                     return formateador.format(valor) + (simboloAmbiguo ? ' ' + escapeHtml(MONEDA) : '');
                 }
                 let toastTimeout = null;
@@ -529,7 +554,7 @@
                         });
                     }
                     saveCart(cart);
-                    mostrarToast('Agregaste ' + item.nombre + (item.variante_nombre ? ' (' + item.variante_nombre + ')' : '') + ' al pedido');
+                    mostrarToast(item.nombre + (item.variante_nombre ? ' (' + item.variante_nombre + ')' : '') + ' agregado');
                 };
 
                 window.cartUpdateQty = function(index, delta) {
@@ -564,7 +589,7 @@
                 window.cartEjecutarVaciar = function() {
                     saveCart([]);
                     cartCancelarVaciar();
-                    mostrarToast('Se vació tu pedido.');
+                    mostrarToast('Vaciaste tu pedido.');
                 };
 
                 window.openCartModal = function() {
@@ -633,13 +658,13 @@
                 window.enviarPedidoWhatsApp = function() {
                     const cart = loadCart();
                     if (cart.length === 0) {
-                        mostrarToast('Tu carrito está vacío.');
+                        mostrarToast('Tu pedido está vacío.');
                         return;
                     }
 
                     const mesaInput = document.getElementById('inputMesa');
                     const mesaVal = mesaInput ? mesaInput.value.trim() : '';
-                    const mesaText = mesaVal ? mesaVal : 'Para llevar / Sin mesa';
+                    const mesaText = mesaVal ? mesaVal : 'Para llevar';
 
                     const notasGeneralesInput = document.getElementById('inputNotasGenerales');
                     const notasGenerales = notasGeneralesInput ? notasGeneralesInput.value.trim() : '';
@@ -657,13 +682,13 @@
                         }
                     });
 
-                    let msg = `¡Hola! Quiero hacer el siguiente pedido desde el menú digital de *${NOMBRE}*:\n\n`;
-                    msg += `*Ubicación/Mesa:* ${mesaText}\n\n`;
-                    msg += `*Detalle del pedido:*\n${itemsText}\n`;
+                    let msg = `Hola, quiero pedir en *${NOMBRE}*:\n\n`;
+                    msg += `*Mesa:* ${mesaText}\n\n`;
+                    msg += `*Pedido:*\n${itemsText}\n`;
                     if (notasGenerales) {
-                        msg += `*Indicaciones:* ${notasGenerales}\n\n`;
+                        msg += `*Nota para la cocina:* ${notasGenerales}\n\n`;
                     }
-                    msg += `*Total estimado:* ${fmt(total)}`;
+                    msg += `*Total:* ${fmt(total)}`;
 
                     const url = `https://wa.me/${WHATSAPP_NUM}?text=${encodeURIComponent(msg)}`;
                     window.open(url, '_blank', 'noopener,noreferrer');
@@ -683,7 +708,7 @@
                         const nota = document.getElementById('inputNotasGenerales');
                         if (nota) nota.value = '';
                         closeCartModal();
-                        mostrarToast('Pedido vaciado. ¡Buen provecho!');
+                        mostrarToast('Listo. Vaciamos tu pedido.');
                     }
                 };
 
@@ -712,7 +737,7 @@
 
                     if (bar) {
                         bar.style.display = totalQty > 0 ? 'flex' : 'none';
-                        bar.setAttribute('aria-label', `Ver mi pedido: ${totalQty} ${totalQty === 1 ? 'artículo' : 'artículos'}, total ${fmt(totalPrice)}`);
+                        bar.setAttribute('aria-label', `Ver pedido: ${totalQty} ${totalQty === 1 ? 'platillo' : 'platillos'}, total ${fmt(totalPrice)}`);
                     }
 
                     if (btnVaciar) {
@@ -728,7 +753,7 @@
                         const activo = document.activeElement;
                         const claveFoco = activo && itemsContainer.contains(activo) ? activo.dataset.qty : null;
                         if (cart.length === 0) {
-                            itemsContainer.innerHTML = '<p class="py-6 text-center text-texto-suave text-sm">Tu carrito está vacío.</p>';
+                            itemsContainer.innerHTML = '<p class="py-6 text-center text-texto-suave text-sm">Tu pedido está vacío. Toca "Agregar" en un platillo.</p>';
                         } else {
                             let html = '';
                             cart.forEach((item, idx) => {
@@ -748,7 +773,7 @@
                                                     type="button"
                                                     onclick="cartUpdateQty(${idx}, -1)"
                                                     data-qty="${idx}:-1"
-                                                    aria-label="Disminuir cantidad de ${itemNombreEsc}"
+                                                    aria-label="Quitar uno de ${itemNombreEsc}"
                                                     class="btn-cant min-w-[44px] min-h-[44px]"
                                                 >
                                                     <span aria-hidden="true">-</span>
@@ -758,7 +783,7 @@
                                                     type="button"
                                                     onclick="cartUpdateQty(${idx}, 1)"
                                                     data-qty="${idx}:1"
-                                                    aria-label="Aumentar cantidad de ${itemNombreEsc}"
+                                                    aria-label="Agregar uno más de ${itemNombreEsc}"
                                                     class="btn-cant min-w-[44px] min-h-[44px]"
                                                 >
                                                     <span aria-hidden="true">+</span>
@@ -768,8 +793,8 @@
                                         <div class="mt-2">
                                             <input
                                                 type="text"
-                                                placeholder="Nota (ej. sin picante)"
-                                                aria-label="Instrucciones especiales para ${itemNombreEsc}"
+                                                placeholder="Nota. Ej. sin picante"
+                                                aria-label="Nota para ${itemNombreEsc}"
                                                 value="${item.notas ? escapeHtml(item.notas) : ''}"
                                                 oninput="cartUpdateItemNotes(${idx}, this.value)"
                                                 onchange="cartUpdateItemNotes(${idx}, this.value)"
