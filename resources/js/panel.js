@@ -137,7 +137,7 @@ V.pedidos=()=>{
 };
 const campo=(id,etiqueta,k,extra='')=>`<div><label class="f" for="${id}">${etiqueta}</label><input id="${id}" value="${esc(S.aj[k]??'')}" data-f="aj.${k}" ${extra}></div>`;
 V.ajustes=()=>{const E=S.equipo,A=S.aj;return `<div class="inner"><div class="head"><div><h1>Ajustes</h1><p class="muted">${esc(S.nombre||'')} · se guardan al salir de cada campo</p></div></div>
- <section class="card"><h2>Sitio público</h2><p class="muted" style="margin-bottom:12px">Elige la plantilla. El sitio cambia al instante.</p>
+ <section class="card"><h2>Sitio público</h2><p class="muted" style="margin-bottom:12px">Elige la plantilla. El sitio cambia en unos segundos.</p>
   <div class="tabs" role="group" aria-label="Plantilla del sitio" style="flex-wrap:wrap">${A.plantillas.map(t=>`<button data-act="plantilla" data-v="${t.clave}" aria-pressed="${A.plantilla===t.clave}" style="min-width:140px"><strong>${t.clave.toUpperCase()}</strong> · ${esc(t.nombre)}</button>`).join('')}</div>
   <p style="margin-top:12px"><a class="btn ghost" href="/s/${esc(slug)}" target="_blank" rel="noopener">Ver sitio</a></p></section>
  <section class="card"><h2>Fotos del sitio</h2>

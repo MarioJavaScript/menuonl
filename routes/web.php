@@ -21,6 +21,7 @@ Route::middleware('throttle:invitaciones')->prefix('invitaciones')->group(functi
 use App\Http\Controllers\MenuPublicoController;
 use App\Http\Controllers\QrDownloadController;
 use App\Http\Controllers\QrRedirectController;
+use App\Http\Controllers\SitioPublicoController;
 
 Route::middleware('throttle:menu-publico')->group(function (): void {
     Route::get('/q/{codigo}', [QrRedirectController::class, 'redirigir'])
@@ -29,6 +30,9 @@ Route::middleware('throttle:menu-publico')->group(function (): void {
 
     Route::get('/m/{slug}', [MenuPublicoController::class, 'mostrar'])
         ->name('menu.publico');
+
+    Route::get('/s/{slug}', [SitioPublicoController::class, 'mostrar'])
+        ->name('sitio.publico');
 });
 
 // Service panel (reservations, orders, menu): Blade shell + Vite assets that talk to /api/v1/panel with the login session.
