@@ -161,6 +161,14 @@ return [
 
     'custom' => [],
 
-    'attributes' => [],
+    'attributes' => [
+        'precio' => 'precio',
+        'precio_oferta' => 'precio promocional',
+        'categoria_id' => 'categoría',
+        'disponible' => 'disponible',
+        'destacado' => 'destacado',
+        'visible' => 'visible',
+        'orden' => 'orden',
+    ],
 
 ];

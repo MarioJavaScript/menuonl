@@ -163,7 +163,7 @@ class FilamentAdminAdversarialTest extends TestCase
         $resourcesToTest = [
             'Categorias' => [
                 'component' => ListCategorias::class,
-                'expectedHeading' => 'No hay categorías registradas',
+                'expectedHeading' => 'Todavía no tienes categorías',
                 'expectedIcon' => 'heroicon-o-rectangle-stack',
             ],
             'Productos' => [
@@ -265,7 +265,7 @@ class FilamentAdminAdversarialTest extends TestCase
         // CategoriasTable in Tenant A MUST display empty state and NOT show Tenant B records
         $testCat = Livewire::test(ListCategorias::class);
         $testCat->assertStatus(200);
-        $testCat->assertSee('No hay categorías registradas');
+        $testCat->assertSee('Todavía no tienes categorías');
         $testCat->assertDontSee('Exclusivo B');
 
         // ProductosTable in Tenant A MUST display empty state and NOT show Tenant B records
