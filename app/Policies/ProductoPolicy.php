@@ -11,5 +11,6 @@ class ProductoPolicy extends MatrizPolicy
         'superadmin' => ['viewAny', 'view', 'create', 'update', 'delete', 'restore', 'reorder'],
         'propietario' => ['viewAny', 'view', 'create', 'update', 'delete', 'restore', 'reorder'],
         'editor' => ['viewAny', 'view', 'create', 'update', 'delete', 'restore', 'reorder'],
+        'gerente' => ['viewAny', 'view', 'create', 'update', 'delete', 'restore', 'reorder'],
     ];
 }

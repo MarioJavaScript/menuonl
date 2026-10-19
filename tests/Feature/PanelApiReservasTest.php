@@ -160,7 +160,7 @@ class PanelApiReservasTest extends TestCase
         $this->getJson('/api/v1/panel')->assertUnauthorized();
         $this->actingAs($usuario)->get('/panel')->assertOk();
         $this->actingAs($usuario)->getJson('/api/v1/panel')
-            ->assertOk()->assertExactJson(['data' => [['slug' => $propio->slug, 'nombre' => 'Mio']]]);
+            ->assertOk()->assertExactJson(['data' => [['slug' => $propio->slug, 'nombre' => 'Mio', 'modulos' => ['inicio', 'reservas', 'menu', 'pedidos']]]]);
         $this->assertNotContains($ajeno->slug, array_column($this->getJson('/api/v1/panel')->json('data'), 'slug'));
     }
 

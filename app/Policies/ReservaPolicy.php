@@ -11,5 +11,7 @@ class ReservaPolicy extends MatrizPolicy
         'superadmin' => ['viewAny', 'view', 'create', 'update', 'delete'],
         'propietario' => ['viewAny', 'view', 'create', 'update', 'delete'],
         'editor' => ['viewAny', 'view', 'create', 'update', 'delete'],
+        'gerente' => ['viewAny', 'view', 'create', 'update', 'delete'],
+        'recepcion' => ['viewAny', 'view', 'create', 'update', 'delete'],
     ];
 }

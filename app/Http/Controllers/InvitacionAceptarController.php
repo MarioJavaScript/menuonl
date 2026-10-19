@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\Catalogos;
 use App\Services\InvitacionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -37,7 +38,7 @@ class InvitacionAceptarController extends Controller
             'token' => $token,
             'cuentaExistente' => $existente !== null,
             'sesionCorrecta' => $existente !== null && $request->user()?->is($existente),
-            'rol' => $invitacion->rol === 'propietario' ? 'Propietario' : 'Editor',
+            'rol' => Catalogos::roles()[$invitacion->rol] ?? ucfirst($invitacion->rol),
         ]);
     }
 

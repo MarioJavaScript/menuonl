@@ -61,7 +61,7 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
             return false;
         }
 
-        return $this->isSuperadmin() || $this->restaurantes()->exists();
+        return $this->isSuperadmin() || $this->restaurantes()->wherePivot('activo', true)->exists();
     }
 
     /**
@@ -79,7 +79,7 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
      */
     public function getTenants(Panel $panel): Collection
     {
-        return $this->isSuperadmin() ? Restaurante::all() : $this->restaurantes()->get();
+        return $this->isSuperadmin() ? Restaurante::all() : $this->restaurantes()->wherePivot('activo', true)->get();
     }
 
     /**
@@ -91,7 +91,7 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
             return false;
         }
 
-        return $this->isSuperadmin() || $this->restaurantes()->whereKey($tenant->getKey())->exists();
+        return $this->isSuperadmin() || $this->restaurantes()->wherePivot('activo', true)->whereKey($tenant->getKey())->exists();
     }
 
     /**
@@ -107,6 +107,7 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
 
         $this->rolesPorRestaurante ??= DB::table('restaurante_usuario')
             ->where('user_id', $this->getKey())
+            ->where('activo', true)
             ->pluck('rol', 'restaurante_id')
             ->all();
 
@@ -138,6 +139,21 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     {
         return $this->isSuperadmin()
             || $this->restaurantes()->wherePivot('rol', 'propietario')->exists();
+    }
+
+    /**
+     * Whether the user only holds operational roles (gerente, recepcion, cocina) and is not a superadmin,
+     * so the service panel (/panel) is their home instead of the advanced admin.
+     */
+    public function esSoloOperativo(): bool
+    {
+        if ($this->isSuperadmin()) {
+            return false;
+        }
+
+        $roles = DB::table('restaurante_usuario')->where('user_id', $this->getKey())->where('activo', true)->pluck('rol');
+
+        return $roles->isNotEmpty() && $roles->every(fn (string $rol): bool => in_array($rol, ['recepcion', 'cocina'], true));
     }
 
     /**

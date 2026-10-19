@@ -76,6 +76,11 @@ class AdminPanelProvider extends PanelProvider
                 Inicio::class,
             ])
             ->navigationItems([
+                NavigationItem::make('Panel de servicio')
+                    ->group('Restaurante')
+                    ->icon(Heroicon::OutlinedBolt)
+                    ->sort(5)
+                    ->url(fn (): string => route('panel')),
                 NavigationItem::make('Mi restaurante')
                     ->group('Restaurante')
                     ->icon(Heroicon::OutlinedBuildingStorefront)

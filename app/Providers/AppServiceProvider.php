@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Http\Responses\LoginRespuesta;
 use App\Models\Categoria;
 use App\Models\CodigoQr;
 use App\Models\Contacto;
@@ -10,6 +11,7 @@ use App\Models\Producto;
 use App\Models\ProductoVariante;
 use App\Models\Restaurante;
 use App\Observers\AuditableObserver;
+use Filament\Auth\Http\Responses\Contracts\LoginResponse;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -22,7 +24,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(LoginResponse::class, LoginRespuesta::class);
     }
 
     /**

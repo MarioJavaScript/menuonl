@@ -140,7 +140,10 @@ class PanelApiMenuYResumenTest extends TestCase
         Reserva::factory()->confirmada()->create(['restaurante_id' => $restaurante->id, 'personas' => 2]);
         Reserva::factory()->cancelada()->create(['restaurante_id' => $restaurante->id, 'personas' => 9]);
 
-        $this->actingAs($this->miembro($restaurante))->getJson($this->url($restaurante, 'resumen'))
+        $gerente = User::factory()->create();
+        $restaurante->usuarios()->attach($gerente, ['rol' => 'gerente']);
+
+        $this->actingAs($gerente)->getJson($this->url($restaurante, 'resumen'))
             ->assertOk()
             ->assertJsonPath('data.ventas_hoy', 400)
             ->assertJsonPath('data.comensales_esperados', 6)

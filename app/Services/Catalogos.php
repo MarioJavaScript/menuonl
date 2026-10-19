@@ -25,6 +25,22 @@ class Catalogos
     }
 
     /**
+     * Roles of the restaurant team: clave => nombre.
+     *
+     * @return array<string, string>
+     */
+    public static function roles(): array
+    {
+        return [
+            'propietario' => 'Propietario',
+            'gerente' => 'Gerente',
+            'editor' => 'Editor',
+            'recepcion' => 'Recepción',
+            'cocina' => 'Cocina',
+        ];
+    }
+
+    /**
      * @return array<string, string>
      */
     public static function monedas(): array
