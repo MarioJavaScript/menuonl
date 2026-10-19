@@ -48,7 +48,8 @@ return [
 
     'imagenes' => [
         'max_bytes' => (int) env('IMAGENES_MAX_BYTES', 2 * 1024 * 1024),
-        'carpetas' => ['logos', 'portadas', 'productos'],
+        'carpetas' => ['logos', 'portadas', 'productos', 'galeria'],
+        'max_galeria' => (int) env('IMAGENES_MAX_GALERIA', 12),
     ],
 
     /*

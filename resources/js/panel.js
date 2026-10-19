@@ -16,6 +16,24 @@ async function api(method,path,body){
   return j.data!==undefined?j.data:j;
 }
 const P=p=>`/${slug}${p}`;
+/* Reduce la foto en el navegador (los celulares dan 4-8 MB): el servidor recorta, convierte a WebP y genera los tamaños. */
+async function reducirImagen(file){
+  try{
+    const bmp=await createImageBitmap(file),k=Math.min(1,2200/Math.max(bmp.width,bmp.height));
+    const c=document.createElement('canvas');c.width=Math.round(bmp.width*k);c.height=Math.round(bmp.height*k);
+    c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);
+    const blob=await new Promise(r=>c.toBlob(r,'image/jpeg',.86));
+    return blob&&blob.size<file.size?new File([blob],'foto.jpg',{type:'image/jpeg'}):file;
+  }catch(e){return file}
+}
+async function subir(path,file){
+  const fd=new FormData();fd.append('imagen',await reducirImagen(file));
+  const r=await fetch('/api/v1/panel'+path,{method:'POST',credentials:'same-origin',headers:{'Accept':'application/json','X-XSRF-TOKEN':xsrf()},body:fd});
+  if(r.status===401){location.href='/panel';throw new Error('Sesión expirada')}
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(j.errors?Object.values(j.errors)[0][0]:(j.message||'No se pudo subir la foto'));
+  return j.data;
+}
 
 const ROLES={propietario:'Propietario',gerente:'Gerente',editor:'Editor',recepcion:'Recepción',cocina:'Cocina'};
 let S={aj:null,reservas:[],menu:[],pedidos:[],resumen:{},equipo:{miembros:[],invitaciones:[],roles_asignables:[]},modulos:[],ok:false};
@@ -25,7 +43,7 @@ const MODULO_DE={reservas:'reservas',pedidos:'pedidos',menu:'menu',resumen:'inic
 const L={
   async reservas(){S.reservas=(await api('GET',P('/reservas'))).map(r=>({id:r.id,n:r.nombre,p:r.personas,h:r.hora,s:r.estado,nota:r.nota||''}))},
   async pedidos(){const now=Date.now();S.pedidos=(await api('GET',P('/pedidos'))).map(p=>({id:p.id,mesa:p.mesa,its:p.detalle,tot:p.total,e:p.estado,t:now-p.minutos*60000}))},
-  async menu(){S.menu=(await api('GET',P('/menu'))).map(c=>({id:c.id,nombre:c.nombre,items:c.productos.map(i=>({id:i.id,n:i.nombre,pr:i.precio,disp:i.disponible,vis:i.visible}))}))},
+  async menu(){S.menu=(await api('GET',P('/menu'))).map(c=>({id:c.id,nombre:c.nombre,items:c.productos.map(i=>({id:i.id,n:i.nombre,pr:i.precio,disp:i.disponible,vis:i.visible,img:i.imagen}))}))},
   async resumen(){S.resumen=await api('GET',P('/resumen'))},
   async equipo(){S.equipo=await api('GET',P('/equipo'))},
   async ajustes(){S.aj=await api('GET',P('/ajustes'))}
@@ -91,7 +109,10 @@ V.menu=()=>`<div class="inner"><div class="head"><div><h1>Menú</h1><p class="mu
     <label class="switch"><input type="checkbox" data-act="disp" data-id="${i.id}" ${i.disp?'checked':''} aria-label="${esc(i.n)} disponible"><i></i><span>${i.disp?'Disponible':'Agotado'}</span></label>
     <input class="inline" value="${esc(i.n)}" aria-label="Nombre del platillo" data-f="item.n" data-id="${i.id}" maxlength="150">
     <input class="inline price" value="${i.pr}" aria-label="Precio de ${esc(i.n)}" data-f="item.pr" data-id="${i.id}" inputmode="decimal">
-    <div class="acts"><button class="btn sm" data-act="dup" data-id="${i.id}">Duplicar</button>
+    <div class="acts">${i.img?`<img class="thumb" src="${esc(i.img)}" alt="Foto de ${esc(i.n)}" width="44" height="55">`:'<span class="thumb vacio" role="img" aria-label="Sin foto"></span>'}
+     <label class="btn sm">${i.img?'Cambiar foto':'Foto'}<input type="file" accept="image/jpeg,image/png,image/webp" class="sr" data-f="item.img" data-id="${i.id}"></label>
+     ${i.img?`<button class="btn sm ghost" data-act="img-quitar" data-id="${i.id}">Quitar foto</button>`:''}
+     <button class="btn sm" data-act="dup" data-id="${i.id}">Duplicar</button>
      <button class="btn sm" data-act="vis" data-id="${i.id}">${i.vis?'Ocultar':'Mostrar'}</button>
      <button class="btn danger sm" data-act="item-del" data-id="${i.id}">Eliminar</button></div>
     ${i.vis?'':'<div class="state muted">Oculto en el sitio</div>'}</div>`).join('')}
@@ -119,6 +140,13 @@ V.ajustes=()=>{const E=S.equipo,A=S.aj;return `<div class="inner"><div class="he
  <section class="card"><h2>Sitio público</h2><p class="muted" style="margin-bottom:12px">Elige la plantilla. El sitio cambia al instante.</p>
   <div class="tabs" role="group" aria-label="Plantilla del sitio" style="flex-wrap:wrap">${A.plantillas.map(t=>`<button data-act="plantilla" data-v="${t.clave}" aria-pressed="${A.plantilla===t.clave}" style="min-width:140px"><strong>${t.clave.toUpperCase()}</strong> · ${esc(t.nombre)}</button>`).join('')}</div>
   <p style="margin-top:12px"><a class="btn ghost" href="/s/${esc(slug)}" target="_blank" rel="noopener">Ver sitio</a></p></section>
+ <section class="card"><h2>Fotos del sitio</h2>
+  <p class="muted" style="margin-bottom:8px">Portada (16:9)</p>
+  ${A.hero?`<img class="hero-prev" src="${esc(A.hero)}" alt="Portada actual" width="480" height="270">`:'<div class="hero-prev vacio" role="img" aria-label="Sin portada">Sin portada</div>'}
+  <div class="row" style="margin:8px 0 16px"><label class="btn">${A.hero?'Cambiar portada':'Subir portada'}<input type="file" accept="image/jpeg,image/png,image/webp" class="sr" data-f="aj.hero"></label>${A.hero?'<button class="btn danger" data-act="hero-quitar">Quitar</button>':''}</div>
+  <p class="muted" style="margin-bottom:8px">Galería (${A.galeria.length}/${A.galeria_max})</p>
+  <div class="gal-grid">${A.galeria.map(f=>`<figure><img src="${esc(f.url)}" alt="Foto de la galería" width="96" height="120"><button class="btn sm danger" data-act="gal-quitar" data-id="${f.id}" aria-label="Quitar foto de la galería">Quitar</button></figure>`).join('')}</div>
+  ${A.galeria.length<A.galeria_max?'<div class="row" style="margin-top:8px"><label class="btn primary">Agregar fotos<input type="file" accept="image/jpeg,image/png,image/webp" multiple class="sr" data-f="aj.galeria"></label></div>':''}</section>
  <section class="card"><h2>Datos del restaurante</h2><div class="addform">
   <div class="wide">${campo('a-nombre','Nombre','nombre','maxlength="150"')}</div>
   <div class="wide">${campo('a-eslogan','Eslogan','eslogan','maxlength="120"')}</div>
@@ -175,6 +203,9 @@ const A={
   'item-del'(el){const [,i]=findItem(el.dataset.id);confirmar(`¿Eliminar "${i.n}" del menú?`,()=>run(async()=>{await api('DELETE',P('/productos/'+i.id));await sync('menu');toast('Platillo eliminado')}),'Eliminar')},
   next(el){return run(async()=>{const p=await api('POST',P('/pedidos/'+el.dataset.id+'/avanzar'));colSel=colSel;
     if(!S.pedidos.some(x=>x.e===colSel&&!same(x.id,p.id)))colSel=p.estado;await sync('pedidos','resumen');toast('Pedido → '+p.estado)})},
+  'img-quitar'(el){const [,i]=findItem(el.dataset.id);return run(async()=>{await api('DELETE',P('/productos/'+i.id+'/imagen'));await sync('menu');toast('Foto quitada')})},
+  'hero-quitar'(){confirmar('¿Quitar la portada del sitio?',()=>run(async()=>{await api('DELETE',P('/ajustes/hero'));await sync('ajustes');toast('Portada quitada')}),'Quitar')},
+  'gal-quitar'(el){confirmar('¿Quitar esta foto de la galería?',()=>run(async()=>{await api('DELETE',P('/ajustes/galeria/'+el.dataset.id));await sync('ajustes');toast('Foto quitada')}),'Quitar')},
   plantilla(el){return run(async()=>{S.aj=await api('PATCH',P('/ajustes'),{plantilla:el.dataset.v});render();toast('Plantilla '+el.dataset.v.toUpperCase()+' activada')})},
   'usr-activo'(el){const on=el.dataset.v==='1';return run(async()=>{await api('PATCH',P('/equipo/usuarios/'+el.dataset.id),{activo:on});await sync('equipo');toast(on?'Usuario activado':'Usuario desactivado')})},
   'inv-revocar'(el){return run(async()=>{await api('DELETE',P('/equipo/invitaciones/'+el.dataset.id));await sync('equipo');toast('Invitación revocada')})},
@@ -185,6 +216,12 @@ document.addEventListener('change',e=>{const el=e.target;
   if(el.type==='checkbox'&&el.dataset.act){A[el.dataset.act](el);return}
   const f=el.dataset.f;if(!f)return;const id=el.dataset.id;
   if(f==='rest'){location.search='?r='+encodeURIComponent(el.value);return}
+  if(el.type==='file'){const files=[...el.files];el.value='';if(!files.length)return;
+    return run(async()=>{toast('Subiendo…');
+      if(f==='item.img'){await subir(P('/productos/'+id+'/imagen'),files[0]);await sync('menu')}
+      if(f==='aj.hero'){await subir(P('/ajustes/hero'),files[0]);await sync('ajustes')}
+      if(f==='aj.galeria'){for(const fl of files)await subir(P('/ajustes/galeria'),fl);await sync('ajustes')}
+      toast('Foto guardada')})}
   if(f.startsWith('aj.')||f.startsWith('hor.'))return ajusteCambiado(el,f);
   if(f==='usr.rol')return run(async()=>{await api('PATCH',P('/equipo/usuarios/'+id),{rol:el.value});await sync('equipo');toast('Rol actualizado')});
   if(f==='res.h')return run(async()=>{await api('PATCH',P('/reservas/'+id),{hora:el.value});await sync('reservas');toast('Reserva movida a las '+el.value)});

@@ -108,6 +108,137 @@ class WebpImageService
     }
 
     /**
+     * Fixed crop ratios (width:height) of the site images.
+     *
+     * @var array<string, array{0: int, 1: int}>
+     */
+    public const array RATIOS = [
+        'platillo' => [4, 5],
+        'galeria' => [4, 5],
+        'hero' => [16, 9],
+    ];
+
+    /**
+     * Widths (px) of the responsive copies; the widest copy that fits the source is the main file.
+     *
+     * @var list<int>
+     */
+    public const array ANCHOS = [480, 960, 1600];
+
+    /**
+     * Center-crop the upload to the fixed ratio, convert it to WebP and store one copy per responsive width.
+     *
+     * Returns the path of the main (widest) copy; the others sit next to it as "{name}-w{width}.webp".
+     * Nothing but the generated WebP files is ever written to the public disk.
+     *
+     * @throws ValidationException
+     */
+    public function storeCroppedForRestaurante(UploadedFile|string $file, int $restauranteId, string $carpeta, string $ratio): string
+    {
+        if (! in_array($carpeta, config('menuonl.imagenes.carpetas', []), true) || ! isset(self::RATIOS[$ratio])) {
+            throw ValidationException::withMessages(['imagen' => 'Carpeta de imágenes no permitida.']);
+        }
+
+        $realPath = is_string($file) ? $file : $file->getRealPath();
+        $this->validateImage($file, $realPath);
+
+        $origen = $this->createGdResource($realPath, $this->getRealMimeType($realPath));
+        [$rw, $rh] = self::RATIOS[$ratio];
+        $origW = imagesx($origen);
+        $origH = imagesy($origen);
+
+        // Largest centered rectangle with the target ratio
+        $cropW = min($origW, (int) floor($origH * $rw / $rh));
+        $cropH = min($origH, (int) floor($cropW * $rh / $rw));
+        $x = intdiv($origW - $cropW, 2);
+        $y = intdiv($origH - $cropH, 2);
+
+        $anchos = array_values(array_filter(self::ANCHOS, fn (int $ancho): bool => $ancho <= $cropW));
+        $maximo = min($cropW, max(self::ANCHOS));
+
+        if (! in_array($maximo, $anchos, true)) {
+            $anchos[] = $maximo;
+        }
+
+        $directorio = "restaurantes/{$restauranteId}/{$carpeta}";
+        $nombre = Str::random(40);
+        $principal = "{$directorio}/{$nombre}.webp";
+
+        $contenido = '';
+
+        foreach ($anchos as $ancho) {
+            $alto = max(1, (int) round($ancho * $rh / $rw));
+            $copia = imagecreatetruecolor($ancho, $alto);
+            imagecopyresampled($copia, $origen, 0, 0, $x, $y, $ancho, $alto, $cropW, $cropH);
+
+            ob_start();
+            imagewebp($copia, null, 82);
+            $contenido = (string) ob_get_clean();
+            imagedestroy($copia);
+
+            Storage::disk('public')->put("{$directorio}/{$nombre}-w{$ancho}.webp", $contenido);
+        }
+
+        // The main file is the widest copy
+        Storage::disk('public')->put($principal, $contenido);
+
+        imagedestroy($origen);
+
+        return $principal;
+    }
+
+    /**
+     * Public URL of a stored image, or null when there is none.
+     */
+    public function url(?string $ruta, ?int $ancho = null): ?string
+    {
+        if ($ruta === null || $ruta === '') {
+            return null;
+        }
+
+        if ($ancho !== null) {
+            $variante = $this->rutaVariante($ruta, $ancho);
+
+            if (Storage::disk('public')->exists($variante)) {
+                return Storage::disk('public')->url($variante);
+            }
+        }
+
+        return Storage::disk('public')->url($ruta);
+    }
+
+    /**
+     * "url 480w, url 960w, ..." for an <img srcset>, or null when the image has no responsive copies
+     * (images uploaded before this feature, or through the advanced admin).
+     */
+    public function srcset(?string $ruta): ?string
+    {
+        if ($ruta === null || $ruta === '') {
+            return null;
+        }
+
+        $partes = [];
+
+        foreach (self::ANCHOS as $ancho) {
+            $variante = $this->rutaVariante($ruta, $ancho);
+
+            if (Storage::disk('public')->exists($variante)) {
+                $partes[] = Storage::disk('public')->url($variante)." {$ancho}w";
+            }
+        }
+
+        return count($partes) > 1 ? implode(', ', $partes) : null;
+    }
+
+    /**
+     * Path of the responsive copy of the given width.
+     */
+    public function rutaVariante(string $ruta, int $ancho): string
+    {
+        return preg_replace('/\.webp\z/', "-w{$ancho}.webp", $ruta) ?? $ruta;
+    }
+
+    /**
      * Whether the path is a plain relative path inside restaurantes/{id}/ (no traversal, no other tenant).
      */
     public function rutaPerteneceAlRestaurante(?string $ruta, int $restauranteId): bool
@@ -150,6 +281,10 @@ class WebpImageService
     {
         if (! $this->rutaPerteneceAlRestaurante($ruta, $restauranteId)) {
             return false;
+        }
+
+        foreach (self::ANCHOS as $ancho) {
+            $this->deleteIfExists($this->rutaVariante($ruta, $ancho));
         }
 
         return $this->deleteIfExists($ruta);

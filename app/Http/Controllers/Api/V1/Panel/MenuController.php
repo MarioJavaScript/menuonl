@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Categoria;
 use App\Models\Producto;
 use App\Models\Restaurante;
+use App\Services\WebpImageService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -129,6 +130,7 @@ class MenuController extends Controller
             'precio' => (float) $producto->precio,
             'disponible' => $producto->disponible,
             'visible' => $producto->visible,
+            'imagen' => app(WebpImageService::class)->url($producto->imagen, 480),
         ];
     }
 

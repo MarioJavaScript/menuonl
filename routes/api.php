@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\MenuApiController;
 use App\Http\Controllers\Api\V1\Panel\AjustesController;
 use App\Http\Controllers\Api\V1\Panel\EquipoController;
+use App\Http\Controllers\Api\V1\Panel\ImagenController;
 use App\Http\Controllers\Api\V1\Panel\MenuController;
 use App\Http\Controllers\Api\V1\Panel\PedidoController;
 use App\Http\Controllers\Api\V1\Panel\ReservaController;
@@ -43,11 +44,17 @@ Route::prefix('v1')->group(function (): void {
                 Route::patch('productos/{producto}', [MenuController::class, 'update'])->name('productos.update');
                 Route::post('productos/{producto}/duplicar', [MenuController::class, 'duplicar'])->name('productos.duplicar');
                 Route::delete('productos/{producto}', [MenuController::class, 'destroy'])->name('productos.destroy');
+                Route::post('productos/{producto}/imagen', [ImagenController::class, 'producto'])->name('productos.imagen');
+                Route::delete('productos/{producto}/imagen', [ImagenController::class, 'quitarProducto'])->name('productos.imagen.quitar');
             });
 
             Route::middleware(ModuloPanel::class.':ajustes')->group(function (): void {
                 Route::get('ajustes', [AjustesController::class, 'show'])->name('ajustes.show');
                 Route::patch('ajustes', [AjustesController::class, 'update'])->name('ajustes.update');
+                Route::post('ajustes/hero', [ImagenController::class, 'hero'])->name('ajustes.hero');
+                Route::delete('ajustes/hero', [ImagenController::class, 'quitarHero'])->name('ajustes.hero.quitar');
+                Route::post('ajustes/galeria', [ImagenController::class, 'galeria'])->name('ajustes.galeria');
+                Route::delete('ajustes/galeria/{imagen}', [ImagenController::class, 'quitarGaleria'])->name('ajustes.galeria.quitar');
                 Route::put('ajustes/horarios/{dia}', [AjustesController::class, 'horario'])->whereNumber('dia')->name('ajustes.horario');
             });
 

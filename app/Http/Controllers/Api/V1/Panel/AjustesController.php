@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Api\V1\Panel;
 
 use App\Http\Controllers\Controller;
 use App\Models\Contacto;
+use App\Models\GaleriaImagen;
 use App\Models\Horario;
 use App\Models\Restaurante;
 use App\Services\Catalogos;
+use App\Services\WebpImageService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -112,6 +114,7 @@ class AjustesController extends Controller
      */
     private function datos(Restaurante $restaurante): array
     {
+        $imagenes = app(WebpImageService::class);
         $contactos = Contacto::orderBy('orden')->orderBy('id')->get()->groupBy('tipo');
         $valor = fn (string $tipo): ?string => $contactos->get($tipo)?->first()?->valor;
         $horarios = Horario::orderBy('abre')->get()->groupBy('dia_semana');
@@ -127,6 +130,9 @@ class AjustesController extends Controller
             'facebook' => $valor('facebook'),
             'latitud' => $restaurante->latitud,
             'longitud' => $restaurante->longitud,
+            'hero' => $imagenes->url($restaurante->portada, 960),
+            'galeria' => GaleriaImagen::orderBy('orden')->orderBy('id')->get()->map(fn (GaleriaImagen $f): array => ['id' => $f->id, 'url' => $imagenes->url($f->imagen, 480)])->values(),
+            'galeria_max' => (int) config('menuonl.imagenes.max_galeria'),
             'plantilla' => $restaurante->sitio_plantilla,
             'plantillas' => collect(Catalogos::plantillasSitio())->map(fn (array $p, string $clave): array => ['clave' => $clave, ...$p])->values(),
             'reservas_activas' => $restaurante->reservas_activas,
