@@ -9,6 +9,8 @@ use App\Models\Horario;
 use App\Models\Producto;
 use App\Models\ProductoVariante;
 use App\Models\Restaurante;
+use App\Models\SitioConfiguracion;
+use App\Models\SitioGaleria;
 use App\Observers\AuditableObserver;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -39,6 +41,8 @@ class AppServiceProvider extends ServiceProvider
         Contacto::observe(AuditableObserver::class);
         Horario::observe(AuditableObserver::class);
         CodigoQr::observe(AuditableObserver::class);
+        SitioConfiguracion::observe(AuditableObserver::class);
+        SitioGaleria::observe(AuditableObserver::class);
         Restaurante::observe(AuditableObserver::class);
     }
 }

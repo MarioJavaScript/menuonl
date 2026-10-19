@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Restaurante extends Model implements HasName
@@ -125,6 +126,22 @@ class Restaurante extends Model implements HasName
     public function horarios(): HasMany
     {
         return $this->hasMany(Horario::class);
+    }
+
+    /**
+     * Contenido editable del sitio del restaurante (una sola fila).
+     */
+    public function sitioConfiguracion(): HasOne
+    {
+        return $this->hasOne(SitioConfiguracion::class);
+    }
+
+    /**
+     * Fotos de la galería del sitio, en el orden elegido.
+     */
+    public function sitioGaleria(): HasMany
+    {
+        return $this->hasMany(SitioGaleria::class)->orderBy('orden')->orderBy('id');
     }
 
     /**
