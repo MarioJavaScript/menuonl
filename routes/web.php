@@ -31,9 +31,9 @@ Route::middleware('throttle:menu-publico')->group(function (): void {
         ->name('menu.publico');
 });
 
-// Service panel (reservations, orders, menu): static page that talks to /api/v1/panel with the login session.
+// Service panel (reservations, orders, menu): Blade shell + Vite assets that talk to /api/v1/panel with the login session.
 Route::middleware('auth')
-    ->get('/panel', fn () => response()->file(public_path('prototipo/panel.html'), ['Cache-Control' => 'no-store']))
+    ->get('/panel', fn () => response()->view('panel.index')->header('Cache-Control', 'no-store'))
     ->name('panel');
 
 Route::middleware('auth')
