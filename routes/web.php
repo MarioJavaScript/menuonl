@@ -31,6 +31,11 @@ Route::middleware('throttle:menu-publico')->group(function (): void {
         ->name('menu.publico');
 });
 
+// Service panel (reservations, orders, menu): static page that talks to /api/v1/panel with the login session.
+Route::middleware('auth')
+    ->get('/panel', fn () => response()->file(public_path('prototipo/panel.html'), ['Cache-Control' => 'no-store']))
+    ->name('panel');
+
 Route::middleware('auth')
     ->get('/admin/codigos-qr/{codigoQr}/descargar/{formato}', [QrDownloadController::class, 'descargar'])
     ->where('formato', 'svg|png|pdf')

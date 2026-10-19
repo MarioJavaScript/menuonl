@@ -33,6 +33,8 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('invitaciones', fn (Request $request): Limit => Limit::perMinute(10)->by($request->ip()));
         RateLimiter::for('menu-publico', fn (Request $request): Limit => Limit::perMinute(300)->by($request->ip()));
 
+        RateLimiter::for('panel-api', fn (Request $request): Limit => Limit::perMinute(240)->by($request->user()?->getAuthIdentifier() ?? $request->ip()));
+
         Categoria::observe(AuditableObserver::class);
         Producto::observe(AuditableObserver::class);
         ProductoVariante::observe(AuditableObserver::class);
