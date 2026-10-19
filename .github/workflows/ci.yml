@@ -78,5 +78,8 @@ jobs:
     - name: Run Migrations (validates CHECK constraints on MariaDB)
       run: php artisan migrate:fresh --force
 
+    # TEMPORAL (DIAGNOSTICO): revertir a `php artisan test --compact` al terminar.
+    # Muestra el texto de los avisos (--display-warnings) y se detiene en el primero (--stop-on-warning)
+    # para identificar la causa de los ~636 avisos que aparecen en este job y no en SQLite.
     - name: Execute Tests on MariaDB
-      run: php artisan test --compact
+      run: php artisan test --compact --display-warnings --stop-on-warning
