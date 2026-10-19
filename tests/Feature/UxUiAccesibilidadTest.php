@@ -44,6 +44,7 @@ use App\Services\Catalogos;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
+use Filament\Actions\BulkActionGroup;
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
 use Filament\Support\Facades\FilamentView;
@@ -721,6 +722,11 @@ class UxUiAccesibilidadTest extends TestCase
 
         $this->assertNotSoftDeleted('categorias', ['id' => $categoria->id]);
         $this->assertNotSoftDeleted('productos', ['id' => $platillo->id]);
+
+        // Id inexistente o ya activo no produce errores ni notificaciones adicionales
+        Livewire::test(ListCategorias::class)
+            ->dispatch('deshacer-eliminar-categoria', id: 999999)
+            ->assertNotNotified();
     }
 
     public function test_tabla_categorias_deshacer_eliminar_respeta_aislamiento_entre_restaurantes(): void
@@ -824,6 +830,21 @@ class UxUiAccesibilidadTest extends TestCase
         $this->assertSame('Eliminar categoría', $deleteAction->getLabel());
         $this->assertSame('Recuperar categoría', $restoreAction->getLabel());
         $this->assertStringContainsString('Los platillos de esta categoría dejarán de mostrarse', (string) $deleteAction->getModalDescription());
+
+        // Acciones masivas en barra de herramientas
+        $toolbarActions = $table->getToolbarActions();
+        $this->assertNotEmpty($toolbarActions);
+        $bulkGroup = collect($toolbarActions)->first(fn ($a) => $a instanceof BulkActionGroup);
+        $this->assertNotNull($bulkGroup);
+        $this->assertSame('Acciones con las seleccionadas', $bulkGroup->getLabel());
+        $bulkActions = $bulkGroup->getActions();
+        $deleteBulk = collect($bulkActions)->first(fn ($a) => $a->getName() === 'delete');
+        $restoreBulk = collect($bulkActions)->first(fn ($a) => $a->getName() === 'restore');
+        $this->assertNotNull($deleteBulk);
+        $this->assertNotNull($restoreBulk);
+        $this->assertSame('Eliminar seleccionadas', $deleteBulk->getLabel());
+        $this->assertSame('Recuperar seleccionadas', $restoreBulk->getLabel());
+        $this->assertStringContainsString('Los platillos de estas categorías dejarán de mostrarse', (string) $deleteBulk->getModalDescription());
     }
 
     public function test_formulario_platillo_configura_prefijos_y_textos_de_ayuda_en_tuteo(): void
@@ -910,6 +931,24 @@ class UxUiAccesibilidadTest extends TestCase
         $this->assertSame('¿Recuperar "Bebidas"?', (string) $catRestore->getModalHeading());
         $this->assertSame('Volverá a mostrarse en tu menú junto con sus platillos.', (string) $catRestore->getModalDescription());
         $this->assertSame('Recuperar categoría', $catRestore->getModalSubmitActionLabel());
+
+        // Ejecución de eliminación y restauración desde la cabecera de EditProducto
+        Livewire::test(EditProducto::class, ['record' => $platillo->getRouteKey()])
+            ->callAction('delete');
+        $this->assertSoftDeleted('productos', ['id' => $platillo->id]);
+
+        Livewire::test(EditProducto::class, ['record' => $platillo->getRouteKey()])
+            ->callAction('restore');
+        $this->assertNotSoftDeleted('productos', ['id' => $platillo->id]);
+
+        // Ejecución de eliminación y restauración desde la cabecera de EditCategoria
+        Livewire::test(EditCategoria::class, ['record' => $categoria->getRouteKey()])
+            ->callAction('delete');
+        $this->assertSoftDeleted('categorias', ['id' => $categoria->id]);
+
+        Livewire::test(EditCategoria::class, ['record' => $categoria->getRouteKey()])
+            ->callAction('restore');
+        $this->assertNotSoftDeleted('categorias', ['id' => $categoria->id]);
     }
 
     public function test_formulario_platillo_y_categoria_validaciones_de_precios_y_orden_en_espanol(): void
@@ -967,6 +1006,43 @@ class UxUiAccesibilidadTest extends TestCase
             ->fillForm([
                 'orden' => -1,
                 'traducciones' => [['idioma' => 'es', 'nombre' => 'Categoría Mal Orden']],
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['orden'])
+            ->assertSee('El orden no puede ser negativo.');
+
+        // Validación de precio requerido en platillo
+        Livewire::test(CreateProducto::class)
+            ->fillForm([
+                'categoria_id' => $categoria->id,
+                'precio' => null,
+                'orden' => 0,
+                'traducciones' => [['idioma' => 'es', 'nombre' => 'Taco Sin Precio']],
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['precio'])
+            ->assertSee('Escribe un precio para el platillo.');
+
+        // Validación de precio promocional negativo
+        Livewire::test(CreateProducto::class)
+            ->fillForm([
+                'categoria_id' => $categoria->id,
+                'precio' => 50,
+                'precio_oferta' => -5,
+                'orden' => 0,
+                'traducciones' => [['idioma' => 'es', 'nombre' => 'Taco Oferta Negativa']],
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['precio_oferta'])
+            ->assertSee('El precio promocional no puede ser negativo.');
+
+        // Validación de orden negativo en platillo
+        Livewire::test(CreateProducto::class)
+            ->fillForm([
+                'categoria_id' => $categoria->id,
+                'precio' => 50,
+                'orden' => -1,
+                'traducciones' => [['idioma' => 'es', 'nombre' => 'Taco Mal Orden']],
             ])
             ->call('create')
             ->assertHasFormErrors(['orden'])
