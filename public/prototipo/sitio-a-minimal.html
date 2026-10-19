@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Casa Alba · Cocina mediterránea contemporánea</title>
+<meta name="description" content="Variante A — Minimal editorial. Reserva tu mesa en Casa Alba.">
+<style>
+:root{--paper:#FFFFFF;--ink:#111111;--muted:#555049;--line:#111111;--hair:#D9D4C8;--sand:#F3EFE6;--accent:#7A5A30;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+  --sans:"Helvetica Neue",Helvetica,"Segoe UI",system-ui,Arial,sans-serif;--g:16px}
+*{box-sizing:border-box;border-radius:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.65 var(--sans);overflow-x:hidden}
+img{display:block;width:100%;height:100%;object-fit:cover;background:var(--sand)}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.wrap{max-width:1280px;margin:0 auto;padding:0 var(--g)}
+.eyebrow{font:600 .8125rem/1 var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+h1,h2,h3{font-family:var(--serif);font-weight:400;margin:0;line-height:1.02;letter-spacing:-.02em}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 28px;background:var(--ink);color:#fff;border:1px solid var(--ink);font:600 .875rem var(--sans);letter-spacing:.12em;text-transform:uppercase;text-decoration:none;cursor:pointer}
+.btn:hover{background:#fff;color:var(--ink)}
+.btn.alt{background:#fff;color:var(--ink)}.btn.alt:hover{background:var(--ink);color:#fff}
+
+header{position:sticky;top:0;z-index:10;background:var(--paper);border-bottom:1px solid var(--line)}
+header .wrap{display:flex;align-items:center;justify-content:space-between;min-height:64px}
+.logo{font:400 1.5rem var(--serif);text-decoration:none;letter-spacing:-.01em}
+nav{display:none;gap:28px}nav a{font-size:.875rem;text-decoration:none;letter-spacing:.06em;padding:12px 0}nav a:hover{text-decoration:underline;text-underline-offset:6px}
+header .btn{min-height:44px;padding:0 18px}
+@media(min-width:900px){nav{display:flex}}
+
+section{border-bottom:1px solid var(--line)}
+.sec{padding:72px 0}
+@media(min-width:900px){.sec{padding:120px 0}}
+.grid{display:grid;gap:var(--g);grid-template-columns:repeat(4,1fr)}
+@media(min-width:900px){.grid{grid-template-columns:repeat(12,1fr);gap:24px}}
+
+/* hero */
+.hero{padding:56px 0 0}
+.hero h1{font-size:clamp(3.25rem,13vw,10.5rem);margin:24px 0 32px}
+.hero h1 em{font-style:italic}
+.hero .lead{display:grid;gap:24px;grid-template-columns:1fr;margin-bottom:56px}
+.hero .lead p{font-size:1.25rem;line-height:1.5;max-width:34ch}
+.hero .ph{aspect-ratio:4/3;border-top:1px solid var(--line)}
+@media(min-width:900px){.hero{padding-top:96px}.hero .lead{grid-template-columns:1fr auto;align-items:end}.hero .ph{aspect-ratio:21/9}}
+
+/* nosotros */
+.about .grid>*:first-child{grid-column:1/-1}
+.about h2{font-size:clamp(2rem,5vw,4rem);grid-column:1/-1}
+.about p{font-size:1.1875rem;grid-column:1/-1}
+@media(min-width:900px){.about .grid>*:first-child{grid-column:1/4}.about h2{grid-column:4/13}.about p{grid-column:4/9}.about .ph{grid-column:9/13}}
+.about .ph{aspect-ratio:4/5;grid-column:1/-1}
+@media(min-width:900px){.about .ph{grid-column:9/13}}
+.muted{color:var(--muted)}
+
+/* menu */
+.menu h2{font-size:clamp(2.5rem,7vw,5.5rem);margin:16px 0 48px}
+.dish{display:grid;grid-template-columns:1fr auto;gap:4px 16px;padding:24px 0;border-top:1px solid var(--hair)}
+.dish:first-of-type{border-top:1px solid var(--line)}
+.dish h3{font-size:1.5rem;letter-spacing:-.01em}
+.dish .pr{font:400 1.375rem var(--serif);font-variant-numeric:lining-nums}
+.dish p{grid-column:1;margin:0;color:var(--muted);max-width:46ch}
+@media(min-width:900px){.dish{grid-template-columns:5fr 6fr auto;align-items:baseline;padding:32px 0}.dish h3{font-size:2rem}.dish p{grid-column:2}}
+
+/* galeria */
+.gal h2{font-size:clamp(2.5rem,7vw,5.5rem);margin:16px 0 40px}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line)}
+.tiles .ph{aspect-ratio:4/5}
+@media(min-width:900px){.tiles{grid-template-columns:repeat(3,1fr)}}
+
+/* reservas */
+.res .grid>div:first-child{grid-column:1/-1}
+.res h2{font-size:clamp(2.5rem,7vw,5.5rem);margin:16px 0 24px}
+form{grid-column:1/-1;display:grid;gap:16px;grid-template-columns:1fr 1fr}
+form .full{grid-column:1/-1}
+label{display:block;font:600 .8125rem var(--sans);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
+input,select{width:100%;min-height:52px;padding:0 14px;border:1px solid var(--ink);background:#fff;color:var(--ink);font:1rem var(--sans)}
+#ok{grid-column:1/-1;padding:20px;border:1px solid var(--ink);background:var(--sand)}
+#ok[hidden]{display:none}
+@media(min-width:900px){.res .grid>div:first-child{grid-column:1/6}form{grid-column:7/13}}
+
+/* ubicacion */
+.loc .map{aspect-ratio:4/3;border:1px solid var(--line);background:
+  linear-gradient(var(--hair) 1px,transparent 1px) 0 0/48px 48px,linear-gradient(90deg,var(--hair) 1px,transparent 1px) 0 0/48px 48px,var(--sand);position:relative;grid-column:1/-1}
+.loc .map b{position:absolute;left:50%;top:50%;transform:translate(-50%,-100%);width:20px;height:20px;background:var(--ink);transform-origin:center}
+.loc .map span{position:absolute;left:50%;top:50%;transform:translate(-50%,10px);background:var(--ink);color:#fff;padding:4px 10px;font-size:.8125rem;white-space:nowrap}
+.loc h2{font-size:clamp(2.5rem,7vw,5.5rem);margin:16px 0 32px;grid-column:1/-1}
+table{border-collapse:collapse;width:100%;grid-column:1/-1}
+td{padding:14px 0;border-top:1px solid var(--hair)}td:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.addr{grid-column:1/-1}
+@media(min-width:900px){.loc .map{grid-column:1/8;aspect-ratio:auto;min-height:420px}.loc .info{grid-column:8/13}}
+footer{padding:40px 0;font-size:.9375rem}
+footer .wrap{display:flex;flex-wrap:wrap;gap:16px 40px;justify-content:space-between}
+footer a{padding:12px 0;display:inline-block}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><a class="logo" href="#top">Casa Alba</a>
+  <nav aria-label="Principal"><a href="#nosotros">Nosotros</a><a href="#menu">Menú</a><a href="#galeria">Galería</a><a href="#reservar">Reservaciones</a><a href="#ubicacion">Ubicación</a></nav>
+  <a class="btn" href="#reservar">Reservar</a></div></header>
+
+<main id="top">
+<section class="hero"><div class="wrap">
+  <p class="eyebrow">Cocina mediterránea contemporánea · Ciudad de México</p>
+  <h1>Cenar es un acto de <em>calma.</em></h1>
+  <div class="lead"><p>Una mesa, buena luz y producto de temporada. Cenas, aniversarios y reuniones que merecen tiempo.</p><a class="btn" href="#reservar">Reservar mesa</a></div></div>
+  <div class="ph"><img data-ph="1,1600,686" alt="Imagen de prueba: platillo de temporada sobre mesa de lino" width="1600" height="686"></div></section>
+
+<section id="nosotros" class="sec about"><div class="wrap"><div class="grid">
+  <p class="eyebrow">01 — Nosotros</p>
+  <h2>Pocos ingredientes, mucho criterio.</h2>
+  <p>Casa Alba nace de una idea sencilla: cocinar despacio y servir sin prisa. Menú corto, proveedores locales y un salón de veinte mesas pensado para conversar.</p>
+  <div class="ph"><img data-ph="2,800,1000" alt="Imagen de prueba: plato principal" width="800" height="1000"></div></div></div></section>
+
+<section id="menu" class="sec menu"><div class="wrap">
+  <p class="eyebrow">02 — Menú destacado</p><h2>De temporada.</h2>
+  <div class="dish"><h3>Carpaccio de res</h3><span class="pr">$185</span><p>Alcaparras, parmesano añejo y aceite de limón.</p></div>
+  <div class="dish"><h3>Burrata con tomate</h3><span class="pr">$165</span><p>Tomate de huerta, albahaca y pan de masa madre.</p></div>
+  <div class="dish"><h3>Risotto de hongos</h3><span class="pr">$280</span><p>Arroz carnaroli, hongos mixtos y mantequilla avellanada.</p></div>
+  <div class="dish"><h3>Salmón al limón</h3><span class="pr">$340</span><p>Cocción lenta, hinojo asado y crema ligera de cítricos.</p></div>
+  <div class="dish"><h3>Tiramisú</h3><span class="pr">$125</span><p>Receta de la casa, café de altura y cacao.</p></div></div></section>
+
+<section id="galeria" class="sec gal"><div class="wrap"><p class="eyebrow">03 — Galería</p><h2>La mesa.</h2>
+  <div class="tiles" id="tiles"></div></div></section>
+
+<section id="reservar" class="sec res"><div class="wrap"><div class="grid">
+  <div><p class="eyebrow">04 — Reservaciones</p><h2>Tu mesa, en un minuto.</h2><p>Confirmamos por WhatsApp en menos de una hora.</p></div>
+  <form id="f" novalidate>
+    <div class="full"><label for="n">Nombre</label><input id="n" required autocomplete="name"></div>
+    <div><label for="d">Fecha</label><input id="d" type="date" required></div>
+    <div><label for="h">Hora</label><select id="h"><option>13:00</option><option>14:00</option><option>15:00</option><option>19:00</option><option selected>20:00</option><option>21:00</option><option>22:00</option></select></div>
+    <div class="full"><label for="p">Personas</label><select id="p"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option></select></div>
+    <button class="btn full" type="submit">Solicitar reserva</button>
+    <div id="ok" role="status" hidden></div></form></div></div></section>
+
+<section id="ubicacion" class="sec loc"><div class="wrap"><p class="eyebrow">05 — Ubicación y horario</p><h2>Visítanos.</h2>
+  <div class="grid"><div class="map" role="img" aria-label="Mapa de ejemplo"><b></b><span>Casa Alba</span></div>
+  <div class="info"><p class="addr">Calle Ejemplo 123, Col. Centro<br>Ciudad de México</p>
+   <table><tr><td>Martes a jueves</td><td>13:00 – 23:00</td></tr><tr><td>Viernes y sábado</td><td>13:00 – 00:00</td></tr><tr><td>Domingo</td><td>13:00 – 18:00</td></tr><tr><td>Lunes</td><td>Cerrado</td></tr></table></div></div></div></section>
+</main>
+
+<footer><div class="wrap"><span class="logo">Casa Alba</span><span><a href="https://instagram.com/" rel="noopener">Instagram</a> &nbsp; <a href="tel:+525500000000">+52 55 0000 0000</a></span><span class="muted">© 2026 Casa Alba</span></div></footer>
+
+<script>
+/* Imágenes de prueba generadas: misma proporción y encuadre (plato centrado). Reemplazar por fotografía real. */
+function photo(i,w,h){
+  const R=n=>{const x=Math.sin(i*97.13+n*13.7)*10000;return x-Math.floor(x)};
+  const P={bg:['#F1EDE4','#D8D1C2'],plate:'#FBFAF7',rim:'#E4DFD3',food:['#A8441F','#D8A14A','#6B7F3A','#C9B28A','#8C2F1B'],green:'#4F6B2F'};
+  const cx=w/2,cy=h/2,r=Math.min(w,h)*.34;let g='';
+  const n=3+Math.floor(R(1)*3);
+  for(let k=0;k<n;k++){const a=R(k+2)*6.28,d=R(k+9)*r*.4;
+    g+=`<ellipse cx='${cx+Math.cos(a)*d}' cy='${cy+Math.sin(a)*d}' rx='${r*(.2+R(k+20)*.22)}' ry='${r*(.15+R(k+30)*.17)}' fill='${P.food[(k+i)%P.food.length]}' transform='rotate(${R(k)*180} ${cx} ${cy})'/>`}
+  for(let k=0;k<16;k++){const a=R(k+50)*6.28,d=R(k+70)*r*.6;g+=`<circle cx='${cx+Math.cos(a)*d}' cy='${cy+Math.sin(a)*d}' r='${r*.025+R(k)*r*.03}' fill='${P.green}'/>`}
+  const s=`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${w} ${h}'><defs><radialGradient id='b' cx='.5' cy='.45' r='.85'><stop offset='0' stop-color='${P.bg[0]}'/><stop offset='1' stop-color='${P.bg[1]}'/></radialGradient><radialGradient id='v'><stop offset='.6' stop-color='#000' stop-opacity='0'/><stop offset='1' stop-color='#000' stop-opacity='.2'/></radialGradient></defs><rect width='${w}' height='${h}' fill='url(#b)'/><ellipse cx='${cx+r*.05}' cy='${cy+r*.1}' rx='${r*1.06}' ry='${r*1.02}' fill='#000' opacity='.18'/><circle cx='${cx}' cy='${cy}' r='${r}' fill='${P.plate}'/><circle cx='${cx}' cy='${cy}' r='${r*.78}' fill='none' stroke='${P.rim}' stroke-width='3'/>${g}<rect width='${w}' height='${h}' fill='url(#v)'/></svg>`;
+  return 'data:image/svg+xml;utf8,'+encodeURIComponent(s);
+}
+const tiles=document.getElementById('tiles');
+for(let i=3;i<9;i++){tiles.insertAdjacentHTML('beforeend',`<div class="ph"><img data-ph="${i},800,1000" alt="Imagen de prueba: platillo ${i-2}" width="800" height="1000" loading="lazy"></div>`)}
+document.querySelectorAll('img[data-ph]').forEach(im=>{const [i,w,h]=im.dataset.ph.split(',').map(Number);im.src=photo(i,w,h)});
+
+const d=document.getElementById('d');const t=new Date();d.min=t.toISOString().slice(0,10);
+document.getElementById('f').addEventListener('submit',e=>{e.preventDefault();
+  const n=document.getElementById('n').value.trim();
+  if(!n||!d.value){document.getElementById(n?'d':'n').focus();return}
+  const msg=`Hola, quiero reservar en Casa Alba: ${n}, ${d.value} a las ${document.getElementById('h').value}, ${document.getElementById('p').value} personas.`;
+  const ok=document.getElementById('ok');ok.hidden=false;
+  ok.innerHTML=`<p><strong>Casi listo, ${n.replace(/</g,'&lt;')}.</strong> Envía tu solicitud por WhatsApp para confirmarla.</p><p><a class="btn" href="https://wa.me/525500000000?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">Enviar por WhatsApp</a></p>`;});
+</script>
+</body>
+</html>
