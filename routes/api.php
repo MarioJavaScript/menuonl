@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\MenuApiController;
+use App\Http\Controllers\Api\V1\Panel\AjustesController;
 use App\Http\Controllers\Api\V1\Panel\EquipoController;
 use App\Http\Controllers\Api\V1\Panel\MenuController;
 use App\Http\Controllers\Api\V1\Panel\PedidoController;
@@ -42,6 +43,12 @@ Route::prefix('v1')->group(function (): void {
                 Route::patch('productos/{producto}', [MenuController::class, 'update'])->name('productos.update');
                 Route::post('productos/{producto}/duplicar', [MenuController::class, 'duplicar'])->name('productos.duplicar');
                 Route::delete('productos/{producto}', [MenuController::class, 'destroy'])->name('productos.destroy');
+            });
+
+            Route::middleware(ModuloPanel::class.':ajustes')->group(function (): void {
+                Route::get('ajustes', [AjustesController::class, 'show'])->name('ajustes.show');
+                Route::patch('ajustes', [AjustesController::class, 'update'])->name('ajustes.update');
+                Route::put('ajustes/horarios/{dia}', [AjustesController::class, 'horario'])->whereNumber('dia')->name('ajustes.horario');
             });
 
             Route::middleware(ModuloPanel::class.':ajustes')->prefix('equipo')->name('equipo.')->group(function (): void {

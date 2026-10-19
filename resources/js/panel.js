@@ -18,16 +18,17 @@ async function api(method,path,body){
 const P=p=>`/${slug}${p}`;
 
 const ROLES={propietario:'Propietario',gerente:'Gerente',editor:'Editor',recepcion:'Recepción',cocina:'Cocina'};
-let S={reservas:[],menu:[],pedidos:[],resumen:{},equipo:{miembros:[],invitaciones:[],roles_asignables:[]},modulos:[],ok:false};
+let S={aj:null,reservas:[],menu:[],pedidos:[],resumen:{},equipo:{miembros:[],invitaciones:[],roles_asignables:[]},modulos:[],ok:false};
 const has=m=>S.modulos.includes(m);
 /* cada carga pertenece a un módulo; un rol sin permiso nunca la pide (la API respondería 403) */
-const MODULO_DE={reservas:'reservas',pedidos:'pedidos',menu:'menu',resumen:'inicio',equipo:'ajustes'};
+const MODULO_DE={reservas:'reservas',pedidos:'pedidos',menu:'menu',resumen:'inicio',equipo:'ajustes',ajustes:'ajustes'};
 const L={
   async reservas(){S.reservas=(await api('GET',P('/reservas'))).map(r=>({id:r.id,n:r.nombre,p:r.personas,h:r.hora,s:r.estado,nota:r.nota||''}))},
   async pedidos(){const now=Date.now();S.pedidos=(await api('GET',P('/pedidos'))).map(p=>({id:p.id,mesa:p.mesa,its:p.detalle,tot:p.total,e:p.estado,t:now-p.minutos*60000}))},
   async menu(){S.menu=(await api('GET',P('/menu'))).map(c=>({id:c.id,nombre:c.nombre,items:c.productos.map(i=>({id:i.id,n:i.nombre,pr:i.precio,disp:i.disponible,vis:i.visible}))}))},
   async resumen(){S.resumen=await api('GET',P('/resumen'))},
-  async equipo(){S.equipo=await api('GET',P('/equipo'))}
+  async equipo(){S.equipo=await api('GET',P('/equipo'))},
+  async ajustes(){S.aj=await api('GET',P('/ajustes'))}
 };
 async function sync(...keys){await Promise.all(keys.filter(k=>has(MODULO_DE[k])).map(k=>L[k]()));render()}
 
@@ -113,7 +114,28 @@ V.pedidos=()=>{
    return `<div class="col ${colSel===c[0]?'on':''}"><h2>${c[1]} <span>${l.length}</span></h2>${l.length?l.map(p=>`<div class="tk ${c[0]!=='entregado'&&mins(p.t)>=15?'late':''}"><div class="top"><span>Mesa ${esc(p.mesa)}</span><span>${mins(p.t)} min</span></div><div class="its">${esc(p.its)}</div>
      ${c[2]?`<button class="btn ${ci<3?'primary':''}" data-act="next" data-id="${p.id}">${c[2]} →</button>`:`<span class="chip done">${money(p.tot)} cobrado</span>`}</div>`).join(''):'<div class="empty">Nada aquí</div>'}</div>`}).join('')}</div></div>`;
 };
-V.ajustes=()=>{const E=S.equipo;return `<div class="inner"><div class="head"><div><h1>Ajustes</h1><p class="muted">${esc(S.nombre||'')}</p></div></div>
+const campo=(id,etiqueta,k,extra='')=>`<div><label class="f" for="${id}">${etiqueta}</label><input id="${id}" value="${esc(S.aj[k]??'')}" data-f="aj.${k}" ${extra}></div>`;
+V.ajustes=()=>{const E=S.equipo,A=S.aj;return `<div class="inner"><div class="head"><div><h1>Ajustes</h1><p class="muted">${esc(S.nombre||'')} · se guardan al salir de cada campo</p></div></div>
+ <section class="card"><h2>Sitio público</h2><p class="muted" style="margin-bottom:12px">Elige la plantilla. El sitio cambia al instante.</p>
+  <div class="tabs" role="group" aria-label="Plantilla del sitio" style="flex-wrap:wrap">${A.plantillas.map(t=>`<button data-act="plantilla" data-v="${t.clave}" aria-pressed="${A.plantilla===t.clave}" style="min-width:140px"><strong>${t.clave.toUpperCase()}</strong> · ${esc(t.nombre)}</button>`).join('')}</div>
+  <p style="margin-top:12px"><a class="btn ghost" href="/s/${esc(slug)}" target="_blank" rel="noopener">Ver sitio</a></p></section>
+ <section class="card"><h2>Datos del restaurante</h2><div class="addform">
+  <div class="wide">${campo('a-nombre','Nombre','nombre','maxlength="150"')}</div>
+  <div class="wide">${campo('a-eslogan','Eslogan','eslogan','maxlength="120"')}</div>
+  ${campo('a-wa','WhatsApp (reservas y pedidos)','whatsapp','inputmode="tel" maxlength="20" placeholder="+52 55 1234 5678"')}
+  ${campo('a-tel','Teléfono','telefono','inputmode="tel" maxlength="255"')}
+  <div class="wide">${campo('a-dir','Dirección','direccion','maxlength="255"')}</div>
+  ${campo('a-ig','Instagram','instagram','maxlength="255" placeholder="@mirestaurante"')}
+  ${campo('a-fb','Facebook','facebook','maxlength="255"')}
+  ${campo('a-lat','Latitud (mapa)','latitud','inputmode="decimal" placeholder="19.4326"')}
+  ${campo('a-lng','Longitud (mapa)','longitud','inputmode="decimal" placeholder="-99.1332"')}</div></section>
+ <section class="card"><h2>Horarios</h2><ul class="list">${A.horarios.map(h=>`<li><div class="grow"><strong>${h.nombre}</strong>${h.varios?'<div class="muted">Varios turnos: edítalo en la administración avanzada.</div>':''}</div>
+   ${h.varios?'':`<label class="switch"><input type="checkbox" data-f="hor.abierto" data-dia="${h.dia}" ${h.cerrado?'':'checked'} aria-label="${h.nombre} abierto"><i></i><span>${h.cerrado?'Cerrado':'Abierto'}</span></label>
+   ${h.cerrado?'':`<input type="time" style="width:auto" aria-label="${h.nombre} abre" value="${h.abre||''}" data-f="hor.abre" data-dia="${h.dia}"><input type="time" style="width:auto" aria-label="${h.nombre} cierra" value="${h.cierra||''}" data-f="hor.cierra" data-dia="${h.dia}">`}`}</li>`).join('')}</ul></section>
+ <section class="card"><h2>Reservas del sitio</h2><div class="addform">
+  <label class="switch"><input type="checkbox" data-f="aj.reservas_activas" ${A.reservas_activas?'checked':''}><i></i><span>${A.reservas_activas?'Aceptando reservas':'Reservas pausadas'}</span></label>
+  <div><label class="f" for="a-cupo">Cupo por franja (personas)</label><input id="a-cupo" type="number" min="1" max="500" value="${A.reservas_cupo}" data-f="aj.reservas_cupo" inputmode="numeric"></div>
+  <div><label class="f" for="a-franja">Duración de la franja</label><select id="a-franja" data-f="aj.reservas_franja_min">${[30,60,90,120].map(m=>`<option value="${m}" ${A.reservas_franja_min===m?'selected':''}>${m} min</option>`).join('')}</select></div></div></section>
  <section class="card"><h2>Equipo</h2><ul class="list">${E.miembros.map(u=>`<li class="${u.activo?'':'cancelled'}"><div class="grow"><strong>${esc(u.nombre)}</strong>${u.es_yo?' <span class="chip soft">Tú</span>':''}<div class="muted">${esc(u.email)}${u.activo?'':' · Desactivado'}</div></div>
    ${u.es_yo||!E.roles_asignables.includes(u.rol)?`<span class="chip">${ROLES[u.rol]||esc(u.rol)}</span>`:`<select style="width:auto" aria-label="Rol de ${esc(u.nombre)}" data-f="usr.rol" data-id="${u.id}">${E.roles_asignables.map(r=>`<option value="${r}" ${r===u.rol?'selected':''}>${ROLES[r]}</option>`).join('')}</select>
    <button class="btn sm ${u.activo?'danger':'primary'}" data-act="usr-activo" data-id="${u.id}" data-v="${u.activo?0:1}">${u.activo?'Desactivar':'Activar'}</button>`}</li>`).join('')}</ul>
@@ -121,7 +143,7 @@ V.ajustes=()=>{const E=S.equipo;return `<div class="inner"><div class="head"><di
   <form class="addform" data-form="usr" style="margin-top:12px"><div class="wide"><label class="f" for="ue">Invitar por correo</label><input id="ue" name="email" type="email" required maxlength="190" autocomplete="off"></div>
    <div><label class="f" for="ur">Rol</label><select id="ur" name="rol">${E.roles_asignables.map(r=>`<option value="${r}" ${r==='recepcion'?'selected':''}>${ROLES[r]}</option>`).join('')}</select></div>
    <button class="btn primary" type="submit">Enviar invitación</button></form></section>
- <section class="card"><h2>Administración avanzada</h2><p class="muted" style="margin-bottom:12px">Horarios, idiomas, QR e historial de cambios.</p>
+ <section class="card"><h2>Administración avanzada</h2><p class="muted" style="margin-bottom:12px">Idiomas, QR, turnos partidos e historial de cambios.</p>
   <div class="row"><a class="btn" href="/admin">Abrir administración</a><a class="btn ghost" href="/m/${esc(slug)}" target="_blank" rel="noopener">Ver menú público</a></div></section>
  ${S.restaurantes.length>1?`<section class="card"><h2>Cambiar de restaurante</h2><select aria-label="Restaurante" data-f="rest">${S.restaurantes.map(r=>`<option value="${esc(r.slug)}" ${r.slug===slug?'selected':''}>${esc(r.nombre)}</option>`).join('')}</select></section>`:''}</div>`};
 
@@ -153,6 +175,7 @@ const A={
   'item-del'(el){const [,i]=findItem(el.dataset.id);confirmar(`¿Eliminar "${i.n}" del menú?`,()=>run(async()=>{await api('DELETE',P('/productos/'+i.id));await sync('menu');toast('Platillo eliminado')}),'Eliminar')},
   next(el){return run(async()=>{const p=await api('POST',P('/pedidos/'+el.dataset.id+'/avanzar'));colSel=colSel;
     if(!S.pedidos.some(x=>x.e===colSel&&!same(x.id,p.id)))colSel=p.estado;await sync('pedidos','resumen');toast('Pedido → '+p.estado)})},
+  plantilla(el){return run(async()=>{S.aj=await api('PATCH',P('/ajustes'),{plantilla:el.dataset.v});render();toast('Plantilla '+el.dataset.v.toUpperCase()+' activada')})},
   'usr-activo'(el){const on=el.dataset.v==='1';return run(async()=>{await api('PATCH',P('/equipo/usuarios/'+el.dataset.id),{activo:on});await sync('equipo');toast(on?'Usuario activado':'Usuario desactivado')})},
   'inv-revocar'(el){return run(async()=>{await api('DELETE',P('/equipo/invitaciones/'+el.dataset.id));await sync('equipo');toast('Invitación revocada')})},
   col(el){colSel=el.dataset.v;render()}
@@ -162,6 +185,7 @@ document.addEventListener('change',e=>{const el=e.target;
   if(el.type==='checkbox'&&el.dataset.act){A[el.dataset.act](el);return}
   const f=el.dataset.f;if(!f)return;const id=el.dataset.id;
   if(f==='rest'){location.search='?r='+encodeURIComponent(el.value);return}
+  if(f.startsWith('aj.')||f.startsWith('hor.'))return ajusteCambiado(el,f);
   if(f==='usr.rol')return run(async()=>{await api('PATCH',P('/equipo/usuarios/'+id),{rol:el.value});await sync('equipo');toast('Rol actualizado')});
   if(f==='res.h')return run(async()=>{await api('PATCH',P('/reservas/'+id),{hora:el.value});await sync('reservas');toast('Reserva movida a las '+el.value)});
   if(f==='item.n'){const [,i]=findItem(id);const v=el.value.trim();if(!v){el.value=i.n;return toast('El nombre no puede estar vacío')}
@@ -170,6 +194,21 @@ document.addEventListener('change',e=>{const el=e.target;
     if(!(v>=0)||v>100000){el.value=i.pr;return toast('Precio no válido')}
     return run(async()=>{await api('PATCH',P('/productos/'+id),{precio:v});i.pr=v;el.value=v;toast('Precio guardado')})}
 });
+function ajusteCambiado(el,f){
+  if(f.startsWith('hor.')){const fila=el.closest('li'),dia=el.dataset.dia;
+    const abierto=f==='hor.abierto'?el.checked:true;
+    const abre=fila.querySelector('[data-f="hor.abre"]'),cierra=fila.querySelector('[data-f="hor.cierra"]');
+    const body=abierto?{cerrado:false,abre:(abre&&abre.value)||'13:00',cierra:(cierra&&cierra.value)||'23:00'}:{cerrado:true};
+    return run(async()=>{const h=await api('PUT',P('/ajustes/horarios/'+dia),body);S.aj.horarios=h;if(f==='hor.abierto')render();toast('Horario guardado')})}
+  const k=f.slice(3);let body;
+  if(k==='latitud'||k==='longitud'){const n=v=>{v=String(v).trim().replace(',','.');return v===''?null:Number(v)};
+    body={latitud:n($('#a-lat').value),longitud:n($('#a-lng').value)}}
+  else if(k==='reservas_activas')body={reservas_activas:el.checked};
+  else if(k==='reservas_cupo'||k==='reservas_franja_min')body={[k]:parseInt(el.value,10)};
+  else{const v=el.value.trim();if(k==='nombre'&&!v){el.value=S.aj.nombre;return toast('El nombre no puede estar vacío')}body={[k]:v===''?null:v}}
+  return run(async()=>{S.aj=await api('PATCH',P('/ajustes'),body);if(k==='nombre'){S.nombre=S.aj.nombre;$('#rest-nombre').textContent=S.nombre}
+    if(k==='reservas_activas')render();toast('Guardado')})
+}
 document.addEventListener('submit',e=>{const f=e.target.dataset.form;if(!f)return;e.preventDefault();
   const form=e.target,d=Object.fromEntries(new FormData(form)),btn=form.querySelector('[type=submit]');btn.disabled=true;
   run(async()=>{

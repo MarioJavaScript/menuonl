@@ -117,6 +117,20 @@ class Catalogos
     }
 
     /**
+     * Plantillas del sitio público (/s/{slug}): clave => [nombre, descripción].
+     *
+     * @return array<string, array{nombre: string, descripcion: string}>
+     */
+    public static function plantillasSitio(): array
+    {
+        return [
+            'a' => ['nombre' => 'Minimal editorial', 'descripcion' => 'Mucho blanco y tipografía grande.'],
+            'b' => ['nombre' => 'Oscuro elegante', 'descripcion' => 'Fondo negro y fotos con alto contraste.'],
+            'c' => ['nombre' => 'Clásico cálido', 'descripcion' => 'Tonos arena y retícula tipo revista.'],
+        ];
+    }
+
+    /**
      * Nombres en español natural para las etiquetas dietéticas y de estado.
      *
      * @return array<string, string>

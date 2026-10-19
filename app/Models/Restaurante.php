@@ -31,6 +31,10 @@ class Restaurante extends Model implements HasName
         'mostrar_agotados' => true,
         'estado' => 'activo',
         'tema' => 'calido',
+        'sitio_plantilla' => 'a',
+        'reservas_activas' => true,
+        'reservas_cupo' => 30,
+        'reservas_franja_min' => 60,
     ];
 
     protected $fillable = [
@@ -42,6 +46,12 @@ class Restaurante extends Model implements HasName
         'portada',
         'tema',
         'color_acento',
+        'sitio_plantilla',
+        'latitud',
+        'longitud',
+        'reservas_activas',
+        'reservas_cupo',
+        'reservas_franja_min',
         'moneda',
         'idioma_default',
         'zona_horaria',
@@ -71,6 +81,11 @@ class Restaurante extends Model implements HasName
         return [
             'pedidos_activos' => 'boolean',
             'mostrar_agotados' => 'boolean',
+            'reservas_activas' => 'boolean',
+            'reservas_cupo' => 'integer',
+            'reservas_franja_min' => 'integer',
+            'latitud' => 'float',
+            'longitud' => 'float',
         ];
     }
 
