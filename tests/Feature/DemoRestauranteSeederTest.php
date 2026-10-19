@@ -8,6 +8,7 @@ use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\EtiquetaSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class DemoRestauranteSeederTest extends TestCase
@@ -27,6 +28,8 @@ class DemoRestauranteSeederTest extends TestCase
 
     public function test_seeder_demo_crea_un_restaurante_completo_y_es_repetible(): void
     {
+        Storage::fake('public');
+
         $this->seed(DatabaseSeeder::class);
         $this->seed(DatabaseSeeder::class);
 

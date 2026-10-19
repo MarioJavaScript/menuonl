@@ -31,6 +31,11 @@ class RestaurantesTable
                     ->color('gray')
                     ->url(fn (Restaurante $record): string => route('menu.publico', ['slug' => $record->slug]))
                     ->openUrlInNewTab(),
+                Action::make('sitioWeb')
+                    ->label('Sitio web')
+                    ->icon('heroicon-o-globe-alt')
+                    ->color('gray')
+                    ->url(fn (Restaurante $record): string => RestauranteResource::getUrl('sitio', ['record' => $record])),
                 EditAction::make(),
                 Action::make('suspender')
                     ->label('Suspender')
