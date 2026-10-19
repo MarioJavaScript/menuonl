@@ -41,3 +41,5 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 /.agents/teamwork/
+frontend/node_modules/
+frontend/.next/
