@@ -2,10 +2,11 @@
     :titulo="trim($__env->yieldContent('titulo')).' · '.config('app.name', 'MENUONL')"
     noindex
     sin-referrer
+    tema="calido"
     class="min-h-screen flex flex-col justify-center items-center p-4"
 >
     <header class="mb-6 text-center">
-        <a href="{{ url('/') }}" class="inline-flex items-center gap-2 font-bold text-lg text-texto-fuerte rounded-lg focus-visible:ring-2 focus-visible:ring-foco focus:outline-none" aria-label="MENUONL">
+        <a href="{{ url('/') }}" class="inline-flex items-center gap-2 min-h-[44px] px-2.5 font-bold text-lg text-texto-fuerte rounded-lg focus-visible:ring-2 focus-visible:ring-foco focus:outline-none" aria-label="MENUONL">
             <span class="w-8 h-8 rounded-xl bg-accion text-accion-texto flex items-center justify-center font-black text-sm" aria-hidden="true">M</span>
             <span class="tracking-wide">MENUONL</span>
         </a>

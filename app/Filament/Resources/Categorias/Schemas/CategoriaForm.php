@@ -13,16 +13,29 @@ class CategoriaForm
     {
         return $schema
             ->components([
+                TraduccionesRepeater::make('traducciones', 120)
+                    ->label('Nombre y descripción')
+                    ->columnSpanFull(),
                 Toggle::make('visible')
-                    ->label('Visible en el menú')
-                    ->helperText('Determina si la categoría y sus platillos se muestran en el menú público.')
+                    ->label('Mostrar en el menú público')
+                    ->helperText('Desmárcala si quieres ocultar temporalmente esta categoría y sus platillos de tu menú.')
                     ->default(true),
                 TextInput::make('orden')
-                    ->label('Orden de visualización')
+                    ->label('Orden de aparición')
                     ->placeholder('0')
-                    ->numeric()->integer()->minValue(0)->maxValue(1000000)->default(0)->required()
-                    ->helperText('Posición numérica para ordenar las secciones del menú público.'),
-                TraduccionesRepeater::make('traducciones', 120)->columnSpanFull(),
+                    ->numeric()
+                    ->integer()
+                    ->minValue(0)
+                    ->maxValue(1000000)
+                    ->default(0)
+                    ->required()
+                    ->helperText('Define la posición para ordenar las secciones de tu menú (por ejemplo: 1 para Entradas, 2 para Platos fuertes).')
+                    ->validationAttribute('orden')
+                    ->validationMessages([
+                        'required' => 'Escribe el número de orden.',
+                        'integer' => 'El orden debe ser un número entero.',
+                        'min' => 'El orden no puede ser negativo.',
+                    ]),
             ]);
     }
 }

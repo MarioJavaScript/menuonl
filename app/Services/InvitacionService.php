@@ -31,12 +31,16 @@ class InvitacionService
      * Earlier pending invitations for the same email and restaurant are replaced. The mail is sent
      * synchronously on purpose: queueing it would write the plain token into the jobs table.
      *
-     * @throws AuthorizationException when the inviter is neither superadmin nor propietario of the restaurant
+     * @throws AuthorizationException when the inviter is neither superadmin nor propietario or gerente of the restaurant
      */
     public function invitar(Restaurante $restaurante, string $email, string $rol, ?User $invitadoPor): Invitacion
     {
-        if ($invitadoPor !== null && ! $invitadoPor->isSuperadmin() && ! $invitadoPor->esPropietarioDe($restaurante)) {
-            throw new AuthorizationException('Solo un propietario puede invitar usuarios.');
+        if (
+            $invitadoPor !== null
+            && ! $invitadoPor->isSuperadmin()
+            && ! in_array($invitadoPor->rolEn($restaurante), ['propietario', 'gerente'], true)
+        ) {
+            throw new AuthorizationException('Solo un propietario o gerente puede invitar usuarios.');
         }
 
         $token = Str::random(self::LONGITUD_TOKEN);

@@ -21,7 +21,7 @@ class UsersTable
                 TextColumn::make('rol')
                     ->label('Rol en este restaurante')
                     ->state(fn (User $record): string => $record->isSuperadmin()
-                        ? 'Superadmin'
+                        ? 'Superadministrador'
                         : ucfirst((string) $record->rolEn(Filament::getTenant()))),
             ])
             ->defaultSort('name')

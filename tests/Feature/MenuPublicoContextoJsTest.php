@@ -135,7 +135,31 @@ class MenuPublicoContextoJsTest extends TestCase
         $this->assertStringNotContainsString('tony&#039;s', $script);
         $this->assertStringNotContainsString('Tony&quot;', $script);
         $this->assertStringContainsString(Js::from('Tony\'s "Special"')->toHtml(), $script);
-        $this->assertStringContainsString('de *${NOMBRE}*', $script);
+        $this->assertStringContainsString('en *${NOMBRE}*', $script);
+    }
+
+    public function test_plantilla_de_mensaje_whatsapp_en_script_usa_textos_aprobados_del_lote_1(): void
+    {
+        $this->crearMenuPedible('El Buen Taco', 'el-buen-taco');
+
+        $html = $this->get(route('menu.publico', ['slug' => 'el-buen-taco']))->assertOk()->getContent();
+        $script = $this->extraerScriptDelCarrito($html);
+
+        // Estructura aprobada en ecf3c15
+        $this->assertStringContainsString('Hola, quiero pedir en *${NOMBRE}*:\n\n', $script);
+        $this->assertStringContainsString('*Mesa:* ${mesaText}\n\n', $script);
+        $this->assertStringContainsString('*Pedido:*\n${itemsText}\n', $script);
+        $this->assertStringContainsString('*Nota para la cocina:* ${notasGenerales}\n\n', $script);
+        $this->assertStringContainsString('*Total:* ${fmt(total)}', $script);
+        $this->assertStringContainsString("mesaVal ? mesaVal : 'Para llevar'", $script);
+
+        // Textos anteriores obsoletos no deben existir
+        $this->assertStringNotContainsString('¡Hola! Quiero hacer el siguiente pedido', $script);
+        $this->assertStringNotContainsString('*Ubicación/Mesa:*', $script);
+        $this->assertStringNotContainsString('*Detalle del pedido:*', $script);
+        $this->assertStringNotContainsString('*Indicaciones:*', $script);
+        $this->assertStringNotContainsString('*Total estimado:*', $script);
+        $this->assertStringNotContainsString('Para llevar / Sin mesa', $script);
     }
 
     public function test_los_onclick_de_agregar_al_carrito_no_se_rompen_con_nombres_hostiles(): void

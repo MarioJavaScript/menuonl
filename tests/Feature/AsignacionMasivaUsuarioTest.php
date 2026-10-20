@@ -8,7 +8,6 @@ use App\Services\InvitacionService;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Storage;
 use Tests\Concerns\ArmaEscenarioDePanel;
 use Tests\TestCase;
 
@@ -56,8 +55,6 @@ class AsignacionMasivaUsuarioTest extends TestCase
 
     public function test_el_seeder_demo_crea_al_superadmin_de_forma_explicita(): void
     {
-        Storage::fake('public');
-
         $this->seed(DatabaseSeeder::class);
 
         $this->assertTrue(User::where('email', 'superadmin@menuonl.test')->firstOrFail()->isSuperadmin());

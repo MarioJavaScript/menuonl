@@ -64,7 +64,7 @@
                         maxlength="255"
                         autocomplete="name"
                         placeholder="Ej. Sofía Morales"
-                        class="w-full px-4 py-3 rounded-xl border border-borde bg-fondo text-texto-fuerte text-sm focus:outline-none focus:ring-2 focus:ring-foco transition-all"
+                        class="w-full min-h-[44px] px-4 py-3 rounded-xl border border-borde bg-fondo text-texto-fuerte text-sm focus:outline-none focus:ring-2 focus:ring-foco focus-visible:ring-2 focus-visible:ring-foco transition-all"
                     >
                     @error('name') <p class="error text-xs text-peligro-texto mt-1" role="alert">{{ $message }}</p> @enderror
                 </div>
@@ -80,7 +80,7 @@
                         required
                         autocomplete="new-password"
                         placeholder="Mínimo 10 caracteres"
-                        class="w-full px-4 py-3 rounded-xl border border-borde bg-fondo text-texto-fuerte text-sm focus:outline-none focus:ring-2 focus:ring-foco transition-all"
+                        class="w-full min-h-[44px] px-4 py-3 rounded-xl border border-borde bg-fondo text-texto-fuerte text-sm focus:outline-none focus:ring-2 focus:ring-foco focus-visible:ring-2 focus-visible:ring-foco transition-all"
                     >
                     <p class="text-xs text-texto-suave mt-1">
                         Debe incluir al menos 10 caracteres combinando letras y números.
@@ -99,7 +99,7 @@
                         required
                         autocomplete="new-password"
                         placeholder="Repite tu contraseña"
-                        class="w-full px-4 py-3 rounded-xl border border-borde bg-fondo text-texto-fuerte text-sm focus:outline-none focus:ring-2 focus:ring-foco transition-all"
+                        class="w-full min-h-[44px] px-4 py-3 rounded-xl border border-borde bg-fondo text-texto-fuerte text-sm focus:outline-none focus:ring-2 focus:ring-foco focus-visible:ring-2 focus-visible:ring-foco transition-all"
                     >
                 </div>
             @endunless

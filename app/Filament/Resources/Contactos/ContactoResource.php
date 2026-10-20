@@ -24,9 +24,9 @@ class ContactoResource extends Resource
 
     protected static ?string $slug = 'contactos';
 
-    protected static \UnitEnum|string|null $navigationGroup = 'Operación del Local';
+    protected static \UnitEnum|string|null $navigationGroup = 'Restaurante';
 
-    protected static ?string $navigationLabel = 'Canales de contacto';
+    protected static ?string $navigationLabel = 'Contactos';
 
     protected static ?int $navigationSort = 50;
 

@@ -1,0 +1,176 @@
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
+
+@source '../../../../app/Filament/**/*';
+@source '../../../../resources/views/filament/**/*';
+
+/*
+ * MENUONL · tema del panel. Mismos tokens (--mo-*) que public/css/menuonl.css en su estilo Clásico.
+ * Filament pone la clase .dark en <html> según localStorage("filament:theme:mode"); el menú público
+ * lee la misma clave, así que la apariencia elegida se recuerda en todo el sistema. Ver DISEÑO.md.
+ */
+@theme {
+    --radius-lg: 0.625rem;
+    --radius-xl: 0.875rem;
+}
+
+:root {
+    --mo-fuente: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --mo-fondo: #f5f5f7;
+    --mo-superficie: #ffffff;
+    --mo-superficie-2: #ececf0;
+    --mo-borde: #e3e3e8;
+    --mo-borde-control: #86868b;
+    --mo-texto: #1d1d1f;
+    --mo-texto-fuerte: #000000;
+    --mo-texto-medio: #424245;
+    --mo-texto-suave: #636366;
+    --mo-foco: #0066cc;
+    --mo-tactil: 44px;
+    --mo-sombra-flotante: 0 12px 32px -8px rgba(0, 0, 0, 0.3);
+}
+
+:root.dark {
+    --mo-fondo: #000000;
+    --mo-superficie: #1c1c1e;
+    --mo-superficie-2: #2c2c2e;
+    --mo-borde: #38383a;
+    --mo-borde-control: #8e8e93;
+    --mo-texto: #f2f2f7;
+    --mo-texto-fuerte: #ffffff;
+    --mo-texto-medio: #d1d1d6;
+    --mo-texto-suave: #a1a1a6;
+    --mo-foco: #4da3ff;
+}
+
+/* Tipografía del sistema en lugar de Inter: Filament declara --font-family en :root, html:root gana. */
+html:root {
+    --font-family: var(--mo-fuente);
+}
+
+@layer components {
+    /* Fondo y superficies con la escala de grises del sistema */
+    .fi-body {
+        background-color: var(--mo-fondo);
+    }
+
+    /* Foco visible y del mismo color en todo el panel */
+    .fi-body :is(a, button, [role='button'], [tabindex]):focus-visible {
+        outline: 2px solid var(--mo-foco);
+        outline-offset: 2px;
+    }
+
+    /* Bordes de campos con contraste de 3:1 (WCAG 1.4.11) */
+    .fi-input-wrp:not(.fi-invalid):not(:focus-within) {
+        --tw-ring-color: var(--mo-borde-control);
+    }
+
+    .fi-checkbox-input:not(:checked),
+    .fi-radio-input:not(:checked) {
+        --tw-ring-color: var(--mo-borde-control);
+    }
+
+    /* Interruptor apagado: pista visible (antes gris claro de 1.3:1) */
+    .fi-toggle.fi-toggle-off {
+        background-color: var(--mo-superficie-2);
+        box-shadow: inset 0 0 0 1px var(--mo-borde-control);
+    }
+
+    /* Botones secundarios: borde visible */
+    .fi-btn:not(.fi-color):not(.fi-outlined),
+    .fi-btn.fi-color-gray:not(.fi-outlined) {
+        --tw-ring-color: var(--mo-borde-control);
+    }
+
+    /* Áreas táctiles de 44 px en botones y acciones de fila */
+    .fi-btn,
+    .fi-icon-btn {
+        min-height: var(--mo-tactil);
+    }
+
+    .fi-ta-actions .fi-link {
+        padding-block: 0.75rem;
+    }
+
+    .fi-icon-btn {
+        min-width: var(--mo-tactil);
+    }
+
+    /* Subir imagen: borde punteado visible */
+    .fi-fo-file-upload .filepond--panel-root {
+        border: 1.5px dashed var(--mo-borde-control);
+        background-color: var(--mo-superficie);
+    }
+
+    /* Títulos de página con más aire, al estilo de iOS */
+    .fi-header-heading {
+        letter-spacing: -0.02em;
+    }
+
+    .fi-header-subheading {
+        color: var(--mo-texto-suave);
+    }
+
+    /* Avisos temporales: superficie elevada */
+    .fi-no-notification {
+        box-shadow: var(--mo-sombra-flotante);
+    }
+
+    /* ---- Barra inferior del panel en móvil (se oculta desde lg, donde aparece el menú lateral) ---- */
+    .mo-barra-inferior {
+        position: fixed;
+        inset-inline: 0;
+        bottom: 0;
+        z-index: 20;
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        padding-bottom: env(safe-area-inset-bottom);
+        border-top: 1px solid var(--mo-borde);
+        background-color: color-mix(in srgb, var(--mo-superficie) 92%, transparent);
+        -webkit-backdrop-filter: blur(16px);
+        backdrop-filter: blur(16px);
+    }
+
+    .mo-barra-inferior a,
+    .mo-barra-inferior button {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.125rem;
+        min-height: 3.5rem;
+        padding: 0.25rem;
+        border: 0;
+        background: transparent;
+        color: var(--mo-texto-suave);
+        font-family: inherit;
+        font-size: 0.6875rem;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .mo-barra-inferior svg {
+        width: 1.5rem;
+        height: 1.5rem;
+    }
+
+    .mo-barra-inferior [aria-current='page'] {
+        color: var(--color-primary-600);
+    }
+
+    .dark .mo-barra-inferior [aria-current='page'] {
+        color: var(--color-primary-400);
+    }
+
+    @media (min-width: 64rem) {
+        .mo-barra-inferior {
+            display: none;
+        }
+    }
+
+    @media (max-width: 63.99rem) {
+        .fi-body:has(.mo-barra-inferior) .fi-main {
+            padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+        }
+    }
+}

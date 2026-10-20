@@ -26,7 +26,7 @@
             <a href="{{ route('filament.admin.auth.login') }}" class="boton inline-flex items-center justify-center w-full min-h-[44px] px-6 py-2.5 rounded-xl bg-accion hover:bg-accion-hover text-accion-texto font-semibold text-sm transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-foco">
                 Ir al acceso del panel
             </a>
-            <a href="{{ url('/') }}" class="inline-flex items-center justify-center w-full min-h-[44px] px-6 py-2.5 rounded-xl text-texto-suave hover:text-texto-fuerte font-medium text-sm transition-colors">
+            <a href="{{ url('/') }}" class="inline-flex items-center justify-center w-full min-h-[44px] px-6 py-2.5 rounded-xl text-texto-suave hover:text-texto-fuerte font-medium text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-foco">
                 Volver al inicio
             </a>
         </div>

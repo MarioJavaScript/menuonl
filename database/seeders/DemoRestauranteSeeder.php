@@ -5,10 +5,7 @@ namespace Database\Seeders;
 use App\Models\Categoria;
 use App\Models\Etiqueta;
 use App\Models\Restaurante;
-use App\Models\SitioConfiguracion;
-use App\Models\SitioGaleria;
 use App\Models\User;
-use App\Services\WebpImageService;
 use Illuminate\Database\Seeder;
 
 class DemoRestauranteSeeder extends Seeder
@@ -86,44 +83,11 @@ class DemoRestauranteSeeder extends Seeder
     ];
 
     /**
-     * CONTENIDO DE DEMOSTRACION del sitio (/sitio/la-esquina): textos de relleno, no describen a ningún restaurante real.
-     * Las fotos están en public/images/sitio-demo (créditos en su CREDITOS.md) y se cargan con el mismo servicio WebP
-     * que una subida real. Todas son CC BY: el crédito viaja como dato y el sitio lo muestra.
-     */
-    private const array SITIO = [
-        'hero' => ['archivo' => 'portada', 'creditos' => 'Foto: City Foodsters, CC BY 2.0'],
-        'hero_subtitulo' => null,
-        'historia_etiqueta' => 'Nuestra historia',
-        'historia_titulo' => 'Una esquina, un comal y mucha paciencia',
-        'historia_parrafo_1' => 'Todo empezó con una mesa plegable y un solo guiso. Con los años la esquina se llenó de vecinos, de sobremesas largas y de recetas que se afinan con el oído más que con la báscula.',
-        'historia_parrafo_2' => 'Hoy seguimos cocinando igual: producto del día, salsas hechas a mano y una carta corta que cambia cuando el mercado lo pide. Aquí no hay prisa, hay lumbre.',
-        'historia_imagen' => ['archivo' => 'tacos-suadero', 'creditos' => 'Foto ilustrativa de demostración. Autor: T.Tseng, CC BY 2.0.'],
-        'estadisticas' => [
-            ['etiqueta' => 'Salsas de la casa', 'valor' => '6'],
-            ['etiqueta' => 'Tortillas a mano', 'valor' => 'Diarias'],
-            ['etiqueta' => 'Cocina a la vista', 'valor' => 'Sí'],
-        ],
-        'galeria' => [
-            ['archivo' => 'tacos-pastor', 'titulo' => 'Pastor, piña y cilantro', 'alt' => 'Plato con tacos de cerdo adobado, piña, cilantro y cebolla', 'creditos' => 'Foto: T.Tseng, CC BY 2.0'],
-            ['archivo' => 'guacamole', 'titulo' => 'Guacamole de molcajete', 'alt' => 'Guacamole fresco servido con totopos', 'creditos' => 'Foto: Missvain, CC BY 4.0'],
-            ['archivo' => 'queso-fundido', 'titulo' => 'Queso fundido con chorizo', 'alt' => 'Queso fundido gratinado servido en cazuela de metal', 'creditos' => 'Foto: Dale Cruse, CC BY 2.0'],
-            ['archivo' => 'sopa-tortilla', 'titulo' => 'Sopa de tortilla', 'alt' => 'Sopa de tortilla en un tazón blanco con aguacate', 'creditos' => 'Foto: spurekar, CC BY 2.0'],
-            ['archivo' => 'agua-fresca', 'titulo' => 'Agua fresca de jamaica', 'alt' => 'Vaso de agua fresca de jamaica con popote sobre una mesa de madera', 'creditos' => 'Foto: City Foodsters, CC BY 2.0'],
-            ['archivo' => 'cafe-de-olla', 'titulo' => 'Café de olla', 'alt' => 'Jarrito de barro con café de olla sobre un plato', 'creditos' => 'Foto: Mover el Bigote, CC BY 2.0'],
-        ],
-    ];
-
-    /**
      * Seed one active demo restaurant with its menu, contacts, hours, QR codes and panel users.
      */
     public function run(): void
     {
-        $existente = Restaurante::withTrashed()->where('slug', 'la-esquina')->first();
-
-        if ($existente !== null) {
-            // Un demo creado antes de que existiera el sitio recibe su contenido; nunca se pisa uno ya editado.
-            $this->sembrarSitio($existente);
-
+        if (Restaurante::withTrashed()->where('slug', 'la-esquina')->exists()) {
             return;
         }
 
@@ -177,67 +141,6 @@ class DemoRestauranteSeeder extends Seeder
         ]);
 
         $this->crearUsuarios($restaurante);
-        $this->sembrarSitio($restaurante);
-    }
-
-    /**
-     * Contenido del sitio y su galería, solo si el restaurante aún no tiene configuración.
-     */
-    private function sembrarSitio(Restaurante $restaurante): void
-    {
-        if (SitioConfiguracion::withoutGlobalScopes()->where('restaurante_id', $restaurante->id)->exists()) {
-            return;
-        }
-
-        $demo = self::SITIO;
-
-        SitioConfiguracion::create([
-            'restaurante_id' => $restaurante->id,
-            'hero_imagen' => $this->guardarFoto($restaurante, $demo['hero']['archivo']),
-            'hero_imagen_creditos' => $demo['hero']['creditos'],
-            'hero_subtitulo' => $demo['hero_subtitulo'],
-            'historia_etiqueta' => $demo['historia_etiqueta'],
-            'historia_titulo' => $demo['historia_titulo'],
-            'historia_parrafo_1' => $demo['historia_parrafo_1'],
-            'historia_parrafo_2' => $demo['historia_parrafo_2'],
-            'historia_imagen' => $this->guardarFoto($restaurante, $demo['historia_imagen']['archivo']),
-            'historia_imagen_creditos' => $demo['historia_imagen']['creditos'],
-            'estadisticas' => $demo['estadisticas'],
-            'reservas_activas' => true,
-        ]);
-
-        foreach ($demo['galeria'] as $orden => $foto) {
-            $ruta = $this->guardarFoto($restaurante, $foto['archivo']);
-
-            if ($ruta === null) {
-                continue;
-            }
-
-            SitioGaleria::create([
-                'restaurante_id' => $restaurante->id,
-                'imagen' => $ruta,
-                'titulo' => $foto['titulo'],
-                'texto_alternativo' => $foto['alt'],
-                'creditos' => $foto['creditos'],
-                'orden' => $orden,
-                'visible' => true,
-            ]);
-        }
-    }
-
-    /**
-     * Pasa la foto de demostración por WebpImageService (como una subida real) y devuelve su ruta en el storage,
-     * o null si el archivo de origen no está.
-     */
-    private function guardarFoto(Restaurante $restaurante, string $archivo): ?string
-    {
-        $origen = public_path("images/sitio-demo/{$archivo}.webp");
-
-        if (! is_file($origen)) {
-            return null;
-        }
-
-        return app(WebpImageService::class)->storeForRestaurante($origen, $restaurante->id, 'sitio');
     }
 
     /**

@@ -2,7 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Pages\Inicio;
 use App\Filament\Resources\Categorias\CategoriaResource;
+use App\Filament\Resources\Categorias\Pages\CreateCategoria;
+use App\Filament\Resources\Categorias\Pages\EditCategoria;
 use App\Filament\Resources\Categorias\Pages\ListCategorias;
 use App\Filament\Resources\CodigosQr\CodigoQrResource;
 use App\Filament\Resources\CodigosQr\Pages\ListCodigosQr;
@@ -14,15 +17,19 @@ use App\Filament\Resources\Horarios\HorarioResource;
 use App\Filament\Resources\Horarios\Pages\ListHorarios;
 use App\Filament\Resources\Invitaciones\InvitacionResource;
 use App\Filament\Resources\Invitaciones\Pages\ListInvitaciones;
+use App\Filament\Resources\Productos\Pages\CreateProducto;
+use App\Filament\Resources\Productos\Pages\EditProducto;
 use App\Filament\Resources\Productos\Pages\ListProductos;
 use App\Filament\Resources\Productos\ProductoResource;
 use App\Filament\Resources\Restaurantes\Pages\ListRestaurantes;
 use App\Filament\Resources\Restaurantes\RestauranteResource;
 use App\Filament\Resources\Users\Pages\ListUsers;
 use App\Filament\Resources\Users\UserResource;
+use App\Filament\Widgets\ResumenRestauranteWidget;
 use App\Models\Categoria;
 use App\Models\CategoriaTraduccion;
 use App\Models\CodigoQr;
+use App\Models\Contacto;
 use App\Models\Etiqueta;
 use App\Models\Horario;
 use App\Models\Invitacion;
@@ -33,11 +40,17 @@ use App\Models\Restaurante;
 use App\Models\RestauranteIdioma;
 use App\Models\Scopes\RestauranteScope;
 use App\Models\VarianteTraduccion;
+use App\Services\Catalogos;
 use Carbon\Carbon;
+use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
 use Filament\Support\Facades\FilamentView;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Livewire\Livewire;
 use Tests\Concerns\ArmaEscenarioDePanel;
@@ -240,21 +253,27 @@ class UxUiAccesibilidadTest extends TestCase
 
         // Banner de confirmación en línea para vaciar pedido
         $response->assertSee('id="vaciarConfirmBanner"', false);
-        $response->assertSee('¿Seguro que deseas vaciar todos los platillos de tu pedido?');
-        $response->assertSee('Sí, vaciar');
-        $response->assertSee('Cancelar');
+        $response->assertSee('¿Quitar todo de tu pedido?');
+        $response->assertSee('Vaciar pedido');
+        $response->assertSee('Conservar');
+
+        // Textos del modal de pedido y botón de WhatsApp
+        $response->assertSee('Mandar pedido por WhatsApp');
+        $response->assertDontSee('Enviar Pedido por WhatsApp');
+        $response->assertSee('Tu pedido está vacío. Toca "Agregar" en un platillo.', false);
+        $response->assertDontSee('Tu carrito está vacío.');
 
         // Transparencia de estado: abierto ahora y mesa activa
         $response->assertSee('Abierto ahora');
         $response->assertSee('Mesa 7');
 
-        // Etiquetas dietéticas con semántica de lista accesible
-        $response->assertSee('<ul class="flex flex-wrap gap-1 mt-2.5 list-none" aria-label="Etiquetas dietéticas', false);
+        // Etiquetas con semántica de lista accesible
+        $response->assertSee('<ul class="flex flex-wrap gap-1 mt-2.5 list-none" aria-label="Etiquetas de', false);
         $response->assertSee('<li class="tag', false);
 
         // Insignia accesible para platillo recomendado
         $response->assertSee('Recomendado');
-        $response->assertSee('aria-label="Platillo recomendado"', false);
+        $response->assertSee('class="chip-recomendado"', false);
 
         // Platillo agotado con estado accesible deshabilitado
         $response->assertSee('Agotado');
@@ -284,7 +303,7 @@ class UxUiAccesibilidadTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('Cerrado');
-        $response->assertSee('El restaurante se encuentra cerrado en este momento. Los pedidos están pausados hasta su próxima apertura.');
+        $response->assertSee('Estamos cerrados.');
         $response->assertDontSee('id="floatingCartBar"', false);
     }
 
@@ -308,7 +327,7 @@ class UxUiAccesibilidadTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('aria-label="Selector de idioma"', false);
-        $response->assertSee('aria-label="Cambiar idioma a EN"', false);
+        $response->assertSee('aria-label="Ver el menú en English"', false);
         $response->assertSee('min-h-[44px]');
         $response->assertSee('min-w-[44px]');
     }
@@ -507,22 +526,22 @@ class UxUiAccesibilidadTest extends TestCase
 
     public function test_filament_recursos_tienen_grupos_de_navegacion_estandarizados_en_espanol(): void
     {
-        // Menú y Carta
-        $this->assertSame('Menú y Carta', CategoriaResource::getNavigationGroup());
-        $this->assertSame('Menú y Carta', ProductoResource::getNavigationGroup());
+        // Menú
+        $this->assertSame('Menú', CategoriaResource::getNavigationGroup());
+        $this->assertSame('Menú', ProductoResource::getNavigationGroup());
 
-        // Operación del Local
-        $this->assertSame('Operación del Local', CodigoQrResource::getNavigationGroup());
-        $this->assertSame('Operación del Local', HorarioResource::getNavigationGroup());
-        $this->assertSame('Operación del Local', ContactoResource::getNavigationGroup());
+        // Restaurante
+        $this->assertSame('Restaurante', CodigoQrResource::getNavigationGroup());
+        $this->assertSame('Restaurante', HorarioResource::getNavigationGroup());
+        $this->assertSame('Restaurante', ContactoResource::getNavigationGroup());
 
-        // Equipo y Acceso
-        $this->assertSame('Equipo y Acceso', UserResource::getNavigationGroup());
-        $this->assertSame('Equipo y Acceso', InvitacionResource::getNavigationGroup());
+        // Administración
+        $this->assertSame('Administración', UserResource::getNavigationGroup());
+        $this->assertSame('Administración', InvitacionResource::getNavigationGroup());
+        $this->assertSame('Administración', HistorialCambioResource::getNavigationGroup());
 
-        // Administración Global
-        $this->assertSame('Administración Global', RestauranteResource::getNavigationGroup());
-        $this->assertSame('Administración Global', HistorialCambioResource::getNavigationGroup());
+        // Plataforma
+        $this->assertSame('Plataforma', RestauranteResource::getNavigationGroup());
     }
 
     public function test_filament_tablas_tienen_encabezados_de_estado_vacio_en_espanol(): void
@@ -532,11 +551,11 @@ class UxUiAccesibilidadTest extends TestCase
         $this->entrarAlPanel($propietario, $restaurante);
 
         // Tablas con contexto de restaurante
-        $this->assertSame('No hay categorías registradas', Livewire::test(ListCategorias::class)->instance()->getTable()->getEmptyStateHeading());
+        $this->assertSame('Todavía no tienes categorías', Livewire::test(ListCategorias::class)->instance()->getTable()->getEmptyStateHeading());
         $this->assertSame('Sin códigos QR generados', Livewire::test(ListCodigosQr::class)->instance()->getTable()->getEmptyStateHeading());
         $this->assertSame('Sin horarios de atención configurados', Livewire::test(ListHorarios::class)->instance()->getTable()->getEmptyStateHeading());
         $this->assertSame('No hay canales de contacto registrados', Livewire::test(ListContactos::class)->instance()->getTable()->getEmptyStateHeading());
-        $this->assertSame('No hay platillos en el menú', Livewire::test(ListProductos::class)->instance()->getTable()->getEmptyStateHeading());
+        $this->assertSame('Todavía no tienes platillos', Livewire::test(ListProductos::class)->instance()->getTable()->getEmptyStateHeading());
         $this->assertSame('No hay invitaciones enviadas', Livewire::test(ListInvitaciones::class)->instance()->getTable()->getEmptyStateHeading());
         $this->assertSame('No hay miembros adicionales en el equipo', Livewire::test(ListUsers::class)->instance()->getTable()->getEmptyStateHeading());
         $this->assertSame('Sin eventos de auditoría', Livewire::test(ListHistorialCambios::class)->instance()->getTable()->getEmptyStateHeading());
@@ -548,26 +567,508 @@ class UxUiAccesibilidadTest extends TestCase
         $this->assertSame('No hay restaurantes registrados', Livewire::test(ListRestaurantes::class)->instance()->getTable()->getEmptyStateHeading());
     }
 
-    public function test_filament_panel_registra_acceso_directo_a_menu_publico_en_tenant_menu_y_render_hook(): void
+    public function test_filament_panel_registra_acceso_directo_a_menu_publico_en_render_hook(): void
     {
         $restaurante = $this->crearRestaurante('los-arcos');
         $propietario = $this->crearUsuario('propietario', $restaurante);
         $this->entrarAlPanel($propietario, $restaurante);
 
-        $panel = Filament::getPanel('admin');
-        $tenantItems = $panel->getTenantMenuItems();
-
-        $this->assertNotEmpty($tenantItems, 'El panel no tiene configurado tenantMenuItems.');
-
-        $publicMenuItem = collect($tenantItems)->first(fn ($item) => $item->getLabel() === 'Ver menú público');
-        $this->assertNotNull($publicMenuItem, 'El panel no tiene registrado el ítem "Ver menú público" en tenantMenuItems.');
-        $this->assertTrue($publicMenuItem->shouldOpenUrlInNewTab(), 'El ítem "Ver menú público" debe abrirse en pestaña nueva.');
-        $this->assertSame(route('menu.publico', ['slug' => 'los-arcos']), $publicMenuItem->getUrl());
-
-        // Render Hook: PanelsRenderHook::USER_MENU_BEFORE
+        // Render Hook en cabecera: PanelsRenderHook::USER_MENU_BEFORE
         $renderedHook = FilamentView::renderHook(PanelsRenderHook::USER_MENU_BEFORE);
-        $this->assertStringContainsString('Ver menú público', (string) $renderedHook);
+        $this->assertStringContainsString('Ver mi menú', (string) $renderedHook);
         $this->assertStringContainsString(route('menu.publico', ['slug' => 'los-arcos']), (string) $renderedHook);
+        $this->assertStringContainsString('target="_blank"', (string) $renderedHook);
+    }
+
+    public function test_panel_navegacion_e_inicio_usan_termino_inicio_y_no_escritorio(): void
+    {
+        $this->assertSame('Inicio', Inicio::getNavigationLabel());
+        $this->assertNotSame('Escritorio', Inicio::getNavigationLabel());
+        $this->assertNotSame('Dashboard', Inicio::getNavigationLabel());
+        $this->assertSame('Inicio', __('filament-panels::pages/dashboard.title'));
+
+        $restaurante = $this->crearRestaurante('tacos-el-guero');
+        $propietario = $this->crearUsuario('propietario', $restaurante);
+        $this->entrarAlPanel($propietario, $restaurante);
+
+        $respuesta = $this->get(Inicio::getUrl());
+        $respuesta->assertOk();
+        $respuesta->assertSee('Inicio');
+        $respuesta->assertSee("Lo que necesita tu atención hoy en {$restaurante->nombre}.");
+        $respuesta->assertDontSee('Escritorio');
+    }
+
+    public function test_tabla_platillos_accion_deshacer_eliminar_restaura_el_registro(): void
+    {
+        $restaurante = $this->crearRestaurante('rest-deshacer');
+        $propietario = $this->crearUsuario('propietario', $restaurante);
+        $this->entrarAlPanel($propietario, $restaurante);
+
+        $categoria = Categoria::factory()->create(['restaurante_id' => $restaurante->id]);
+        $producto = Producto::factory()->create([
+            'restaurante_id' => $restaurante->id,
+            'categoria_id' => $categoria->id,
+        ]);
+        ProductoTraduccion::factory()->create([
+            'producto_id' => $producto->id,
+            'idioma' => 'es',
+            'nombre' => 'Taco al Pastor',
+        ]);
+
+        Livewire::test(ListProductos::class)
+            ->callAction(TestAction::make('delete')->table($producto))
+            ->assertNotified('Taco al Pastor se eliminó')
+            ->dispatch('deshacer-eliminar-platillo', id: $producto->id)
+            ->assertNotified('Taco al Pastor volvió a tu menú');
+
+        $this->assertNotSoftDeleted('productos', ['id' => $producto->id]);
+    }
+
+    public function test_tabla_platillos_deshacer_eliminar_respeta_aislamiento_entre_restaurantes(): void
+    {
+        $tenantA = $this->crearRestaurante('tenant-undo-a');
+        $tenantB = $this->crearRestaurante('tenant-undo-b');
+
+        $prodB = Producto::factory()->create(['restaurante_id' => $tenantB->id]);
+        $prodB->delete();
+
+        $propietarioA = $this->crearUsuario('propietario', $tenantA);
+        $this->entrarAlPanel($propietarioA, $tenantA);
+
+        Livewire::test(ListProductos::class)
+            ->dispatch('deshacer-eliminar-platillo', id: $prodB->id);
+
+        $this->assertSoftDeleted('productos', ['id' => $prodB->id]);
+    }
+
+    public function test_tabla_platillos_configura_columnas_responsivas_acciones_y_estados_vacios(): void
+    {
+        $restaurante = $this->crearRestaurante('rest-tabla-platillos');
+        $propietario = $this->crearUsuario('propietario', $restaurante);
+        $this->entrarAlPanel($propietario, $restaurante);
+
+        $livewire = Livewire::test(ListProductos::class);
+        /** @var ListProductos $page */
+        $page = $livewire->instance();
+        $this->assertSame('Cambia precios y marca lo que se agotó, sin entrar a cada uno.', $page->getSubheading());
+
+        $table = $page->getTable();
+        $this->assertTrue($table->isStackedOnMobile());
+
+        // Columnas y responsividad (sm)
+        $colImagen = $table->getColumn('imagen');
+        $this->assertNotNull($colImagen);
+        $this->assertSame('Foto', $colImagen->getLabel());
+        $this->assertSame('sm', $colImagen->getVisibleFrom());
+
+        $colNombre = $table->getColumn('nombre');
+        $this->assertNotNull($colNombre);
+        $this->assertSame('Platillo', $colNombre->getLabel());
+        $this->assertTrue($colNombre->isSearchable());
+
+        $colPrecio = $table->getColumn('precio');
+        $this->assertNotNull($colPrecio);
+        $this->assertSame('Precio', $colPrecio->getLabel());
+        $this->assertSame('$', $colPrecio->getPrefixLabel());
+
+        $colDisponible = $table->getColumn('disponible');
+        $this->assertNotNull($colDisponible);
+        $this->assertSame('Disponible', $colDisponible->getLabel());
+
+        $colVisible = $table->getColumn('visible');
+        $this->assertNotNull($colVisible);
+        $this->assertSame('En el menú', $colVisible->getLabel());
+
+        // Estado vacío
+        $this->assertSame('Todavía no tienes platillos', $table->getEmptyStateHeading());
+        $this->assertSame('Agrega el primero; puedes completar la foto y las opciones después.', $table->getEmptyStateDescription());
+        $this->assertSame('heroicon-o-cake', $table->getEmptyStateIcon());
+
+        $emptyActions = $table->getEmptyStateActions();
+        $this->assertNotEmpty($emptyActions);
+        $crearAction = collect($emptyActions)->first(fn ($a) => $a->getName() === 'crear');
+        $this->assertNotNull($crearAction);
+        $this->assertSame('Agregar platillo', $crearAction->getLabel());
+        $this->assertSame(ProductoResource::getUrl('create'), $crearAction->getUrl());
+    }
+
+    public function test_tabla_categorias_accion_deshacer_eliminar_restaura_el_registro(): void
+    {
+        $restaurante = $this->crearRestaurante('rest-deshacer-cat');
+        $propietario = $this->crearUsuario('propietario', $restaurante);
+        $this->entrarAlPanel($propietario, $restaurante);
+
+        $categoria = Categoria::factory()->create(['restaurante_id' => $restaurante->id]);
+        CategoriaTraduccion::factory()->create([
+            'categoria_id' => $categoria->id,
+            'idioma' => 'es',
+            'nombre' => 'Entradas Calientes',
+        ]);
+        $platillo = Producto::factory()->create([
+            'restaurante_id' => $restaurante->id,
+            'categoria_id' => $categoria->id,
+        ]);
+        ProductoTraduccion::factory()->create([
+            'producto_id' => $platillo->id,
+            'idioma' => 'es',
+            'nombre' => 'Sopa de Tortilla',
+        ]);
+
+        Livewire::test(ListCategorias::class)
+            ->callAction(TestAction::make('delete')->table($categoria))
+            ->assertNotified('Entradas Calientes se eliminó')
+            ->dispatch('deshacer-eliminar-categoria', id: $categoria->id)
+            ->assertNotified('Entradas Calientes volvió a tu menú');
+
+        $this->assertNotSoftDeleted('categorias', ['id' => $categoria->id]);
+        $this->assertNotSoftDeleted('productos', ['id' => $platillo->id]);
+
+        // Id inexistente o ya activo no produce errores ni notificaciones adicionales
+        Livewire::test(ListCategorias::class)
+            ->dispatch('deshacer-eliminar-categoria', id: 999999)
+            ->assertNotNotified();
+    }
+
+    public function test_tabla_categorias_deshacer_eliminar_respeta_aislamiento_entre_restaurantes(): void
+    {
+        $tenantA = $this->crearRestaurante('cat-undo-a');
+        $tenantB = $this->crearRestaurante('cat-undo-b');
+
+        $catB = Categoria::factory()->create(['restaurante_id' => $tenantB->id]);
+        $catB->delete();
+
+        $propietarioA = $this->crearUsuario('propietario', $tenantA);
+        $this->entrarAlPanel($propietarioA, $tenantA);
+
+        Livewire::test(ListCategorias::class)
+            ->dispatch('deshacer-eliminar-categoria', id: $catB->id);
+
+        $this->assertSoftDeleted('categorias', ['id' => $catB->id]);
+    }
+
+    public function test_tabla_categorias_accion_recuperar_restaura_el_registro(): void
+    {
+        $restaurante = $this->crearRestaurante('rest-recuperar-cat');
+        $propietario = $this->crearUsuario('propietario', $restaurante);
+        $this->entrarAlPanel($propietario, $restaurante);
+
+        $categoria = Categoria::factory()->create(['restaurante_id' => $restaurante->id]);
+        CategoriaTraduccion::factory()->create([
+            'categoria_id' => $categoria->id,
+            'idioma' => 'es',
+            'nombre' => 'Bebidas Frías',
+        ]);
+        $categoria->delete();
+        $this->assertSoftDeleted('categorias', ['id' => $categoria->id]);
+
+        Livewire::test(ListCategorias::class)
+            ->filterTable('trashed', true)
+            ->callAction(TestAction::make('restore')->table($categoria))
+            ->assertNotified('Bebidas Frías se recuperó');
+
+        $this->assertNotSoftDeleted('categorias', ['id' => $categoria->id]);
+    }
+
+    public function test_tabla_categorias_configura_columnas_responsivas_acciones_y_estados_vacios(): void
+    {
+        $restaurante = $this->crearRestaurante('rest-tabla-categorias');
+        $propietario = $this->crearUsuario('propietario', $restaurante);
+        $this->entrarAlPanel($propietario, $restaurante);
+
+        $livewire = Livewire::test(ListCategorias::class);
+        /** @var ListCategorias $page */
+        $page = $livewire->instance();
+        $this->assertSame('Organiza las secciones de tu menú y el orden en que las ven tus comensales.', $page->getSubheading());
+
+        $table = $page->getTable();
+        $this->assertTrue($table->isStackedOnMobile());
+
+        // Columnas
+        $colNombre = $table->getColumn('nombre');
+        $this->assertNotNull($colNombre);
+        $this->assertSame('Nombre', $colNombre->getLabel());
+        $this->assertTrue($colNombre->isSearchable());
+
+        $colPlatillos = $table->getColumn('productos_count');
+        $this->assertNotNull($colPlatillos);
+        $this->assertSame('Platillos', $colPlatillos->getLabel());
+
+        $colVisible = $table->getColumn('visible');
+        $this->assertNotNull($colVisible);
+        $this->assertSame('Visible', $colVisible->getLabel());
+
+        $colOrden = $table->getColumn('orden');
+        $this->assertNotNull($colOrden);
+        $this->assertSame('Orden', $colOrden->getLabel());
+
+        // Estado vacío
+        $this->assertSame('Todavía no tienes categorías', $table->getEmptyStateHeading());
+        $this->assertSame('Crea la primera para organizar tu menú, por ejemplo: Entradas, Platos fuertes o Bebidas.', $table->getEmptyStateDescription());
+        $this->assertSame('heroicon-o-rectangle-stack', $table->getEmptyStateIcon());
+
+        $emptyActions = $table->getEmptyStateActions();
+        $this->assertNotEmpty($emptyActions);
+        $crearAction = collect($emptyActions)->first(fn ($a) => $a->getName() === 'crear');
+        $this->assertNotNull($crearAction);
+        $this->assertSame('Agregar categoría', $crearAction->getLabel());
+        $this->assertSame(CategoriaResource::getUrl('create'), $crearAction->getUrl());
+
+        // Acciones de registro: ActionGroup "Más acciones" con DeleteAction y RestoreAction
+        $recordActions = $table->getRecordActions();
+        $this->assertNotEmpty($recordActions);
+        $editAction = collect($recordActions)->first(fn ($a) => $a instanceof Action && $a->getName() === 'edit');
+        $this->assertNotNull($editAction);
+
+        $grupo = collect($recordActions)->first(fn ($a) => $a instanceof ActionGroup);
+        $this->assertNotNull($grupo);
+        $this->assertSame('Más acciones', $grupo->getLabel());
+        $accionesGrupo = $grupo->getActions();
+        $deleteAction = collect($accionesGrupo)->first(fn ($a) => $a->getName() === 'delete');
+        $restoreAction = collect($accionesGrupo)->first(fn ($a) => $a->getName() === 'restore');
+        $this->assertNotNull($deleteAction);
+        $this->assertNotNull($restoreAction);
+        $this->assertSame('Eliminar categoría', $deleteAction->getLabel());
+        $this->assertSame('Recuperar categoría', $restoreAction->getLabel());
+        $this->assertStringContainsString('Los platillos de esta categoría dejarán de mostrarse', (string) $deleteAction->getModalDescription());
+
+        // Acciones masivas en barra de herramientas
+        $toolbarActions = $table->getToolbarActions();
+        $this->assertNotEmpty($toolbarActions);
+        $bulkGroup = collect($toolbarActions)->first(fn ($a) => $a instanceof BulkActionGroup);
+        $this->assertNotNull($bulkGroup);
+        $this->assertSame('Acciones con las seleccionadas', $bulkGroup->getLabel());
+        $bulkActions = $bulkGroup->getActions();
+        $deleteBulk = collect($bulkActions)->first(fn ($a) => $a->getName() === 'delete');
+        $restoreBulk = collect($bulkActions)->first(fn ($a) => $a->getName() === 'restore');
+        $this->assertNotNull($deleteBulk);
+        $this->assertNotNull($restoreBulk);
+        $this->assertSame('Eliminar seleccionadas', $deleteBulk->getLabel());
+        $this->assertSame('Recuperar seleccionadas', $restoreBulk->getLabel());
+        $this->assertStringContainsString('Los platillos de estas categorías dejarán de mostrarse', (string) $deleteBulk->getModalDescription());
+    }
+
+    public function test_formulario_platillo_configura_prefijos_y_textos_de_ayuda_en_tuteo(): void
+    {
+        $restaurante = $this->crearRestaurante('rest-form-platillo');
+        $propietario = $this->crearUsuario('propietario', $restaurante);
+        $this->entrarAlPanel($propietario, $restaurante);
+
+        $livewire = Livewire::test(CreateProducto::class);
+        $form = $livewire->instance()->form;
+
+        // Prefijos en campos de precio
+        $campoPrecio = $form->getComponent('precio');
+        $this->assertNotNull($campoPrecio);
+        $this->assertSame('$', $campoPrecio->getPrefixLabel());
+
+        $campoOferta = $form->getComponent('precio_oferta');
+        $this->assertNotNull($campoOferta);
+        $this->assertSame('$', $campoOferta->getPrefixLabel());
+
+        // Textos de ayuda empáticos y en tuteo renderizados en pantalla
+        $livewire->assertSee('Precio regular que pagarán tus comensales.');
+        $livewire->assertSee('Si lo indicas, se mostrará como precio vigente junto al precio regular tachado.');
+        $livewire->assertSee('Desmárcalo si se te agotó hoy; podrás volver a activarlo en cualquier momento.');
+        $livewire->assertSee('Actívalo para sugerirlo al inicio de tu menú como una de tus recomendaciones especiales.');
+        $livewire->assertSee('Desmárcalo si quieres guardarlo u ocultarlo temporalmente de tu menú sin borrarlo.');
+    }
+
+    public function test_formulario_categoria_configura_textos_de_ayuda_y_orden(): void
+    {
+        $restaurante = $this->crearRestaurante('rest-form-cat');
+        $propietario = $this->crearUsuario('propietario', $restaurante);
+        $this->entrarAlPanel($propietario, $restaurante);
+
+        $livewire = Livewire::test(CreateCategoria::class);
+
+        $livewire->assertSee('Desmárcala si quieres ocultar temporalmente esta categoría y sus platillos de tu menú.');
+        $livewire->assertSee('Define la posición para ordenar las secciones de tu menú (por ejemplo: 1 para Entradas, 2 para Platos fuertes).');
+    }
+
+    public function test_edicion_platillo_y_categoria_configuran_acciones_de_cabecera(): void
+    {
+        $restaurante = $this->crearRestaurante('rest-edit-actions');
+        $propietario = $this->crearUsuario('propietario', $restaurante);
+        $this->entrarAlPanel($propietario, $restaurante);
+
+        $categoria = Categoria::factory()->create(['restaurante_id' => $restaurante->id]);
+        CategoriaTraduccion::factory()->create(['categoria_id' => $categoria->id, 'idioma' => 'es', 'nombre' => 'Bebidas']);
+        $platillo = Producto::factory()->create(['restaurante_id' => $restaurante->id, 'categoria_id' => $categoria->id]);
+        ProductoTraduccion::factory()->create(['producto_id' => $platillo->id, 'idioma' => 'es', 'nombre' => 'Limonada']);
+
+        // EditProducto
+        $livewireProd = Livewire::test(EditProducto::class, ['record' => $platillo->getRouteKey()]);
+        /** @var EditProducto $editProd */
+        $editProd = $livewireProd->instance();
+        $prodActions = $editProd->getCachedHeaderActions();
+        $prodDelete = collect($prodActions)->first(fn ($a) => $a->getName() === 'delete');
+        $prodRestore = collect($prodActions)->first(fn ($a) => $a->getName() === 'restore');
+        $this->assertNotNull($prodDelete);
+        $this->assertNotNull($prodRestore);
+        $this->assertSame('Eliminar platillo', $prodDelete->getLabel());
+        $this->assertSame('Recuperar platillo', $prodRestore->getLabel());
+        $this->assertSame('¿Eliminar "Limonada"?', (string) $prodDelete->getModalHeading());
+        $this->assertSame('Dejará de verse en tu menú. Puedes recuperarlo desde "Eliminados".', (string) $prodDelete->getModalDescription());
+        $this->assertSame('Eliminar platillo', $prodDelete->getModalSubmitActionLabel());
+        $this->assertSame('¿Recuperar "Limonada"?', (string) $prodRestore->getModalHeading());
+        $this->assertSame('Volverá a tu menú con el mismo precio y foto.', (string) $prodRestore->getModalDescription());
+        $this->assertSame('Recuperar platillo', $prodRestore->getModalSubmitActionLabel());
+
+        // EditCategoria
+        $livewireCat = Livewire::test(EditCategoria::class, ['record' => $categoria->getRouteKey()]);
+        /** @var EditCategoria $editCat */
+        $editCat = $livewireCat->instance();
+        $catActions = $editCat->getCachedHeaderActions();
+        $catDelete = collect($catActions)->first(fn ($a) => $a->getName() === 'delete');
+        $catRestore = collect($catActions)->first(fn ($a) => $a->getName() === 'restore');
+        $this->assertNotNull($catDelete);
+        $this->assertNotNull($catRestore);
+        $this->assertSame('Eliminar categoría', $catDelete->getLabel());
+        $this->assertSame('Recuperar categoría', $catRestore->getLabel());
+        $this->assertSame('¿Eliminar "Bebidas"?', (string) $catDelete->getModalHeading());
+        $this->assertSame('Los platillos dentro de esta categoría dejarán de mostrarse en tu menú. Puedes recuperarla desde "Eliminados".', (string) $catDelete->getModalDescription());
+        $this->assertSame('Eliminar categoría', $catDelete->getModalSubmitActionLabel());
+        $this->assertSame('¿Recuperar "Bebidas"?', (string) $catRestore->getModalHeading());
+        $this->assertSame('Volverá a mostrarse en tu menú junto con sus platillos.', (string) $catRestore->getModalDescription());
+        $this->assertSame('Recuperar categoría', $catRestore->getModalSubmitActionLabel());
+
+        // Ejecución de eliminación y restauración desde la cabecera de EditProducto
+        Livewire::test(EditProducto::class, ['record' => $platillo->getRouteKey()])
+            ->callAction('delete');
+        $this->assertSoftDeleted('productos', ['id' => $platillo->id]);
+
+        Livewire::test(EditProducto::class, ['record' => $platillo->getRouteKey()])
+            ->callAction('restore');
+        $this->assertNotSoftDeleted('productos', ['id' => $platillo->id]);
+
+        // Ejecución de eliminación y restauración desde la cabecera de EditCategoria
+        Livewire::test(EditCategoria::class, ['record' => $categoria->getRouteKey()])
+            ->callAction('delete');
+        $this->assertSoftDeleted('categorias', ['id' => $categoria->id]);
+
+        Livewire::test(EditCategoria::class, ['record' => $categoria->getRouteKey()])
+            ->callAction('restore');
+        $this->assertNotSoftDeleted('categorias', ['id' => $categoria->id]);
+    }
+
+    public function test_formulario_platillo_y_categoria_validaciones_de_precios_y_orden_en_espanol(): void
+    {
+        $restaurante = $this->crearRestaurante('rest-validaciones-lote2');
+        $propietario = $this->crearUsuario('propietario', $restaurante);
+        $this->entrarAlPanel($propietario, $restaurante);
+
+        $categoria = Categoria::factory()->create(['restaurante_id' => $restaurante->id]);
+
+        // Validación de precio negativo en platillo
+        Livewire::test(CreateProducto::class)
+            ->fillForm([
+                'categoria_id' => $categoria->id,
+                'precio' => -10,
+                'orden' => 0,
+                'traducciones' => [['idioma' => 'es', 'nombre' => 'Taco']],
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['precio'])
+            ->assertSee('El precio no puede ser negativo.');
+
+        // Validación de precio de oferta mayor al regular
+        Livewire::test(CreateProducto::class)
+            ->fillForm([
+                'categoria_id' => $categoria->id,
+                'precio' => 50,
+                'precio_oferta' => 70,
+                'orden' => 0,
+                'traducciones' => [['idioma' => 'es', 'nombre' => 'Taco Caro']],
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['precio_oferta'])
+            ->assertSee('El precio promocional debe ser menor o igual al precio regular.');
+
+        // Caso límite: precio de oferta igual al precio regular es válido
+        Livewire::test(CreateProducto::class)
+            ->fillForm([
+                'categoria_id' => $categoria->id,
+                'precio' => 50,
+                'precio_oferta' => 50,
+                'orden' => 0,
+                'traducciones' => [['idioma' => 'es', 'nombre' => 'Taco Mismo Precio']],
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $this->assertDatabaseHas('productos', [
+            'precio' => 50,
+            'precio_oferta' => 50,
+        ]);
+
+        // Validación de orden negativo en categoría
+        Livewire::test(CreateCategoria::class)
+            ->fillForm([
+                'orden' => -1,
+                'traducciones' => [['idioma' => 'es', 'nombre' => 'Categoría Mal Orden']],
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['orden'])
+            ->assertSee('El orden no puede ser negativo.');
+
+        // Validación de precio requerido en platillo
+        Livewire::test(CreateProducto::class)
+            ->fillForm([
+                'categoria_id' => $categoria->id,
+                'precio' => null,
+                'orden' => 0,
+                'traducciones' => [['idioma' => 'es', 'nombre' => 'Taco Sin Precio']],
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['precio'])
+            ->assertSee('Escribe un precio para el platillo.');
+
+        // Validación de precio promocional negativo
+        Livewire::test(CreateProducto::class)
+            ->fillForm([
+                'categoria_id' => $categoria->id,
+                'precio' => 50,
+                'precio_oferta' => -5,
+                'orden' => 0,
+                'traducciones' => [['idioma' => 'es', 'nombre' => 'Taco Oferta Negativa']],
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['precio_oferta'])
+            ->assertSee('El precio promocional no puede ser negativo.');
+
+        // Validación de orden negativo en platillo
+        Livewire::test(CreateProducto::class)
+            ->fillForm([
+                'categoria_id' => $categoria->id,
+                'precio' => 50,
+                'orden' => -1,
+                'traducciones' => [['idioma' => 'es', 'nombre' => 'Taco Mal Orden']],
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['orden'])
+            ->assertSee('El orden no puede ser negativo.');
+    }
+
+    public function test_panel_render_hook_barra_inferior_movil_aislamiento_y_estructura(): void
+    {
+        $restaurante = $this->crearRestaurante('rest-barra-movil');
+        $propietario = $this->crearUsuario('propietario', $restaurante);
+        $this->entrarAlPanel($propietario, $restaurante);
+
+        $hook = (string) FilamentView::renderHook(PanelsRenderHook::BODY_END);
+        $this->assertStringContainsString('class="mo-barra-inferior"', $hook);
+        $this->assertStringContainsString('aria-label="Accesos rápidos"', $hook);
+        $this->assertStringContainsString('Inicio', $hook);
+        $this->assertStringContainsString('Platillos', $hook);
+        $this->assertStringContainsString('Categorías', $hook);
+        $this->assertStringContainsString('Horario', $hook);
+        $this->assertStringContainsString('Más', $hook);
+        $this->assertStringContainsString('aria-label="Más opciones del menú"', $hook);
+
+        // Aislamiento: con tenant nulo retorna cadena vacía sin errores
+        Filament::setTenant(null);
+        $hookNulo = (string) FilamentView::renderHook(PanelsRenderHook::BODY_END);
+        $this->assertSame('', trim($hookNulo), 'Render hook BODY_END debe retornar vacío cuando tenant es nulo.');
     }
 
     // =========================================================================
@@ -607,9 +1108,9 @@ class UxUiAccesibilidadTest extends TestCase
         }
     }
 
-    public function test_menu_publico_soporta_modo_oscuro_y_optimiza_la_imagen_de_portada(): void
+    public function test_menu_publico_muestra_hero_con_portada_prioritaria_y_logo_con_dimensiones(): void
     {
-        $restaurante = Restaurante::factory()->create(['estado' => 'activo']);
+        $restaurante = Restaurante::factory()->create(['estado' => 'activo', 'eslogan' => 'Cocina de brasa']);
         $restaurante->update([
             'portada' => "restaurantes/{$restaurante->id}/portada.webp",
             'logo' => "restaurantes/{$restaurante->id}/logo.webp",
@@ -619,11 +1120,75 @@ class UxUiAccesibilidadTest extends TestCase
         $respuesta = $this->get(route('menu.publico', ['slug' => $restaurante->slug]));
 
         $respuesta->assertOk();
-        $respuesta->assertSee('dark:bg-slate-900', false);
-        $respuesta->assertSee('dark:text-slate-', false);
+        $respuesta->assertSee('hero--con-portada', false);
         $respuesta->assertSee('fetchpriority="high"', false);
-        $respuesta->assertSee('class="cover-img" width="768" height="192"', false);
-        $respuesta->assertSee('width="88" height="88"', false);
+        $respuesta->assertSee('width="72" height="72"', false);
+        $respuesta->assertSee('Cocina de brasa');
+        $respuesta->assertSee('href="#carta"', false);
+    }
+
+    public function test_cada_tema_se_aplica_en_el_menu_publico_y_un_tema_desconocido_cae_al_calido(): void
+    {
+        foreach (array_keys(Catalogos::temas()) as $tema) {
+            $restaurante = Restaurante::factory()->create(['estado' => 'activo', 'tema' => $tema]);
+
+            $this->get(route('menu.publico', ['slug' => $restaurante->slug]))
+                ->assertOk()
+                ->assertSee('data-tema="'.$tema.'"', false);
+        }
+
+        $raro = Restaurante::factory()->create(['estado' => 'activo']);
+        DB::table('restaurantes')->where('id', $raro->id)->update(['tema' => 'inventado']);
+
+        $this->get(route('menu.publico', ['slug' => $raro->slug]))->assertSee('data-tema="calido"', false);
+
+        $css = (string) file_get_contents(public_path('css/menuonl.css'));
+        foreach (['calido', 'editorial', 'rustico'] as $tema) {
+            $this->assertStringContainsString('[data-tema="'.$tema.'"]', $css);
+        }
+    }
+
+    public function test_color_de_acento_valido_se_imprime_y_uno_malicioso_se_descarta(): void
+    {
+        $valido = Restaurante::factory()->create(['estado' => 'activo', 'color_acento' => '#112233']);
+        $this->get(route('menu.publico', ['slug' => $valido->slug]))
+            ->assertSee('--mo-acento: #112233', false)
+            ->assertSee('--mo-acento-texto: #ffffff', false);
+
+        $claro = Restaurante::factory()->create(['estado' => 'activo', 'color_acento' => '#f5e6a8']);
+        $this->get(route('menu.publico', ['slug' => $claro->slug]))->assertSee('--mo-acento-texto: #17171e', false);
+
+        $malicioso = Restaurante::factory()->create(['estado' => 'activo']);
+        DB::table('restaurantes')->where('id', $malicioso->id)
+            ->update(['color_acento' => 'red;background:url(//x.test)']);
+
+        $respuesta = $this->get(route('menu.publico', ['slug' => $malicioso->slug]));
+        $respuesta->assertOk();
+        $respuesta->assertDontSee('url(//x.test)', false);
+        $respuesta->assertDontSee('--mo-acento:', false);
+    }
+
+    public function test_menu_publico_incluye_control_de_apariencia_y_script_de_persistencia(): void
+    {
+        $restaurante = Restaurante::factory()->create(['estado' => 'activo']);
+        RestauranteIdioma::factory()->create(['restaurante_id' => $restaurante->id, 'idioma' => 'es']);
+
+        $respuesta = $this->get(route('menu.publico', ['slug' => $restaurante->slug]));
+
+        $respuesta->assertOk();
+        $respuesta->assertSee('class="pie-publico"', false);
+        $respuesta->assertSee('segmentado');
+        $respuesta->assertSee('<legend>Apariencia</legend>', false);
+        $respuesta->assertSee('data-apariencia-opcion', false);
+        $respuesta->assertSee('value="system"', false);
+        $respuesta->assertSee('value="light"', false);
+        $respuesta->assertSee('value="dark"', false);
+        $respuesta->assertSee('Automático');
+        $respuesta->assertSee('Claro');
+        $respuesta->assertSee('Oscuro');
+
+        $respuesta->assertSee("var clave = 'filament:theme:mode';", false);
+        $respuesta->assertSee("document.documentElement.setAttribute('data-apariencia', modo);", false);
     }
 
     public function test_portada_usa_tokens_y_no_colores_fijos_ni_consultas_en_la_vista(): void
@@ -669,5 +1234,193 @@ class UxUiAccesibilidadTest extends TestCase
 
         $vacio = view('filament.historial.cambios', ['cambios' => []])->render();
         $this->assertStringContainsString('Sin detalles de cambios registrados.', $vacio);
+    }
+
+    // =========================================================================
+    // Hoja inferior, cabecera dinámica, tarjetas y View Transitions
+    // =========================================================================
+
+    public function test_hoja_del_carrito_es_un_dialogo_accesible_arrastrable_con_alpine(): void
+    {
+        $restaurante = Restaurante::factory()->create(['estado' => 'activo', 'pedidos_activos' => true, 'whatsapp_pedidos' => '5215555555555']);
+        RestauranteIdioma::factory()->create(['restaurante_id' => $restaurante->id, 'idioma' => 'es']);
+        Horario::factory()->create(['restaurante_id' => $restaurante->id, 'dia_semana' => now($restaurante->zona_horaria)->dayOfWeek, 'abre' => '00:00:00', 'cierra' => '23:59:00']);
+
+        $respuesta = $this->get(route('menu.publico', ['slug' => $restaurante->slug]));
+
+        $respuesta->assertOk();
+        $respuesta->assertSee('id="cartModalBackdrop"', false);
+        $respuesta->assertSee('role="dialog"', false);
+        $respuesta->assertSee('aria-modal="true"', false);
+        $respuesta->assertSee('aria-labelledby="cartDrawerTitle"', false);
+        $respuesta->assertSee('x-data="hoja"', false);
+        $respuesta->assertSee('class="hoja-asa" aria-hidden="true"', false);
+        $respuesta->assertSee('min-w-[44px] min-h-[44px]', false);
+        $respuesta->assertSee("e.key === 'Escape' || e.key === 'Esc'", false);
+    }
+
+    public function test_solo_el_menu_publico_carga_alpine_y_sin_dependencias_de_animacion(): void
+    {
+        $paquete = json_decode((string) file_get_contents(base_path('package.json')), true);
+        $dependencias = array_keys(($paquete['dependencies'] ?? []) + ($paquete['devDependencies'] ?? []));
+
+        $this->assertContains('@alpinejs/csp', $dependencias, 'Alpine debe usar la compilación CSP: la política no permite unsafe-eval.');
+        $this->assertNotContains('alpinejs', $dependencias);
+        foreach (['gsap', 'framer-motion', 'animejs', 'aos', 'motion', 'lottie-web'] as $libreria) {
+            $this->assertNotContains($libreria, $dependencias, "No se permiten librerías de animación ($libreria).");
+        }
+
+        $vite = (string) file_get_contents(base_path('vite.config.js'));
+        $this->assertStringContainsString('resources/js/menu.js', $vite);
+        $this->assertSame('', trim((string) file_get_contents(resource_path('js/app.js')), '/ 
+'));
+        $this->assertStringContainsString('@alpinejs/csp', (string) file_get_contents(resource_path('js/menu.js')));
+    }
+
+    public function test_cabecera_dinamica_tiene_centinela_barra_decorativa_y_navegacion_etiquetada(): void
+    {
+        $restaurante = Restaurante::factory()->create(['estado' => 'activo']);
+        RestauranteIdioma::factory()->create(['restaurante_id' => $restaurante->id, 'idioma' => 'es']);
+
+        $respuesta = $this->get(route('menu.publico', ['slug' => $restaurante->slug]));
+
+        $respuesta->assertOk();
+        $respuesta->assertSee('x-data="cabecera"', false);
+        $respuesta->assertSee('x-init="iniciar"', false);
+        $respuesta->assertSee('data-centinela', false);
+        $respuesta->assertSee('class="barra-compacta" aria-hidden="true"', false);
+        $respuesta->assertSee('aria-label="Categorías del menú"', false);
+
+        $css = (string) file_get_contents(public_path('css/menuonl.css'));
+        $this->assertStringContainsString('.cabecera-compacta .sticky-nav', $css);
+        $this->assertStringContainsString('@media (prefers-reduced-motion: reduce)', $css);
+    }
+
+    public function test_tarjeta_de_plato_tiene_jerarquia_imagen_con_marco_y_entrada_escalonada(): void
+    {
+        $restaurante = Restaurante::factory()->create(['estado' => 'activo']);
+        RestauranteIdioma::factory()->create(['restaurante_id' => $restaurante->id, 'idioma' => 'es']);
+        $categoria = Categoria::factory()->create(['restaurante_id' => $restaurante->id]);
+        CategoriaTraduccion::factory()->create(['categoria_id' => $categoria->id, 'idioma' => 'es', 'nombre' => 'Fuertes']);
+        $plato = Producto::factory()->create(['restaurante_id' => $restaurante->id, 'categoria_id' => $categoria->id, 'precio' => 120, 'disponible' => true, 'visible' => true]);
+        $plato->update(['imagen' => "restaurantes/{$restaurante->id}/productos/a.webp"]);
+        ProductoTraduccion::factory()->create(['producto_id' => $plato->id, 'idioma' => 'es', 'nombre' => 'Pulpo a la brasa']);
+
+        $respuesta = $this->get(route('menu.publico', ['slug' => $restaurante->slug]));
+
+        $respuesta->assertOk();
+        $respuesta->assertSee('class="plato" data-plato="'.$plato->id.'" style="--i: 0"', false);
+        $respuesta->assertSee('class="plato-imagen"', false);
+        $respuesta->assertSee('loading="lazy" decoding="async" width="96" height="96"', false);
+        $respuesta->assertSee('class="plato-precio"', false);
+
+        $css = (string) file_get_contents(public_path('css/menuonl.css'));
+        $this->assertStringContainsString('animation-timeline: view()', $css);
+        $this->assertStringContainsString('@supports (animation-timeline: view())', $css);
+        $this->assertStringContainsString('.plato:active', $css);
+        $this->assertStringContainsString('prefers-reduced-motion: no-preference', $css);
+    }
+
+    public function test_detalle_del_plato_es_dialogo_accesible_con_transiciones_y_fallback(): void
+    {
+        $restaurante = Restaurante::factory()->create(['estado' => 'activo']);
+        RestauranteIdioma::factory()->create(['restaurante_id' => $restaurante->id, 'idioma' => 'es']);
+        $categoria = Categoria::factory()->create(['restaurante_id' => $restaurante->id]);
+        CategoriaTraduccion::factory()->create(['categoria_id' => $categoria->id, 'idioma' => 'es', 'nombre' => 'Postres']);
+        $plato = Producto::factory()->create(['restaurante_id' => $restaurante->id, 'categoria_id' => $categoria->id, 'disponible' => true, 'visible' => true]);
+        ProductoTraduccion::factory()->create(['producto_id' => $plato->id, 'idioma' => 'es', 'nombre' => 'Flan casero']);
+
+        $respuesta = $this->get(route('menu.publico', ['slug' => $restaurante->slug]));
+
+        $respuesta->assertOk();
+        $respuesta->assertSee('id="platoHojaFondo"', false);
+        $respuesta->assertSee('aria-labelledby="platoHojaTitulo"', false);
+        $respuesta->assertSee('x-data="detallePlato"', false);
+        $respuesta->assertSee('aria-label="Cerrar detalle del platillo"', false);
+        $respuesta->assertSee('data-abrir-plato aria-haspopup="dialog">Flan casero</button>', false);
+
+        $js = (string) file_get_contents(resource_path('js/menu.js'));
+        $this->assertStringContainsString('document.startViewTransition', $js);
+        $this->assertStringContainsString("typeof document.startViewTransition === 'function'", $js, 'Debe haber fallback sin View Transitions.');
+        $this->assertStringContainsString("evento.key === 'Escape'", $js);
+        $this->assertStringContainsString("evento.key !== 'Tab'", $js);
+        $this->assertStringContainsString('viewTransitionName = nombreVt', $js);
+
+        $css = (string) file_get_contents(public_path('css/menuonl.css'));
+        $this->assertStringContainsString('::view-transition-group(*)', $css);
+        $this->assertStringContainsString('aspect-ratio: 4 / 3', $css);
+    }
+
+    public function test_widget_resumen_restaurante_muestra_estado_acciones_directas_y_avisos_reales(): void
+    {
+        $restaurante = $this->crearRestaurante('casa-oaxaca');
+        $restaurante->update([
+            'nombre' => 'Casa Oaxaca',
+            'eslogan' => 'Cocina tradicional oaxaqueña',
+            'tema' => 'rustico',
+            'pedidos_activos' => true,
+            'whatsapp_pedidos' => null,
+        ]);
+
+        $propietario = $this->crearUsuario('propietario', $restaurante);
+        $this->entrarAlPanel($propietario, $restaurante);
+
+        Livewire::test(ResumenRestauranteWidget::class)
+            ->assertSee('Tu menú está en línea')
+            ->assertSee('Cerrado ahora')
+            ->assertSee('Hoy no abres')
+            ->assertSee('Agregar platillo')
+            ->assertSee('Pendientes')
+            ->assertSee('Crea tu primera categoría, por ejemplo "Tacos" o "Bebidas".')
+            ->assertSee('Crear categoría')
+            ->assertSee('Activaste los pedidos, pero falta tu WhatsApp. Sin él no te llegan.')
+            ->assertSee('Agregar WhatsApp')
+            ->assertSee('Agrega tu horario para que tus clientes sepan cuándo abres.')
+            ->assertSee('Agregar horario');
+    }
+
+    public function test_menu_publico_muestra_etiquetas_en_espanol_monograma_sin_logo_y_enlace_mapa(): void
+    {
+        $restaurante = Restaurante::factory()->create([
+            'nombre' => 'Bosque de Agua',
+            'slug' => 'bosque-de-agua',
+            'logo' => null,
+            'estado' => 'activo',
+        ]);
+        RestauranteIdioma::factory()->create(['restaurante_id' => $restaurante->id, 'idioma' => 'es']);
+
+        Contacto::factory()->create([
+            'restaurante_id' => $restaurante->id,
+            'tipo' => 'direccion',
+            'etiqueta' => 'Ubicación',
+            'valor' => 'Av. Álvaro Obregón 120, Roma Norte',
+            'visible' => true,
+        ]);
+
+        $categoria = Categoria::factory()->create(['restaurante_id' => $restaurante->id, 'visible' => true]);
+        CategoriaTraduccion::factory()->create(['categoria_id' => $categoria->id, 'idioma' => 'es', 'nombre' => 'Especialidades']);
+
+        $plato = Producto::factory()->create([
+            'restaurante_id' => $restaurante->id,
+            'categoria_id' => $categoria->id,
+            'precio' => 240,
+            'destacado' => true,
+            'disponible' => true,
+            'visible' => true,
+        ]);
+        ProductoTraduccion::factory()->create(['producto_id' => $plato->id, 'idioma' => 'es', 'nombre' => 'Mole negro']);
+
+        $etiqueta = Etiqueta::firstOrCreate(['codigo' => 'sin_gluten'], ['icono' => 'wheat-off']);
+        $plato->etiquetas()->attach($etiqueta);
+
+        $respuesta = $this->get(route('menu.publico', ['slug' => $restaurante->slug]));
+
+        $respuesta->assertOk();
+        $respuesta->assertSee('hero-monograma', false);
+        $respuesta->assertSee('Sin gluten');
+        $respuesta->assertSee('data-etiqueta="sin_gluten"', false);
+        $respuesta->assertSee('https://www.google.com/maps/search/?api=1&amp;query=', false);
+        $respuesta->assertSee('id="destacado-dish-title-'.$plato->id.'"', false);
+        $respuesta->assertSee('id="dish-title-'.$plato->id.'"', false);
     }
 }

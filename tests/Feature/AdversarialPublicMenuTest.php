@@ -849,7 +849,7 @@ class AdversarialPublicMenuTest extends TestCase
         $resp1 = $this->get(route('menu.publico', ['slug' => $r1->slug]));
         $resp1->assertOk();
         $resp1->assertDontSee('id="floatingCartBar"', false);
-        $resp1->assertSee('no tiene pedidos en línea activos actualmente');
+        $resp1->assertSee('Para ordenar, pídele a tu mesero.');
 
         // Reset scope before setting up next restaurant
         RestauranteScope::setRestauranteId(null);
@@ -867,7 +867,7 @@ class AdversarialPublicMenuTest extends TestCase
         $resp2 = $this->get(route('menu.publico', ['slug' => $r2->slug]));
         $resp2->assertOk();
         $resp2->assertDontSee('id="floatingCartBar"', false);
-        $resp2->assertSee('El restaurante se encuentra cerrado en este momento');
+        $resp2->assertSee('Estamos cerrados.');
 
         // Reset scope before setting up next restaurant
         RestauranteScope::setRestauranteId(null);
@@ -887,7 +887,7 @@ class AdversarialPublicMenuTest extends TestCase
         $resp3 = $this->get(route('menu.publico', ['slug' => $r3->slug]));
         $resp3->assertOk();
         $resp3->assertDontSee('id="floatingCartBar"', false);
-        $resp3->assertSee('Servicio de pedidos temporalmente no disponible por WhatsApp');
+        $resp3->assertSee('Por ahora no recibimos pedidos aquí. Pídele a tu mesero.');
 
         // Reset scope before setting up next restaurant
         RestauranteScope::setRestauranteId(null);
@@ -908,7 +908,9 @@ class AdversarialPublicMenuTest extends TestCase
         $resp4->assertOk();
         $resp4->assertSee('id="floatingCartBar"', false);
         $resp4->assertSee('id="cartModalBackdrop"', false);
-        $resp4->assertDontSee('Este restaurante no tiene pedidos en línea activos actualmente');
+        $resp4->assertDontSee('Para ordenar, pídele a tu mesero.');
+        $resp4->assertDontSee('Estamos cerrados.');
+        $resp4->assertDontSee('Por ahora no recibimos pedidos aquí. Pídele a tu mesero.');
     }
 
     // =========================================================================
@@ -935,6 +937,8 @@ class AdversarialPublicMenuTest extends TestCase
         // Zero schedules -> restaurant is closed
         $this->assertFalse($response->viewData('estaAbierto'));
         $response->assertSee('Cerrado');
+        $response->assertSee('Este menú se está preparando');
+        $response->assertSee('Pídele la carta a tu mesero.');
         $response->assertDontSee('id="floatingCartBar"', false);
         $this->assertEmpty($response->viewData('categorias'));
         $this->assertEmpty($response->viewData('destacados'));
@@ -966,7 +970,7 @@ class AdversarialPublicMenuTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Bebidas Calientes');
-        $response->assertSee('No hay platillos disponibles en esta categoría.');
+        $response->assertSee('Pronto habrá platillos aquí.');
     }
 
     // =========================================================================

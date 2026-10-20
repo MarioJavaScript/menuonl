@@ -3,7 +3,9 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Pages\Auth\Login;
+use App\Filament\Pages\Inicio;
 use App\Filament\Pages\Tenancy\EditRestauranteProfile;
+use App\Filament\Widgets\ResumenRestauranteWidget;
 use App\Http\Middleware\ExigeDosFactores;
 use App\Models\Restaurante;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
@@ -12,13 +14,12 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Navigation\MenuItem;
-use Filament\Pages\Dashboard;
+use Filament\Navigation\NavigationItem;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Support\Icons\Heroicon;
 use Filament\View\PanelsRenderHook;
-use Filament\Widgets\AccountWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -29,9 +30,11 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AdminPanelProvider extends PanelProvider
 {
+    private const TEMA = 'resources/css/filament/admin/theme.css';
+
     public function panel(Panel $panel): Panel
     {
-        return $panel
+        $panel = $panel
             ->default()
             ->id('admin')
             ->path('admin')
@@ -41,13 +44,6 @@ class AdminPanelProvider extends PanelProvider
             ->multiFactorAuthentication([AppAuthentication::make()->recoverable()])
             ->tenant(Restaurante::class, slugAttribute: 'slug')
             ->tenantProfile(EditRestauranteProfile::class)
-            ->tenantMenuItems([
-                MenuItem::make()
-                    ->label('Ver menú público')
-                    ->icon('heroicon-o-arrow-top-right-on-square')
-                    ->url(fn (): ?string => Filament::getTenant() ? route('menu.publico', ['slug' => Filament::getTenant()->slug]) : null)
-                    ->openUrlInNewTab(),
-            ])
             ->renderHook(
                 PanelsRenderHook::USER_MENU_BEFORE,
                 function (): HtmlString|string {
@@ -62,21 +58,40 @@ class AdminPanelProvider extends PanelProvider
                     ])->render());
                 }
             )
+            ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn (): string => Filament::getTenant() ? view('filament.hooks.barra-inferior')->render() : '',
+            )
             ->brandName('MENUONL')
             ->brandLogo(fn () => view('filament.logo'))
             ->brandLogoHeight('2rem')
             ->favicon(asset('favicon.svg'))
             ->colors([
                 'primary' => Color::Amber,
+                'gray' => Color::Zinc,
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
-                Dashboard::class,
+                Inicio::class,
+            ])
+            ->navigationItems([
+                NavigationItem::make('Panel de servicio')
+                    ->group('Restaurante')
+                    ->icon(Heroicon::OutlinedBolt)
+                    ->sort(5)
+                    ->url(fn (): string => route('panel')),
+                NavigationItem::make('Mi restaurante')
+                    ->group('Restaurante')
+                    ->icon(Heroicon::OutlinedBuildingStorefront)
+                    ->sort(60)
+                    ->url(fn (): string => EditRestauranteProfile::getUrl())
+                    ->isActiveWhen(fn (): bool => request()->routeIs(EditRestauranteProfile::getRouteName()))
+                    ->visible(fn (): bool => Filament::getTenant() !== null && EditRestauranteProfile::canView(Filament::getTenant())),
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
-                AccountWidget::class,
+                ResumenRestauranteWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -96,5 +111,26 @@ class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 ExigeDosFactores::class,
             ], isPersistent: true);
+
+        if (self::temaCompilado()) {
+            $panel->viteTheme(self::TEMA);
+        }
+
+        return $panel;
+    }
+
+    /**
+     * The theme is only registered when Vite can serve it (dev server or a build that includes it), so the
+     * panel still renders in CI and tests, where assets are not compiled.
+     */
+    private static function temaCompilado(): bool
+    {
+        if (is_file(public_path('hot'))) {
+            return true;
+        }
+
+        $manifiesto = public_path('build/manifest.json');
+
+        return is_file($manifiesto) && str_contains((string) file_get_contents($manifiesto), self::TEMA);
     }
 }

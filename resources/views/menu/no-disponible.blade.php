@@ -1,5 +1,6 @@
 <x-layout.publico
     :titulo="'Menú no disponible — '.config('app.name', 'MENUONL')"
+    tema="calido"
     class="flex min-h-screen items-center justify-center p-6"
 >
     <main class="bg-superficie rounded-3xl p-8 max-w-sm w-full text-center shadow-xl border border-borde">
@@ -32,11 +33,11 @@
             </li>
         </ol>
 
-        <button type="button" onclick="window.location.reload()" class="btn-primario w-full py-3 text-sm focus-visible:ring-2 focus-visible:ring-foco focus:outline-none">
+        <button type="button" onclick="window.location.reload()" class="btn-primario w-full min-h-[44px] py-3 text-sm focus-visible:ring-2 focus-visible:ring-foco focus:outline-none">
             Reintentar lectura
         </button>
 
-        <a href="{{ url('/') }}" class="mt-3 inline-flex items-center justify-center min-h-[44px] px-3 text-xs text-texto-suave hover:text-texto-fuerte transition-colors rounded-lg">
+        <a href="{{ url('/') }}" class="mt-3 inline-flex items-center justify-center min-h-[44px] px-3 text-xs text-texto-suave hover:text-texto-fuerte transition-colors rounded-lg focus-visible:ring-2 focus-visible:ring-foco focus:outline-none">
             Ir a la portada de MENUONL
         </a>
     </main>

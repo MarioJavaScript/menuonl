@@ -1,5 +1,6 @@
 @props(['url'])
 
+{{-- Único acceso al menú público desde el panel (DISEÑO.md): "Ver mi menú", en la cabecera. --}}
 <div class="flex items-center me-3">
     <x-filament::button
         tag="a"
@@ -7,12 +8,11 @@
         target="_blank"
         rel="noopener noreferrer"
         size="sm"
-        color="warning"
-        outlined
+        color="gray"
         icon="heroicon-o-arrow-top-right-on-square"
-        title="Abrir el menú digital público en una nueva pestaña"
+        icon-position="after"
     >
-        <span class="hidden sm:inline">Ver menú público</span>
-        <span class="sm:hidden">Menú</span>
+        Ver mi menú
+        <span class="sr-only">(se abre en otra pestaña)</span>
     </x-filament::button>
 </div>

@@ -46,9 +46,17 @@ return [
     |
     */
 
+    'reservas' => [
+        'max_personas' => (int) env('RESERVAS_MAX_PERSONAS', 12),
+        'max_dias' => (int) env('RESERVAS_MAX_DIAS', 60),
+        'anticipacion_min' => (int) env('RESERVAS_ANTICIPACION_MIN', 30),
+        'espera_min_segundos' => (int) env('RESERVAS_ESPERA_MIN_SEGUNDOS', 2),
+    ],
+
     'imagenes' => [
         'max_bytes' => (int) env('IMAGENES_MAX_BYTES', 2 * 1024 * 1024),
-        'carpetas' => ['logos', 'portadas', 'productos', 'sitio'],
+        'carpetas' => ['logos', 'portadas', 'productos', 'galeria'],
+        'max_galeria' => (int) env('IMAGENES_MAX_GALERIA', 12),
     ],
 
     /*

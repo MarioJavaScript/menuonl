@@ -38,8 +38,8 @@ class TraduccionesRepeater
 
         if ($conDescripcion) {
             $campos[] = Textarea::make('descripcion')
-                ->label('Descripción')
-                ->placeholder('Descripción detallada, ingredientes o notas en este idioma...')
+                ->label('Descripción (opcional)')
+                ->placeholder('Ingredientes, preparación o notas breves...')
                 ->maxLength(2000)
                 ->rows(2);
         }
@@ -48,13 +48,20 @@ class TraduccionesRepeater
             ->label('Traducciones')
             ->relationship($relacion)
             ->schema($campos)
+            ->default(fn (): array => [
+                [
+                    'idioma' => Filament::getTenant()?->idioma_default ?? 'es',
+                    'nombre' => '',
+                    'descripcion' => null,
+                ],
+            ])
             ->itemLabel(fn (array $state): ?string => isset($state['idioma'])
                     ? (Catalogos::idiomas()[$state['idioma']] ?? $state['idioma']).
                       (isset($state['nombre']) && filled($state['nombre']) ? " — {$state['nombre']}" : '')
                     : null
             )
             ->minItems(1)
-            ->addActionLabel('Agregar idioma')
+            ->addActionLabel('Agregar otro idioma')
             ->rule(fn (): Closure => self::exigirIdiomaPrincipal());
     }
 

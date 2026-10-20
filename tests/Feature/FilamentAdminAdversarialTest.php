@@ -63,19 +63,16 @@ class FilamentAdminAdversarialTest extends TestCase
         $owner = $this->crearUsuario('propietario', $tenant);
         $this->entrarAlPanel($owner, $tenant);
 
-        $panel = Filament::getPanel('admin');
-        $tenantItems = $panel->getTenantMenuItems();
+        $hook = (string) FilamentView::renderHook(PanelsRenderHook::USER_MENU_BEFORE);
 
-        $this->assertNotEmpty($tenantItems);
-        $publicMenuItem = collect($tenantItems)->first(fn ($item) => $item->getLabel() === 'Ver menú público');
-        $this->assertNotNull($publicMenuItem);
-        $this->assertSame(route('menu.publico', ['slug' => 'tenant-menu-test']), $publicMenuItem->getUrl());
+        $this->assertNotEmpty($hook);
+        $this->assertStringContainsString('Ver mi menú', $hook);
+        $this->assertStringContainsString(route('menu.publico', ['slug' => 'tenant-menu-test']), $hook);
 
-        // Now test the URL closure directly under null tenant
+        // Now test when tenant is set to null
         Filament::setTenant(null);
-        // The URL closure itself must return null without throwing
-        $urlClosure = fn (): ?string => Filament::getTenant() ? route('menu.publico', ['slug' => Filament::getTenant()->slug]) : null;
-        $this->assertNull($urlClosure(), 'URL closure must evaluate to null when tenant is null.');
+        $renderedNull = (string) FilamentView::renderHook(PanelsRenderHook::USER_MENU_BEFORE);
+        $this->assertSame('', trim($renderedNull), 'Render hook must evaluate to empty string when tenant is null.');
     }
 
     public function test_superadmin_viewing_admin_profile_does_not_leak_public_menu_hook(): void
@@ -89,7 +86,7 @@ class FilamentAdminAdversarialTest extends TestCase
         $response->assertStatus(200);
         // Should NOT render the public menu button because tenant is null
         $response->assertDontSee('/m/'.$tenant->slug);
-        $response->assertDontSee('Ver menú público');
+        $response->assertDontSee('Ver mi menú');
     }
 
     public function test_render_hook_is_strictly_isolated_between_different_tenants(): void
@@ -103,14 +100,14 @@ class FilamentAdminAdversarialTest extends TestCase
         // When logged into Tenant A
         $this->entrarAlPanel($userA, $tenantA);
         $hookA = (string) FilamentView::renderHook(PanelsRenderHook::USER_MENU_BEFORE);
-        $this->assertStringContainsString('Ver menú público', $hookA);
+        $this->assertStringContainsString('Ver mi menú', $hookA);
         $this->assertStringContainsString(route('menu.publico', ['slug' => 'tacos-alpha']), $hookA);
         $this->assertStringNotContainsString('pizzas-beta', $hookA);
 
         // When logged into Tenant B
         $this->entrarAlPanel($userB, $tenantB);
         $hookB = (string) FilamentView::renderHook(PanelsRenderHook::USER_MENU_BEFORE);
-        $this->assertStringContainsString('Ver menú público', $hookB);
+        $this->assertStringContainsString('Ver mi menú', $hookB);
         $this->assertStringContainsString(route('menu.publico', ['slug' => 'pizzas-beta']), $hookB);
         $this->assertStringNotContainsString('tacos-alpha', $hookB);
     }
@@ -166,12 +163,12 @@ class FilamentAdminAdversarialTest extends TestCase
         $resourcesToTest = [
             'Categorias' => [
                 'component' => ListCategorias::class,
-                'expectedHeading' => 'No hay categorías registradas',
+                'expectedHeading' => 'Todavía no tienes categorías',
                 'expectedIcon' => 'heroicon-o-rectangle-stack',
             ],
             'Productos' => [
                 'component' => ListProductos::class,
-                'expectedHeading' => 'No hay platillos en el menú',
+                'expectedHeading' => 'Todavía no tienes platillos',
                 'expectedIcon' => 'heroicon-o-cake',
             ],
             'Horarios' => [
@@ -268,13 +265,13 @@ class FilamentAdminAdversarialTest extends TestCase
         // CategoriasTable in Tenant A MUST display empty state and NOT show Tenant B records
         $testCat = Livewire::test(ListCategorias::class);
         $testCat->assertStatus(200);
-        $testCat->assertSee('No hay categorías registradas');
+        $testCat->assertSee('Todavía no tienes categorías');
         $testCat->assertDontSee('Exclusivo B');
 
         // ProductosTable in Tenant A MUST display empty state and NOT show Tenant B records
         $testProd = Livewire::test(ListProductos::class);
         $testProd->assertStatus(200);
-        $testProd->assertSee('No hay platillos en el menú');
+        $testProd->assertSee('Todavía no tienes platillos');
         $testProd->assertDontSee('Platillo B');
 
         // HorariosTable in Tenant A MUST display empty state

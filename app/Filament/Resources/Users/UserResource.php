@@ -28,13 +28,22 @@ class UserResource extends Resource
 
     protected static bool $isScopedToTenant = false;
 
-    protected static \UnitEnum|string|null $navigationGroup = 'Equipo y Acceso';
-
-    protected static ?string $navigationLabel = 'Miembros del equipo';
-
-    protected static ?int $navigationSort = 70;
+    protected static ?int $navigationSort = 55;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUsers;
+
+    /**
+     * The superadmin sees every account of the platform; everyone else sees the team of the active restaurant.
+     */
+    public static function getNavigationGroup(): string|\UnitEnum|null
+    {
+        return auth()->user()?->isSuperadmin() ? 'Plataforma' : 'Administración';
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return auth()->user()?->isSuperadmin() ? 'Cuentas' : 'Equipo';
+    }
 
     public static function table(Table $table): Table
     {

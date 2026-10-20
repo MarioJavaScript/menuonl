@@ -63,23 +63,20 @@ class QrNfcVolumenYN1Test extends TestCase
         $queries = DB::getQueryLog();
         DB::disableQueryLog();
 
-        // Entrecomillado del dialecto activo ("mesa" en SQLite, `mesa` en MariaDB).
-        $columnaMesa = strtolower(DB::connection()->getQueryGrammar()->wrap('mesa'));
-
-        $consultasWhereIn = array_filter($queries, function (array $q) use ($columnaMesa): bool {
+        $consultasWhereIn = array_filter($queries, function (array $q): bool {
             $sql = strtolower($q['query']);
 
             return str_contains($sql, 'select')
-                && str_contains($sql, $columnaMesa)
+                && str_contains($sql, '"mesa"')
                 && str_contains($sql, 'in (');
         });
 
-        $consultasIndividualesMesa = array_filter($queries, function (array $q) use ($columnaMesa): bool {
+        $consultasIndividualesMesa = array_filter($queries, function (array $q): bool {
             $sql = strtolower($q['query']);
 
             return str_contains($sql, 'select')
                 && str_contains($sql, 'codigos_qr')
-                && (str_contains($sql, $columnaMesa.' =') || str_contains($sql, 'mesa ='));
+                && (str_contains($sql, '"mesa" =') || str_contains($sql, 'mesa ='));
         });
 
         $this->assertCount(1, $consultasWhereIn, 'Debe ejecutarse exactamente 1 consulta por lote whereIn para verificar mesas existentes.');

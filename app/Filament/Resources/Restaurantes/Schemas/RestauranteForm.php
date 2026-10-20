@@ -16,9 +16,9 @@ class RestauranteForm
             ->components([
                 TextInput::make('nombre')->label('Nombre')->required()->maxLength(150),
                 TextInput::make('slug')
-                    ->label('Identificador URL (Slug)')
+                    ->label('Dirección corta del menú')
                     ->placeholder('mi-restaurante')
-                    ->helperText('Identificador único para la URL del menú público (/m/{slug}). Solo letras minúsculas, números y guiones.')
+                    ->helperText('Dirección única para el enlace del menú público (/m/mi-restaurante). Solo letras minúsculas, números y guiones.')
                     ->required()
                     ->maxLength(80)
                     ->regex('/\A[a-z0-9]+(?:-[a-z0-9]+)*\z/')

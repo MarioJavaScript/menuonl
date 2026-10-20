@@ -18,6 +18,8 @@
     --color-superficie: var(--mo-superficie);
     --color-superficie-2: var(--mo-superficie-2);
     --color-borde: var(--mo-borde);
+    --color-borde-control: var(--mo-borde-control);
+    --color-exito-texto: var(--mo-exito-texto);
     --color-texto: var(--mo-texto);
     --color-texto-fuerte: var(--mo-texto-fuerte);
     --color-texto-medio: var(--mo-texto-medio);
@@ -30,4 +32,8 @@
     --color-peligro: var(--mo-peligro);
     --color-peligro-texto: var(--mo-peligro-texto);
     --color-foco: var(--mo-foco);
+    --color-acento: var(--mo-acento);
+    --color-acento-texto: var(--mo-acento-texto);
+    --color-oferta: var(--mo-oferta);
+    --font-titulo: var(--mo-fuente-titulo);
 }

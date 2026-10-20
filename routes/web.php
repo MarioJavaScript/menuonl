@@ -6,6 +6,11 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', PortadaController::class)->name('portada');
 
+// Design system sample (DISEÑO.md): local environment only.
+if (app()->isLocal()) {
+    Route::view('/diseno', 'diseno.componentes')->name('diseno');
+}
+
 // Invitations (Mitad A). /m and /q belong to Mitad B.
 Route::middleware('throttle:invitaciones')->prefix('invitaciones')->group(function (): void {
     Route::get('/{token}', [InvitacionAceptarController::class, 'mostrar'])->name('invitaciones.mostrar');
@@ -16,7 +21,7 @@ Route::middleware('throttle:invitaciones')->prefix('invitaciones')->group(functi
 use App\Http\Controllers\MenuPublicoController;
 use App\Http\Controllers\QrDownloadController;
 use App\Http\Controllers\QrRedirectController;
-use App\Http\Controllers\SitioPrototipoController;
+use App\Http\Controllers\SitioPublicoController;
 
 Route::middleware('throttle:menu-publico')->group(function (): void {
     Route::get('/q/{codigo}', [QrRedirectController::class, 'redirigir'])
@@ -25,18 +30,17 @@ Route::middleware('throttle:menu-publico')->group(function (): void {
 
     Route::get('/m/{slug}', [MenuPublicoController::class, 'mostrar'])
         ->name('menu.publico');
+
+    Route::get('/s/{slug}', [SitioPublicoController::class, 'mostrar'])
+        ->name('sitio.publico');
 });
+
+// Service panel (reservations, orders, menu): Blade shell + Vite assets that talk to /api/v1/panel with the login session.
+Route::middleware('auth')
+    ->get('/panel', fn () => response()->view('panel.index')->header('Cache-Control', 'no-store'))
+    ->name('panel');
 
 Route::middleware('auth')
     ->get('/admin/codigos-qr/{codigoQr}/descargar/{formato}', [QrDownloadController::class, 'descargar'])
     ->where('formato', 'svg|png|pdf')
     ->name('codigos-qr.descargar');
-
-// Prototipo de sitio completo del restaurante (experimento de diseno). Su contenido ya se edita desde el panel
-// (pagina "Sitio web"), pero la ruta sigue limitada a local/testing: PENDIENTE decidir si se publica en produccion.
-// Para activarla basta con quitar esta condicion; antes hay que revisar el CSP con nonce y el SEO (hoy lleva noindex).
-if (app()->environment(['local', 'testing'])) {
-    Route::middleware('throttle:menu-publico')
-        ->get('/sitio/{slug}', [SitioPrototipoController::class, 'mostrar'])
-        ->name('sitio.prototipo');
-}
