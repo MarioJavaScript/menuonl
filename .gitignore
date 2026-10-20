@@ -1,5 +1,6 @@
 .env
 vendor/
+!/lang/vendor/
 node_modules/
 storage/*.key
 .DS_Store
