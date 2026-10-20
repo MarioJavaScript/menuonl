@@ -21,6 +21,7 @@ Route::middleware('throttle:invitaciones')->prefix('invitaciones')->group(functi
 use App\Http\Controllers\MenuPublicoController;
 use App\Http\Controllers\QrDownloadController;
 use App\Http\Controllers\QrRedirectController;
+use App\Http\Controllers\SitioPrototipoController;
 use App\Http\Controllers\SitioPublicoController;
 
 Route::middleware('throttle:menu-publico')->group(function (): void {
