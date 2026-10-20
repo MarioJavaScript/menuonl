@@ -47,6 +47,7 @@ class EditRestauranteProfile extends EditTenantProfile
     public function form(Schema $schema): Schema
     {
         $temas = Catalogos::temas();
+        $plantillas = Catalogos::plantillasSitio();
 
         return $schema
             ->components([
@@ -59,6 +60,14 @@ class EditRestauranteProfile extends EditTenantProfile
                             ->descriptions(array_map(fn (array $tema): string => $tema['descripcion'], $temas))
                             ->in(array_keys($temas))
                             ->default('calido')
+                            ->required(),
+                        Radio::make('sitio_plantilla')
+                            ->label('Plantilla del sitio')
+                            ->helperText('Diseño de tu sitio (/tu-restaurante) y de su menú. La plantilla Cafetería trae sus propios colores y tipografías y no usa el estilo visual de arriba.')
+                            ->options(array_map(fn (array $plantilla): string => $plantilla['nombre'], $plantillas))
+                            ->descriptions(array_map(fn (array $plantilla): string => $plantilla['descripcion'], $plantillas))
+                            ->in(array_keys($plantillas))
+                            ->default('a')
                             ->required(),
                         ColorPicker::make('color_acento')
                             ->label('Color principal')
