@@ -56,6 +56,7 @@ class SitioPublicoDatos
             'mapa_url' => $this->enlaceMapa($restaurante, $valor('direccion')),
             'tiene_mapa' => $restaurante->latitud !== null && $restaurante->longitud !== null,
             'reservas_activas' => (bool) $restaurante->reservas_activas,
+            'esta_abierto' => $restaurante->estaAbiertoAhora(),
             'menu_url' => route('menu.publico', ['slug' => $restaurante->slug]),
         ];
     }
@@ -63,7 +64,7 @@ class SitioPublicoDatos
     /**
      * Featured dishes (or the first visible ones) with their photo and price.
      *
-     * @return list<array{nombre: string, descripcion: ?string, precio: string, categoria: string, imagen: ?string, agotado: bool}>
+     * @return list<array{nombre: string, descripcion: ?string, precio: string, precio_anterior: ?string, etiquetas: list<string>, categoria: string, imagen: ?string, agotado: bool}>
      */
     private function destacados(Restaurante $restaurante, string $idioma): array
     {
@@ -71,7 +72,7 @@ class SitioPublicoDatos
             ->whereHas('categoria', fn ($q) => $q->where('visible', true))
             ->when($soloDestacados, fn ($q) => $q->destacado())
             ->when(! $restaurante->mostrar_agotados, fn ($q) => $q->disponible())
-            ->with(['traducciones', 'categoria.traducciones'])
+            ->with(['traducciones', 'categoria.traducciones', 'etiquetas'])
             ->orderBy('orden')
             ->orderBy('id')
             ->limit(self::MAX_DESTACADOS)
@@ -91,6 +92,8 @@ class SitioPublicoDatos
                 'nombre' => (string) ($traduccion?->nombre ?? ''),
                 'descripcion' => $traduccion?->descripcion,
                 'precio' => FormatoMoneda::formatear($p->precioVigente(), $restaurante->moneda, $idioma),
+                'precio_anterior' => $p->precioVigente() !== (string) $p->precio ? FormatoMoneda::formatear((string) $p->precio, $restaurante->moneda, $idioma) : null,
+                'etiquetas' => $p->etiquetas->map(fn ($etiqueta): string => Catalogos::nombreEtiqueta((string) $etiqueta->codigo))->values()->all(),
                 'categoria' => (string) ($categoria?->nombre ?? ''),
                 'imagen' => $p->imagen,
                 'agotado' => ! $p->disponible,
