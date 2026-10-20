@@ -127,6 +127,7 @@ class Catalogos
             'a' => ['nombre' => 'Minimal editorial', 'descripcion' => 'Mucho blanco y tipografía grande.'],
             'b' => ['nombre' => 'Oscuro elegante', 'descripcion' => 'Fondo negro y fotos con alto contraste.'],
             'c' => ['nombre' => 'Clásico cálido', 'descripcion' => 'Tonos arena y retícula tipo revista.'],
+            'd' => ['nombre' => 'Editorial oscuro', 'descripcion' => 'Fondo oscuro, acento dorado y mucho aire. Para cocina de autor y bares.'],
         ];
     }
 
