@@ -4,6 +4,7 @@ namespace App\Filament\Components;
 
 use App\Models\Restaurante;
 use App\Services\WebpImageService;
+use Closure;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\FileUpload;
 use Illuminate\Database\Eloquent\Model;
@@ -20,16 +21,21 @@ use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
  */
 class ImagenRestauranteUpload
 {
-    public static function make(string $name, string $carpeta): FileUpload
+    /**
+     * @param  Closure|null  $rutaPermitida  fn (string $file, $livewire): bool. Para campos que no son una columna del
+     *                                       registro del formulario (p. ej. dentro de un Repeater sin relación): decide qué
+     *                                       rutas ya guardadas pueden reenviarse sin ser consideradas manipuladas.
+     */
+    public static function make(string $name, string $carpeta, ?Closure $rutaPermitida = null): FileUpload
     {
         return FileUpload::make($name)
             ->image()
             ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
             ->maxSize((int) ceil((int) config('menuonl.imagenes.max_bytes') / 1024))
-            ->helperText('Formatos permitidos: JPG, PNG o WebP (máx. 5 MB). La imagen se optimiza y comprime automáticamente a formato WebP.')
+            ->helperText('Formatos permitidos: JPG, PNG o WebP (máx. '.self::maximoLegible().'). La imagen se optimiza y comprime automáticamente a formato WebP.')
             ->disk('public')
             ->visibility('public')
-            ->preventFilePathTampering()
+            ->preventFilePathTampering(true, $rutaPermitida)
             ->saveUploadedFileUsing(function (FileUpload $component, TemporaryUploadedFile $file, ?Model $record) use ($carpeta): string {
                 $restauranteId = self::restauranteActivoId($record);
 
@@ -45,6 +51,16 @@ class ImagenRestauranteUpload
                     ]);
                 }
             });
+    }
+
+    /**
+     * Peso máximo por imagen según la configuración real (menuonl.imagenes.max_bytes), en MB legibles.
+     */
+    public static function maximoLegible(): string
+    {
+        $megas = (int) config('menuonl.imagenes.max_bytes') / 1024 / 1024;
+
+        return rtrim(rtrim(number_format($megas, 1, '.', ''), '0'), '.').' MB';
     }
 
     /**
