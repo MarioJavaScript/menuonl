@@ -41,7 +41,7 @@
     <a class="d-logo" href="#inicio">{{ $nombre }}</a>
     <nav class="d-nav" aria-label="Principal">
         @if ($hayHistoria)<a href="#historia">Historia</a>@endif
-        <a href="{{ $menu_url }}">Carta</a>
+        <a href="{{ $menu_url }}">Menú</a>
         @if ($hayHorario)<a href="#horario">Horario</a>@endif
         @if ($hayContacto)<a href="#contacto">Contacto</a>@endif
     </nav>
@@ -57,7 +57,7 @@
         <h1 id="d-titulo">{{ $inicioNombre }}@if ($ultimaPalabra !== null) <em>{{ $ultimaPalabra }}</em>@endif</h1>
         @if (filled($r->eslogan))<p class="d-eslogan">{{ $r->eslogan }}</p>@endif
         <div class="d-acciones">
-            <a class="d-btn" href="{{ $menu_url }}">Ver carta</a>
+            <a class="d-btn" href="{{ $menu_url }}">Ver menú</a>
             @if ($reservas_activas)<a class="d-btn d-btn-linea" href="#reservar">Reservar</a>@endif
         </div>
     </div>
@@ -110,7 +110,7 @@
         </li>
     @endforeach
     </ul>
-    <p class="d-aparte"><a class="d-btn d-btn-linea" href="{{ $menu_url }}">Ver carta</a></p>
+    <p class="d-aparte"><a class="d-btn d-btn-linea" href="{{ $menu_url }}">Ver menú</a></p>
 </div></section>
 @endif
 

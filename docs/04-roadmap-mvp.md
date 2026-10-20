@@ -15,17 +15,17 @@ Objetivo: tener 3 a 5 restaurantes reales usando el sistema lo antes posible y c
 - [x] Categorías y productos en panel administrativo (`/admin`) con reordenamiento y edición rápida
 - [x] Subida de imágenes con reprocesado a WebP (`WebpImageService` + ver [02-seguridad.md](02-seguridad.md))
 - [x] Contactos y horarios en panel, con cálculo de estado abierto/cerrado (`Restaurante::estaAbiertoAhora()`)
-- [x] Menú público `/m/{slug}` con Blade + Tailwind CSS v4, multi-idioma, variantes, etiquetas y horarios dinámicos
+- [x] Menú público `/{slug}/menu` con Blade + Tailwind CSS v4, multi-idioma, variantes, etiquetas y horarios dinámicos
 - [x] Redirección `/q/{codigo}` y descarga de QR en PNG/SVG/PDF + generación por lote de mesas en Filament 5
 - [x] Roles Propietario y Editor (`MatrizPolicy`, policies por entidad y 2FA para Propietario/Superadmin)
-- [x] Conexión de caché L1/L2 (`MenuCacheService`) en `/m/{slug}` y cabeceras de seguridad estrictas (CSP, nosniff, SAMEORIGIN)
+- [x] Conexión de caché L1/L2 (`MenuCacheService`) en `/{slug}/menu` y cabeceras de seguridad estrictas (CSP, nosniff, SAMEORIGIN)
 - [ ] Despliegue en VPS + Cloudflare (pendiente de infraestructura de producción)
 
 ## Fase 2: Primeros clientes
 
 - [ ] Piloto con 3 a 5 restaurantes
 - [x] Pedido por WhatsApp (carrito en navegador con `localStorage` y deep-link estructurado `wa.me`)
-- [x] Platillos agotados y precio de oferta en BD, panel y visualización en menú público `/m/{slug}`
+- [x] Platillos agotados y precio de oferta en BD, panel y visualización en menú público `/{slug}/menu`
 - [ ] Respaldos diarios fuera del VPS (código listo, falta disco y prueba en VPS)
 
 ## Fase 3: Funcionalidades avanzadas v1.0

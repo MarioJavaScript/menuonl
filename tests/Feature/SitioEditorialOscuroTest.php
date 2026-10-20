@@ -20,7 +20,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
- * Plantilla D "Editorial oscuro" de /s/{slug}: contenido solo de los datos del restaurante, acento seguro,
+ * Plantilla D "Editorial oscuro" de /{slug}: contenido solo de los datos del restaurante, acento seguro,
  * escapado, sin recursos externos ni emojis. Usa withoutVite() para no depender de un build previo de los assets.
  */
 class SitioEditorialOscuroTest extends TestCase
@@ -83,7 +83,7 @@ class SitioEditorialOscuroTest extends TestCase
 
     private function sitio(string $slug = 'la-casa-negra'): TestResponse
     {
-        return $this->get('/s/'.$slug);
+        return $this->get('/'.$slug);
     }
 
     public function test_el_catalogo_acepta_d_y_rechaza_otros_valores(): void
@@ -124,7 +124,7 @@ class SitioEditorialOscuroTest extends TestCase
 
         $respuesta = $this->sitio()->assertOk();
 
-        $respuesta->assertSee('La Casa Negra')->assertSee('Ver carta');
+        $respuesta->assertSee('La Casa Negra')->assertSee('Ver menú');
         foreach (['id="historia"', 'id="recomendados"', 'id="reservar"', 'id="horario"', 'id="contacto"', 'd-eslogan', 'd-estado', 'href="#reservar"'] as $ausente) {
             $respuesta->assertDontSee($ausente, false);
         }

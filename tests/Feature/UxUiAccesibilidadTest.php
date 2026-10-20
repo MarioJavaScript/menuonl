@@ -109,11 +109,11 @@ class UxUiAccesibilidadTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('Ver menú de muestra');
         $response->assertSee('Explorar menú de muestra');
-        $response->assertSee(url('/m/'.$demo->slug));
+        $response->assertSee(url('/'.$demo->slug.'/menu'));
     }
 
     // =========================================================================
-    // 2. Menú Público (GET /m/{slug}) — WCAG 2.2 AA y Experiencia del Comensal
+    // 2. Menú Público (GET /{slug}/menu) — WCAG 2.2 AA y Experiencia del Comensal
     // =========================================================================
 
     public function test_menu_publico_cumple_criterios_wcag_aa_objetivos_tactiles_y_aria(): void
@@ -220,7 +220,7 @@ class UxUiAccesibilidadTest extends TestCase
             'nombre' => 'Tiramisú Casero',
         ]);
 
-        $response = $this->get('/m/trattoria-bella?mesa=7');
+        $response = $this->get('/trattoria-bella/menu?mesa=7');
 
         $response->assertStatus(200);
         $response->assertViewIs('menu.publico');
@@ -299,7 +299,7 @@ class UxUiAccesibilidadTest extends TestCase
         $domingo = Carbon::parse('2026-10-18 23:59:00', 'America/Mexico_City');
         Carbon::setTestNow($domingo);
 
-        $response = $this->get('/m/'.$restaurante->slug);
+        $response = $this->get('/'.$restaurante->slug.'/menu');
 
         $response->assertStatus(200);
         $response->assertSee('Cerrado');
@@ -323,7 +323,7 @@ class UxUiAccesibilidadTest extends TestCase
             'idioma' => 'en',
         ]);
 
-        $response = $this->get('/m/'.$restaurante->slug);
+        $response = $this->get('/'.$restaurante->slug.'/menu');
 
         $response->assertStatus(200);
         $response->assertSee('aria-label="Selector de idioma"', false);
@@ -368,7 +368,7 @@ class UxUiAccesibilidadTest extends TestCase
             'descripcion' => 'Descripción con '.$xssPayload,
         ]);
 
-        $response = $this->get('/m/'.$restaurante->slug);
+        $response = $this->get('/'.$restaurante->slug.'/menu');
 
         $response->assertStatus(200);
         $response->assertDontSee($xssPayload, false);
@@ -376,7 +376,7 @@ class UxUiAccesibilidadTest extends TestCase
     }
 
     // =========================================================================
-    // 3. Menú No Disponible (GET /q/{codigo} y /m/{slug} inválidos/inactivos)
+    // 3. Menú No Disponible (GET /q/{codigo} y /{slug}/menu inválidos/inactivos)
     // =========================================================================
 
     public function test_codigo_qr_inexistente_o_inactivo_muestra_pantalla_empatica_sin_error_404_tecnico(): void
@@ -421,7 +421,7 @@ class UxUiAccesibilidadTest extends TestCase
         $responseQr->assertSee('carta impresa');
 
         // Acceso directo a menú público
-        $responseMenu = $this->get('/m/'.$restaurante->slug);
+        $responseMenu = $this->get('/'.$restaurante->slug.'/menu');
         $responseMenu->assertStatus(404);
         $responseMenu->assertViewIs('menu.no-disponible');
         $responseMenu->assertDontSee('Error 404');

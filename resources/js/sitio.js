@@ -1,4 +1,4 @@
-// Sitio público (/s/{slug}): reserva en línea. Sin dependencias.
+// Sitio público (/{slug}): reserva en línea. Sin dependencias.
 const form = document.getElementById('form-reserva');
 
 if (form) {

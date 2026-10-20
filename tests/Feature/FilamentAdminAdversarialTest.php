@@ -85,7 +85,7 @@ class FilamentAdminAdversarialTest extends TestCase
 
         $response->assertStatus(200);
         // Should NOT render the public menu button because tenant is null
-        $response->assertDontSee('/m/'.$tenant->slug);
+        $response->assertDontSee('/'.$tenant->slug.'/menu');
         $response->assertDontSee('Ver mi menú');
     }
 
@@ -124,14 +124,14 @@ class FilamentAdminAdversarialTest extends TestCase
         // Enter Tenant 1
         $this->entrarAlPanel($usuario, $tenant1);
         $hook1 = (string) FilamentView::renderHook(PanelsRenderHook::USER_MENU_BEFORE);
-        $this->assertStringContainsString('/m/sucursal-norte', $hook1);
-        $this->assertStringNotContainsString('/m/sucursal-sur', $hook1);
+        $this->assertStringContainsString('/sucursal-norte/menu', $hook1);
+        $this->assertStringNotContainsString('/sucursal-sur/menu', $hook1);
 
         // Switch to Tenant 2
         $this->entrarAlPanel($usuario, $tenant2);
         $hook2 = (string) FilamentView::renderHook(PanelsRenderHook::USER_MENU_BEFORE);
-        $this->assertStringContainsString('/m/sucursal-sur', $hook2);
-        $this->assertStringNotContainsString('/m/sucursal-norte', $hook2);
+        $this->assertStringContainsString('/sucursal-sur/menu', $hook2);
+        $this->assertStringNotContainsString('/sucursal-norte/menu', $hook2);
     }
 
     public function test_tenant_with_adversarial_slug_is_properly_html_escaped_in_render_hook(): void

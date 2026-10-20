@@ -38,3 +38,9 @@ RNF-06 se da por cumplido solo cuando los tres puntos de prueba (`menuonl:backup
 - [ ] Definir `APP_NAME=MENUONL` en el `.env` de producción: lo usan el título del navegador y el pie de los correos.
 - [ ] Servir `public/css/menuonl.css` y `public/favicon.svg` con caché larga en el CDN, y purgar el CDN si cambian.
 
+
+## Direcciones públicas (sitio y menú)
+
+- [ ] El sitio del restaurante vive en `/{slug}` y el menú en `/{slug}/menu`. Las direcciones antiguas `/s/{slug}` y `/m/{slug}` solo redirigen (301) conservando `?mesa=` y `?lang=`. Los QR impresos usan `/q/{codigo}`, que no cambia.
+- [ ] Si hay reglas de caché en Cloudflare para `/m/*` (o `/s/*`), cambiarlas por las nuevas: una para `/*/menu` y otra para las páginas de sitio `/{slug}`, excluyendo `/admin*`, `/panel*`, `/api/*`, `/q/*`, `/invitaciones/*`, `/livewire*`, `/storage/*` y `/build/*`. La purga automática (`PurgarCacheRestauranteJob`) borra `https://{dominio}/{slug}/menu` y `https://{dominio}/{slug}`.
+- [ ] Antes de añadir una ruta nueva en el primer nivel (`/algo`), agregar `algo` a `Catalogos::slugsReservados()`; una prueba lo exige.

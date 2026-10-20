@@ -29,7 +29,7 @@ class QrRedirectYDescargaTest extends TestCase
     // =========================================================================
 
     /**
-     * Table QR redirects to /m/{slug}?mesa=N (302).
+     * Table QR redirects to /{slug}/menu?mesa=N (302).
      */
     public function test_table_qr_redirects_to_public_menu_with_mesa_query(): void
     {
@@ -78,7 +78,7 @@ class QrRedirectYDescargaTest extends TestCase
     }
 
     /**
-     * General QR redirects to /m/{slug} (302).
+     * General QR redirects to /{slug}/menu (302).
      */
     public function test_general_qr_redirects_to_public_menu_without_mesa_query(): void
     {

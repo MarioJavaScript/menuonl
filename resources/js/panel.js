@@ -140,7 +140,7 @@ const campo=(id,etiqueta,k,extra='')=>`<div><label class="f" for="${id}">${etiqu
 V.ajustes=()=>{const E=S.equipo,A=S.aj;return `<div class="inner"><div class="head"><div><h1>Ajustes</h1><p class="muted">${esc(S.nombre||'')} · se guardan al salir de cada campo</p></div></div>
  <section class="card"><h2>Sitio público</h2><p class="muted" style="margin-bottom:12px">Elige la plantilla. El sitio cambia en unos segundos.</p>
   <div class="tabs" role="group" aria-label="Plantilla del sitio" style="flex-wrap:wrap">${A.plantillas.map(t=>`<button data-act="plantilla" data-v="${t.clave}" aria-pressed="${A.plantilla===t.clave}" style="min-width:140px"><strong>${t.clave.toUpperCase()}</strong> · ${esc(t.nombre)}</button>`).join('')}</div>
-  <p style="margin-top:12px"><a class="btn ghost" href="/s/${esc(slug)}" target="_blank" rel="noopener">Ver sitio</a></p></section>
+  <p style="margin-top:12px"><a class="btn ghost" href="/${esc(slug)}" target="_blank" rel="noopener">Ver sitio</a></p></section>
  <section class="card"><h2>Fotos del sitio</h2>
   <p class="muted" style="margin-bottom:8px">Portada (16:9)</p>
   ${A.hero?`<img class="hero-prev" src="${esc(A.hero)}" alt="Portada actual" width="480" height="270">`:'<div class="hero-prev vacio" role="img" aria-label="Sin portada">Sin portada</div>'}
@@ -173,7 +173,7 @@ V.ajustes=()=>{const E=S.equipo,A=S.aj;return `<div class="inner"><div class="he
    <div><label class="f" for="ur">Rol</label><select id="ur" name="rol">${E.roles_asignables.map(r=>`<option value="${r}" ${r==='recepcion'?'selected':''}>${ROLES[r]}</option>`).join('')}</select></div>
    <button class="btn primary" type="submit">Enviar invitación</button></form></section>
  <section class="card"><h2>Administración avanzada</h2><p class="muted" style="margin-bottom:12px">Idiomas, QR, turnos partidos e historial de cambios.</p>
-  <div class="row"><a class="btn" href="/admin">Abrir administración</a><a class="btn ghost" href="/m/${esc(slug)}" target="_blank" rel="noopener">Ver menú público</a></div></section>
+  <div class="row"><a class="btn" href="/admin">Abrir administración</a><a class="btn ghost" href="/${esc(slug)}/menu" target="_blank" rel="noopener">Ver menú público</a></div></section>
  ${S.restaurantes.length>1?`<section class="card"><h2>Cambiar de restaurante</h2><select aria-label="Restaurante" data-f="rest">${S.restaurantes.map(r=>`<option value="${esc(r.slug)}" ${r.slug===slug?'selected':''}>${esc(r.nombre)}</option>`).join('')}</select></section>`:''}</div>`};
 
 /* ---------- render / ruteo ---------- */

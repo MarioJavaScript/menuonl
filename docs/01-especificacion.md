@@ -20,8 +20,8 @@ MENUONL es una plataforma en la que **varios restaurantes** publican su menú. E
 
 | Uso | URL |
 | --- | --- |
-| Menú público | `https://{dominio}/m/{slug}` |
-| Menú desde el QR de una mesa | `https://{dominio}/m/{slug}?mesa=5` |
+| Menú público | `https://{dominio}/{slug}/menu` |
+| Menú desde el QR de una mesa | `https://{dominio}/{slug}/menu?mesa=5` |
 | Panel de administración | `https://{dominio}/admin` |
 
 ## 2. Requisitos funcionales
@@ -85,7 +85,7 @@ El VPS está en **Finlandia** y los comensales, probablemente, en **Latinoaméri
 
 **Solución:** poner **Cloudflare (plan gratuito) delante del VPS**.
 
-- El HTML del menú público (`/m/*`) y las imágenes se guardan en los servidores de Cloudflare más cercanos al comensal (México, Bogotá, São Paulo, etc.). La carga baja a unos **30–80 ms**.
+- El HTML del menú público (`/{slug}/menu`) y las imágenes se guardan en los servidores de Cloudflare más cercanos al comensal (México, Bogotá, São Paulo, etc.). La carga baja a unos **30–80 ms**.
 - Al guardar un cambio en el panel, la aplicación **borra la caché de ese restaurante** con la API de Cloudflare, y el precio nuevo se ve en segundos.
 - El panel (`/admin`) no se guarda en caché y se conecta directo al VPS. Lo usan pocas personas, así que los ~200 ms extra son aceptables.
 
@@ -155,7 +155,7 @@ Personas que entran al panel.
 | --- | --- | --- |
 | id | BIGINT UNSIGNED PK | |
 | nombre | VARCHAR(150) | |
-| slug | VARCHAR(80) | Único; se usa en `/m/{slug}` |
+| slug | VARCHAR(80) | Único; se usa en `/{slug}/menu` |
 | descripcion | VARCHAR(500) NULL | Texto corto bajo el logo |
 | logo / portada | VARCHAR(255) NULL | Ruta de la imagen |
 | moneda | CHAR(3) | ISO 4217 (MXN, COP, USD…) |
@@ -327,7 +327,7 @@ flowchart TD
     A([Comensal escanea el QR]) --> B["Abre /q/{codigo}"]
     B --> C{¿El código QR existe<br/>y está activo?}
     C -- No --> X[Página: Menú no disponible]
-    C -- Sí --> D["Redirige a /m/{slug}?mesa=N"]
+    C -- Sí --> D["Redirige a /{slug}/menu?mesa=N"]
     D --> E{¿Restaurante existe<br/>y está activo?}
     E -- No --> X
     E -- Sí --> F{¿Idioma del navegador<br/>activo en el restaurante?}

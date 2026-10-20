@@ -9,12 +9,12 @@ Este documento define la frontera exacta entre **Mitad A** y **Mitad B** del pro
 | Bloque | Responsable | Alcance | Carpetas / Archivos Exclusivos |
 | --- | --- | --- | --- |
 | **Base Compartida + Mitad A (Completada en `main`)** | Compañero A (`@MarioJavaScript`) | - Las 14 tablas de [`docs/esquema.sql`](esquema.sql) (migraciones, modelos Eloquent, relaciones, scopes, factories y seeders).<br>- Panel administrativo completo en Filament 5 (`/admin`).<br>- Roles (`Superadmin`, `Propietario`, `Editor`), `MatrizPolicy` y 2FA (`ExigeDosFactores`).<br>- Invitaciones por correo (caducidad 7 días, token SHA-256).<br>- Conversión segura de imágenes a WebP (`WebpImageService`).<br>- Bitácora de auditoría (`historial_cambios` / trait `Auditable`) y disparo de purga de caché (`MenuCacheService`). | `database/migrations/*`<br>`database/seeders/*`<br>`database/factories/*`<br>`app/Models/*`<br>`app/Policies/*`<br>`app/Filament/*`<br>`app/Observers/*`<br>`app/Services/WebpImageService.php`<br>`app/Services/MenuCacheService.php`<br>`app/Services/InvitacionService.php` |
-| **Mitad B (Completada y Verificada en `main`)** | Compañero B (`@Elproshaitron-stack`) | - Menú público SSR `/m/{slug}` (y `?mesa=N`) en Blade + Tailwind CSS.<br>- Detección de idioma del navegador con fallback al `idioma_default` y selector de idioma.<br>- Visualización de horario y estado dinámico **Abierto / Cerrado**.<br>- Carrito de compras en el navegador y armado de enlace de pedido por WhatsApp (`wa.me`).<br>- Redirección corta `/q/{codigo}` → `/m/{slug}?mesa=N`.<br>- Generación y descarga de Códigos QR (PNG, SVG y hoja PDF/HTML imprimible).<br>- Lectura desde Caché L1 (`MenuCacheService`) y cabeceras HTTP para Cloudflare CDN (L2). | `app/Http/Controllers/MenuPublicoController.php`<br>`app/Http/Controllers/QrRedirectController.php`<br>`app/Http/Controllers/QrDownloadController.php`<br>`app/Services/QrGeneratorService.php`<br>`resources/views/menu/*`<br>`resources/views/qr/*`<br>`resources/js/*` / `resources/css/*`<br>`tests/Feature/MenuPublicoTest.php`<br>`tests/Feature/QrRedirectTest.php`<br>`tests/Feature/QrDownloadTest.php` |
+| **Mitad B (Completada y Verificada en `main`)** | Compañero B (`@Elproshaitron-stack`) | - Menú público SSR `/{slug}/menu` (y `?mesa=N`) en Blade + Tailwind CSS.<br>- Detección de idioma del navegador con fallback al `idioma_default` y selector de idioma.<br>- Visualización de horario y estado dinámico **Abierto / Cerrado**.<br>- Carrito de compras en el navegador y armado de enlace de pedido por WhatsApp (`wa.me`).<br>- Redirección corta `/q/{codigo}` → `/{slug}/menu?mesa=N`.<br>- Generación y descarga de Códigos QR (PNG, SVG y hoja PDF/HTML imprimible).<br>- Lectura desde Caché L1 (`MenuCacheService`) y cabeceras HTTP para Cloudflare CDN (L2). | `app/Http/Controllers/MenuPublicoController.php`<br>`app/Http/Controllers/QrRedirectController.php`<br>`app/Http/Controllers/QrDownloadController.php`<br>`app/Services/QrGeneratorService.php`<br>`resources/views/menu/*`<br>`resources/views/qr/*`<br>`resources/js/*` / `resources/css/*`<br>`tests/Feature/MenuPublicoTest.php`<br>`tests/Feature/QrRedirectTest.php`<br>`tests/Feature/QrDownloadTest.php` |
 
 > [!IMPORTANT]
 > **Regla de oro para evitar conflictos en Git:**
 > - **Mitad B** NO necesita crear ni modificar migraciones en `database/migrations/` (todas las 14 tablas del esquema v1.0 ya están listas en `main`).
-> - En `routes/web.php`, **Mitad A** únicamente registra las rutas `/invitaciones/{token}`, mientras que **Mitad B** es dueña de las rutas `/m/{slug}`, `/q/{codigo}` y descarga de QR.
+> - En `routes/web.php`, **Mitad A** únicamente registra las rutas `/invitaciones/{token}`, mientras que **Mitad B** es dueña de las rutas `/{slug}/menu`, `/q/{codigo}` y descarga de QR.
 
 ---
 
@@ -22,7 +22,7 @@ Este documento define la frontera exacta entre **Mitad A** y **Mitad B** del pro
 
 Todos los modelos viven en `App\Models\` y reflejan exactamente el esquema [`docs/esquema.sql`](esquema.sql).
 
-### Nota importante sobre `RestauranteScope` en rutas públicas (`/m/{slug}` y `/q/{codigo}`)
+### Nota importante sobre `RestauranteScope` en rutas públicas (`/{slug}/menu` y `/q/{codigo}`)
 Los modelos dependientes (`Categoria`, `Producto`, `Contacto`, `Horario`, `CodigoQr`, `RestauranteIdioma`) usan el trait `BelongsToRestaurante`.
 - En peticiones públicas fuera de Filament (`Filament::isServing() === false`), `RestauranteScope::resolveRestauranteId()` es `null` a menos que fijes el contexto explícitamente:
   ```php
@@ -80,8 +80,8 @@ La **Mitad A** invalida automáticamente la caché cada vez que un propietario o
   - Si `$qr->esMesa()`, redirigir (302) a `route('menu.publico', ['slug' => $restaurante->slug, 'mesa' => $qr->mesa])`.
   - Si no tiene mesa, redirigir (302) a `route('menu.publico', ['slug' => $restaurante->slug])`.
 
-### B2. Menú Público SSR (`/m/{slug}`) — RF-01 a RF-06, RNF-01, RNF-08
-- [x] Ruta `GET /m/{slug}` (`name('menu.publico')`).
+### B2. Menú Público SSR (`/{slug}/menu`) — RF-01 a RF-06, RNF-01, RNF-08
+- [x] Ruta `GET /{slug}/menu` (`name('menu.publico')`).
 - [x] Resolver el idioma activo:
   1. Parámetro query `?lang=xx` si está en `restaurante_idiomas`.
   2. Idioma del header `Accept-Language` del navegador si está en `restaurante_idiomas`.
@@ -109,5 +109,5 @@ La **Mitad A** invalida automáticamente la caché cada vez que un propietario o
 - [x] Servicio y controlador autenticado para generar el QR apuntando a `url("/q/{$codigoQr->codigo}")` en formatos `svg`, `png` y hoja imprimible (`pdf` / vista de impresión con logo, nombre del restaurante y número de mesa), más acciones de descarga en `CodigosQrTable`.
 
 ### B5. Pruebas Feature en PHPUnit (`tests/Feature/MenuPublicoTest.php`, `QrRedirectTest.php`, `QrDownloadTest.php`)
-- [x] Verificar que `/q/{codigo}` redirige a `/m/{slug}?mesa=N` cuando está activo y devuelve página de no disponible cuando el QR o el restaurante están suspendidos.
-- [x] Verificar que `/m/{slug}` muestra categorías/platillos ordenados, aplica fallback al `idioma_default`, respeta `mostrar_agotados`, usa `MenuCacheService` y escapa cualquier intento de XSS.
+- [x] Verificar que `/q/{codigo}` redirige a `/{slug}/menu?mesa=N` cuando está activo y devuelve página de no disponible cuando el QR o el restaurante están suspendidos.
+- [x] Verificar que `/{slug}/menu` muestra categorías/platillos ordenados, aplica fallback al `idioma_default`, respeta `mostrar_agotados`, usa `MenuCacheService` y escapa cualquier intento de XSS.

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Restaurantes\Schemas;
 
 use App\Filament\Components\ImagenRestauranteUpload;
+use App\Rules\SlugNoReservado;
 use App\Services\Catalogos;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -18,10 +19,10 @@ class RestauranteForm
                 TextInput::make('slug')
                     ->label('Dirección corta del menú')
                     ->placeholder('mi-restaurante')
-                    ->helperText('Dirección única para el enlace del menú público (/m/mi-restaurante). Solo letras minúsculas, números y guiones.')
+                    ->helperText('Dirección única del sitio y del menú público (/mi-restaurante). Solo letras minúsculas, números y guiones.')
                     ->required()
                     ->maxLength(80)
-                    ->regex('/\A[a-z0-9]+(?:-[a-z0-9]+)*\z/')
+                    ->rule(new SlugNoReservado)
                     ->unique(ignoreRecord: true),
                 Select::make('moneda')->label('Moneda')->options(Catalogos::monedas())->default('MXN')->required(),
                 Select::make('idioma_default')->label('Idioma principal')->options(Catalogos::idiomas())->default('es')->required(),

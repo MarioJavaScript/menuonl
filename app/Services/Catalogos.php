@@ -9,6 +9,42 @@ use DateTimeZone;
  */
 class Catalogos
 {
+    public const string PATRON_SLUG = '[a-z0-9]+(?:-[a-z0-9]+)*';
+
+    /**
+     * Slugs que un restaurante no puede usar: son el primer segmento de rutas de la aplicación o de archivos
+     * públicos, y /{slug} las taparía o se confundiría con ellas. Se prefijan con "livewire" también (ver esSlugReservado).
+     *
+     * @return list<string>
+     */
+    public static function slugsReservados(): array
+    {
+        return [
+            'admin', 'panel', 'api', 'q', 'm', 's', 'menu', 'invitaciones', 'login', 'logout', 'register',
+            'storage', 'build', 'up', 'livewire', 'filament', 'vendor', 'assets', 'css', 'js', 'fonts', 'images',
+            'favicon.ico', 'robots.txt', 'sitemap.xml', 'health', 'diseno', 'sanctum', 'horizon', 'telescope',
+            'dashboard', 'password', 'email', 'user', 'users', 'index.php',
+        ];
+    }
+
+    /**
+     * Livewire publica sus rutas bajo un prefijo con hash ("livewire-xxxx"), por eso se compara por prefijo.
+     */
+    public static function esSlugReservado(string $slug): bool
+    {
+        return in_array($slug, self::slugsReservados(), true) || str_starts_with($slug, 'livewire');
+    }
+
+    /**
+     * Expresión del parámetro {slug} en las rutas públicas: formato válido y que no sea un slug reservado.
+     */
+    public static function patronSlugRuta(): string
+    {
+        $reservados = implode('|', array_map(fn (string $slug): string => preg_quote($slug, '/'), self::slugsReservados()));
+
+        return '(?!(?:'.$reservados.')(?![a-z0-9-]))(?!livewire)'.self::PATRON_SLUG;
+    }
+
     /**
      * @return array<string, string>
      */
@@ -117,7 +153,7 @@ class Catalogos
     }
 
     /**
-     * Plantillas del sitio público (/s/{slug}): clave => [nombre, descripción].
+     * Plantillas del sitio público (/{slug}): clave => [nombre, descripción].
      *
      * @return array<string, array{nombre: string, descripcion: string}>
      */
