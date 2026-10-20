@@ -22,6 +22,8 @@ class ReservaResource extends JsonResource
             'personas' => $this->personas,
             'fecha' => $this->fecha->toDateString(),
             'hora' => substr((string) $this->hora, 0, 5),
+            'telefono' => $this->telefono,
+            'origen' => $this->origen,
             'estado' => $this->estado,
             'nota' => $this->nota,
         ];

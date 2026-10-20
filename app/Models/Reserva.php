@@ -20,9 +20,11 @@ class Reserva extends Model
         'restaurante_id',
         'nombre',
         'personas',
+        'telefono',
         'fecha',
         'hora',
         'estado',
+        'origen',
         'nota',
     ];
 

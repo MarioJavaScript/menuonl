@@ -41,7 +41,7 @@ const has=m=>S.modulos.includes(m);
 /* cada carga pertenece a un módulo; un rol sin permiso nunca la pide (la API respondería 403) */
 const MODULO_DE={reservas:'reservas',pedidos:'pedidos',menu:'menu',resumen:'inicio',equipo:'ajustes',ajustes:'ajustes'};
 const L={
-  async reservas(){S.reservas=(await api('GET',P('/reservas'))).map(r=>({id:r.id,n:r.nombre,p:r.personas,h:r.hora,s:r.estado,nota:r.nota||''}))},
+  async reservas(){S.reservas=(await api('GET',P('/reservas'))).map(r=>({id:r.id,n:r.nombre,p:r.personas,h:r.hora,s:r.estado,nota:r.nota||'',tel:r.telefono||'',o:r.origen}))},
   async pedidos(){const now=Date.now();S.pedidos=(await api('GET',P('/pedidos'))).map(p=>({id:p.id,mesa:p.mesa,its:p.detalle,tot:p.total,e:p.estado,t:now-p.minutos*60000}))},
   async menu(){S.menu=(await api('GET',P('/menu'))).map(c=>({id:c.id,nombre:c.nombre,items:c.productos.map(i=>({id:i.id,n:i.nombre,pr:i.precio,disp:i.disponible,vis:i.visible,img:i.imagen}))}))},
   async resumen(){S.resumen=await api('GET',P('/resumen'))},
@@ -75,7 +75,8 @@ function resRow(r,compact){
   const extra=compact||c?'':`<select class="sm" style="width:auto;min-height:44px" aria-label="Mover ${esc(r.n)} a otra hora" data-f="res.h" data-id="${r.id}">${horas.map(h=>`<option ${h===r.h?'selected':''}>${h}</option>`).join('')}</select>
     ${r.s==='llego'?'':`<button class="btn danger sm" data-act="res-cancel" data-id="${r.id}">Cancelar</button>`}`;
   return `<li class="${c?'cancelled':''}"><span class="time">${esc(r.h)}</span>
-    <div class="grow"><strong>${esc(r.n)}</strong><div class="muted">${r.p} personas${r.nota?' · '+esc(r.nota):''}</div></div>
+    <div class="grow"><strong>${esc(r.n)}</strong><div class="muted">${r.p} personas${r.nota?' · '+esc(r.nota):''}${r.tel?` · <a class="tel" href="tel:${esc(r.tel.replace(/[^0-9+]/g,''))}">${esc(r.tel)}</a>`:''}</div></div>
+    ${r.o==='sitio'?'<span class="chip soft">Sitio web</span>':''}
     ${chip}${act}${extra}</li>`;
 }
 V.inicio=()=>{

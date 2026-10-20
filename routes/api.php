@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\Panel\MenuController;
 use App\Http\Controllers\Api\V1\Panel\PedidoController;
 use App\Http\Controllers\Api\V1\Panel\ReservaController;
 use App\Http\Controllers\Api\V1\Panel\ResumenController;
+use App\Http\Controllers\Api\V1\ReservaPublicaController;
 use App\Http\Middleware\ContextoRestaurantePanel;
 use App\Http\Middleware\ModuloPanel;
 use Illuminate\Support\Facades\Route;
@@ -16,6 +17,12 @@ Route::prefix('v1')->group(function (): void {
     Route::middleware('throttle:menu-publico')
         ->get('/menu/{slug}', [MenuApiController::class, 'show'])
         ->name('api.v1.menu.show');
+
+    // Public reservations from the restaurant site (no session: strict validation, honeypot and rate limits).
+    Route::prefix('sitio/{slug}')->name('api.v1.sitio.')->group(function (): void {
+        Route::middleware('throttle:menu-publico')->get('disponibilidad', [ReservaPublicaController::class, 'disponibilidad'])->name('disponibilidad');
+        Route::middleware('throttle:reservas-publicas')->post('reservas', [ReservaPublicaController::class, 'store'])->name('reservas');
+    });
 
     // Admin panel API: same session as the Filament login (cookie + CSRF), scoped to one restaurant.
     Route::middleware(['web', 'auth', 'throttle:panel-api'])
