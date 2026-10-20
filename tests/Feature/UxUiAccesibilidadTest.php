@@ -1160,11 +1160,11 @@ class UxUiAccesibilidadTest extends TestCase
 
         $malicioso = Restaurante::factory()->create(['estado' => 'activo']);
         DB::table('restaurantes')->where('id', $malicioso->id)
-            ->update(['color_acento' => 'red;background:url(//x.test)']);
+            ->update(['color_acento' => 'red;x:y']); // 7 caracteres: color_acento es string(7) y MariaDB rechaza valores más largos.
 
         $respuesta = $this->get(route('menu.publico', ['slug' => $malicioso->slug]));
         $respuesta->assertOk();
-        $respuesta->assertDontSee('url(//x.test)', false);
+        $respuesta->assertDontSee('red;x:y', false);
         $respuesta->assertDontSee('--mo-acento:', false);
     }
 
