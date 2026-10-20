@@ -582,7 +582,8 @@ class PublicMenuApiStressTest extends TestCase
         $resLight->assertJsonPath('data.color_acento_texto', '#17171e');
 
         // 3. Malformed/malicious accent color -> sanitized to null
-        $rMalicious = Restaurante::factory()->create(['color_acento' => 'red; background:url(x)']);
+        // 'red;x:y' mide 7 caracteres porque color_acento es string(7); MariaDB rechaza valores más largos.
+        $rMalicious = Restaurante::factory()->create(['color_acento' => 'red;x:y']);
         $resMalicious = $this->getJson(route('api.v1.menu.show', ['slug' => $rMalicious->slug]));
         $resMalicious->assertJsonPath('data.color_acento', null);
         $resMalicious->assertJsonPath('data.color_acento_texto', null);

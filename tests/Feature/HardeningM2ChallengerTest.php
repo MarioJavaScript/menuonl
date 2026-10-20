@@ -165,12 +165,15 @@ class HardeningM2ChallengerTest extends TestCase
         $queries = DB::getQueryLog();
         DB::disableQueryLog();
 
+        // Entrecomillado del dialecto activo ("mesa" en SQLite, `mesa` en MariaDB).
+        $columnaMesa = strtolower(DB::connection()->getQueryGrammar()->wrap('mesa'));
+
         // Find the batch existence query checking pre-existing tables
-        $batchExistenceQueries = array_filter($queries, function ($q) {
+        $batchExistenceQueries = array_filter($queries, function ($q) use ($columnaMesa) {
             $sql = strtolower($q['query']);
 
             return str_contains($sql, 'select')
-                && str_contains($sql, '"mesa"')
+                && str_contains($sql, $columnaMesa)
                 && str_contains($sql, 'in (');
         });
 
@@ -182,12 +185,12 @@ class HardeningM2ChallengerTest extends TestCase
         );
 
         // Verify there are ZERO individual N+1 table existence checks
-        $individualExistenceQueries = array_filter($queries, function ($q) {
+        $individualExistenceQueries = array_filter($queries, function ($q) use ($columnaMesa) {
             $sql = strtolower($q['query']);
 
             return str_contains($sql, 'select')
                 && str_contains($sql, 'codigos_qr')
-                && (str_contains($sql, '"mesa" =') || str_contains($sql, 'mesa ='));
+                && (str_contains($sql, $columnaMesa.' =') || str_contains($sql, 'mesa ='));
         });
 
         $this->assertCount(
