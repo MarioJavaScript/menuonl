@@ -164,6 +164,7 @@ class Catalogos
             'b' => ['nombre' => 'Oscuro elegante', 'descripcion' => 'Fondo negro y fotos con alto contraste.'],
             'c' => ['nombre' => 'Clásico cálido', 'descripcion' => 'Tonos arena y retícula tipo revista.'],
             'd' => ['nombre' => 'Editorial oscuro', 'descripcion' => 'Fondo oscuro, acento dorado y mucho aire. Para cocina de autor y bares.'],
+            'e' => ['nombre' => 'Cafetería', 'descripcion' => 'Colores tierra y rosa, palabras grandes y menú en carrusel. Para cafeterías y bebidas.'],
         ];
     }
 
