@@ -6,6 +6,7 @@ use App\Models\Reserva;
 use App\Models\Restaurante;
 use App\Models\Scopes\RestauranteScope;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -13,8 +14,16 @@ class PanelApiReservasTest extends TestCase
 {
     use RefreshDatabase;
 
+    /** Fixed mid-day instant so "today" is the same date in UTC and in the restaurant's time zone. */
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Carbon::setTestNow(Carbon::parse('2026-10-21 18:00:00', 'UTC'));
+    }
+
     protected function tearDown(): void
     {
+        Carbon::setTestNow();
         RestauranteScope::setRestauranteId(null);
         parent::tearDown();
     }

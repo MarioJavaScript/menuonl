@@ -37,12 +37,19 @@ class SeguridadCuentasTest extends TestCase
         $this->assertContains(config('session.same_site'), ['lax', 'strict']);
 
         $anterior = [$_ENV['APP_ENV'] ?? null, $_SERVER['APP_ENV'] ?? null];
+        $cookieAnterior = [$_ENV['SESSION_SECURE_COOKIE'] ?? null, $_SERVER['SESSION_SECURE_COOKIE'] ?? null, getenv('SESSION_SECURE_COOKIE')];
         $_ENV['APP_ENV'] = $_SERVER['APP_ENV'] = 'production';
+        unset($_ENV['SESSION_SECURE_COOKIE'], $_SERVER['SESSION_SECURE_COOKIE']);
+        putenv('SESSION_SECURE_COOKIE');
 
         try {
             $configuracion = require config_path('session.php');
         } finally {
             [$_ENV['APP_ENV'], $_SERVER['APP_ENV']] = $anterior;
+            [$_ENV['SESSION_SECURE_COOKIE'], $_SERVER['SESSION_SECURE_COOKIE']] = $cookieAnterior;
+            if ($cookieAnterior[2] !== false) {
+                putenv('SESSION_SECURE_COOKIE='.$cookieAnterior[2]);
+            }
         }
 
         $this->assertTrue($configuracion['secure']);

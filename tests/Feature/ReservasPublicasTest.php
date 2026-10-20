@@ -9,6 +9,7 @@ use App\Models\Scopes\RestauranteScope;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\RateLimiter;
 use Tests\TestCase;
 
@@ -20,6 +21,9 @@ class ReservasPublicasTest extends TestCase
     private const AHORA = '2026-10-21 10:00:00';
 
     private Restaurante $restaurante;
+
+    /** Validation tests send many requests; only the rate-limit test keeps the throttle counters. */
+    private bool $conLimite = false;
 
     protected function setUp(): void
     {
@@ -58,6 +62,10 @@ class ReservasPublicasTest extends TestCase
 
     private function reservar(array $extra = [], string $slug = 'mesa-larga')
     {
+        if (! $this->conLimite) {
+            Cache::flush();
+        }
+
         return $this->postJson("/api/v1/sitio/{$slug}/reservas", $this->datos($extra));
     }
 
@@ -72,7 +80,7 @@ class ReservasPublicasTest extends TestCase
 
     public function test_availability_blocks_past_slots_and_full_ones_and_depends_on_party_size(): void
     {
-        Carbon::setTestNow(Carbon::parse('2026-10-21 14:20:00', 'America/Mexico_City'));
+        Carbon::setTestNow(Carbon::parse('2026-10-21 14:40:00', 'America/Mexico_City'));
         Reserva::factory()->confirmada()->create(['restaurante_id' => $this->restaurante->id, 'fecha' => '2026-10-21', 'hora' => '20:30:00', 'personas' => 8]);
         Reserva::factory()->cancelada()->create(['restaurante_id' => $this->restaurante->id, 'fecha' => '2026-10-21', 'hora' => '21:00:00', 'personas' => 10]);
 
@@ -210,8 +218,10 @@ class ReservasPublicasTest extends TestCase
 
     public function test_rate_limit_stops_bursts(): void
     {
+        $this->conLimite = true;
+
         foreach (range(1, 3) as $n) {
-            $this->reservar(['hora' => '13:00', 'personas' => 1, 'nombre' => "Persona {$n}"])->assertCreated();
+            $this->reservar(['hora' => '13:00', 'personas' => 1, 'nombre' => 'Persona '.['Uno', 'Dos', 'Tres'][$n - 1]])->assertCreated();
         }
 
         $this->reservar(['hora' => '14:00'])->assertStatus(429);
