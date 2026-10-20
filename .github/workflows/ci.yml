@@ -24,6 +24,21 @@ jobs:
     - name: Install Dependencies
       run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
 
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: npm
+
+    - name: Build front-end assets
+      run: |
+        npm ci
+        npm run build
+
+    # Empty .env so PHPUnit does not warn about a missing file; real values come from env vars.
+    - name: Create empty .env
+      run: touch .env
+
     - name: Execute Tests
       env:
         APP_KEY: base64:zTXE842dAjTvLSYC0JlPBcqLedGFCENE7FWHBeLjbxA=
@@ -74,6 +89,21 @@ jobs:
 
     - name: Install Dependencies
       run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: npm
+
+    - name: Build front-end assets
+      run: |
+        npm ci
+        npm run build
+
+    # Empty .env so PHPUnit does not warn about a missing file; real values come from env vars.
+    - name: Create empty .env
+      run: touch .env
 
     - name: Run Migrations (validates CHECK constraints on MariaDB)
       run: php artisan migrate:fresh --force
