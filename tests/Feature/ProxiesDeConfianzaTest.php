@@ -132,7 +132,7 @@ class ProxiesDeConfianzaTest extends TestCase
             $ipRotativa = '10.0.'.intdiv($i, 256).'.'.($i % 256);
             $res = $this->withServerVariables(['REMOTE_ADDR' => $remotoNoConfiable])
                 ->withHeaders(['X-Forwarded-For' => $ipRotativa])
-                ->get('/m/'.$restaurante->slug);
+                ->get('/'.$restaurante->slug.'/menu');
 
             if ($i === 1 || $i === 300) {
                 $res->assertOk();
@@ -142,7 +142,7 @@ class ProxiesDeConfianzaTest extends TestCase
         // Petición 301 con una nueva IP rotativa debe recibir HTTP 429
         $res301 = $this->withServerVariables(['REMOTE_ADDR' => $remotoNoConfiable])
             ->withHeaders(['X-Forwarded-For' => '10.0.1.45'])
-            ->get('/m/'.$restaurante->slug);
+            ->get('/'.$restaurante->slug.'/menu');
 
         $res301->assertStatus(429);
     }
@@ -191,19 +191,19 @@ class ProxiesDeConfianzaTest extends TestCase
         for ($i = 1; $i <= 300; $i++) {
             $this->withServerVariables(['REMOTE_ADDR' => $proxyConfiable])
                 ->withHeaders(['X-Forwarded-For' => $clienteA])
-                ->get('/m/'.$restaurante->slug);
+                ->get('/'.$restaurante->slug.'/menu');
         }
 
         // Cliente A es bloqueado en la petición 301
         $this->withServerVariables(['REMOTE_ADDR' => $proxyConfiable])
             ->withHeaders(['X-Forwarded-For' => $clienteA])
-            ->get('/m/'.$restaurante->slug)
+            ->get('/'.$restaurante->slug.'/menu')
             ->assertStatus(429);
 
         // Cliente B a través del MISMO proxy confiable debe tener su propio bucket intacto
         $this->withServerVariables(['REMOTE_ADDR' => $proxyConfiable])
             ->withHeaders(['X-Forwarded-For' => $clienteB])
-            ->get('/m/'.$restaurante->slug)
+            ->get('/'.$restaurante->slug.'/menu')
             ->assertOk();
     }
 
@@ -218,7 +218,7 @@ class ProxiesDeConfianzaTest extends TestCase
 
         $this->withServerVariables(['REMOTE_ADDR' => '198.51.100.99'])
             ->withHeaders(['X-Forwarded-For' => '203.0.113.88'])
-            ->get('/m/'.$restaurante->slug)
+            ->get('/'.$restaurante->slug.'/menu')
             ->assertOk();
     }
 }

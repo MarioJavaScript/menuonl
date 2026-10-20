@@ -8,8 +8,8 @@ use App\Services\SitioPublicoDatos;
 use Illuminate\Http\Response;
 
 /**
- * Public marketing site of a restaurant (/s/{slug}), rendered with the template chosen in Ajustes.
- * The full menu keeps living at /m/{slug}.
+ * Public marketing site of a restaurant (/{slug}), rendered with the template chosen in Ajustes.
+ * The full menu keeps living at /{slug}/menu.
  */
 class SitioPublicoController extends Controller
 {

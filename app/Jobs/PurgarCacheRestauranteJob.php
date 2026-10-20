@@ -43,15 +43,16 @@ class PurgarCacheRestauranteJob implements ShouldQueue
             return;
         }
 
-        $url = "https://{$domain}/m/{$this->slug}";
+        $urls = [
+            "https://{$domain}".route('menu.publico', ['slug' => $this->slug], false),
+            "https://{$domain}".route('sitio.publico', ['slug' => $this->slug], false),
+        ];
 
         try {
             $response = Http::withToken($token)
                 ->timeout(5)
                 ->post("https://api.cloudflare.com/client/v4/zones/{$zoneId}/purge_cache", [
-                    'files' => [
-                        $url,
-                    ],
+                    'files' => $urls,
                 ]);
 
             if ($response->failed()) {

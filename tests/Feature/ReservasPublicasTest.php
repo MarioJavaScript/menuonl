@@ -237,10 +237,10 @@ class ReservasPublicasTest extends TestCase
 
     public function test_the_public_site_renders_the_form_only_when_reservations_are_active(): void
     {
-        $this->get('/s/mesa-larga')->assertOk()->assertSee('id="form-reserva"', false)->assertSee('name="sitio_web"', false)
+        $this->get('/mesa-larga')->assertOk()->assertSee('id="form-reserva"', false)->assertSee('name="sitio_web"', false)
             ->assertSee('/api/v1/sitio/mesa-larga/reservas', false)->assertSee('wa.me/525512345678', false);
 
         $this->restaurante->update(['reservas_activas' => false]);
-        $this->get('/s/mesa-larga')->assertOk()->assertDontSee('id="form-reserva"', false)->assertSee('no recibimos reservas en línea');
+        $this->get('/mesa-larga')->assertOk()->assertDontSee('id="form-reserva"', false)->assertSee('no recibimos reservas en línea');
     }
 }
