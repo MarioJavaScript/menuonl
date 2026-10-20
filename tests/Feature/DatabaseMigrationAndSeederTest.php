@@ -6,7 +6,6 @@ use Database\Seeders\EtiquetaSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class DatabaseMigrationAndSeederTest extends TestCase
@@ -292,8 +291,6 @@ class DatabaseMigrationAndSeederTest extends TestCase
      */
     public function test_database_seeder_creates_demo_restaurant_graph(): void
     {
-        Storage::fake('public');
-
         $this->seed();
 
         // Must have at least 1 restaurant

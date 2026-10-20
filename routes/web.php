@@ -21,7 +21,6 @@ Route::middleware('throttle:invitaciones')->prefix('invitaciones')->group(functi
 use App\Http\Controllers\MenuPublicoController;
 use App\Http\Controllers\QrDownloadController;
 use App\Http\Controllers\QrRedirectController;
-use App\Http\Controllers\SitioPrototipoController;
 use App\Http\Controllers\SitioPublicoController;
 
 Route::middleware('throttle:menu-publico')->group(function (): void {
@@ -45,12 +44,3 @@ Route::middleware('auth')
     ->get('/admin/codigos-qr/{codigoQr}/descargar/{formato}', [QrDownloadController::class, 'descargar'])
     ->where('formato', 'svg|png|pdf')
     ->name('codigos-qr.descargar');
-
-// Prototipo de sitio completo del restaurante (experimento de diseno). Su contenido ya se edita desde el panel
-// (pagina "Sitio web"), pero la ruta sigue limitada a local/testing: PENDIENTE decidir si se publica en produccion.
-// Para activarla basta con quitar esta condicion; antes hay que revisar el CSP con nonce y el SEO (hoy lleva noindex).
-if (app()->environment(['local', 'testing'])) {
-    Route::middleware('throttle:menu-publico')
-        ->get('/sitio/{slug}', [SitioPrototipoController::class, 'mostrar'])
-        ->name('sitio.prototipo');
-}

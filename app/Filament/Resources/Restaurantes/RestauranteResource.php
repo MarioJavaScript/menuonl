@@ -4,7 +4,6 @@ namespace App\Filament\Resources\Restaurantes;
 
 use App\Filament\Resources\Restaurantes\Pages\CreateRestaurante;
 use App\Filament\Resources\Restaurantes\Pages\EditRestaurante;
-use App\Filament\Resources\Restaurantes\Pages\EditSitioRestaurante;
 use App\Filament\Resources\Restaurantes\Pages\ListRestaurantes;
 use App\Filament\Resources\Restaurantes\Schemas\RestauranteForm;
 use App\Filament\Resources\Restaurantes\Tables\RestaurantesTable;
@@ -66,7 +65,6 @@ class RestauranteResource extends Resource
             'index' => ListRestaurantes::route('/'),
             'create' => CreateRestaurante::route('/create'),
             'edit' => EditRestaurante::route('/{record}/edit'),
-            'sitio' => EditSitioRestaurante::route('/{record}/sitio'),
         ];
     }
 }
