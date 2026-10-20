@@ -17,7 +17,8 @@ use Livewire\Livewire;
 use Tests\TestCase;
 
 /**
- * Prototipo del sitio del restaurante (/sitio/{slug}): solo existe en local y testing.
+ * Contenido y estructura del sitio del restaurante (/sitio/{slug}). La disponibilidad en produccion y las
+ * protecciones publicas se prueban en SitioPublicoEntornoTest y SitioPublicoProduccionTest.
  */
 class SitioPrototipoTest extends TestCase
 {
@@ -160,14 +161,5 @@ class SitioPrototipoTest extends TestCase
         }
         $respuesta->assertSee('data-restaurante=', false);
         $respuesta->assertSee('data-horarios=', false);
-    }
-
-    public function test_la_ruta_solo_se_registra_en_local_y_testing(): void
-    {
-        $this->assertTrue(app()->environment(['local', 'testing']));
-        $this->assertNotNull(app('router')->getRoutes()->getByName('sitio.prototipo'));
-
-        $archivo = (string) file_get_contents(base_path('routes/web.php'));
-        $this->assertMatchesRegularExpression("/environment\(\['local', 'testing'\]\)[\s\S]*sitio\.prototipo/", $archivo);
     }
 }

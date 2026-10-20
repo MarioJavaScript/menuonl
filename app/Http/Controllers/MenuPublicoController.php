@@ -12,11 +12,16 @@ use Illuminate\Http\Response;
 
 class MenuPublicoController extends Controller
 {
-    private const SECURITY_HEADERS = [
+    /**
+     * Cabeceras y caché de las páginas públicas; las comparte SitioPrototipoController para no duplicarlas.
+     */
+    public const SECURITY_HEADERS = [
         'Content-Security-Policy' => "default-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:;",
         'X-Content-Type-Options' => 'nosniff',
         'X-Frame-Options' => 'SAMEORIGIN',
     ];
+
+    public const CACHE_CONTROL = 'public, max-age=30, stale-while-revalidate=86400';
 
     public function __construct(
         protected MenuCacheService $menuCacheService
@@ -150,7 +155,7 @@ class MenuPublicoController extends Controller
                 ], 200)
                 ->withHeaders([
                     ...self::SECURITY_HEADERS,
-                    'Cache-Control' => 'public, max-age=30, stale-while-revalidate=86400',
+                    'Cache-Control' => self::CACHE_CONTROL,
                 ]);
         } finally {
             RestauranteScope::setRestauranteId(null);

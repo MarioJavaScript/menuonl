@@ -10,21 +10,15 @@ use App\Models\SitioGaleria;
 use Illuminate\Http\Response;
 
 /**
- * Prototipo de "sitio del restaurante" completo (/sitio/{slug}), alimentado por los datos reales del restaurante.
- * Es un experimento de diseño: la ruta solo se registra en local y testing (ver routes/web.php).
+ * Sitio completo del restaurante (/sitio/{slug}), disponible en todos los entornos para todos los restaurantes.
  * El contenido propio del sitio (portada, historia, datos, galería) sale de sitio_configuraciones y sitio_galeria,
  * editables desde el panel; si falta algo, la vista oculta o simplifica esa sección.
  * Sigue los patrones de MenuPublicoController: scope de tenant liberado en finally, 404 con la vista de
- * "menú no disponible" y las mismas cabeceras de seguridad. No usa la caché del menú.
+ * "menú no disponible", y las mismas cabeceras de seguridad y Cache-Control (constantes compartidas).
+ * No usa la caché L1 del menú: ver la nota en el reporte de la fase 1.
  */
 class SitioPrototipoController extends Controller
 {
-    private const SECURITY_HEADERS = [
-        'Content-Security-Policy' => "default-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:;",
-        'X-Content-Type-Options' => 'nosniff',
-        'X-Frame-Options' => 'SAMEORIGIN',
-    ];
-
     public function mostrar(string $slug): Response
     {
         try {
@@ -37,7 +31,7 @@ class SitioPrototipoController extends Controller
             ) {
                 return response()
                     ->view('menu.no-disponible', [], 404)
-                    ->withHeaders(self::SECURITY_HEADERS);
+                    ->withHeaders(MenuPublicoController::SECURITY_HEADERS);
             }
 
             RestauranteScope::setRestauranteId($restaurante->id);
@@ -100,7 +94,10 @@ class SitioPrototipoController extends Controller
                     'galeria' => $galeria,
                     'hojasListas' => $this->hojasDeViteDisponibles(),
                 ], 200)
-                ->withHeaders(self::SECURITY_HEADERS);
+                ->withHeaders([
+                    ...MenuPublicoController::SECURITY_HEADERS,
+                    'Cache-Control' => MenuPublicoController::CACHE_CONTROL,
+                ]);
         } finally {
             RestauranteScope::setRestauranteId(null);
         }
