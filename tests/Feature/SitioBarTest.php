@@ -285,10 +285,16 @@ class SitioBarTest extends TestCase
     public function test_color_acento_hostil_no_se_inyecta(): void
     {
         // La columna color_acento mide 7 caracteres: en la base solo cabe un valor hostil corto; el largo se prueba en memoria.
-        $this->completo(['color_acento' => '#1;}</s>']);
+        $hostilCorto = '#1;}<s>';
+        preg_match("/string\('color_acento', (\d+)\)/", (string) file_get_contents(glob(database_path('migrations/*apariencia_to_restaurantes*'))[0]), $largo);
+        $this->assertNotEmpty($largo, 'No se encontró el largo de color_acento en la migración.');
+        $this->assertLessThanOrEqual((int) $largo[1], mb_strlen($hostilCorto), 'El valor hostil no cabe en la columna color_acento (MariaDB estricto lo rechazaría).');
+        $this->assertNull((new Restaurante(['color_acento' => $hostilCorto]))->colorAcentoSeguro());
+
+        $this->completo(['color_acento' => $hostilCorto]);
 
         foreach ([$this->sitio(), $this->menu()] as $respuesta) {
-            $respuesta->assertOk()->assertDontSee('#1;}</s>', false)->assertDontSee('--bar-acento:', false);
+            $respuesta->assertOk()->assertDontSee($hostilCorto, false)->assertDontSee('--bar-acento:', false);
         }
 
         foreach (['#fff;}</style><script>alert(1)</script>', '#12345', '#12345g', 'red', '#1234567'] as $hostil) {
