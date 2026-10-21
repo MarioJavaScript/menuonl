@@ -275,10 +275,17 @@ class SitioCafeteriaTest extends TestCase
 
     public function test_color_acento_hostil_no_se_inyecta(): void
     {
-        $this->restauranteCompleto(['color_acento' => '#fff;}</style><script>alert(1)</script>']);
+        // La columna color_acento mide 7 caracteres: en la base solo cabe un valor hostil corto; el largo se prueba en memoria.
+        $this->restauranteCompleto(['color_acento' => '#1;}</s>']);
 
         foreach ([$this->sitio(), $this->menu()] as $respuesta) {
-            $respuesta->assertOk()->assertDontSee('<script>alert(1)', false)->assertDontSee('--cal-acento:', false);
+            $respuesta->assertOk()->assertDontSee('#1;}</s>', false)->assertDontSee('--cal-acento:', false);
+        }
+
+        foreach (['#fff;}</style><script>alert(1)</script>', '#12345', '#12345g', 'red', '#1234567'] as $hostil) {
+            $restaurante = new Restaurante(['color_acento' => $hostil]);
+            $this->assertNull($restaurante->colorAcentoSeguro(), $hostil);
+            $this->assertNull($restaurante->colorAcentoTexto(), $hostil);
         }
     }
 

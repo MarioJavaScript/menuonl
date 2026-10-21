@@ -5,7 +5,7 @@ namespace Tests\Unit;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Ejecuta las pruebas de JavaScript del pedido por WhatsApp de la plantilla E (tests/Js, con el ejecutor de pruebas de Node,
+ * Ejecuta las pruebas de JavaScript del pedido por WhatsApp de la plantilla E (tests/Js/*.test.mjs, con el ejecutor de pruebas de Node,
  * sin dependencias nuevas). Si Node no está instalado, la prueba se omite.
  */
 class PedidoWhatsappJsTest extends TestCase
@@ -19,9 +19,14 @@ class PedidoWhatsappJsTest extends TestCase
         }
 
         $raiz = dirname(__DIR__, 2);
+        $archivos = array_map(fn (string $ruta): string => 'tests/Js/'.basename($ruta), glob($raiz.'/tests/Js/*.test.mjs') ?: []);
+        sort($archivos);
+
+        $this->assertNotEmpty($archivos, 'No hay archivos tests/Js/*.test.mjs que ejecutar.');
+
         $salida = [];
         $codigo = 0;
-        exec('cd '.escapeshellarg($raiz).' && node --test tests/Js/ 2>&1', $salida, $codigo);
+        exec('cd '.escapeshellarg($raiz).' && node --test '.implode(' ', array_map('escapeshellarg', $archivos)).' 2>&1', $salida, $codigo);
 
         $this->assertSame(0, $codigo, implode("\n", array_slice($salida, -40)));
     }

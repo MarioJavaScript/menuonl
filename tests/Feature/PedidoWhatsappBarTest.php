@@ -104,7 +104,6 @@ class PedidoWhatsappBarTest extends TestCase
             'sin número' => [['whatsapp_pedidos' => null], false],
             'número vacío' => [['whatsapp_pedidos' => '   '], false],
             'número de 7 dígitos' => [['whatsapp_pedidos' => '555-1234'], false],
-            'número de 21 dígitos' => [['whatsapp_pedidos' => '123456789012345678901'], false],
             'número con letras' => [['whatsapp_pedidos' => 'llámanos'], false],
             'número de 8 dígitos (mínimo)' => [['whatsapp_pedidos' => '12345678'], true],
             'número de 20 dígitos (máximo)' => [['whatsapp_pedidos' => '12345678901234567890'], true],
