@@ -6,6 +6,7 @@ use App\Models\Categoria;
 use App\Models\Producto;
 use App\Models\Restaurante;
 use App\Models\Scopes\RestauranteScope;
+use App\Services\Catalogos;
 use App\Services\MenuCacheService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -136,8 +137,11 @@ class MenuPublicoController extends Controller
                 ];
             });
 
+            $plantilla = array_key_exists((string) $restaurante->sitio_plantilla, Catalogos::plantillasSitio()) ? (string) $restaurante->sitio_plantilla : 'a';
+            $vista = view()->exists('menu.plantillas.'.$plantilla) ? 'menu.plantillas.'.$plantilla : 'menu.publico';
+
             return response()
-                ->view('menu.publico', [
+                ->view($vista, [
                     'restaurante' => $restaurante,
                     'idioma' => $idioma,
                     'idiomasDisponibles' => $idiomasDisponibles,

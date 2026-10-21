@@ -5,7 +5,7 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/css/app.css', 'resources/js/app.js', 'resources/js/menu.js', 'resources/css/panel.css', 'resources/js/panel.js', 'resources/css/sitio/a.css', 'resources/css/sitio/b.css', 'resources/css/sitio/c.css', 'resources/css/sitio/d.css', 'resources/js/sitio.js', 'resources/css/filament/admin/theme.css'],
+            input: ['resources/css/app.css', 'resources/js/app.js', 'resources/js/menu.js', 'resources/css/panel.css', 'resources/js/panel.js', 'resources/css/sitio/a.css', 'resources/css/sitio/b.css', 'resources/css/sitio/c.css', 'resources/css/sitio/d.css', 'resources/css/sitio/e.css', 'resources/js/sitio-cafeteria.js', 'resources/js/sitio-cafeteria-pedido.js', 'resources/css/sitio/f.css', 'resources/js/sitio-bar.js', 'resources/js/sitio-bar-pedido.js', 'resources/js/sitio.js', 'resources/css/filament/admin/theme.css'],
             refresh: true,
         }),
         tailwindcss(),

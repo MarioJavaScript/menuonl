@@ -88,14 +88,14 @@ class SitioEditorialOscuroTest extends TestCase
 
     public function test_el_catalogo_acepta_d_y_rechaza_otros_valores(): void
     {
-        $this->assertSame(['a', 'b', 'c', 'd'], array_keys(Catalogos::plantillasSitio()));
+        $this->assertSame(['a', 'b', 'c', 'd', 'e', 'f'], array_keys(Catalogos::plantillasSitio()));
         $this->assertSame('Editorial oscuro', Catalogos::plantillasSitio()['d']['nombre']);
-        $this->assertArrayNotHasKey('e', Catalogos::plantillasSitio());
+        $this->assertArrayNotHasKey('z', Catalogos::plantillasSitio());
     }
 
     public function test_un_valor_de_plantilla_desconocido_sigue_cayendo_a_la_plantilla_a(): void
     {
-        $this->restaurante()->forceFill(['sitio_plantilla' => 'e'])->saveQuietly();
+        $this->restaurante()->forceFill(['sitio_plantilla' => 'z'])->saveQuietly();
 
         $this->sitio()->assertOk()->assertSee('data-plantilla="a"', false);
     }
