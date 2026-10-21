@@ -13,9 +13,9 @@
     $eslogan = trim((string) $r->eslogan);
     $acentoPortada = $eslogan !== '' && mb_strlen($eslogan) <= 24 ? $eslogan : null;
 
-    $d = compact('r', 'menu_url', 'horarios', 'direccion', 'telefono', 'telefono_enlace', 'whatsapp_digitos', 'instagram_url', 'facebook_url', 'mapa_url');
+    $d = compact('r', 'menu_url', 'horarios', 'direccion', 'telefono', 'telefono_enlace', 'whatsapp_digitos', 'reservas_activas', 'instagram_url', 'facebook_url', 'mapa_url');
 @endphp
-<x-sitio.cafeteria.layout :r="$r" :titulo="$nombre.($eslogan !== '' ? ' · '.$eslogan : '')" :descripcion="$r->descripcion" pagina="inicio">
+<x-sitio.cafeteria.layout :r="$r" :titulo="$nombre.($eslogan !== '' ? ' · '.$eslogan : '')" :descripcion="$r->descripcion" pagina="inicio" :reservas="$reservas_activas">
 <div class="cal-portada">
     <x-sitio.cafeteria.cabecera :d="$d" actual="inicio" />
 
@@ -42,6 +42,7 @@
     </main>
 </div>
 
+<x-sitio.cafeteria.reservar :d="$d" />
 <x-sitio.cafeteria.contacto :d="$d" />
 <x-sitio.cafeteria.pie :d="$d" />
 </x-sitio.cafeteria.layout>

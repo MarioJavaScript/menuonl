@@ -69,6 +69,9 @@
 
   /* Color de foco: oscuro por defecto, claro dentro de zonas oscuras */
   --cal-foco: var(--cal-cafe);
+
+  /* Mensajes de error de formularios (7:1 sobre blanco) */
+  --cal-error: #8a1c14;
 }
 
 /* ---------- Base ---------- */
@@ -815,3 +818,244 @@ a { color: inherit; }
 .cal-nueva__titulo { font-size: clamp(2rem, 5vw, 4rem); overflow-wrap: anywhere; }
 .cal-nueva .cal-marcas { margin-top: var(--cal-esp-3); }
 .cal-nueva .cal-marcas li { border-color: var(--cal-cafe); }
+
+/* El texto solo para lectores de pantalla es absoluto: sin un contenedor posicionado escapa del recorte del carrusel y ensancha la página en móvil */
+.cal-carrusel__pista { position: relative; }
+
+/* ---------- Pedido por WhatsApp ---------- */
+.cal-boton--chico { padding: 0 var(--cal-esp-3); font-size: 0.9375rem; }
+
+.cal-tarjeta__pie { flex-wrap: wrap; justify-content: space-between; }
+.cal-variantes li { flex-wrap: wrap; align-items: center; }
+.cal-variantes__nombre { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.cal-variantes__agotado { padding: 2px 10px; border-radius: var(--cal-radio-pildora); font-size: 0.8125rem; font-weight: 600; }
+
+.cal-aviso {
+  display: grid;
+  gap: var(--cal-esp-2);
+  margin: 0 0 var(--cal-esp-4);
+  padding: var(--cal-esp-2) var(--cal-esp-3);
+  border: 2px solid var(--cal-cafe);
+  border-radius: var(--cal-radio-marco);
+  background: var(--cal-beige);
+  color: var(--cal-cafe);
+  font-weight: 500;
+}
+.cal-aviso--exito { background: var(--cal-rosa); }
+.cal-aviso p { margin: 0; }
+
+.cal-barra {
+  --cal-foco: var(--cal-blanco);
+  position: fixed;
+  left: 50%;
+  bottom: max(var(--cal-esp-3), env(safe-area-inset-bottom));
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cal-esp-2);
+  width: max-content;
+  max-width: calc(100vw - 2 * var(--cal-gutter));
+  min-height: 52px;
+  padding: 0 var(--cal-esp-4) 0 var(--cal-esp-2);
+  transform: translateX(-50%);
+  border: 2px solid var(--cal-blanco);
+  border-radius: var(--cal-radio-pildora);
+  background: var(--cal-cafe);
+  color: var(--cal-blanco);
+  box-shadow: 0 8px 24px var(--cal-sombra);
+  font-family: var(--cal-fuente-texto);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.cal-barra:hover { background: var(--cal-arcilla); }
+.cal-barra__cuenta {
+  display: grid;
+  place-items: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 6px;
+  border-radius: var(--cal-radio-pildora);
+  background: var(--cal-blanco);
+  color: var(--cal-cafe);
+}
+.cal-barra__total { font-family: var(--cal-fuente-titulo); }
+
+.cal-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(max(var(--cal-esp-3), env(safe-area-inset-bottom)) + 64px);
+  z-index: 30;
+  max-width: calc(100vw - 2 * var(--cal-gutter));
+  margin: 0;
+  padding: var(--cal-esp-1) var(--cal-esp-3);
+  transform: translateX(-50%);
+  border-radius: var(--cal-radio-pildora);
+  background: var(--cal-blanco);
+  color: var(--cal-cafe);
+  border: 2px solid var(--cal-cafe);
+  font-weight: 600;
+  text-align: center;
+}
+
+.cal-pedido {
+  position: fixed;
+  inset: auto 0 0 0;
+  width: 100%;
+  max-width: none;
+  max-height: 92dvh;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--cal-radio-banda) var(--cal-radio-banda) 0 0;
+  background: var(--cal-blanco);
+  color: var(--cal-cafe);
+  overflow: hidden;
+}
+.cal-pedido[open] { display: flex; flex-direction: column; }
+.cal-pedido::backdrop { background: var(--cal-velo); }
+body:has(.cal-pedido[open]) { overflow: hidden; }
+
+.cal-pedido__cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cal-esp-2);
+  padding: var(--cal-esp-3) var(--cal-esp-4);
+  border-bottom: 2px solid var(--cal-cafe);
+}
+.cal-pedido__titulo {
+  font-family: var(--cal-fuente-titulo);
+  font-weight: 800;
+  font-size: 1.75rem;
+  line-height: 1;
+}
+.cal-pedido__cerrar {
+  display: grid;
+  place-items: center;
+  width: var(--cal-tactil);
+  height: var(--cal-tactil);
+  border: 2px solid var(--cal-cafe);
+  border-radius: var(--cal-radio-pildora);
+  background: transparent;
+  color: var(--cal-cafe);
+  cursor: pointer;
+}
+.cal-pedido__cerrar:hover { background: var(--cal-beige); }
+.cal-pedido__cuerpo { flex: 1 1 auto; overflow-y: auto; padding: var(--cal-esp-3) var(--cal-esp-4); }
+.cal-pedido__vacio { padding: var(--cal-esp-4) 0; text-align: center; }
+.cal-pedido__lista { display: grid; margin-bottom: var(--cal-esp-3); }
+
+.cal-linea { display: grid; gap: var(--cal-esp-1); padding: var(--cal-esp-2) 0; border-bottom: 1px solid var(--cal-cafe); }
+.cal-linea__fila { display: flex; align-items: center; justify-content: space-between; gap: var(--cal-esp-2); }
+.cal-linea__nombre { min-width: 0; font-weight: 700; overflow-wrap: anywhere; }
+.cal-linea__subtotal { flex: none; font-family: var(--cal-fuente-titulo); font-weight: 700; }
+.cal-linea__nota { flex: 1 1 auto; min-width: 0; }
+.cal-linea__cantidad { display: flex; flex: none; align-items: center; gap: 2px; }
+.cal-linea__numero { min-width: 2ch; text-align: center; font-weight: 800; }
+.cal-cantidad {
+  display: grid;
+  place-items: center;
+  width: var(--cal-tactil);
+  height: var(--cal-tactil);
+  border: 2px solid var(--cal-cafe);
+  border-radius: var(--cal-radio-pildora);
+  background: transparent;
+  color: var(--cal-cafe);
+  font-size: 1.375rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.cal-cantidad:hover:not(:disabled) { background: var(--cal-beige); }
+.cal-cantidad:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.cal-campo { display: grid; gap: 6px; margin-bottom: var(--cal-esp-2); min-width: 0; }
+.cal-campo__etiqueta { font-weight: 700; }
+.cal-campo__entrada {
+  width: 100%;
+  min-height: var(--cal-tactil);
+  padding: 0 var(--cal-esp-2);
+  border: 2px solid var(--cal-cafe);
+  border-radius: var(--cal-radio-marco);
+  background: var(--cal-blanco);
+  color: var(--cal-cafe);
+  font-family: var(--cal-fuente-texto);
+  font-size: 1rem;
+}
+.cal-campo__entrada::placeholder { color: var(--cal-arcilla); opacity: 1; }
+.cal-campo__area { min-height: 72px; padding-block: var(--cal-esp-1); resize: vertical; }
+.cal-campo__entrada:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.cal-pedido__pie {
+  display: grid;
+  gap: var(--cal-esp-2);
+  padding: var(--cal-esp-3) var(--cal-esp-4) max(var(--cal-esp-3), env(safe-area-inset-bottom));
+  border-top: 2px solid var(--cal-cafe);
+  background: var(--cal-blanco);
+  overflow-y: auto;
+}
+.cal-pedido__total { display: flex; justify-content: space-between; gap: var(--cal-esp-2); font-family: var(--cal-fuente-titulo); font-size: 1.375rem; font-weight: 800; }
+.cal-pedido__nota { font-size: 0.875rem; }
+.cal-pedido__pie .cal-aviso { margin-bottom: 0; }
+.cal-pedido__botones { display: flex; flex-wrap: wrap; gap: var(--cal-esp-2); }
+.cal-pedido__enviar { flex: 1 1 auto; }
+.cal-boton:disabled { opacity: 0.55; cursor: not-allowed; }
+
+@media (min-width: 768px) {
+  .cal-pedido {
+    inset: 0 0 0 auto;
+    width: min(460px, 100vw);
+    max-height: none;
+    height: 100dvh;
+    border-radius: var(--cal-radio-banda) 0 0 var(--cal-radio-banda);
+  }
+}
+
+/* ---------- Reservas ---------- */
+.cal-reservar {
+  background: var(--cal-blanco);
+  padding: var(--cal-esp-6) var(--cal-gutter);
+}
+.cal-reservar__interior { max-width: 760px; margin-inline: auto; }
+.cal-reservar__titulos { display: grid; gap: 2px; margin-bottom: var(--cal-esp-4); }
+.cal-reserva {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 var(--cal-esp-3);
+}
+.cal-campo--completo { grid-column: 1 / -1; }
+.cal-reserva .cal-boton { margin-top: var(--cal-esp-1); }
+.cal-reserva__trampa {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.cal-reserva__mensaje {
+  grid-column: 1 / -1;
+  margin-top: var(--cal-esp-3);
+  padding: var(--cal-esp-3);
+  border: 2px solid var(--cal-cafe);
+  border-radius: var(--cal-radio-marco);
+  background: var(--cal-beige);
+}
+.cal-reserva__mensaje[class~="error"] { border-color: var(--cal-error); background: var(--cal-blanco); color: var(--cal-error); font-weight: 600; }
+.cal-reserva__mensaje a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--cal-tactil);
+  padding: 0 var(--cal-esp-4);
+  border-radius: var(--cal-radio-pildora);
+  background: var(--cal-acento);
+  color: var(--cal-acento-texto);
+  font-weight: 700;
+  text-decoration: none;
+}
+.cal-reservar__alterno { margin-top: var(--cal-esp-4); }
+.cal-reservar__alterno .cal-contacto__botones { margin-top: var(--cal-esp-2); }
+
+@media (max-width: 767px) {
+  .cal-reserva { grid-template-columns: minmax(0, 1fr); }
+}

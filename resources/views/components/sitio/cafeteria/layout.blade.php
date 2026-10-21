@@ -1,4 +1,4 @@
-@props(['r', 'titulo', 'descripcion' => null, 'pagina' => 'inicio', 'lang' => null, 'js' => false])
+@props(['r', 'titulo', 'descripcion' => null, 'pagina' => 'inicio', 'lang' => null, 'js' => false, 'pedido' => false, 'reservas' => false])
 @php
     /*
      * Base de la plantilla E (sitio y menú). Solo carga su propia hoja; no usa menuonl.css ni el estilo (tema) del restaurante.
@@ -31,7 +31,7 @@
     @endif
     <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
     <link rel="preload" href="/fonts/sitio/syne-var.woff2" as="font" type="font/woff2" crossorigin>
-    @vite(array_values(array_filter(['resources/css/sitio/e.css', $js ? 'resources/js/sitio-cafeteria.js' : null])))
+    @vite(array_values(array_filter(['resources/css/sitio/e.css', $js ? 'resources/js/sitio-cafeteria.js' : null, $pedido ? 'resources/js/sitio-cafeteria-pedido.js' : null, $reservas ? 'resources/js/sitio.js' : null])))
 </head>
 <body class="sitio sitio-e cal-pagina cal-pagina--{{ $pagina }}" data-plantilla="e"@if ($usarAcento) style="--cal-acento: {{ $acento }}; --cal-acento-texto: {{ $acentoTexto }};"@endif>
 <a class="cal-salto" href="#principal">Saltar al contenido</a>

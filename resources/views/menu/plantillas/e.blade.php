@@ -1,7 +1,8 @@
 @php
     /*
      * Menú de la plantilla E · Cafetería. Recibe lo mismo que menu.publico y no usa menuonl.css ni el estilo (tema) del restaurante.
-     * Contacto y horario salen de SitioPublicoDatos, igual que en el sitio. Sin carrito: el pedido se hace por WhatsApp.
+     * Contacto y horario salen de SitioPublicoDatos, igual que en el sitio. El pedido por WhatsApp usa la misma configuración que
+     * menu.publico (pedidos activos, número de pedidos y horario); su script y su formato de mensaje están en resources/js/sitio-cafeteria-pedido*.js.
      */
     $d = app(\App\Services\SitioPublicoDatos::class)->para($restaurante);
     $formato = fn ($valor): string => \App\Services\FormatoMoneda::formatear($valor, $restaurante->moneda, $idioma);
@@ -14,9 +15,19 @@
     $nuevo = $destacados->first(fn ($producto): bool => $producto->etiquetas->contains('codigo', 'nuevo'));
     $destacado = $nuevo ?? $destacados->first(fn ($producto): bool => filled($producto->imagen)) ?? $destacados->first();
     $nombreDestacado = $destacado?->traduccion($idioma)?->nombre;
-    $puedePedirPorWhatsapp = $restaurante->pedidos_activos && filled($d['whatsapp_digitos']);
+
+    $numeroPedidos = $restaurante->whatsappPedidosDigitos();
+    $pedidosHabilitados = $restaurante->pedidos_activos && $numeroPedidos !== null;
+    $puedePedir = $pedidosHabilitados && $estaAbierto;
+    $agregar = function ($producto, string $nombre, ?object $variante = null, string $nombreVariante = '') use ($puedePedir): ?array {
+        $disponible = $producto->disponible && ($variante === null || $variante->disponible);
+
+        return $puedePedir && $disponible
+            ? ['producto' => $producto->id, 'variante' => $variante?->id, 'nombre' => $nombre, 'nombreVariante' => $nombreVariante, 'precio' => $variante !== null ? (string) $variante->precio : $producto->precioVigente()]
+            : null;
+    };
 @endphp
-<x-sitio.cafeteria.layout :r="$restaurante" :titulo="$restaurante->nombre.' · Menú'" :descripcion="$restaurante->descripcion" pagina="menu" :lang="str_replace('_', '-', $idioma)" :js="true">
+<x-sitio.cafeteria.layout :r="$restaurante" :titulo="$restaurante->nombre.' · Menú'" :descripcion="$restaurante->descripcion" pagina="menu" :lang="str_replace('_', '-', $idioma)" :js="true" :pedido="$puedePedir">
 <div class="cal-portada cal-portada--corta">
     <x-sitio.cafeteria.cabecera :d="$d" actual="menu" />
 </div>
@@ -36,11 +47,14 @@
                         @endforeach
                     </nav>
                 @endif
-                @if ($puedePedirPorWhatsapp)
-                    <a class="cal-boton cal-boton--arcilla" href="https://wa.me/{{ $d['whatsapp_digitos'] }}" rel="noopener">Pedir por WhatsApp</a>
+                @if ($puedePedir)
+                    <a class="cal-boton cal-boton--arcilla" href="https://wa.me/{{ $numeroPedidos }}" rel="noopener" data-cal-sin-js>Pedir por WhatsApp</a>
                 @endif
             </div>
         </div>
+        @if ($pedidosHabilitados && ! $estaAbierto)
+            <p class="cal-aviso" role="status">Estamos cerrados ahora. Puedes ver el menú; los pedidos se activan al abrir.</p>
+        @endif
 
         @if ($platos->isEmpty())
             <p class="cal-vacio">Este menú se está preparando.</p>
@@ -87,7 +101,19 @@
                                     @if ($producto->tieneVariantes())
                                         <ul class="cal-variantes" role="list">
                                             @foreach ($producto->variantes as $variante)
-                                                <li><span>{{ $variante->traduccion($idioma)?->nombre }}</span> <span class="cal-precio">{{ $formato($variante->precio) }}</span></li>
+                                                @php
+                                                    $nombreVariante = (string) ($variante->traduccion($idioma)?->nombre ?: 'Opción');
+                                                    $articulo = $agregar($producto, $nombrePlato, $variante, $nombreVariante);
+                                                @endphp
+                                                <li>
+                                                    <span class="cal-variantes__nombre">{{ $variante->traduccion($idioma)?->nombre }}</span>
+                                                    <span class="cal-precio">{{ $formato($variante->precio) }}</span>
+                                                    @if ($articulo !== null)
+                                                        <button class="cal-boton cal-boton--arcilla cal-boton--chico" type="button" hidden data-cal-agregar data-producto="{{ $articulo['producto'] }}" data-variante="{{ $articulo['variante'] }}" data-nombre="{{ $articulo['nombre'] }}" data-nombre-variante="{{ $articulo['nombreVariante'] }}" data-precio="{{ $articulo['precio'] }}" aria-label="Agregar {{ $nombrePlato }} ({{ $nombreVariante }}) al pedido">Agregar</button>
+                                                    @elseif ($puedePedir)
+                                                        <span class="cal-marcas__agotado cal-variantes__agotado">Agotado</span>
+                                                    @endif
+                                                </li>
                                             @endforeach
                                         </ul>
                                     @else
@@ -95,6 +121,9 @@
                                             @if ($enOferta)<s class="cal-precio-antes"><span class="cal-visualmente-oculto">Precio anterior </span>{{ $formato($producto->precio) }}</s>@endif
                                             <span class="cal-precio">{{ $formato($producto->precioVigente()) }}</span>
                                         </p>
+                                        @if (($articulo = $agregar($producto, $nombrePlato)) !== null)
+                                            <button class="cal-boton cal-boton--arcilla cal-boton--chico" type="button" hidden data-cal-agregar data-producto="{{ $articulo['producto'] }}" data-variante="" data-nombre="{{ $articulo['nombre'] }}" data-nombre-variante="" data-precio="{{ $articulo['precio'] }}" aria-label="Agregar {{ $nombrePlato }} al pedido">Agregar</button>
+                                        @endif
                                     @endif
                                 </div>
                             </article>
@@ -140,6 +169,10 @@
         </section>
     @endif
 </main>
+
+@if ($puedePedir)
+    <x-sitio.cafeteria.pedido :restaurante="$restaurante" :numero="$numeroPedidos" :idioma="$idioma" :mesa="$mesa" />
+@endif
 
 <x-sitio.cafeteria.contacto :d="$d" />
 <x-sitio.cafeteria.pie :d="$d" />

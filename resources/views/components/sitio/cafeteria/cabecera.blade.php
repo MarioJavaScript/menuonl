@@ -14,6 +14,7 @@
         <ul class="cal-cabecera__lista">
             <li><a class="cal-cabecera__enlace" href="{{ $inicioUrl }}" @if ($actual === 'inicio') aria-current="page" @endif>Inicio</a></li>
             <li><a class="cal-cabecera__enlace" href="{{ $d['menu_url'] }}" @if ($actual === 'menu') aria-current="page" @endif>Menú</a></li>
+            @if ($d['reservas_activas'] ?? false)<li><a class="cal-cabecera__enlace" href="{{ $actual === 'inicio' ? '#reservar' : $inicioUrl.'#reservar' }}">Reservar</a></li>@endif
         </ul>
     </nav>
     @if ($hayVisita || filled($d['telefono_enlace']) || filled($d['whatsapp_digitos']))

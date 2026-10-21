@@ -217,6 +217,16 @@ class Restaurante extends Model implements HasName
     }
 
     /**
+     * Número de "WhatsApp para pedidos" solo con dígitos, o null si no tiene de 8 a 20 (la misma regla del formulario del panel).
+     */
+    public function whatsappPedidosDigitos(): ?string
+    {
+        $digitos = preg_replace('/\D/', '', (string) $this->whatsapp_pedidos);
+
+        return is_string($digitos) && preg_match('/\A[0-9]{8,20}\z/', $digitos) === 1 ? $digitos : null;
+    }
+
+    /**
      * Determine if the restaurant is open at the given moment, in its own time zone.
      *
      * Supports several shifts per day and overnight shifts (cierra <= abre closes the next day).

@@ -168,6 +168,7 @@ class SitioCafeteriaTest extends TestCase
 
     public function test_el_menu_se_renderiza_con_la_vista_de_la_plantilla_e(): void
     {
+        $this->travelTo('2026-10-21 18:00:00'); // miércoles 12:00 en Ciudad de México: abierto
         $this->restauranteCompleto();
 
         $respuesta = $this->menu()->assertOk()->assertViewIs('menu.plantillas.e');
@@ -193,6 +194,7 @@ class SitioCafeteriaTest extends TestCase
     #[DataProvider('estilos')]
     public function test_sitio_y_menu_no_cambian_con_el_estilo_del_restaurante(string $estilo): void
     {
+        $this->freezeTime(); // el formulario de reservas lleva la hora de renderizado
         $restaurante = $this->restauranteCompleto(['tema' => 'calido']);
         $sitioBase = $this->cuerpo($this->sitio());
         $menuBase = $this->cuerpo($this->menu());
