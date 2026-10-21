@@ -35,5 +35,11 @@
     --color-acento: var(--mo-acento);
     --color-acento-texto: var(--mo-acento-texto);
     --color-oferta: var(--mo-oferta);
+    --color-abierto-fondo: var(--mo-abierto-fondo);
+    --color-abierto-texto: var(--mo-abierto-texto);
+    --color-cerrado-fondo: var(--mo-cerrado-fondo);
+    --color-cerrado-texto: var(--mo-cerrado-texto);
+    --color-mesa-fondo: var(--mo-mesa-fondo);
+    --color-mesa-texto: var(--mo-mesa-texto);
     --font-titulo: var(--mo-fuente-titulo);
 }
