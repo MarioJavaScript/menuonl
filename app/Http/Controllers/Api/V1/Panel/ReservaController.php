@@ -14,19 +14,33 @@ use Illuminate\Validation\Rule;
 
 class ReservaController extends Controller
 {
+    public const int MAXIMO_PROXIMAS = 200;
+
     /**
      * Reservations of one day (today in the restaurant's time zone by default), ordered by time.
+     * With proximas=1 it returns the ones from today onward (up to MAXIMO_PROXIMAS), ordered by date and time.
+     * The response carries "hoy": today's date in the restaurant's time zone.
      */
     public function index(Request $request, Restaurante $restaurante): AnonymousResourceCollection
     {
         Gate::authorize('viewAny', Reserva::class);
 
-        $datos = $request->validate(['fecha' => ['nullable', 'date_format:Y-m-d']]);
-        $fecha = $datos['fecha'] ?? now($restaurante->zona_horaria)->toDateString();
+        $datos = $request->validate([
+            'fecha' => ['nullable', 'date_format:Y-m-d'],
+            'proximas' => ['nullable', 'boolean'],
+        ]);
+        $hoy = now($restaurante->zona_horaria)->toDateString();
 
-        return ReservaResource::collection(
-            Reserva::whereDate('fecha', $fecha)->orderBy('hora')->orderBy('id')->get()
-        );
+        if ($request->boolean('proximas')) {
+            $reservas = Reserva::whereDate('fecha', '>=', $hoy)
+                ->orderBy('fecha')->orderBy('hora')->orderBy('id')
+                ->limit(self::MAXIMO_PROXIMAS)
+                ->get();
+        } else {
+            $reservas = Reserva::whereDate('fecha', $datos['fecha'] ?? $hoy)->orderBy('hora')->orderBy('id')->get();
+        }
+
+        return ReservaResource::collection($reservas)->additional(['hoy' => $hoy]);
     }
 
     public function store(Request $request, Restaurante $restaurante): JsonResponse

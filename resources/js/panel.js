@@ -6,14 +6,15 @@ const same=(a,b)=>String(a)===String(b);
 /* ---------- API (misma sesión que /admin: cookie + CSRF) ---------- */
 let slug=null;
 const xsrf=()=>decodeURIComponent((document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]*)/)||[])[1]||'');
-async function api(method,path,body){
+const api=async(method,path,body)=>{const j=await apiRaw(method,path,body);return j===null?null:j.data!==undefined?j.data:j};
+async function apiRaw(method,path,body){
   const r=await fetch('/api/v1/panel'+path,{method,credentials:'same-origin',headers:{'Accept':'application/json','Content-Type':'application/json','X-XSRF-TOKEN':xsrf()},body:body?JSON.stringify(body):undefined});
   if(r.status===401){location.href='/panel';throw new Error('Sesión expirada')}
   if(r.status===419)throw new Error('La página caducó, recárgala');
   if(r.status===204)return null;
   const j=await r.json().catch(()=>({}));
   if(!r.ok)throw new Error(j.errors?Object.values(j.errors)[0][0]:(j.message||'No se pudo completar la acción'));
-  return j.data!==undefined?j.data:j;
+  return j;
 }
 const P=p=>`/${slug}${p}`;
 /* Reduce la foto en el navegador (los celulares dan 4-8 MB): el servidor recorta, convierte a WebP y genera los tamaños. */
@@ -36,12 +37,18 @@ async function subir(path,file){
 }
 
 const ROLES={propietario:'Propietario',gerente:'Gerente',editor:'Editor',recepcion:'Recepción',cocina:'Cocina'};
-let S={aj:null,reservas:[],menu:[],pedidos:[],resumen:{},equipo:{miembros:[],invitaciones:[],roles_asignables:[]},modulos:[],ok:false};
+let S={aj:null,reservas:[],prox:[],resDia:[],hoy:'',resModo:'proximas',resFecha:'',menu:[],pedidos:[],resumen:{},equipo:{miembros:[],invitaciones:[],roles_asignables:[]},modulos:[],ok:false};
 const has=m=>S.modulos.includes(m);
 /* cada carga pertenece a un módulo; un rol sin permiso nunca la pide (la API respondería 403) */
 const MODULO_DE={reservas:'reservas',pedidos:'pedidos',menu:'menu',resumen:'inicio',equipo:'ajustes',ajustes:'ajustes'};
 const L={
-  async reservas(){S.reservas=(await api('GET',P('/reservas'))).map(r=>({id:r.id,n:r.nombre,p:r.personas,h:r.hora,s:r.estado,nota:r.nota||'',tel:r.telefono||'',o:r.origen}))},
+  /* hoy (resumen y pestaña "Hoy"), de hoy en adelante (pestaña "Próximas", avisos) y, si se eligió, un día concreto */
+  async reservas(){
+    const fila=r=>({id:r.id,f:r.fecha,n:r.nombre,p:r.personas,h:r.hora,s:r.estado,nota:r.nota||'',tel:r.telefono||'',o:r.origen});
+    const dia=S.resModo==='fecha'&&S.resFecha?apiRaw('GET',P('/reservas?fecha='+S.resFecha)):null;
+    const [hoy,prox,otro]=await Promise.all([apiRaw('GET',P('/reservas')),apiRaw('GET',P('/reservas?proximas=1')),dia]);
+    S.reservas=hoy.data.map(fila);S.prox=prox.data.map(fila);S.hoy=prox.hoy||hoy.hoy||S.hoy;S.resDia=otro?otro.data.map(fila):[];
+  },
   async pedidos(){const now=Date.now();S.pedidos=(await api('GET',P('/pedidos'))).map(p=>({id:p.id,mesa:p.mesa,its:p.detalle,tot:p.total,e:p.estado,t:now-p.minutos*60000}))},
   async menu(){S.menu=(await api('GET',P('/menu'))).map(c=>({id:c.id,nombre:c.nombre,items:c.productos.map(i=>({id:i.id,n:i.nombre,pr:i.precio,disp:i.disponible,vis:i.visible,img:i.imagen}))}))},
   async resumen(){S.resumen=await api('GET',P('/resumen'))},
@@ -61,6 +68,10 @@ const findItem=id=>{for(const c of S.menu){const i=c.items.find(x=>same(x.id,id)
 const mins=t=>Math.max(0,Math.round((Date.now()-t)/60000));
 const activos=()=>S.pedidos.filter(p=>p.e!=='entregado');
 const byHora=(a,b)=>a.h<b.h?-1:a.h>b.h?1:0;
+const byFechaHora=(a,b)=>a.f<b.f?-1:a.f>b.f?1:byHora(a,b);
+const fechaCorta=f=>new Date(f+'T12:00:00').toLocaleDateString('es-MX',{weekday:'short',day:'numeric',month:'short'});
+const fechaLarga=f=>{const t=new Date(f+'T12:00:00').toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'});return t.charAt(0).toUpperCase()+t.slice(1)};
+const findRes=id=>[S.prox,S.reservas,S.resDia].flatMap(l=>l).find(x=>same(x.id,id));
 
 /* ---------- vistas ---------- */
 const V={};
@@ -75,12 +86,12 @@ function resRow(r,compact){
   const extra=compact||c?'':`<select class="sm" style="width:auto;min-height:44px" aria-label="Mover ${esc(r.n)} a otra hora" data-f="res.h" data-id="${r.id}">${horas.map(h=>`<option ${h===r.h?'selected':''}>${h}</option>`).join('')}</select>
     ${r.s==='llego'?'':`<button class="btn danger sm" data-act="res-cancel" data-id="${r.id}">Cancelar</button>`}`;
   return `<li class="${c?'cancelled':''}"><span class="time">${esc(r.h)}</span>
-    <div class="grow"><strong>${esc(r.n)}</strong><div class="muted">${r.p} personas${r.nota?' · '+esc(r.nota):''}${r.tel?` · <a class="tel" href="tel:${esc(r.tel.replace(/[^0-9+]/g,''))}">${esc(r.tel)}</a>`:''}</div></div>
+    <div class="grow"><strong>${esc(r.n)}</strong><div class="muted">${compact&&r.f&&r.f!==S.hoy?esc(fechaCorta(r.f))+' · ':''}${r.p} personas${r.nota?' · '+esc(r.nota):''}${r.tel?` · <a class="tel" href="tel:${esc(r.tel.replace(/[^0-9+]/g,''))}">${esc(r.tel)}</a>`:''}</div></div>
     ${r.o==='sitio'?'<span class="chip soft">Sitio web</span>':''}
     ${chip}${act}${extra}</li>`;
 }
 V.inicio=()=>{
-  const prox=[...S.reservas].filter(r=>r.s==='pendiente'||r.s==='confirmada').sort(byHora).slice(0,4);
+  const prox=[...S.prox].filter(r=>r.s==='pendiente'||r.s==='confirmada').sort(byFechaHora).slice(0,4);
   const agot=S.menu.flatMap(c=>c.items).filter(i=>!i.disp&&i.vis);
   const act=activos(), late=act.filter(p=>mins(p.t)>=15).length, R=S.resumen;
   const stats=[];
@@ -95,14 +106,25 @@ V.inicio=()=>{
   ${has('menu')?`<section class="card"><h2>Platillos agotados</h2>${agot.length?`<ul class="list">${agot.map(i=>`<li><div class="grow"><strong>${esc(i.n)}</strong></div><button class="btn primary sm" data-act="disp" data-id="${i.id}">Volver a disponible</button></li>`).join('')}</ul>`:'<p class="empty">Todo el menú está disponible.</p>'}</section>`:''}</div>`;
 };
 V.reservas=()=>{
-  const l=[...S.reservas].sort(byHora);
-  return `<div class="inner"><div class="head"><div><h1>Reservas</h1><p class="muted">${l.filter(r=>r.s!=='cancelada').length} activas hoy</p></div></div>
+  const modo=S.resModo,hoy=S.hoy;
+  const l=[...(modo==='hoy'?S.reservas:modo==='fecha'?S.resDia:S.prox)].sort(byFechaHora);
+  const donde={hoy:'hoy',fecha:'el '+(S.resFecha?fechaCorta(S.resFecha):'día elegido'),proximas:'de hoy en adelante'}[modo];
+  const vacio={hoy:'No hay reservas para hoy.',fecha:'No hay reservas para ese día.',proximas:'No hay reservas próximas.'}[modo];
+  const grupos=[];for(const r of l){const g=grupos[grupos.length-1];if(g&&g.f===r.f)g.l.push(r);else grupos.push({f:r.f,l:[r]})}
+  const lista=g=>`${modo==='proximas'?`<h2 class="dia">${esc(g.f===hoy?'Hoy · '+fechaCorta(g.f):fechaLarga(g.f))}</h2>`:''}<ul class="list">${g.l.map(r=>resRow(r)).join('')}</ul>`;
+  const nueva=modo==='fecha'&&S.resFecha?S.resFecha:hoy;
+  return `<div class="inner"><div class="head"><div><h1>Reservas</h1><p class="muted">${l.filter(r=>r.s!=='cancelada').length} activas ${donde}</p></div></div>
+  <div class="tabs fechas" role="group" aria-label="Qué reservas ver">
+   <button data-act="res-modo" data-v="proximas" aria-pressed="${modo==='proximas'}">Próximas</button>
+   <button data-act="res-modo" data-v="hoy" aria-pressed="${modo==='hoy'}">Hoy</button>
+   <label class="fecha-sel" data-activo="${modo==='fecha'}"><span class="sr">Ver otro día</span><input id="rf" type="date" data-f="res.fecha" value="${modo==='fecha'?esc(S.resFecha):''}" aria-label="Ver otro día"></label></div>
   <form class="card addform" data-form="res" aria-label="Nueva reserva">
    <div class="wide"><label class="f" for="rn">Nombre</label><input id="rn" name="n" required maxlength="100" autocomplete="off"></div>
    <div><label class="f" for="rp">Personas</label><input id="rp" name="p" type="number" min="1" max="30" value="2" required inputmode="numeric"></div>
+   <div><label class="f" for="rd">Día</label><input id="rd" name="f" type="date" value="${esc(nueva)}" min="${esc(hoy)}" required></div>
    <div><label class="f" for="rh">Hora</label><select id="rh" name="h">${HR.map(h=>`<option ${h==='20:00'?'selected':''}>${h}</option>`).join('')}</select></div>
    <button class="btn primary wide" type="submit">Agregar reserva</button></form>
-  <section class="card">${l.length?`<ul class="list">${l.map(r=>resRow(r)).join('')}</ul>`:'<p class="empty">No hay reservas para hoy.</p>'}</section></div>`;
+  <section class="card">${l.length?grupos.map(lista).join(''):`<p class="empty">${vacio}</p>`}</section></div>`;
 };
 V.menu=()=>`<div class="inner"><div class="head"><div><h1>Menú</h1><p class="muted">Edita el nombre o el precio directamente. Los cambios se guardan solos.</p></div></div>
  ${S.menu.length?S.menu.map(c=>`<section class="card cat"><header><h2>${esc(c.nombre)}</h2><span class="muted">${c.items.length} platillos</span></header>
@@ -185,7 +207,7 @@ function render(){
   $('#main').innerHTML=V[r]();
   document.querySelectorAll('.nav a').forEach(a=>{if(a.dataset.r===r)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
   document.querySelectorAll('.nav a[data-modulo]').forEach(a=>{a.hidden=!has(a.dataset.modulo)});
-  const pend=S.reservas.filter(x=>x.s==='pendiente').length, act=activos().length;
+  const pend=S.prox.filter(x=>x.s==='pendiente').length, act=activos().length;
   const b1=$('#b-res'),b2=$('#b-ped');b1.hidden=!pend||!has('reservas');b1.textContent=pend;b2.hidden=!act||!has('pedidos');b2.textContent=act;
   document.title=TITULOS[r]+' · '+(S.nombre||'Panel');
   if(foco&&$('#'+foco))$('#'+foco).focus();
@@ -196,8 +218,9 @@ addEventListener('hashchange',()=>{render();scrollTo(0,0)});
 const A={
   res(el){return run(async()=>{const v=el.dataset.v;await api('PATCH',P('/reservas/'+el.dataset.id),{estado:v});
     await sync('reservas','resumen');toast({confirmada:'Reserva confirmada',llego:'Marcada como llegada',pendiente:'Reserva restaurada'}[v])})},
-  'res-cancel'(el){const r=S.reservas.find(x=>same(x.id,el.dataset.id));
-    confirmar(`¿Cancelar la reserva de ${r.n} a las ${r.h}?`,()=>run(async()=>{await api('PATCH',P('/reservas/'+r.id),{estado:'cancelada'});await sync('reservas','resumen');toast('Reserva cancelada')}),'Sí, cancelar')},
+  'res-modo'(el){S.resModo=el.dataset.v;S.resFecha='';return run(async()=>{await sync('reservas')})},
+  'res-cancel'(el){const r=findRes(el.dataset.id);
+    confirmar(`¿Cancelar la reserva de ${r.n} ${r.f===S.hoy?'a las':'el '+fechaCorta(r.f)+' a las'} ${r.h}?`,()=>run(async()=>{await api('PATCH',P('/reservas/'+r.id),{estado:'cancelada'});await sync('reservas','resumen');toast('Reserva cancelada')}),'Sí, cancelar')},
   disp(el){const [,i]=findItem(el.dataset.id);const nuevo=!i.disp;return run(async()=>{await api('PATCH',P('/productos/'+i.id),{disponible:nuevo});await sync('menu');toast(nuevo?`${i.n} disponible`:`${i.n} agotado`)})},
   dup(el){return run(async()=>{await api('POST',P('/productos/'+el.dataset.id+'/duplicar'));await sync('menu');toast('Platillo duplicado')})},
   vis(el){const [,i]=findItem(el.dataset.id);const nuevo=!i.vis;return run(async()=>{await api('PATCH',P('/productos/'+i.id),{visible:nuevo});await sync('menu');toast(nuevo?'Visible en el sitio':'Oculto en el sitio')})},
@@ -225,6 +248,7 @@ document.addEventListener('change',e=>{const el=e.target;
       toast('Foto guardada')})}
   if(f.startsWith('aj.')||f.startsWith('hor.'))return ajusteCambiado(el,f);
   if(f==='usr.rol')return run(async()=>{await api('PATCH',P('/equipo/usuarios/'+id),{rol:el.value});await sync('equipo');toast('Rol actualizado')});
+  if(f==='res.fecha'){if(!el.value)return;S.resModo='fecha';S.resFecha=el.value;return run(async()=>{await sync('reservas')})}
   if(f==='res.h')return run(async()=>{await api('PATCH',P('/reservas/'+id),{hora:el.value});await sync('reservas');toast('Reserva movida a las '+el.value)});
   if(f==='item.n'){const [,i]=findItem(id);const v=el.value.trim();if(!v){el.value=i.n;return toast('El nombre no puede estar vacío')}
     return run(async()=>{await api('PATCH',P('/productos/'+id),{nombre:v});i.n=v;toast('Nombre guardado')})}
@@ -250,7 +274,7 @@ function ajusteCambiado(el,f){
 document.addEventListener('submit',e=>{const f=e.target.dataset.form;if(!f)return;e.preventDefault();
   const form=e.target,d=Object.fromEntries(new FormData(form)),btn=form.querySelector('[type=submit]');btn.disabled=true;
   run(async()=>{
-    if(f==='res'){await api('POST',P('/reservas'),{nombre:d.n.trim(),personas:parseInt(d.p)||1,hora:d.h});await sync('reservas','resumen');toast('Reserva agregada')}
+    if(f==='res'){await api('POST',P('/reservas'),{nombre:d.n.trim(),personas:parseInt(d.p)||1,hora:d.h,fecha:d.f||undefined});await sync('reservas','resumen');toast('Reserva agregada')}
     if(f==='item'){const pr=parseFloat(String(d.pr).replace(/[$,]/g,''));if(!(pr>=0))throw new Error('Precio no válido');
       await api('POST',P('/categorias/'+form.dataset.cid+'/productos'),{nombre:d.n.trim(),precio:pr});await sync('menu');toast('Platillo agregado')}
     if(f==='usr'){await api('POST',P('/equipo/invitaciones'),{email:d.email.trim(),rol:d.rol});await sync('equipo');toast('Invitación enviada')}
