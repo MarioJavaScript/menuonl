@@ -8,7 +8,7 @@ El comensal escanea un QR, ve el menú al instante sin instalar ninguna app y, s
 - ✅ **Panel de servicio `/panel` (Fases 1–4):** vista Blade + Vite que consume la API `/api/v1/panel` con la sesión de login. Reservas, pedidos, menú, resumen del día, roles operativos (`gerente`, `recepcion`, `cocina`) con gestión de equipo, ajustes funcionales del restaurante y subida de fotos con recorte, WebP y tamaños responsive (galería de imágenes).
 - ✅ **Sitios públicos `/{slug}` (Fase 5):** sitio dinámico del restaurante con tres plantillas en Blade.
 - 🚧 **Reservas públicas:** formulario de reserva en el sitio conectado a `ReservaPublicaController` / `ReservasPublicas` (disponibilidad por horario y aforo, validación de datos de contacto, rate limiting, origen de la reserva). Aún hay pruebas pendientes de ajustar.
-- ✅ **API REST + frontend Next.js 15 (`frontend/`):** menú público desacoplado vía `/api/v1` (experimental).
+- ✅ **API REST pública:** menú público vía `/api/v1/menu/{slug}`. El cliente Next.js experimental (`frontend/`) se retiró; sigue en el historial de git.
 - Suite actual: **770 pruebas** (761 pasan, 8 fallan —reservas por fecha/hora y cookie de sesión—, 1 omitida).
 
 **Historial (16 de octubre de 2026):**
