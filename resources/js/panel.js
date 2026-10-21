@@ -75,9 +75,22 @@ const findRes=id=>[S.prox,S.reservas,S.resDia].flatMap(l=>l).find(x=>same(x.id,i
 
 /* ---------- vistas ---------- */
 const V={};
+const ICO={
+  cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  gente:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0113 0M16 4.5a3.5 3.5 0 010 7M18 14a6 6 0 013.5 6"/>',
+  bolsa:'<path d="M5 4h14l-1 16H6L5 4zM9 8h6"/>',
+  caja:'<path d="M4 7h16v12H4zM4 7l2-3h12l2 3M9 12h6"/>',
+  reloj:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  plato:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/>',
+  ok:'<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>'
+};
+const ico=k=>`<svg viewBox="0 0 24 24" aria-hidden="true">${ICO[k]}</svg>`;
+const vacio=(msg,k='ok')=>`<div class="empty">${ico(k)}<span>${msg}</span></div>`;
+const saludo=()=>{const h=new Date().getHours();return h<12?'Buenos días':h<19?'Buenas tardes':'Buenas noches'};
+const stat=(valor,etiqueta,k,clase='')=>`<div class="stat ${clase}"><span class="ico">${ico(k)}</span><b>${valor}</b><span>${etiqueta}</span></div>`;
 function resRow(r,compact){
   const c=r.s==='cancelada';
-  const chip={pendiente:'<span class="chip alert">Por confirmar</span>',confirmada:'<span class="chip">Confirmada</span>',llego:'<span class="chip done">Ya llegó</span>',cancelada:'<span class="chip soft">Cancelada</span>'}[r.s];
+  const chip={pendiente:'<span class="chip alert">Por confirmar</span>',confirmada:'<span class="chip ok">Confirmada</span>',llego:'<span class="chip done">Ya llegó</span>',cancelada:'<span class="chip soft">Cancelada</span>'}[r.s];
   let act='';
   if(r.s==='pendiente')act=`<button class="btn primary sm" data-act="res" data-id="${r.id}" data-v="confirmada">Confirmar</button>`;
   if(r.s==='confirmada')act=`<button class="btn primary sm" data-act="res" data-id="${r.id}" data-v="llego">Llegó</button>`;
@@ -94,22 +107,25 @@ V.inicio=()=>{
   const prox=[...S.prox].filter(r=>r.s==='pendiente'||r.s==='confirmada').sort(byFechaHora).slice(0,4);
   const agot=S.menu.flatMap(c=>c.items).filter(i=>!i.disp&&i.vis);
   const act=activos(), late=act.filter(p=>mins(p.t)>=15).length, R=S.resumen;
+  const porConfirmar=S.prox.filter(r=>r.s==='pendiente').length;
   const stats=[];
-  if(R.ventas_hoy!==undefined)stats.push(`<div class="stat"><b>${money(R.ventas_hoy)}</b><span>Ventas de hoy</span></div>`);
-  if(R.comensales_esperados!==undefined)stats.push(`<div class="stat"><b>${R.comensales_esperados}</b><span>Comensales esperados</span></div>`);
-  if(R.reservas_por_confirmar!==undefined&&R.ventas_hoy===undefined)stats.push(`<div class="stat"><b>${R.reservas_por_confirmar}</b><span>Por confirmar</span></div>`);
-  if(has('pedidos'))stats.push(`<div class="stat"><b>${act.length}</b><span>Pedidos activos${late?` · <b style="display:inline;font-size:inherit;color:var(--accent)">${late} tarde</b>`:''}</span></div>`);
-  return `<div class="inner"><div class="head"><div><h1>Inicio</h1><p class="muted">Resumen del servicio de hoy</p></div></div>
-  <div class="stats" style="grid-template-columns:repeat(${Math.max(stats.length,1)},1fr)">${stats.join('')}</div>
-  ${has('reservas')?`<section class="card"><h2>Próximas reservas</h2>${prox.length?`<ul class="list">${prox.map(r=>resRow(r,true)).join('')}</ul>`:'<p class="empty">Sin reservas pendientes.</p>'}
-   <p style="margin-top:12px"><a href="#reservas" class="btn ghost">Ver todas las reservas</a></p></section>`:''}
-  ${has('menu')?`<section class="card"><h2>Platillos agotados</h2>${agot.length?`<ul class="list">${agot.map(i=>`<li><div class="grow"><strong>${esc(i.n)}</strong></div><button class="btn primary sm" data-act="disp" data-id="${i.id}">Volver a disponible</button></li>`).join('')}</ul>`:'<p class="empty">Todo el menú está disponible.</p>'}</section>`:''}</div>`;
+  if(R.ventas_hoy!==undefined)stats.push(stat(money(R.ventas_hoy),'Ventas de hoy','caja','ok'));
+  if(R.comensales_esperados!==undefined)stats.push(stat(R.comensales_esperados,'Comensales esperados hoy','gente'));
+  if(has('reservas'))stats.push(stat(porConfirmar,'Reservas por confirmar','cal',porConfirmar?'acento':''));
+  if(has('pedidos'))stats.push(stat(act.length,`Pedidos activos${late?` · <span class="tarde">${late} tarde</span>`:''}`,'bolsa',act.length?'acento':''));
+  const hoyTxt=S.hoy?fechaLarga(S.hoy):'';
+  return `<div class="inner"><div class="head"><div><h1>${saludo()}</h1><p class="muted">${esc(hoyTxt)}${hoyTxt?' · ':''}Resumen del servicio</p></div></div>
+  <div class="stats">${stats.join('')}</div>
+  <div class="grid-2">
+  ${has('reservas')?`<section class="card"><div class="sec-head"><h2>Próximas reservas</h2><a href="#reservas" class="btn ghost sm">Ver todas</a></div>${prox.length?`<ul class="list">${prox.map(r=>resRow(r,true)).join('')}</ul>`:vacio('Sin reservas pendientes.','cal')}</section>`:''}
+  ${has('menu')?`<section class="card"><div class="sec-head"><h2>Platillos agotados</h2><a href="#menu" class="btn ghost sm">Ir al menú</a></div>${agot.length?`<ul class="list">${agot.map(i=>`<li><div class="grow"><strong>${esc(i.n)}</strong></div><button class="btn primary sm" data-act="disp" data-id="${i.id}">Volver a disponible</button></li>`).join('')}</ul>`:vacio('Todo el menú está disponible.','plato')}</section>`:''}
+  </div></div>`;
 };
 V.reservas=()=>{
   const modo=S.resModo,hoy=S.hoy;
   const l=[...(modo==='hoy'?S.reservas:modo==='fecha'?S.resDia:S.prox)].sort(byFechaHora);
   const donde={hoy:'hoy',fecha:'el '+(S.resFecha?fechaCorta(S.resFecha):'día elegido'),proximas:'de hoy en adelante'}[modo];
-  const vacio={hoy:'No hay reservas para hoy.',fecha:'No hay reservas para ese día.',proximas:'No hay reservas próximas.'}[modo];
+  const sinReservas={hoy:'No hay reservas para hoy.',fecha:'No hay reservas para ese día.',proximas:'No hay reservas próximas.'}[modo];
   const grupos=[];for(const r of l){const g=grupos[grupos.length-1];if(g&&g.f===r.f)g.l.push(r);else grupos.push({f:r.f,l:[r]})}
   const lista=g=>`${modo==='proximas'?`<h2 class="dia">${esc(g.f===hoy?'Hoy · '+fechaCorta(g.f):fechaLarga(g.f))}</h2>`:''}<ul class="list">${g.l.map(r=>resRow(r)).join('')}</ul>`;
   const nueva=modo==='fecha'&&S.resFecha?S.resFecha:hoy;
@@ -124,7 +140,7 @@ V.reservas=()=>{
    <div><label class="f" for="rd">Día</label><input id="rd" name="f" type="date" value="${esc(nueva)}" min="${esc(hoy)}" required></div>
    <div><label class="f" for="rh">Hora</label><select id="rh" name="h">${HR.map(h=>`<option ${h==='20:00'?'selected':''}>${h}</option>`).join('')}</select></div>
    <button class="btn primary wide" type="submit">Agregar reserva</button></form>
-  <section class="card">${l.length?grupos.map(lista).join(''):`<p class="empty">${vacio}</p>`}</section></div>`;
+  <section class="card">${l.length?grupos.map(lista).join(''):vacio(sinReservas,'cal')}</section></div>`;
 };
 V.menu=()=>`<div class="inner"><div class="head"><div><h1>Menú</h1><p class="muted">Edita el nombre o el precio directamente. Los cambios se guardan solos.</p></div></div>
  ${S.menu.length?S.menu.map(c=>`<section class="card cat"><header><h2>${esc(c.nombre)}</h2><span class="muted">${c.items.length} platillos</span></header>
@@ -142,7 +158,7 @@ V.menu=()=>`<div class="inner"><div class="head"><div><h1>Menú</h1><p class="mu
   <form class="addrow addform" data-form="item" data-cid="${c.id}" aria-label="Agregar platillo a ${esc(c.nombre)}">
    <div class="wide"><label class="f" for="n${c.id}">Nuevo platillo</label><input id="n${c.id}" name="n" required maxlength="150" autocomplete="off"></div>
    <div><label class="f" for="p${c.id}">Precio</label><input id="p${c.id}" name="pr" required inputmode="decimal"></div>
-   <button class="btn primary" type="submit">Agregar</button></form></section>`).join(''):'<p class="empty">Aún no hay categorías. Créalas en la administración avanzada.</p>'}</div>`;
+   <button class="btn primary" type="submit">Agregar</button></form></section>`).join(''):vacio('Aún no hay categorías. Créalas en la administración avanzada.','plato')}</div>`;
 const COLS=[['nuevo','Nuevo','A cocina'],['cocina','En cocina','Marcar listo'],['listo','Listo','Entregar'],['entregado','Entregado','']];
 let colSel=null;
 V.pedidos=()=>{
@@ -155,13 +171,18 @@ V.pedidos=()=>{
    <button class="btn primary wide" type="submit">Enviar a cocina</button></form>
   <div class="tabs" role="group" aria-label="Estado">${COLS.map(c=>`<button data-act="col" data-v="${c[0]}" aria-pressed="${colSel===c[0]}">${c[1]} (${S.pedidos.filter(p=>p.e===c[0]).length})</button>`).join('')}</div>
   <div class="board">${COLS.map((c,ci)=>{const l=S.pedidos.filter(p=>p.e===c[0]);
-   return `<div class="col ${colSel===c[0]?'on':''}"><h2>${c[1]} <span>${l.length}</span></h2>${l.length?l.map(p=>`<div class="tk ${c[0]!=='entregado'&&mins(p.t)>=15?'late':''}"><div class="top"><span>Mesa ${esc(p.mesa)}</span><span>${mins(p.t)} min</span></div><div class="its">${esc(p.its)}</div>
-     ${c[2]?`<button class="btn ${ci<3?'primary':''}" data-act="next" data-id="${p.id}">${c[2]} →</button>`:`<span class="chip done">${money(p.tot)} cobrado</span>`}</div>`).join(''):'<div class="empty">Nada aquí</div>'}</div>`}).join('')}</div></div>`;
+   return `<div class="col ${colSel===c[0]?'on':''}" data-e="${c[0]}"><h2>${c[1]} <span>${l.length}</span></h2>${l.length?l.map(p=>`<div class="tk ${c[0]!=='entregado'&&mins(p.t)>=15?'late':''}"><div class="top"><span>Mesa ${esc(p.mesa)}</span><span class="min">${mins(p.t)} min</span></div><div class="its">${esc(p.its)}</div>
+     ${c[2]?`<button class="btn ${ci<3?'primary':''}" data-act="next" data-id="${p.id}">${c[2]} →</button>`:`<span class="chip done">${money(p.tot)} cobrado</span>`}</div>`).join(''):vacio('Nada aquí','bolsa')}</div>`}).join('')}</div></div>`;
 };
+/* mismo control que x-apariencia: el script de <head> guarda y aplica la opción elegida */
+function aparienciaCtl(){
+  let actual='system';try{const g=localStorage.getItem('filament:theme:mode');if(g==='light'||g==='dark')actual=g}catch(e){}
+  return `<fieldset class="segmentado"><legend>Apariencia</legend>${[['system','Automático'],['light','Claro'],['dark','Oscuro']].map(([v,t])=>`<label><input type="radio" name="apariencia-ajustes" value="${v}" data-apariencia-opcion ${v===actual?'checked':''}><span>${t}</span></label>`).join('')}</fieldset>`;
+}
 const campo=(id,etiqueta,k,extra='')=>`<div><label class="f" for="${id}">${etiqueta}</label><input id="${id}" value="${esc(S.aj[k]??'')}" data-f="aj.${k}" ${extra}></div>`;
 V.ajustes=()=>{const E=S.equipo,A=S.aj;return `<div class="inner"><div class="head"><div><h1>Ajustes</h1><p class="muted">${esc(S.nombre||'')} · se guardan al salir de cada campo</p></div></div>
  <section class="card"><h2>Sitio público</h2><p class="muted" style="margin-bottom:12px">Elige la plantilla. El sitio cambia en unos segundos.</p>
-  <div class="tabs" role="group" aria-label="Plantilla del sitio" style="flex-wrap:wrap">${A.plantillas.map(t=>`<button data-act="plantilla" data-v="${t.clave}" aria-pressed="${A.plantilla===t.clave}" style="min-width:140px"><strong>${t.clave.toUpperCase()}</strong> · ${esc(t.nombre)}</button>`).join('')}</div>
+  <div class="plantillas" role="group" aria-label="Plantilla del sitio">${A.plantillas.map(t=>`<button data-act="plantilla" data-v="${t.clave}" aria-pressed="${A.plantilla===t.clave}"><strong>${t.clave.toUpperCase()}</strong>${esc(t.nombre)}</button>`).join('')}</div>
   <p style="margin-top:12px"><a class="btn ghost" href="/${esc(slug)}" target="_blank" rel="noopener">Ver sitio</a></p></section>
  <section class="card"><h2>Fotos del sitio</h2>
   <p class="muted" style="margin-bottom:8px">Portada (16:9)</p>
@@ -194,6 +215,7 @@ V.ajustes=()=>{const E=S.equipo,A=S.aj;return `<div class="inner"><div class="he
   <form class="addform" data-form="usr" style="margin-top:12px"><div class="wide"><label class="f" for="ue">Invitar por correo</label><input id="ue" name="email" type="email" required maxlength="190" autocomplete="off"></div>
    <div><label class="f" for="ur">Rol</label><select id="ur" name="rol">${E.roles_asignables.map(r=>`<option value="${r}" ${r==='recepcion'?'selected':''}>${ROLES[r]}</option>`).join('')}</select></div>
    <button class="btn primary" type="submit">Enviar invitación</button></form></section>
+ <section class="card"><h2>Apariencia</h2><p class="muted" style="margin-bottom:12px">Solo cambia cómo ves el panel en este dispositivo.</p>${aparienciaCtl()}</section>
  <section class="card"><h2>Administración avanzada</h2><p class="muted" style="margin-bottom:12px">Idiomas, QR, turnos partidos e historial de cambios.</p>
   <div class="row"><a class="btn" href="/admin">Abrir administración</a><a class="btn ghost" href="/${esc(slug)}/menu" target="_blank" rel="noopener">Ver menú público</a></div></section>
  ${S.restaurantes.length>1?`<section class="card"><h2>Cambiar de restaurante</h2><select aria-label="Restaurante" data-f="rest">${S.restaurantes.map(r=>`<option value="${esc(r.slug)}" ${r.slug===slug?'selected':''}>${esc(r.nombre)}</option>`).join('')}</select></section>`:''}</div>`};
@@ -287,12 +309,12 @@ document.addEventListener('submit',e=>{const f=e.target.dataset.form;if(!f)retur
 async function init(){
   try{
     S.restaurantes=await api('GET','');
-    if(!S.restaurantes.length){$('#main').innerHTML='<p class="empty">Tu cuenta no tiene restaurantes asignados.</p>';return}
+    if(!S.restaurantes.length){$('#main').innerHTML=vacio('Tu cuenta no tiene restaurantes asignados.','caja');return}
     const pedido=new URLSearchParams(location.search).get('r');
     const r=S.restaurantes.find(x=>x.slug===pedido)||S.restaurantes[0];slug=r.slug;S.nombre=r.nombre;S.modulos=r.modulos;$('#rest-nombre').textContent=r.nombre;
     await Promise.all(Object.keys(L).filter(k=>has(MODULO_DE[k])).map(k=>L[k]()));S.ok=true;render();
     /* tablero casi en vivo: refresca reservas y pedidos si no se está escribiendo */
     setInterval(()=>{if(document.hidden||document.activeElement.matches('input,select,textarea')||$('#dlg').open)return;sync('reservas','pedidos','resumen').catch(()=>{})},30000);
-  }catch(e){$('#main').innerHTML=`<p class="empty">${esc(e.message)}</p>`}
+  }catch(e){$('#main').innerHTML=vacio(esc(e.message),'reloj')}
 }
 init();
