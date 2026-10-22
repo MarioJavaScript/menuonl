@@ -56,7 +56,7 @@ class ProductoForm
                             ->rule(fn () => Rule::exists('categorias', 'id')
                                 ->where('restaurante_id', Filament::getTenant()?->getKey())
                                 ->whereNull('deleted_at')),
-                        ImagenRestauranteUpload::make('imagen', 'productos')
+                        ImagenRestauranteUpload::make('imagen', 'platillo')
                             ->label('Fotografía')
                             ->columnSpanFull(),
                         Toggle::make('disponible')

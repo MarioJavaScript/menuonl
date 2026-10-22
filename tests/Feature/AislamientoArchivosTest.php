@@ -104,7 +104,7 @@ class AislamientoArchivosTest extends TestCase
             app(WebpImageService::class)->storeForRestaurante($grande, $this->a->id, 'portadas');
             $this->fail('Debió rechazar por peso.');
         } catch (ValidationException $e) {
-            $this->assertStringContainsString('pesa más', $e->errors()['imagen'][0]);
+            $this->assertStringContainsString('demasiado grande', $e->errors()['imagen'][0]);
         }
 
         $this->assertSame([], Storage::disk('public')->allFiles("restaurantes/{$this->a->id}"));

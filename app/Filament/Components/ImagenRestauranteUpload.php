@@ -13,24 +13,36 @@ use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 /**
  * Image upload (logo, cover, product photo) that never stores the original.
  *
- * The temporary Livewire upload is processed by WebpImageService (real MIME, SVG rejected, byte cap
- * before decoding, 4096 px cap) and only the generated WebP is written, under restaurantes/{id}/{carpeta}/.
- * String values coming back from the form are client-controlled: preventFilePathTampering() only accepts
- * the path the record already has, and the model (ProtegeImagenesDelRestaurante) rejects any other.
+ * The temporary Livewire upload goes through WebpImageService::procesar(), the same entry point as the
+ * /panel uploads (real type, size and pixel caps, EXIF orientation, same crop), and only the generated WebP
+ * is written, under restaurantes/{id}/. String values coming back from the form are client-controlled:
+ * preventFilePathTampering() only accepts the path the record already has, and the model
+ * (ProtegeImagenesDelRestaurante) rejects any other.
  */
 class ImagenRestauranteUpload
 {
-    public static function make(string $name, string $carpeta): FileUpload
+    /**
+     * @param  string  $perfil  One of the keys of WebpImageService::PERFILES (logotipo, portada, platillo, galeria)
+     */
+    public static function make(string $name, string $perfil): FileUpload
     {
+        $imagenes = app(WebpImageService::class);
+
         return FileUpload::make($name)
             ->image()
             ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
             ->maxSize((int) ceil((int) config('menuonl.imagenes.max_bytes') / 1024))
-            ->helperText('Formatos permitidos: JPG, PNG o WebP (máx. 5 MB). La imagen se optimiza y comprime automáticamente a formato WebP.')
+            ->validationMessages([
+                'max' => $imagenes->mensajeDemasiadoGrande(),
+                'image' => $imagenes->mensajeIlegible(),
+                'mimetypes' => $imagenes->mensajeIlegible(),
+                'uploaded' => $imagenes->mensajeDemasiadoGrande(),
+            ])
+            ->helperText($imagenes->ayudaDeSubida($perfil))
             ->disk('public')
             ->visibility('public')
             ->preventFilePathTampering()
-            ->saveUploadedFileUsing(function (FileUpload $component, TemporaryUploadedFile $file, ?Model $record) use ($carpeta): string {
+            ->saveUploadedFileUsing(function (FileUpload $component, TemporaryUploadedFile $file, ?Model $record) use ($perfil): string {
                 $restauranteId = self::restauranteActivoId($record);
 
                 if ($restauranteId === null) {
@@ -38,7 +50,7 @@ class ImagenRestauranteUpload
                 }
 
                 try {
-                    return app(WebpImageService::class)->storeForRestaurante($file, $restauranteId, $carpeta);
+                    return app(WebpImageService::class)->procesar($file, $restauranteId, $perfil);
                 } catch (ValidationException $e) {
                     throw ValidationException::withMessages([
                         $component->getStatePath() => collect($e->errors())->flatten()->first(),
