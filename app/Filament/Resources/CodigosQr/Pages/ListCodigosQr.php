@@ -23,6 +23,46 @@ class ListCodigosQr extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('crearQrMesas')
+                ->label(__('panel.qr.mesas.accion'))
+                ->icon('heroicon-o-qr-code')
+                ->modalHeading(__('panel.qr.mesas.titulo'))
+                ->modalDescription(__('panel.qr.mesas.descripcion'))
+                ->modalSubmitActionLabel(__('panel.qr.mesas.boton'))
+                ->schema([
+                    TextInput::make('cantidad')
+                        ->label(__('panel.qr.mesas.cantidad'))
+                        ->helperText(__('panel.qr.mesas.cantidad_ayuda'))
+                        ->numeric()
+                        ->integer()
+                        ->minValue(1)
+                        ->maxValue(100)
+                        ->default(10)
+                        ->required(),
+                ])
+                ->action(function (array $data): void {
+                    $tenantId = Filament::getTenant()?->id ?? RestauranteScope::resolveRestauranteId();
+
+                    if ($tenantId === null) {
+                        Notification::make()->danger()->title('No hay un restaurante activo seleccionado.')->send();
+
+                        return;
+                    }
+
+                    ['creadas' => $creadas, 'omitidas' => $omitidas] = $this->crearMesas(
+                        array_map('strval', range(1, (int) $data['cantidad'])),
+                        TipoCodigoAcceso::Qr,
+                        $tenantId,
+                    );
+
+                    $aviso = Notification::make()->success()->title(trans_choice('panel.qr.mesas.resultado', $creadas, ['n' => $creadas]));
+
+                    if ($omitidas > 0) {
+                        $aviso->body(__('panel.qr.mesas.omitidas', ['n' => $omitidas]));
+                    }
+
+                    $aviso->send();
+                }),
             Action::make('generarLoteMesas')
                 ->label('Generar lote de mesas')
                 ->icon('heroicon-o-squares-plus')
@@ -80,40 +120,7 @@ class ListCodigosQr extends ListRecords
                         return;
                     }
 
-                    $mesasRango = array_map('strval', range($desde, $hasta));
-
-                    // Consulta en lote único: evita N consultas de existencia
-                    $mesasExistentes = CodigoQr::where('restaurante_id', $tenantId)
-                        ->whereIn('mesa', $mesasRango)
-                        ->pluck('mesa')
-                        ->flip()
-                        ->all();
-
-                    $creadas = 0;
-                    $omitidas = count($mesasExistentes);
-
-                    DB::transaction(function () use ($mesasRango, $mesasExistentes, $tenantId, $tipo, &$creadas): void {
-                        foreach ($mesasRango as $mesaStr) {
-                            if (isset($mesasExistentes[$mesaStr])) {
-                                continue;
-                            }
-
-                            do {
-                                $codigo = Str::lower(Str::random(8));
-                            } while (CodigoQr::withoutGlobalScopes()->where('codigo', $codigo)->exists());
-
-                            CodigoQr::create([
-                                'restaurante_id' => $tenantId,
-                                'nombre' => "Mesa {$mesaStr}",
-                                'mesa' => $mesaStr,
-                                'tipo' => $tipo,
-                                'codigo' => $codigo,
-                                'activo' => true,
-                            ]);
-
-                            $creadas++;
-                        }
-                    });
+                    ['creadas' => $creadas, 'omitidas' => $omitidas] = $this->crearMesas(array_map('strval', range($desde, $hasta)), $tipo, $tenantId);
 
                     Notification::make()
                         ->success()
@@ -122,5 +129,48 @@ class ListCodigosQr extends ListRecords
                 }),
             CreateAction::make(),
         ];
+    }
+
+    /**
+     * Crea un código por mesa que aún no tiene uno en este restaurante; las mesas existentes no se tocan.
+     *
+     * @param  list<string>  $mesas
+     * @return array{creadas: int, omitidas: int}
+     */
+    private function crearMesas(array $mesas, TipoCodigoAcceso $tipo, int $tenantId): array
+    {
+        // Consulta en lote único: evita N consultas de existencia
+        $mesasExistentes = CodigoQr::where('restaurante_id', $tenantId)
+            ->whereIn('mesa', $mesas)
+            ->pluck('mesa')
+            ->flip()
+            ->all();
+
+        $creadas = 0;
+
+        DB::transaction(function () use ($mesas, $mesasExistentes, $tenantId, $tipo, &$creadas): void {
+            foreach ($mesas as $mesa) {
+                if (isset($mesasExistentes[$mesa])) {
+                    continue;
+                }
+
+                do {
+                    $codigo = Str::lower(Str::random(8));
+                } while (CodigoQr::withoutGlobalScopes()->where('codigo', $codigo)->exists());
+
+                CodigoQr::create([
+                    'restaurante_id' => $tenantId,
+                    'nombre' => "Mesa {$mesa}",
+                    'mesa' => $mesa,
+                    'tipo' => $tipo,
+                    'codigo' => $codigo,
+                    'activo' => true,
+                ]);
+
+                $creadas++;
+            }
+        });
+
+        return ['creadas' => $creadas, 'omitidas' => count($mesasExistentes)];
     }
 }

@@ -71,7 +71,7 @@ class ProductoForm
                     ->columnSpanFull(),
 
                 Section::make('Opciones adicionales')
-                    ->description('Promociones, etiquetas dietéticas y orden en la carta.')
+                    ->description(__('panel.menu.platillo.opciones_descripcion'))
                     ->collapsible()
                     ->schema([
                         TextInput::make('precio_oferta')
@@ -103,22 +103,7 @@ class ProductoForm
                             ->label('Mostrar en el menú público')
                             ->helperText('Desmárcalo si quieres guardarlo u ocultarlo temporalmente de tu menú sin borrarlo.')
                             ->default(true),
-                        TextInput::make('orden')
-                            ->label('Orden de aparición')
-                            ->placeholder('0')
-                            ->helperText('Define el lugar en el que aparecerá este platillo dentro de su categoría.')
-                            ->numeric()
-                            ->integer()
-                            ->minValue(0)
-                            ->maxValue(65535)
-                            ->default(0)
-                            ->required()
-                            ->validationAttribute('orden')
-                            ->validationMessages([
-                                'required' => 'Escribe el número de orden.',
-                                'integer' => 'El orden debe ser un número entero.',
-                                'min' => 'El orden no puede ser negativo.',
-                            ]),
+
                     ])
                     ->columns(2)
                     ->columnSpanFull(),

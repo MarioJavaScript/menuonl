@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Filament\Pages\Tenancy\EditRestauranteProfile;
+use App\Filament\Pages\Apariencia;
 use App\Models\GaleriaImagen;
 use App\Models\Restaurante;
 use App\Models\Scopes\RestauranteScope;
@@ -405,7 +405,7 @@ class ImagenesSeguridadTest extends TestCase
     {
         $this->entrarAlPanel($this->crearUsuario('propietario', $this->a), $this->a);
 
-        $formulario = Livewire::test(EditRestauranteProfile::class)
+        $formulario = Livewire::test(Apariencia::class)
             ->set('data.logo', $this->subida($nombre, $contenido))
             ->call('save');
 
@@ -420,7 +420,7 @@ class ImagenesSeguridadTest extends TestCase
     {
         $this->entrarAlPanel($this->crearUsuario('propietario', $this->a), $this->a);
 
-        $formulario = Livewire::test(EditRestauranteProfile::class)
+        $formulario = Livewire::test(Apariencia::class)
             ->set('data.portada', $this->subida($nombre, $this->construir($tipo)))
             ->call('save');
 
@@ -435,7 +435,7 @@ class ImagenesSeguridadTest extends TestCase
         $usuario = $this->crearUsuario('propietario', $this->a);
         $this->entrarAlPanel($usuario, $this->a);
 
-        Livewire::test(EditRestauranteProfile::class)
+        Livewire::test(Apariencia::class)
             ->set('data.portada', $this->subida('p.jpg', $this->bytes('jpg', 2400, 1600)))
             ->call('save')
             ->assertHasNoErrors();
@@ -475,7 +475,7 @@ class ImagenesSeguridadTest extends TestCase
             ->assertStatus(404);
 
         $this->entrarAlPanel($usuarioDeA, $this->a);
-        Livewire::test(EditRestauranteProfile::class)
+        Livewire::test(Apariencia::class)
             ->set('data.portada', $this->subida('x.png', $this->bytes('png')))
             ->call('save')
             ->assertHasNoErrors();

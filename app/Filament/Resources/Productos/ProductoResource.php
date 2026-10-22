@@ -26,13 +26,16 @@ class ProductoResource extends Resource
 
     protected static ?string $slug = 'productos';
 
-    protected static \UnitEnum|string|null $navigationGroup = 'Menú';
-
     protected static ?string $navigationLabel = 'Platillos';
 
     protected static ?int $navigationSort = 10;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCake;
+
+    public static function getNavigationGroup(): string|\UnitEnum|null
+    {
+        return __('panel.grupos.menu');
+    }
 
     public static function form(Schema $schema): Schema
     {

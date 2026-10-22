@@ -2,7 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Filament\Pages\Tenancy\EditRestauranteProfile;
+use App\Filament\Pages\Apariencia;
+use App\Services\AparienciaSitio;
 use App\Services\Catalogos;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -10,7 +11,7 @@ use Tests\Concerns\ArmaEscenarioDePanel;
 use Tests\TestCase;
 
 /**
- * "Mi restaurante" (Filament) también deja elegir la plantilla del sitio, con la misma lista que usa el panel de servicio.
+ * "Apariencia" (Filament) deja elegir la plantilla del sitio, con la misma lista que usa el panel de servicio.
  */
 class PerfilPlantillaSitioTest extends TestCase
 {
@@ -21,10 +22,10 @@ class PerfilPlantillaSitioTest extends TestCase
         $restaurante = $this->crearRestaurante('la-esquina');
         $this->entrarAlPanel($this->crearUsuario('propietario', $restaurante), $restaurante);
 
-        Livewire::test(EditRestauranteProfile::class)
-            ->assertSee('Plantilla del sitio')
-            ->assertSee(Catalogos::plantillasSitio()['e']['nombre'])
-            ->assertSee(Catalogos::plantillasSitio()['a']['nombre']);
+        Livewire::test(Apariencia::class)
+            ->assertSee('Diseño de tu sitio')
+            ->assertSee('Cafetería')
+            ->assertSee('Claro y sencillo');
     }
 
     public function test_cafeteria_no_es_el_valor_por_defecto_y_se_puede_elegir_y_guardar(): void
@@ -33,7 +34,7 @@ class PerfilPlantillaSitioTest extends TestCase
         $this->entrarAlPanel($this->crearUsuario('propietario', $restaurante), $restaurante);
         $this->assertSame('a', $restaurante->fresh()->sitio_plantilla);
 
-        Livewire::test(EditRestauranteProfile::class)
+        Livewire::test(Apariencia::class)
             ->assertSet('data.sitio_plantilla', 'a')
             ->set('data.sitio_plantilla', 'e')
             ->call('save')
@@ -47,11 +48,19 @@ class PerfilPlantillaSitioTest extends TestCase
         $restaurante = $this->crearRestaurante('la-esquina');
         $this->entrarAlPanel($this->crearUsuario('propietario', $restaurante), $restaurante);
 
-        Livewire::test(EditRestauranteProfile::class)
+        Livewire::test(Apariencia::class)
             ->set('data.sitio_plantilla', 'z')
             ->call('save')
             ->assertHasErrors(['data.sitio_plantilla']);
 
         $this->assertSame('a', $restaurante->fresh()->sitio_plantilla);
+    }
+
+    public function test_cada_plantilla_del_catalogo_tiene_su_ficha_para_el_dueno(): void
+    {
+        $this->assertSame(
+            array_keys(Catalogos::plantillasSitio()),
+            array_keys(AparienciaSitio::fichas()),
+        );
     }
 }

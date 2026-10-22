@@ -4,6 +4,8 @@ namespace Tests\Concerns;
 
 use App\Models\Categoria;
 use App\Models\CategoriaTraduccion;
+use App\Models\Producto;
+use App\Models\ProductoTraduccion;
 use App\Models\Restaurante;
 use App\Models\RestauranteIdioma;
 use App\Models\Scopes\RestauranteScope;
@@ -54,6 +56,17 @@ trait ArmaEscenarioDePanel
         CategoriaTraduccion::factory()->create(['categoria_id' => $categoria->id, 'idioma' => 'es', 'nombre' => $nombre]);
 
         return $categoria;
+    }
+
+    /**
+     * @param  array<string, mixed>  $atributos
+     */
+    protected function crearPlatillo(Restaurante $restaurante, Categoria $categoria, string $nombre, array $atributos = []): Producto
+    {
+        $producto = Producto::factory()->create($atributos + ['restaurante_id' => $restaurante->id, 'categoria_id' => $categoria->id]);
+        ProductoTraduccion::factory()->create(['producto_id' => $producto->id, 'idioma' => 'es', 'nombre' => $nombre]);
+
+        return $producto;
     }
 
     /**
