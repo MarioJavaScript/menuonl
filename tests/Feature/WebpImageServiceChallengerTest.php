@@ -198,7 +198,7 @@ class WebpImageServiceChallengerTest extends TestCase
             $this->fail('Expected ValidationException was not thrown for image width > 4096px.');
         } catch (ValidationException $e) {
             $this->assertArrayHasKey('imagen', $e->errors());
-            $this->assertStringContainsString('4096x4096px', $e->errors()['imagen'][0]);
+            $this->assertStringContainsString('4096 px por lado', $e->errors()['imagen'][0]);
         }
     }
 
@@ -226,7 +226,7 @@ class WebpImageServiceChallengerTest extends TestCase
             $this->fail('Expected ValidationException was not thrown for image height > 4096px.');
         } catch (ValidationException $e) {
             $this->assertArrayHasKey('imagen', $e->errors());
-            $this->assertStringContainsString('4096x4096px', $e->errors()['imagen'][0]);
+            $this->assertStringContainsString('4096 px por lado', $e->errors()['imagen'][0]);
         }
     }
 
@@ -329,7 +329,7 @@ class WebpImageServiceChallengerTest extends TestCase
             $this->fail('Expected ValidationException was not thrown for GIF format.');
         } catch (ValidationException $e) {
             $this->assertArrayHasKey('imagen', $e->errors());
-            $this->assertStringContainsString('image/gif', $e->errors()['imagen'][0]);
+            $this->assertStringContainsString('JPG, PNG o WebP', $e->errors()['imagen'][0]);
         }
     }
 

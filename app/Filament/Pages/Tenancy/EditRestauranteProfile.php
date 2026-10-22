@@ -4,6 +4,7 @@ namespace App\Filament\Pages\Tenancy;
 
 use App\Filament\Components\ImagenRestauranteUpload;
 use App\Services\Catalogos;
+use App\Services\WebpImageService;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\ColorPicker;
@@ -73,12 +74,11 @@ class EditRestauranteProfile extends EditTenantProfile
                             ->label('Color principal')
                             ->helperText('Se aplica en botones y acentos del menú. Déjalo vacío para conservar el color original del estilo elegido.')
                             ->regex('/^#[0-9a-fA-F]{6}$/'),
-                        ImagenRestauranteUpload::make('portada', 'portadas')
-                            ->label('Fotografía de portada')
-                            ->helperText('Una foto horizontal de tus platillos o del ambiente de tu local luce mejor. Formatos JPG, PNG o WebP (máx. 5 MB).'),
-                        ImagenRestauranteUpload::make('logo', 'logos')
+                        ImagenRestauranteUpload::make('portada', 'portada')
+                            ->label('Fotografía de portada'),
+                        ImagenRestauranteUpload::make('logo', 'logotipo')
                             ->label('Logotipo')
-                            ->helperText('Opcional. Si no subes uno, el menú destacará el nombre de tu restaurante con su tipografía principal.'),
+                            ->helperText(app(WebpImageService::class)->ayudaDeSubida('logotipo').' Opcional: si no subes uno, el menú destacará el nombre de tu restaurante.'),
                         TextInput::make('eslogan')
                             ->label('Frase corta o especialidad')
                             ->placeholder('Cocina italiana de leña')

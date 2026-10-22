@@ -33,8 +33,8 @@ class RestauranteForm
                     ->in(['activo', 'suspendido'])
                     ->default('activo')
                     ->required(),
-                ImagenRestauranteUpload::make('logo', 'logos')->label('Logo')->visibleOn('edit'),
-                ImagenRestauranteUpload::make('portada', 'portadas')->label('Portada')->visibleOn('edit'),
+                ImagenRestauranteUpload::make('logo', 'logotipo')->label('Logo')->visibleOn('edit'),
+                ImagenRestauranteUpload::make('portada', 'portada')->label('Portada')->visibleOn('edit'),
                 TextInput::make('email_propietario')
                     ->label('Correo del propietario')
                     ->placeholder('propietario@ejemplo.com')
