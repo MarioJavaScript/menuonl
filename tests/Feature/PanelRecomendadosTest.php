@@ -94,7 +94,7 @@ class PanelRecomendadosTest extends TestCase
         $restaurante->update(['sitio_plantilla' => 'f']);
         $categoria = $this->crearCategoria($restaurante);
         $this->crearPlatillo($restaurante, $categoria, 'Sin foto', ['destacado' => true, 'orden' => 1, 'imagen' => null]);
-        $conFoto = $this->crearPlatillo($restaurante, $categoria, 'Con foto', ['destacado' => true, 'orden' => 2, 'imagen' => 'restaurantes/1/platillos/x.webp']);
+        $conFoto = $this->crearPlatillo($restaurante, $categoria, 'Con foto', ['destacado' => true, 'orden' => 2, 'imagen' => "restaurantes/{$restaurante->id}/platillos/x.webp"]);
         $nuevo = $this->crearPlatillo($restaurante, $categoria, 'Novedad', ['destacado' => true, 'orden' => 3, 'imagen' => null]);
         $nuevo->etiquetas()->attach(Etiqueta::factory()->create(['codigo' => 'nuevo'])->id);
         $this->entrarAlPanel($this->crearUsuario('propietario', $restaurante), $restaurante);
