@@ -79,7 +79,7 @@ class UxUiAccesibilidadTest extends TestCase
         $response->assertStatus(200);
         $response->assertViewIs('welcome');
         $response->assertSee('MENUONL');
-        $response->assertSee('La carta digital que tus comensales recordarán.');
+        $response->assertSeeText('La carta digital que tus comensales recordarán.');
         $response->assertSee('Entrar al panel');
         $response->assertSee('Acceder a la administración');
         $response->assertSee(url('/admin'));
@@ -1259,15 +1259,24 @@ class UxUiAccesibilidadTest extends TestCase
         $respuesta->assertSee("e.key === 'Escape' || e.key === 'Esc'", false);
     }
 
-    public function test_solo_el_menu_publico_carga_alpine_y_sin_dependencias_de_animacion(): void
+    public function test_solo_el_menu_publico_carga_alpine_y_solo_la_portada_usa_motion(): void
     {
         $paquete = json_decode((string) file_get_contents(base_path('package.json')), true);
         $dependencias = array_keys(($paquete['dependencies'] ?? []) + ($paquete['devDependencies'] ?? []));
 
         $this->assertContains('@alpinejs/csp', $dependencias, 'Alpine debe usar la compilación CSP: la política no permite unsafe-eval.');
         $this->assertNotContains('alpinejs', $dependencias);
-        foreach (['gsap', 'framer-motion', 'animejs', 'aos', 'motion', 'lottie-web'] as $libreria) {
+        foreach (['gsap', 'framer-motion', 'animejs', 'aos', 'lottie-web'] as $libreria) {
             $this->assertNotContains($libreria, $dependencias, "No se permiten librerías de animación ($libreria).");
+        }
+
+        // Motion solo se permite en la portada: el menú público y los sitios deben seguir ligeros.
+        $this->assertContains('motion', $dependencias);
+        foreach (glob(resource_path('js/*.js')) as $archivo) {
+            if (basename($archivo) === 'portada.js') {
+                continue;
+            }
+            $this->assertStringNotContainsString("from 'motion'", (string) file_get_contents($archivo), basename($archivo).' no debe importar Motion.');
         }
 
         $vite = (string) file_get_contents(base_path('vite.config.js'));
