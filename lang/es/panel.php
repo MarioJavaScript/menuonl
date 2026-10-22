@@ -206,7 +206,95 @@ return [
     ],
 
     'inicio' => [
-        'whatsapp_faltante' => 'Activaste los pedidos, pero falta tu WhatsApp. Sin él no te llegan.',
+        'accesos' => [
+            'titulo' => 'Accesos rápidos',
+            'descargar_qr' => 'Descargar mi QR',
+        ],
+        'dia' => [
+            'titulo' => 'Tu día',
+            'reservas_hoy' => '{1} Tienes 1 reserva para hoy.|[2,*] Tienes :n reservas para hoy.',
+            'por_confirmar' => '{1} Hay 1 reserva por confirmar.|[2,*] Hay :n reservas por confirmar.',
+            'ver' => 'Ver reservas',
+        ],
+        'avisos' => [
+            'reservas_sin_horario' => [
+                'mensaje' => 'Tus clientes pueden reservar, pero aún no tienes horario. Sin horario no saben cuándo pueden venir.',
+                'accion' => 'Agregar horario',
+            ],
+        ],
+        'falta' => [
+            'titulo' => 'Qué falta configurar',
+            'avance' => 'Tu restaurante está al :porcentaje %.',
+            'te_faltan' => '{1} Te falta 1 paso.|[2,*] Te faltan :n pasos.',
+            'completo' => 'No te falta ningún paso.',
+            'pendiente' => 'Pendiente',
+            'listo' => 'Listo',
+            'listos' => '{1} 1 paso ya está listo|[2,*] :n pasos ya están listos',
+            'todo_en_orden' => 'Todo en orden.',
+            'menu_completo' => 'Tu menú está completo.',
+        ],
+        'pasos' => [
+            'categoria' => [
+                'pendiente' => 'Crea tu primera categoría, por ejemplo "Tacos" o "Bebidas".',
+                'hecho' => 'Ya tienes categorías en tu menú.',
+                'accion' => 'Crear categoría',
+            ],
+            'platillo' => [
+                'pendiente' => 'Tu menú todavía no tiene platillos. Agrega el primero.',
+                'hecho' => 'Ya tienes platillos en tu menú.',
+                'accion' => 'Agregar platillo',
+            ],
+            'horario' => [
+                'pendiente' => 'Agrega tu horario para que tus clientes sepan cuándo abres.',
+                'hecho' => 'Tu horario está listo.',
+                'accion' => 'Agregar horario',
+            ],
+            'contacto' => [
+                'pendiente' => 'Agrega un teléfono, una dirección o tus redes para que te encuentren.',
+                'hecho' => 'Ya tienes datos de contacto visibles.',
+                'accion' => 'Agregar contacto',
+            ],
+            'descripcion' => [
+                'pendiente' => 'Escribe una descripción breve para contar qué hace especial a tu cocina.',
+                'hecho' => 'Tu descripción está lista.',
+                'accion' => 'Escribir descripción',
+            ],
+            'mapa' => [
+                'pendiente' => 'Agrega tu ubicación en el mapa para que tus clientes lleguen fácil.',
+                'hecho' => 'Tu ubicación en el mapa está lista.',
+                'accion' => 'Agregar ubicación',
+            ],
+            'logotipo' => [
+                'pendiente' => 'Sube tu logotipo para que te reconozcan.',
+                'hecho' => 'Tu logotipo está listo.',
+                'accion' => 'Subir logotipo',
+            ],
+            'portada' => [
+                'pendiente' => 'Sube una foto de portada: es lo primero que ven en tu sitio.',
+                'hecho' => 'Tu portada está lista.',
+                'accion' => 'Subir portada',
+            ],
+            'whatsapp' => [
+                'pendiente' => 'Activaste los pedidos, pero falta tu WhatsApp. Sin él no te llegan.',
+                'hecho' => 'Tu WhatsApp para pedidos está listo.',
+                'accion' => 'Agregar WhatsApp',
+            ],
+        ],
+        'atencion' => [
+            'titulo' => 'Para revisar',
+            'agotados' => [
+                'mensaje' => '{1} Tienes 1 platillo agotado.|[2,*] Tienes :n platillos agotados.',
+                'accion' => 'Ver agotados',
+            ],
+            'sin_foto' => [
+                'mensaje' => '{1} 1 platillo no tiene foto. Con foto se piden más.|[2,*] :n platillos no tienen foto. Con foto se piden más.',
+                'accion' => 'Ver platillos',
+            ],
+            'sin_qr' => [
+                'mensaje' => 'Aún no creas los códigos QR de tus mesas.',
+                'accion' => 'Crear QR de mesas',
+            ],
+        ],
     ],
 
 ];

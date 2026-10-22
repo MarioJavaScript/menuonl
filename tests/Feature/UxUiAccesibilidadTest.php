@@ -1351,7 +1351,7 @@ class UxUiAccesibilidadTest extends TestCase
             ->assertSee('Cerrado ahora')
             ->assertSee('Hoy no abres')
             ->assertSee('Agregar platillo')
-            ->assertSee('Pendientes')
+            ->assertSee('Qué falta configurar')
             ->assertSee('Crea tu primera categoría, por ejemplo "Tacos" o "Bebidas".')
             ->assertSee('Crear categoría')
             ->assertSee('Activaste los pedidos, pero falta tu WhatsApp. Sin él no te llegan.')
