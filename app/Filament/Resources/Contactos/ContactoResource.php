@@ -24,13 +24,16 @@ class ContactoResource extends Resource
 
     protected static ?string $slug = 'contactos';
 
-    protected static \UnitEnum|string|null $navigationGroup = 'Restaurante';
-
     protected static ?string $navigationLabel = 'Contactos';
 
-    protected static ?int $navigationSort = 50;
+    protected static ?int $navigationSort = 30;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedPhone;
+
+    public static function getNavigationGroup(): string|\UnitEnum|null
+    {
+        return __('panel.grupos.informacion');
+    }
 
     public static function form(Schema $schema): Schema
     {

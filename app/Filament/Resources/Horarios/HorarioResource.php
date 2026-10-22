@@ -24,13 +24,16 @@ class HorarioResource extends Resource
 
     protected static ?string $slug = 'horarios';
 
-    protected static \UnitEnum|string|null $navigationGroup = 'Restaurante';
-
     protected static ?string $navigationLabel = 'Horario';
 
-    protected static ?int $navigationSort = 30;
+    protected static ?int $navigationSort = 20;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClock;
+
+    public static function getNavigationGroup(): string|\UnitEnum|null
+    {
+        return __('panel.grupos.informacion');
+    }
 
     public static function form(Schema $schema): Schema
     {

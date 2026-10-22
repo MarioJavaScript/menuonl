@@ -14,6 +14,7 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationGroup;
 use Filament\Navigation\NavigationItem;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -55,6 +56,7 @@ class AdminPanelProvider extends PanelProvider
 
                     return new HtmlString(view('filament.hooks.ver-menu-publico', [
                         'url' => route('menu.publico', ['slug' => $tenant->slug]),
+                        'sitioUrl' => route('sitio.publico', ['slug' => $tenant->slug]),
                     ])->render());
                 }
             )
@@ -75,16 +77,25 @@ class AdminPanelProvider extends PanelProvider
             ->pages([
                 Inicio::class,
             ])
+            ->navigationGroups([
+                NavigationGroup::make(fn (): string => __('panel.grupos.menu')),
+                NavigationGroup::make(fn (): string => __('panel.grupos.apariencia')),
+                NavigationGroup::make(fn (): string => __('panel.grupos.informacion')),
+                NavigationGroup::make(fn (): string => __('panel.grupos.pedidos')),
+                NavigationGroup::make(fn (): string => __('panel.grupos.qr')),
+                NavigationGroup::make('Administración'),
+                NavigationGroup::make('Plataforma'),
+            ])
             ->navigationItems([
-                NavigationItem::make('Panel de servicio')
-                    ->group('Restaurante')
+                NavigationItem::make(fn (): string => __('panel.enlaces.servicio'))
+                    ->group(fn (): string => __('panel.grupos.pedidos'))
                     ->icon(Heroicon::OutlinedBolt)
-                    ->sort(5)
+                    ->sort(20)
                     ->url(fn (): string => route('panel')),
-                NavigationItem::make('Mi restaurante')
-                    ->group('Restaurante')
+                NavigationItem::make(fn (): string => __('panel.datos.nav'))
+                    ->group(fn (): string => __('panel.grupos.informacion'))
                     ->icon(Heroicon::OutlinedBuildingStorefront)
-                    ->sort(60)
+                    ->sort(10)
                     ->url(fn (): string => EditRestauranteProfile::getUrl())
                     ->isActiveWhen(fn (): bool => request()->routeIs(EditRestauranteProfile::getRouteName()))
                     ->visible(fn (): bool => Filament::getTenant() !== null && EditRestauranteProfile::canView(Filament::getTenant())),

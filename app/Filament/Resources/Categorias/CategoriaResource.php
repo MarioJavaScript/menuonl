@@ -26,13 +26,16 @@ class CategoriaResource extends Resource
 
     protected static ?string $slug = 'categorias';
 
-    protected static \UnitEnum|string|null $navigationGroup = 'Menú';
-
     protected static ?string $navigationLabel = 'Categorías';
 
     protected static ?int $navigationSort = 20;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+
+    public static function getNavigationGroup(): string|\UnitEnum|null
+    {
+        return __('panel.grupos.menu');
+    }
 
     public static function form(Schema $schema): Schema
     {

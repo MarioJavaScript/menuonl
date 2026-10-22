@@ -2,7 +2,7 @@
 
 namespace App\Filament\Widgets;
 
-use App\Filament\Pages\Tenancy\EditRestauranteProfile;
+use App\Filament\Pages\PedidosYReservas;
 use App\Filament\Resources\Categorias\CategoriaResource;
 use App\Filament\Resources\CodigosQr\CodigoQrResource;
 use App\Filament\Resources\Horarios\HorarioResource;
@@ -94,9 +94,9 @@ class ResumenRestauranteWidget extends Widget
 
         if ($restaurante->pedidos_activos && blank($restaurante->whatsapp_pedidos)) {
             $pendientes[] = [
-                'mensaje' => 'Activaste los pedidos, pero falta tu WhatsApp. Sin él no te llegan.',
+                'mensaje' => __('panel.inicio.whatsapp_faltante'),
                 'accion' => 'Agregar WhatsApp',
-                'url' => $puedeEditarRestaurante ? EditRestauranteProfile::getUrl() : null,
+                'url' => $puedeEditarRestaurante ? PedidosYReservas::getUrl() : null,
                 'importante' => true,
             ];
         }
