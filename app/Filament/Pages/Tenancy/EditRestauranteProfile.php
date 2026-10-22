@@ -63,7 +63,7 @@ class EditRestauranteProfile extends EditTenantProfile
                             ->required(),
                         Radio::make('sitio_plantilla')
                             ->label('Plantilla del sitio')
-                            ->helperText('Diseño de tu sitio (/tu-restaurante) y de su menú. La plantilla Cafetería trae sus propios colores y tipografías y no usa el estilo visual de arriba.')
+                            ->helperText('Diseño de tu sitio (/tu-restaurante) y de su menú. Las plantillas Cafetería, Bar, Café pastel y Pizzería traen sus propios colores y tipografías y no usan el estilo visual de arriba.')
                             ->options(array_map(fn (array $plantilla): string => $plantilla['nombre'], $plantillas))
                             ->descriptions(array_map(fn (array $plantilla): string => $plantilla['descripcion'], $plantillas))
                             ->in(array_keys($plantillas))

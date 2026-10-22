@@ -88,7 +88,7 @@ class SitioEditorialOscuroTest extends TestCase
 
     public function test_el_catalogo_acepta_d_y_rechaza_otros_valores(): void
     {
-        $this->assertSame(['a', 'b', 'c', 'd', 'e', 'f', 'g'], array_keys(Catalogos::plantillasSitio()));
+        $this->assertSame(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'], array_keys(Catalogos::plantillasSitio()));
         $this->assertSame('Editorial oscuro', Catalogos::plantillasSitio()['d']['nombre']);
         $this->assertArrayNotHasKey('z', Catalogos::plantillasSitio());
     }

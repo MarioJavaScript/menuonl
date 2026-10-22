@@ -166,7 +166,8 @@ class Catalogos
             'd' => ['nombre' => 'Editorial oscuro', 'descripcion' => 'Fondo oscuro, acento dorado y mucho aire. Para cocina de autor y bares.'],
             'e' => ['nombre' => 'Cafetería', 'descripcion' => 'Colores tierra y rosa, palabras grandes y menú en carrusel. Para cafeterías y bebidas.'],
             'f' => ['nombre' => 'Bar', 'descripcion' => 'Fondo oscuro, neón magenta y menú con líneas punteadas. Para bares y coctelerías.'],
-            'g' => ['nombre' => 'CafePastel', 'descripcion' => 'Tonos pastel, bordes rasgados y letra cursiva. Para cafeterías de postres y repostería.'],
+            'g' => ['nombre' => 'Café pastel', 'descripcion' => 'Tonos pastel, bordes rasgados y letra cursiva. Para cafeterías de postres y repostería.'],
+            'h' => ['nombre' => 'Pizzería', 'descripcion' => 'Papel crema, rojo tomate y mantel de cuadros; fotos redondas como platos. Para pizzerías y trattorias.'],
         ];
     }
 

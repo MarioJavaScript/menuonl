@@ -55,7 +55,7 @@ class PanelAjustesTest extends TestCase
 
         $r->assertJsonPath('data.plantilla', 'a')->assertJsonPath('data.reservas_activas', true)
             ->assertJsonPath('data.reservas_cupo', 30)->assertJsonPath('data.reservas_franja_min', 60)
-            ->assertJsonCount(7, 'data.horarios')->assertJsonCount(7, 'data.plantillas');
+            ->assertJsonCount(7, 'data.horarios')->assertJsonCount(8, 'data.plantillas');
         $this->assertTrue($r->json('data.horarios.0.cerrado'));
     }
 
