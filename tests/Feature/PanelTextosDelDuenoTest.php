@@ -16,7 +16,7 @@ class PanelTextosDelDuenoTest extends TestCase
         $faltantes = [];
 
         foreach ($this->archivosDelPanel() as $archivo) {
-            preg_match_all("/(?:__|trans_choice)\\(\\s*'(panel\\.[a-z0-9_.]+)'/", (string) file_get_contents($archivo), $coincidencias);
+            preg_match_all("/(?:__|trans_choice)\\(\\s*'(panel\\.[a-z0-9_.]*[a-z0-9_])'/", (string) file_get_contents($archivo), $coincidencias);
 
             foreach ($coincidencias[1] as $clave) {
                 if (! Lang::has($clave, 'es', false)) {
