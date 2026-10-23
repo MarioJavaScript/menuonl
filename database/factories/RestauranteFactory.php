@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\PlanRestaurante;
 use App\Models\Restaurante;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -38,6 +39,26 @@ class RestauranteFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'estado' => 'suspendido',
+        ]);
+    }
+
+    /**
+     * Plan "Sitio y menú".
+     */
+    public function sitioMenu(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'plan' => PlanRestaurante::SitioMenu->value,
+        ]);
+    }
+
+    /**
+     * Plan "Solo menú".
+     */
+    public function soloMenu(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'plan' => PlanRestaurante::SoloMenu->value,
         ]);
     }
 }

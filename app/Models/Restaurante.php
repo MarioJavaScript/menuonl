@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Enums\Capacidad;
+use App\Enums\PlanRestaurante;
 use App\Services\Catalogos;
 use App\Traits\Auditable;
 use App\Traits\ProtegeImagenesDelRestaurante;
 use Carbon\Carbon;
 use Filament\Models\Contracts\HasName;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -30,6 +33,7 @@ class Restaurante extends Model implements HasName
         'pedidos_activos' => false,
         'mostrar_agotados' => true,
         'estado' => 'activo',
+        'plan' => 'completo',
         'tema' => 'calido',
         'sitio_plantilla' => 'a',
         'reservas_activas' => true,
@@ -87,6 +91,43 @@ class Restaurante extends Model implements HasName
             'latitud' => 'float',
             'longitud' => 'float',
         ];
+    }
+
+    /**
+     * Plan de venta. Al leer, un valor raro de la base cae al plan más restrictivo (D12); al guardar,
+     * solo se aceptan los valores del enum. No está en $fillable: se cambia con forceFill desde Plataforma.
+     *
+     * @return Attribute<PlanRestaurante, PlanRestaurante|string>
+     */
+    protected function plan(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $valor): PlanRestaurante => PlanRestaurante::desde($valor),
+            set: fn (PlanRestaurante|string $valor): string => ($valor instanceof PlanRestaurante ? $valor : PlanRestaurante::from($valor))->value,
+        );
+    }
+
+    public function incluye(Capacidad $capacidad): bool
+    {
+        return $this->plan->incluye($capacidad);
+    }
+
+    /**
+     * El superadmin edita por encima del techo del plan; los demás, solo lo que el plan incluye.
+     */
+    public function permiteA(User $usuario, Capacidad $capacidad): bool
+    {
+        return $usuario->isSuperadmin() || $this->incluye($capacidad);
+    }
+
+    public function tieneSitio(): bool
+    {
+        return $this->incluye(Capacidad::Sitio);
+    }
+
+    public function reservasDisponibles(): bool
+    {
+        return (bool) $this->reservas_activas && $this->incluye(Capacidad::Reservas);
     }
 
     /**
