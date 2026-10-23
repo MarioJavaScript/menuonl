@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Capacidad;
 use Filament\Auth\MultiFactor\App\Concerns\InteractsWithAppAuthentication;
 use Filament\Auth\MultiFactor\App\Concerns\InteractsWithAppAuthenticationRecovery;
 use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthentication;
@@ -61,7 +62,19 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
             return false;
         }
 
-        return $this->isSuperadmin() || $this->restaurantes()->wherePivot('activo', true)->exists();
+        return $this->isSuperadmin() || $this->restaurantesConPanel()->isNotEmpty();
+    }
+
+    /**
+     * Active restaurants whose plan lets their team into the panel (Solo menú does not).
+     *
+     * @return Collection<int, Restaurante>
+     */
+    private function restaurantesConPanel(): Collection
+    {
+        return $this->restaurantes()->wherePivot('activo', true)->get()
+            ->filter(fn (Restaurante $restaurante): bool => $restaurante->incluye(Capacidad::Panel))
+            ->values();
     }
 
     /**
@@ -79,7 +92,7 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
      */
     public function getTenants(Panel $panel): Collection
     {
-        return $this->isSuperadmin() ? Restaurante::all() : $this->restaurantes()->wherePivot('activo', true)->get();
+        return $this->isSuperadmin() ? Restaurante::all() : $this->restaurantesConPanel();
     }
 
     /**
@@ -91,7 +104,8 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
             return false;
         }
 
-        return $this->isSuperadmin() || $this->restaurantes()->wherePivot('activo', true)->whereKey($tenant->getKey())->exists();
+        return $this->isSuperadmin()
+            || ($tenant->incluye(Capacidad::Panel) && $this->restaurantes()->wherePivot('activo', true)->whereKey($tenant->getKey())->exists());
     }
 
     /**
