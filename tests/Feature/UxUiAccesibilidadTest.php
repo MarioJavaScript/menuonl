@@ -526,14 +526,16 @@ class UxUiAccesibilidadTest extends TestCase
 
     public function test_filament_recursos_tienen_grupos_de_navegacion_estandarizados_en_espanol(): void
     {
-        // Menú
-        $this->assertSame('Menú', CategoriaResource::getNavigationGroup());
-        $this->assertSame('Menú', ProductoResource::getNavigationGroup());
+        // Mi menú
+        $this->assertSame('Mi menú', CategoriaResource::getNavigationGroup());
+        $this->assertSame('Mi menú', ProductoResource::getNavigationGroup());
 
-        // Restaurante
-        $this->assertSame('Restaurante', CodigoQrResource::getNavigationGroup());
-        $this->assertSame('Restaurante', HorarioResource::getNavigationGroup());
-        $this->assertSame('Restaurante', ContactoResource::getNavigationGroup());
+        // Información
+        $this->assertSame('Información', HorarioResource::getNavigationGroup());
+        $this->assertSame('Información', ContactoResource::getNavigationGroup());
+
+        // QR y mesas
+        $this->assertSame('QR y mesas', CodigoQrResource::getNavigationGroup());
 
         // Administración
         $this->assertSame('Administración', UserResource::getNavigationGroup());
@@ -797,9 +799,9 @@ class UxUiAccesibilidadTest extends TestCase
         $this->assertNotNull($colVisible);
         $this->assertSame('Visible', $colVisible->getLabel());
 
-        $colOrden = $table->getColumn('orden');
-        $this->assertNotNull($colOrden);
-        $this->assertSame('Orden', $colOrden->getLabel());
+        // El orden se cambia arrastrando: no hay columna numérica.
+        $this->assertNull($table->getColumn('orden'));
+        $this->assertSame('orden', $table->getReorderColumn());
 
         // Estado vacío
         $this->assertSame('Todavía no tienes categorías', $table->getEmptyStateHeading());
@@ -881,8 +883,8 @@ class UxUiAccesibilidadTest extends TestCase
 
         $livewire = Livewire::test(CreateCategoria::class);
 
-        $livewire->assertSee('Desmárcala si quieres ocultar temporalmente esta categoría y sus platillos de tu menú.');
-        $livewire->assertSee('Define la posición para ordenar las secciones de tu menú (por ejemplo: 1 para Entradas, 2 para Platos fuertes).');
+        $livewire->assertSee('Apágala para ocultar esta categoría y sus platillos de tu menú sin borrarlos.');
+        $livewire->assertDontSee('Orden de aparición');
     }
 
     public function test_edicion_platillo_y_categoria_configuran_acciones_de_cabecera(): void
@@ -1001,16 +1003,6 @@ class UxUiAccesibilidadTest extends TestCase
             'precio_oferta' => 50,
         ]);
 
-        // Validación de orden negativo en categoría
-        Livewire::test(CreateCategoria::class)
-            ->fillForm([
-                'orden' => -1,
-                'traducciones' => [['idioma' => 'es', 'nombre' => 'Categoría Mal Orden']],
-            ])
-            ->call('create')
-            ->assertHasFormErrors(['orden'])
-            ->assertSee('El orden no puede ser negativo.');
-
         // Validación de precio requerido en platillo
         Livewire::test(CreateProducto::class)
             ->fillForm([
@@ -1036,17 +1028,6 @@ class UxUiAccesibilidadTest extends TestCase
             ->assertHasFormErrors(['precio_oferta'])
             ->assertSee('El precio promocional no puede ser negativo.');
 
-        // Validación de orden negativo en platillo
-        Livewire::test(CreateProducto::class)
-            ->fillForm([
-                'categoria_id' => $categoria->id,
-                'precio' => 50,
-                'orden' => -1,
-                'traducciones' => [['idioma' => 'es', 'nombre' => 'Taco Mal Orden']],
-            ])
-            ->call('create')
-            ->assertHasFormErrors(['orden'])
-            ->assertSee('El orden no puede ser negativo.');
     }
 
     public function test_panel_render_hook_barra_inferior_movil_aislamiento_y_estructura(): void
@@ -1370,7 +1351,7 @@ class UxUiAccesibilidadTest extends TestCase
             ->assertSee('Cerrado ahora')
             ->assertSee('Hoy no abres')
             ->assertSee('Agregar platillo')
-            ->assertSee('Pendientes')
+            ->assertSee('Qué falta configurar')
             ->assertSee('Crea tu primera categoría, por ejemplo "Tacos" o "Bebidas".')
             ->assertSee('Crear categoría')
             ->assertSee('Activaste los pedidos, pero falta tu WhatsApp. Sin él no te llegan.')

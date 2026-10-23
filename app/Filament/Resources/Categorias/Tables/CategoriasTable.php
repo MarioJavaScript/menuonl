@@ -36,11 +36,13 @@ class CategoriasTable
                     ->counts('productos')
                     ->label('Platillos'),
                 IconColumn::make('visible')->label('Visible')->boolean(),
-                TextColumn::make('orden')->label('Orden')->sortable(),
             ])
             ->stackedOnMobile()
             ->defaultSort('orden')
             ->reorderable('orden')
+            ->reorderRecordsTriggerAction(fn (Action $action, bool $isReordering): Action => $action
+                ->label($isReordering ? __('panel.menu.orden.terminar') : __('panel.menu.orden.ordenar')))
+            ->description(__('panel.menu.orden.ayuda_categorias'))
             ->filters([
                 TrashedFilter::make(),
             ])

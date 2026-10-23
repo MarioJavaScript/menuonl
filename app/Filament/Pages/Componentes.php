@@ -108,7 +108,7 @@ class Componentes extends Page implements HasTable
                                 FileUpload::make('foto')
                                     ->label('Foto')
                                     ->image()
-                                    ->helperText('Una foto de tu celular sirve. Hasta 5 MB.')
+                                    ->helperText('Una foto de tu celular sirve. Hasta 10 MB.')
                                     ->disk('local')
                                     ->directory('componentes-muestra'),
                             ]),

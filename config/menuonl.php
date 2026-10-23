@@ -42,7 +42,8 @@ return [
     |--------------------------------------------------------------------------
     |
     | `max_bytes` is checked on the uploaded file BEFORE it is decoded, so a huge file never
-    | reaches GD. Dimensions are capped separately (4096 px) by WebpImageService.
+    | reaches GD. Dimensions (4096 px per side, 16 MP total) are capped separately by WebpImageService.
+    | The server limits upload_max_filesize and post_max_size must be at least this value (see docs).
     |
     */
 
@@ -54,7 +55,7 @@ return [
     ],
 
     'imagenes' => [
-        'max_bytes' => (int) env('IMAGENES_MAX_BYTES', 2 * 1024 * 1024),
+        'max_bytes' => (int) env('IMAGENES_MAX_BYTES', 10 * 1024 * 1024),
         'carpetas' => ['logos', 'portadas', 'productos', 'galeria'],
         'max_galeria' => (int) env('IMAGENES_MAX_GALERIA', 12),
     ],

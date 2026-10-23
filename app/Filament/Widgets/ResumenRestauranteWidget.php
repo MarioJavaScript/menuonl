@@ -2,19 +2,17 @@
 
 namespace App\Filament\Widgets;
 
-use App\Filament\Pages\Tenancy\EditRestauranteProfile;
-use App\Filament\Resources\Categorias\CategoriaResource;
-use App\Filament\Resources\CodigosQr\CodigoQrResource;
-use App\Filament\Resources\Horarios\HorarioResource;
 use App\Filament\Resources\Productos\ProductoResource;
 use App\Models\Restaurante;
 use App\Services\FormatoFecha;
+use App\Services\ProgresoDeConfiguracion;
 use Filament\Facades\Filament;
 use Filament\Widgets\Widget;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * Panel home (DISEÑO.md): the state of the menu and what needs attention, not a copy of the navigation.
- * It only reads; every pending item links to the screen where it is solved.
+ * It only reads; every pending item links to the screen where it is solved, and only shows to people who can open it.
  */
 class ResumenRestauranteWidget extends Widget
 {
@@ -49,7 +47,6 @@ class ResumenRestauranteWidget extends Widget
 
         $restaurante->loadMissing('horarios');
 
-        $puedeEditarRestaurante = auth()->user()?->can('update', $restaurante) ?? false;
         $diaHoy = (int) now($restaurante->zona_horaria)->dayOfWeek;
         $turnosHoy = $restaurante->horarios
             ->where('dia_semana', $diaHoy)
@@ -59,88 +56,17 @@ class ResumenRestauranteWidget extends Widget
             ->values()
             ->all();
 
+        $usuario = Auth::user();
+
         return [
             'restaurante' => $restaurante,
             'estaPublicado' => $restaurante->isActivo(),
             'estaAbierto' => $restaurante->estaAbiertoAhora(),
             'turnosHoy' => $turnosHoy,
             'agregarPlatilloUrl' => ProductoResource::canCreate() ? ProductoResource::getUrl('create') : null,
-            'pendientes' => $this->pendientes($restaurante, $puedeEditarRestaurante),
+            'sitioUrl' => route('sitio.publico', ['slug' => $restaurante->slug]),
+            'menuUrl' => route('menu.publico', ['slug' => $restaurante->slug]),
+            'progreso' => $usuario ? app(ProgresoDeConfiguracion::class)->para($restaurante, $usuario) : null,
         ];
-    }
-
-    /**
-     * @return list<array{mensaje: string, accion: string, url: ?string, importante: bool}>
-     */
-    private function pendientes(Restaurante $restaurante, bool $puedeEditarRestaurante): array
-    {
-        $pendientes = [];
-
-        if (! $restaurante->categorias()->exists()) {
-            $pendientes[] = [
-                'mensaje' => 'Crea tu primera categoría, por ejemplo "Tacos" o "Bebidas".',
-                'accion' => 'Crear categoría',
-                'url' => CategoriaResource::getUrl('create'),
-                'importante' => true,
-            ];
-        } elseif (! $restaurante->productos()->exists()) {
-            $pendientes[] = [
-                'mensaje' => 'Tu menú todavía no tiene platillos.',
-                'accion' => 'Agregar platillo',
-                'url' => ProductoResource::getUrl('create'),
-                'importante' => true,
-            ];
-        }
-
-        if ($restaurante->pedidos_activos && blank($restaurante->whatsapp_pedidos)) {
-            $pendientes[] = [
-                'mensaje' => 'Activaste los pedidos, pero falta tu WhatsApp. Sin él no te llegan.',
-                'accion' => 'Agregar WhatsApp',
-                'url' => $puedeEditarRestaurante ? EditRestauranteProfile::getUrl() : null,
-                'importante' => true,
-            ];
-        }
-
-        if (! $restaurante->horarios()->where('cerrado', false)->exists()) {
-            $pendientes[] = [
-                'mensaje' => 'Agrega tu horario para que tus clientes sepan cuándo abres.',
-                'accion' => 'Agregar horario',
-                'url' => HorarioResource::getUrl('index'),
-                'importante' => false,
-            ];
-        }
-
-        $agotados = $restaurante->productos()->where('disponible', false)->count();
-
-        if ($agotados > 0) {
-            $pendientes[] = [
-                'mensaje' => $agotados === 1 ? 'Tienes 1 platillo agotado.' : "Tienes {$agotados} platillos agotados.",
-                'accion' => 'Ver agotados',
-                'url' => ProductoResource::getUrl('index', ['filters' => ['agotados' => ['isActive' => true]]]),
-                'importante' => false,
-            ];
-        }
-
-        $sinFoto = $restaurante->productos()->whereNull('imagen')->count();
-
-        if ($sinFoto > 0) {
-            $pendientes[] = [
-                'mensaje' => ($sinFoto === 1 ? '1 platillo no tiene foto.' : "{$sinFoto} platillos no tienen foto.").' Con foto se piden más.',
-                'accion' => 'Ver platillos',
-                'url' => ProductoResource::getUrl('index'),
-                'importante' => false,
-            ];
-        }
-
-        if ($restaurante->productos()->exists() && ! $restaurante->codigosQr()->exists()) {
-            $pendientes[] = [
-                'mensaje' => 'Aún no creas los códigos QR de tus mesas.',
-                'accion' => 'Crear QR de mesas',
-                'url' => CodigoQrResource::getUrl('index'),
-                'importante' => false,
-            ];
-        }
-
-        return $pendientes;
     }
 }

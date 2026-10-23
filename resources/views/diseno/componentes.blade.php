@@ -118,7 +118,7 @@
                         <input type="file" accept="image/jpeg,image/png,image/webp">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path stroke-linejoin="round" d="m21 16-5-5-8 8"/></svg>
                         <strong>Toca para elegir una foto</strong>
-                        <span class="ayuda-campo">Una foto de tu celular sirve. Hasta 5 MB.</span>
+                        <span class="ayuda-campo">Una foto de tu celular sirve. Hasta 10 MB.</span>
                     </label>
                 </div>
             </div>

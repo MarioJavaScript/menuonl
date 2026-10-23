@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Filament\Pages\Tenancy\EditRestauranteProfile;
+use App\Filament\Pages\Apariencia;
 use App\Filament\Resources\Productos\Pages\CreateProducto;
 use App\Filament\Resources\Productos\Pages\EditProducto;
 use App\Models\Producto;
@@ -104,7 +104,7 @@ class AislamientoArchivosTest extends TestCase
             app(WebpImageService::class)->storeForRestaurante($grande, $this->a->id, 'portadas');
             $this->fail('Debió rechazar por peso.');
         } catch (ValidationException $e) {
-            $this->assertStringContainsString('pesa más', $e->errors()['imagen'][0]);
+            $this->assertStringContainsString('demasiado grande', $e->errors()['imagen'][0]);
         }
 
         $this->assertSame([], Storage::disk('public')->allFiles("restaurantes/{$this->a->id}"));
@@ -230,7 +230,7 @@ class AislamientoArchivosTest extends TestCase
     {
         $this->entrarAlPanel($this->crearUsuario('propietario', $this->a), $this->a);
 
-        Livewire::test(EditRestauranteProfile::class)
+        Livewire::test(Apariencia::class)
             ->set('data.logo', ['uuid-1' => $this->rutaDeB])
             ->set('data.portada', ['uuid-2' => $this->rutaDeB])
             ->call('save')
@@ -257,7 +257,7 @@ class AislamientoArchivosTest extends TestCase
     {
         $this->entrarAlPanel($this->crearUsuario('propietario', $this->a), $this->a);
 
-        Livewire::test(EditRestauranteProfile::class)
+        Livewire::test(Apariencia::class)
             ->set('data.logo', UploadedFile::fake()->image('logo-original.jpg', 300, 300))
             ->call('save')
             ->assertHasNoErrors();
@@ -274,7 +274,7 @@ class AislamientoArchivosTest extends TestCase
     {
         $this->entrarAlPanel($this->crearUsuario('propietario', $this->a), $this->a);
 
-        Livewire::test(EditRestauranteProfile::class)
+        Livewire::test(Apariencia::class)
             ->set('data.logo', UploadedFile::fake()->createWithContent('logo.svg', '<svg xmlns="http://www.w3.org/2000/svg"/>'))
             ->call('save')
             ->assertHasErrors();

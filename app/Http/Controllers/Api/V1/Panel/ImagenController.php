@@ -11,12 +11,14 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Photo uploads from the panel: dish photos (module "menu"), hero and gallery (module "ajustes").
  *
- * Every upload is validated (real MIME type, size, dimensions, no SVG), cropped to a fixed ratio and
- * stored as WebP with responsive copies, always inside the restaurant's own directory.
+ * Every upload goes through WebpImageService::procesar(), the same entry point as the Filament panel:
+ * real type, size and pixel caps, EXIF orientation, fixed crop, WebP with responsive copies, always inside
+ * the restaurant's own directory.
  */
 class ImagenController extends Controller
 {
@@ -27,7 +29,7 @@ class ImagenController extends Controller
         Gate::authorize('update', $producto);
         $archivo = $this->archivo($request);
 
-        $producto->update(['imagen' => $this->imagenes->storeCroppedForRestaurante($archivo, $restaurante->id, 'productos', 'platillo')]);
+        $producto->update(['imagen' => $this->imagenes->procesar($archivo, $restaurante->id, 'platillo')]);
 
         return response()->json(['data' => ['imagen' => $this->imagenes->url($producto->imagen, 480)]]);
     }
@@ -45,7 +47,7 @@ class ImagenController extends Controller
     {
         $archivo = $this->archivo($request);
 
-        $restaurante->update(['portada' => $this->imagenes->storeCroppedForRestaurante($archivo, $restaurante->id, 'portadas', 'hero')]);
+        $restaurante->update(['portada' => $this->imagenes->procesar($archivo, $restaurante->id, 'portada')]);
 
         return response()->json(['data' => ['hero' => $this->imagenes->url($restaurante->portada, 960)]]);
     }
@@ -67,7 +69,7 @@ class ImagenController extends Controller
 
         $archivo = $this->archivo($request);
         $foto = GaleriaImagen::create([
-            'imagen' => $this->imagenes->storeCroppedForRestaurante($archivo, $restaurante->id, 'galeria', 'galeria'),
+            'imagen' => $this->imagenes->procesar($archivo, $restaurante->id, 'galeria'),
             'orden' => (int) GaleriaImagen::max('orden') + 1,
         ]);
 
@@ -85,13 +87,25 @@ class ImagenController extends Controller
         return response()->json(null, 204);
     }
 
+    /**
+     * The uploaded file. Size, type and pixels are checked by WebpImageService with the same messages as Filament;
+     * here only the cases where PHP never delivered the file (limits of upload_max_filesize or post_max_size).
+     */
     private function archivo(Request $request): UploadedFile
     {
+        $demasiadoGrande = $this->imagenes->mensajeDemasiadoGrande();
+
+        // Over post_max_size PHP drops the whole body, so the file is simply missing
+        if (! $request->hasFile('imagen') && (int) $request->server('CONTENT_LENGTH') > 0 && $request->all() === []) {
+            throw ValidationException::withMessages(['imagen' => $demasiadoGrande]);
+        }
+
         $request->validate([
-            'imagen' => ['required', 'file', 'max:'.(int) ceil(config('menuonl.imagenes.max_bytes') / 1024)],
+            'imagen' => ['required', 'file'],
         ], [
-            'imagen.max' => 'La imagen pesa más del máximo permitido.',
             'imagen.required' => 'Elige una imagen.',
+            'imagen.file' => $demasiadoGrande,
+            'imagen.uploaded' => $demasiadoGrande,
         ]);
 
         return $request->file('imagen');

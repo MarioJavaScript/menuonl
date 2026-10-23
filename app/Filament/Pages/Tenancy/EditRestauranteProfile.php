@@ -2,12 +2,10 @@
 
 namespace App\Filament\Pages\Tenancy;
 
-use App\Filament\Components\ImagenRestauranteUpload;
 use App\Services\Catalogos;
+use App\Services\EnlaceGoogleMaps;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
-use Filament\Forms\Components\ColorPicker;
-use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -15,18 +13,24 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Pages\Tenancy\EditTenantProfile;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Text;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\ValidationException;
 
 /**
- * Mi restaurante (RF-19): apariencia de la página pública y ajustes del local. Only propietario and
- * superadmin reach it: canView() asks the Restaurante policy for `update`. Logo and cover go
- * through WebpImageService.
+ * Datos del restaurante (RF-19): nombre, frase, descripción, ubicación en el mapa, moneda e idiomas. Only propietario and
+ * superadmin reach it: canView() asks the Restaurante policy for `update`. El diseño del sitio vive en Apariencia y los
+ * pedidos y reservas en Pedidos y reservas. La dirección corta (slug) no se edita aquí: es de la plataforma.
  */
 class EditRestauranteProfile extends EditTenantProfile
 {
+    private const int MAX_CONSULTAS_POR_MINUTO = 10;
+
     public static function getLabel(): string
     {
-        return 'Mi restaurante';
+        return __('panel.datos.nav');
     }
 
     /**
@@ -35,8 +39,14 @@ class EditRestauranteProfile extends EditTenantProfile
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('ver_sitio')
+                ->label(__('panel.enlaces.ver_sitio'))
+                ->icon('heroicon-o-arrow-top-right-on-square')
+                ->color('gray')
+                ->url(fn (): ?string => Filament::getTenant() ? route('sitio.publico', ['slug' => Filament::getTenant()->slug]) : null)
+                ->openUrlInNewTab(),
             Action::make('ver_menu')
-                ->label('Ver menú')
+                ->label(__('panel.enlaces.ver_menu'))
                 ->icon('heroicon-o-arrow-top-right-on-square')
                 ->color('gray')
                 ->url(fn (): ?string => Filament::getTenant() ? route('menu.publico', ['slug' => Filament::getTenant()->slug]) : null)
@@ -46,90 +56,131 @@ class EditRestauranteProfile extends EditTenantProfile
 
     public function form(Schema $schema): Schema
     {
-        $temas = Catalogos::temas();
-        $plantillas = Catalogos::plantillasSitio();
-
         return $schema
             ->components([
-                Section::make('Diseño del menú')
-                    ->description('Personaliza el estilo visual, colores e imágenes que verán tus clientes al abrir tu menú.')
+                Section::make(__('panel.datos.basicos.titulo'))
+                    ->description(__('panel.datos.basicos.descripcion'))
                     ->schema([
-                        Radio::make('tema')
-                            ->label('Estilo visual')
-                            ->options(Catalogos::nombresDeTemas())
-                            ->descriptions(array_map(fn (array $tema): string => $tema['descripcion'], $temas))
-                            ->in(array_keys($temas))
-                            ->default('calido')
-                            ->required(),
-                        Radio::make('sitio_plantilla')
-                            ->label('Plantilla del sitio')
-                            ->helperText('Diseño de tu sitio (/tu-restaurante) y de su menú. Las plantillas Cafetería, Bar, Café pastel y Pizzería traen sus propios colores y tipografías y no usan el estilo visual de arriba.')
-                            ->options(array_map(fn (array $plantilla): string => $plantilla['nombre'], $plantillas))
-                            ->descriptions(array_map(fn (array $plantilla): string => $plantilla['descripcion'], $plantillas))
-                            ->in(array_keys($plantillas))
-                            ->default('a')
-                            ->required(),
-                        ColorPicker::make('color_acento')
-                            ->label('Color principal')
-                            ->helperText('Se aplica en botones y acentos del menú. Déjalo vacío para conservar el color original del estilo elegido.')
-                            ->regex('/^#[0-9a-fA-F]{6}$/'),
-                        ImagenRestauranteUpload::make('portada', 'portadas')
-                            ->label('Fotografía de portada')
-                            ->helperText('Una foto horizontal de tus platillos o del ambiente de tu local luce mejor. Formatos JPG, PNG o WebP (máx. 5 MB).'),
-                        ImagenRestauranteUpload::make('logo', 'logos')
-                            ->label('Logotipo')
-                            ->helperText('Opcional. Si no subes uno, el menú destacará el nombre de tu restaurante con su tipografía principal.'),
+                        TextInput::make('nombre')
+                            ->label(__('panel.datos.basicos.nombre'))
+                            ->helperText(__('panel.datos.basicos.nombre_ayuda'))
+                            ->required()
+                            ->maxLength(150),
                         TextInput::make('eslogan')
-                            ->label('Frase corta o especialidad')
-                            ->placeholder('Cocina italiana de leña')
-                            ->helperText('Aparece junto al nombre de tu restaurante en el encabezado.')
+                            ->label(__('panel.datos.basicos.frase'))
+                            ->placeholder(__('panel.datos.basicos.frase_ejemplo'))
+                            ->helperText(__('panel.datos.basicos.frase_ayuda'))
                             ->maxLength(120),
                         Textarea::make('descripcion')
-                            ->label('Descripción breve')
-                            ->placeholder('Cuéntales a tus clientes qué hace especial a tu cocina o comparte indicaciones útiles.')
+                            ->label(__('panel.datos.basicos.descripcion'))
+                            ->placeholder(__('panel.datos.basicos.descripcion_ejemplo'))
+                            ->helperText(__('panel.datos.basicos.descripcion_ayuda'))
                             ->rows(3)
                             ->maxLength(500),
                     ]),
-                Section::make('Mi restaurante')
-                    ->description('Información general, moneda e idioma principal de tu carta.')
+                Section::make(__('panel.datos.mapa.titulo'))
+                    ->description(__('panel.datos.mapa.descripcion'))
                     ->schema([
-                        TextInput::make('nombre')->label('Nombre del restaurante')->required()->maxLength(150),
-                        Select::make('moneda')->label('Moneda')->options(Catalogos::monedas())->required(),
-                        Select::make('idioma_default')->label('Idioma principal')->options(Catalogos::idiomas())->required(),
-                        Select::make('zona_horaria')->label('Zona horaria')->options(Catalogos::zonasHorarias())->searchable()->required(),
+                        Text::make(fn (): string => __('panel.datos.mapa.guardado'))
+                            ->visible(fn (): bool => $this->tenant->latitud !== null && $this->tenant->longitud !== null),
+                        TextInput::make('enlace_mapa')
+                            ->label(__('panel.datos.mapa.enlace'))
+                            ->placeholder('https://maps.app.goo.gl/...')
+                            ->helperText(__('panel.datos.mapa.enlace_ayuda'))
+                            ->url()
+                            ->maxLength(2048)
+                            ->rule(fn (): \Closure => function (string $attribute, mixed $value, \Closure $fail): void {
+                                if (filled($value) && ! EnlaceGoogleMaps::esValido((string) $value)) {
+                                    $fail(__('panel.datos.mapa.no_es_google_maps'));
+                                }
+                            }),
+                        Toggle::make('quitar_mapa')
+                            ->label(__('panel.datos.mapa.quitar'))
+                            ->helperText(__('panel.datos.mapa.quitar_ayuda'))
+                            ->visible(fn (): bool => $this->tenant->latitud !== null && $this->tenant->longitud !== null)
+                            ->disabled(fn (Get $get): bool => filled($get('enlace_mapa'))),
+                    ]),
+                Section::make(__('panel.datos.moneda.titulo'))
+                    ->description(__('panel.datos.moneda.descripcion'))
+                    ->schema([
+                        Select::make('moneda')
+                            ->label(__('panel.datos.moneda.moneda'))
+                            ->helperText(__('panel.datos.moneda.moneda_ayuda'))
+                            ->options(Catalogos::monedas())
+                            ->required(),
+                        Select::make('idioma_default')
+                            ->label(__('panel.datos.moneda.idioma'))
+                            ->helperText(__('panel.datos.moneda.idioma_ayuda'))
+                            ->options(Catalogos::idiomas())
+                            ->required(),
+                        Select::make('zona_horaria')
+                            ->label(__('panel.datos.moneda.zona'))
+                            ->helperText(__('panel.datos.moneda.zona_ayuda'))
+                            ->options(Catalogos::zonasHorarias())
+                            ->searchable()
+                            ->required(),
                     ])
                     ->columns(2),
-                Section::make('Pedidos por WhatsApp')
-                    ->description('Permite que tus clientes armen su pedido en el menú y lo envíen listo a tu WhatsApp.')
-                    ->schema([
-                        Toggle::make('pedidos_activos')
-                            ->label('Activar pedidos por WhatsApp')
-                            ->helperText('Habilita la selección de platillos en el menú público para enviar el pedido por WhatsApp.'),
-                        TextInput::make('whatsapp_pedidos')
-                            ->label('WhatsApp para pedidos')
-                            ->placeholder('5215512345678')
-                            ->helperText('Número en formato internacional con código de país, solo dígitos (8 a 20 dígitos, sin espacios ni signos).')
-                            ->regex('/^[0-9]{8,20}$/')
-                            ->maxLength(20),
-                        Toggle::make('mostrar_agotados')
-                            ->label('Mostrar platillos agotados')
-                            ->helperText('Si se desmarca, los platillos no disponibles se ocultan por completo del menú público.'),
-                    ]),
-                Section::make('Idiomas adicionales')
-                    ->description('Agrega otros idiomas si recibes clientes extranjeros y deseas traducir tus categorías y platillos.')
+                Section::make(__('panel.datos.idiomas.titulo'))
+                    ->description(__('panel.datos.idiomas.descripcion'))
                     ->collapsed()
                     ->schema([
                         Repeater::make('idiomas')
-                            ->label('Idiomas activos')
+                            ->label(__('panel.datos.idiomas.activos'))
                             ->relationship('idiomas')
                             ->schema([
-                                Select::make('idioma')->label('Idioma')->options(Catalogos::idiomas())->required()->distinct(),
-                                TextInput::make('orden')->label('Orden')->numeric()->integer()->minValue(0)->maxValue(32767)->default(0)->required(),
+                                Select::make('idioma')->label(__('panel.datos.idiomas.idioma'))->options(Catalogos::idiomas())->required()->distinct(),
+                                TextInput::make('orden')->label(__('panel.datos.idiomas.orden'))->numeric()->integer()->minValue(0)->maxValue(32767)->default(0)->required(),
                             ])
                             ->columns(2)
                             ->orderColumn('orden')
-                            ->addActionLabel('Agregar idioma'),
+                            ->addActionLabel(__('panel.datos.idiomas.agregar')),
                     ]),
             ]);
+    }
+
+    /**
+     * El enlace del mapa no es una columna: se convierte en latitud y longitud (o se quita la ubicación guardada).
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        $enlace = trim((string) ($data['enlace_mapa'] ?? ''));
+        $quitar = (bool) ($data['quitar_mapa'] ?? false);
+        unset($data['enlace_mapa'], $data['quitar_mapa']);
+
+        if ($enlace !== '') {
+            $this->limitarConsultasDeEnlaces($enlace);
+
+            $coordenadas = EnlaceGoogleMaps::coordenadas($enlace);
+
+            if ($coordenadas === null) {
+                throw ValidationException::withMessages(['data.enlace_mapa' => __('panel.datos.mapa.sin_ubicacion')]);
+            }
+
+            return $data + $coordenadas;
+        }
+
+        return $quitar ? $data + ['latitud' => null, 'longitud' => null] : $data;
+    }
+
+    /**
+     * Seguir un enlace corto hace una petición saliente: se limita por persona (solo el propietario o el superadmin llegan aquí).
+     */
+    private function limitarConsultasDeEnlaces(string $enlace): void
+    {
+        if (! EnlaceGoogleMaps::esEnlaceCorto($enlace)) {
+            return;
+        }
+
+        $clave = 'enlace-mapa:'.auth()->id();
+
+        if (RateLimiter::tooManyAttempts($clave, self::MAX_CONSULTAS_POR_MINUTO)) {
+            throw ValidationException::withMessages(['data.enlace_mapa' => __('panel.datos.mapa.demasiados_intentos')]);
+        }
+
+        RateLimiter::hit($clave, 60);
     }
 }
