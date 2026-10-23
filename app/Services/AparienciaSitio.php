@@ -19,6 +19,14 @@ class AparienciaSitio
     public const array PLANTILLAS_CON_ESTILO = ['a', 'b', 'c', 'd'];
 
     /**
+     * Plantillas cuyo sitio público muestra la sección Galería. Única fuente de este dato; una prueba la compara
+     * con las vistas de resources/views/sitio para que no se desfase sin querer.
+     *
+     * @var list<string>
+     */
+    public const array PLANTILLAS_CON_GALERIA = ['a', 'b', 'c'];
+
+    /**
      * Contraste mínimo entre el color principal y su texto para que las plantillas e, f, g y h lo usen.
      */
     private const float CONTRASTE_MINIMO = 4.5;
@@ -56,6 +64,21 @@ class AparienciaSitio
     public static function usaEstilo(?string $plantilla): bool
     {
         return in_array((string) $plantilla, self::PLANTILLAS_CON_ESTILO, true);
+    }
+
+    public static function muestraGaleria(?string $plantilla): bool
+    {
+        return in_array((string) $plantilla, self::PLANTILLAS_CON_GALERIA, true);
+    }
+
+    /**
+     * Nombres claros (los de Apariencia) de los diseños que muestran la galería, en el orden del catálogo.
+     *
+     * @return list<string>
+     */
+    public static function nombresConGaleria(): array
+    {
+        return array_map(self::nombre(...), self::PLANTILLAS_CON_GALERIA);
     }
 
     /**

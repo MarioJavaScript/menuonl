@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Filament\Pages\Apariencia;
+use App\Filament\Pages\FotosDelRestaurante;
 use App\Filament\Pages\Inicio;
 use App\Filament\Pages\PedidosYReservas;
 use App\Filament\Pages\Recomendados;
@@ -71,7 +72,7 @@ class PanelNavegacionDuenoTest extends TestCase
             ->all();
 
         $this->assertSame(['Platillos', 'Categorías', 'Recomendados'], $porGrupo['Mi menú']);
-        $this->assertSame(['Apariencia'], $porGrupo['Apariencia']);
+        $this->assertSame(['Apariencia', 'Fotos de tu restaurante'], $porGrupo['Apariencia']);
         $this->assertSame(['Datos del restaurante', 'Horario', 'Contactos'], $porGrupo['Información']);
         $this->assertSame(['Pedidos y reservas', 'Pedidos y reservas de hoy'], $porGrupo['Pedidos y reservas']);
         $this->assertSame(['Códigos QR'], $porGrupo['QR y mesas']);
@@ -82,7 +83,7 @@ class PanelNavegacionDuenoTest extends TestCase
         $restaurante = $this->crearRestaurante('la-esquina');
         $this->entrarAlPanel($this->crearUsuario('propietario', $restaurante), $restaurante);
 
-        foreach ([Inicio::getUrl(), Apariencia::getUrl(), Recomendados::getUrl(), PedidosYReservas::getUrl(), ProductoResource::getUrl('index')] as $url) {
+        foreach ([Inicio::getUrl(), Apariencia::getUrl(), FotosDelRestaurante::getUrl(), Recomendados::getUrl(), PedidosYReservas::getUrl(), ProductoResource::getUrl('index')] as $url) {
             $this->get($url)
                 ->assertSee('Ver mi sitio')
                 ->assertSee('Ver mi menú')
