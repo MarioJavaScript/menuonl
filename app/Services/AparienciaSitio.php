@@ -19,7 +19,7 @@ class AparienciaSitio
     public const array PLANTILLAS_CON_ESTILO = ['a', 'b', 'c', 'd'];
 
     /**
-     * Contraste mínimo entre el color principal y su texto para que las plantillas e, f y g lo usen.
+     * Contraste mínimo entre el color principal y su texto para que las plantillas e, f, g y h lo usen.
      */
     private const float CONTRASTE_MINIMO = 4.5;
 
@@ -41,6 +41,7 @@ class AparienciaSitio
             'e' => ['nombre' => 'Cafetería', 'descripcion' => 'Colores tierra y rosa, letras grandes y un menú que se desliza de lado.', 'para' => 'Cafeterías y bebidas', 'fondo' => '#f3e6d8', 'texto' => '#4a2f22', 'acento' => '#c0714f', 'bloque' => '#e8b7b0'],
             'f' => ['nombre' => 'Bar y coctelería', 'descripcion' => 'Fondo oscuro con luz de neón magenta y un menú con líneas punteadas.', 'para' => 'Bares y coctelerías', 'fondo' => '#120b17', 'texto' => '#f3e8ff', 'acento' => '#e11d9c', 'bloque' => '#2b1838'],
             'g' => ['nombre' => 'Cafetería pastel', 'descripcion' => 'Tonos pastel, bordes rasgados y letra cursiva. Dulce y alegre.', 'para' => 'Postres, repostería y cafeterías', 'fondo' => '#fdf0f4', 'texto' => '#7a4a5a', 'acento' => '#f4a8c0', 'bloque' => '#f7d4e0'],
+            'h' => ['nombre' => 'Pizzería', 'descripcion' => 'Papel crema, rojo tomate y detalles verde albahaca, con fotos redondas como platos.', 'para' => 'Pizzerías y trattorias', 'fondo' => '#f6efe2', 'texto' => '#2a1a14', 'acento' => '#c4351f', 'bloque' => '#cfdcc4'],
         ];
     }
 

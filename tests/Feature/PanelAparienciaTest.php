@@ -199,6 +199,8 @@ class PanelAparienciaTest extends TestCase
             'f con azul marino' => ['f', '#0f172a', 'aplica', true],
             'f con el magenta del bar' => ['f', '#e11d9c', 'no_legible', false],
             'g con gris medio' => ['g', '#808080', 'no_legible', false],
+            'h con verde albahaca' => ['h', '#3f6b3a', 'aplica', true],
+            'h con gris medio' => ['h', '#808080', 'no_legible', false],
             'color mal formado' => ['e', 'rojo', 'sin_color', false],
         ];
     }
@@ -321,6 +323,6 @@ class PanelAparienciaTest extends TestCase
      */
     public static function plantillasSinEstilo(): array
     {
-        return ['e' => ['e'], 'f' => ['f'], 'g' => ['g']];
+        return ['e' => ['e'], 'f' => ['f'], 'g' => ['g'], 'h' => ['h']];
     }
 }
