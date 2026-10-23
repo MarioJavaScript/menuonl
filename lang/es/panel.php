@@ -331,4 +331,19 @@ return [
         ],
     ],
 
+    'planes' => [
+        'completo' => [
+            'nombre' => 'Completo',
+            'descripcion' => 'Sitio, menú, reservas y panel completo para el propietario.',
+        ],
+        'sitio_menu' => [
+            'nombre' => 'Sitio y menú',
+            'descripcion' => 'Sitio y menú públicos, con reservas. El propietario atiende las reservas, el horario y los teléfonos; lo demás lo cambia Menuonl.',
+        ],
+        'solo_menu' => [
+            'nombre' => 'Solo menú',
+            'descripcion' => 'Solo el menú público, sin página de sitio ni reservas. Los cambios los hace Menuonl.',
+        ],
+    ],
+
 ];

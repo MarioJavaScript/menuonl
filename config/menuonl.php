@@ -96,6 +96,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Contacto de soporte
+    |--------------------------------------------------------------------------
+    |
+    | Número de WhatsApp (solo dígitos, con lada, formato wa.me) que se ofrece en el mensaje de
+    | "Solo menú" (docs/planes.md, D10). Vacío = no se muestra el botón de WhatsApp.
+    | Ver App\Services\ContactoSoporte.
+    |
+    */
+
+    'soporte_whatsapp' => env('SOPORTE_WHATSAPP'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Respaldos (RNF-06)
     |--------------------------------------------------------------------------
     |

@@ -55,7 +55,7 @@ class SitioPublicoDatos
             'facebook_url' => $this->enlaceRed($valor('facebook'), 'https://facebook.com/'),
             'mapa_url' => $this->enlaceMapa($restaurante, $valor('direccion')),
             'tiene_mapa' => $restaurante->latitud !== null && $restaurante->longitud !== null,
-            'reservas_activas' => (bool) $restaurante->reservas_activas,
+            'reservas_activas' => $restaurante->reservasDisponibles(),
             'esta_abierto' => $restaurante->estaAbiertoAhora(),
             'menu_url' => route('menu.publico', ['slug' => $restaurante->slug]),
         ];

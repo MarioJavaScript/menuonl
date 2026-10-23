@@ -78,7 +78,7 @@ class ReservasPublicas
      */
     public function crear(Restaurante $restaurante, array $datos): Reserva
     {
-        if (! $restaurante->reservas_activas) {
+        if (! $restaurante->reservasDisponibles()) {
             throw ValidationException::withMessages(['fecha' => 'Por ahora no recibimos reservas en línea.']);
         }
 
