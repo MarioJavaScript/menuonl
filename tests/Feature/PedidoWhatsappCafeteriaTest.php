@@ -307,10 +307,11 @@ class PedidoWhatsappCafeteriaTest extends TestCase
 
     public function test_el_script_no_usa_innerhtml_ni_manejadores_ni_guarda_precios(): void
     {
-        $principal = (string) file_get_contents(resource_path('js/sitio-cafeteria-pedido.js'));
-        $mensaje = (string) file_get_contents(resource_path('js/sitio-cafeteria-pedido-mensaje.js'));
+        $entrada = (string) file_get_contents(resource_path('js/sitio-cafeteria-pedido.js'));
+        $principal = (string) file_get_contents(resource_path('js/pedido/controlador.js'));
+        $mensaje = (string) file_get_contents(resource_path('js/pedido/mensaje.js'));
 
-        foreach ([$principal, $mensaje] as $codigo) {
+        foreach ([$entrada, $principal, $mensaje] as $codigo) {
             $this->assertStringNotContainsString('innerHTML', $codigo);
             $this->assertStringNotContainsString('outerHTML', $codigo);
             $this->assertStringNotContainsString('insertAdjacentHTML', $codigo);
@@ -321,6 +322,7 @@ class PedidoWhatsappCafeteriaTest extends TestCase
         }
 
         $this->assertStringContainsString('{ p: producto, v: variante || null, c: linea.cantidad, n: linea.nota }', $principal, 'localStorage debe guardar solo ids, cantidad y nota');
+        $this->assertStringContainsString("iniciarPedido('cal', 'menuonl_cart_e')", $entrada, 'La clave por defecto debe ser la de la plantilla');
         $this->assertStringContainsString('menu.publico', $mensaje, 'Falta el aviso de mantener el formato igual al de menu.publico');
         $this->assertStringContainsString('menu.publico', $principal);
     }
