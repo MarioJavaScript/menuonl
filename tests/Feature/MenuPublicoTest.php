@@ -660,9 +660,11 @@ class MenuPublicoTest extends TestCase
 
         $response->assertOk();
         $this->assertTrue($response->viewData('estaAbierto'));
-        $response->assertSee("menuonl_cart_{$restaurante->slug}", false);
-        $response->assertSee('525512345678', false);
-        $response->assertSee('https://wa.me/', false);
+        $response->assertSee("data-clave=\"menuonl_cart_m_{$restaurante->slug}\"", false);
+        $response->assertSee("data-clave-antigua=\"menuonl_cart_{$restaurante->slug}\"", false);
+        $response->assertSee('data-numero="525512345678"', false);
+        $response->assertSee('data-mesa="7"', false);
+        $this->assertStringContainsString('https://wa.me/${numero}?text=', (string) file_get_contents(resource_path('js/pedido/mensaje.js')));
         $response->assertSee('value="7"', false);
     }
 

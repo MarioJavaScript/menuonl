@@ -18,11 +18,12 @@ use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Queue;
-use Illuminate\Support\Js;
+use Tests\Concerns\LeeElPedidoDelMenuPublico;
 use Tests\TestCase;
 
 class AdversarialPublicMenuTest extends TestCase
 {
+    use LeeElPedidoDelMenuPublico;
     use RefreshDatabase;
 
     protected function tearDown(): void
@@ -1144,8 +1145,8 @@ class AdversarialPublicMenuTest extends TestCase
         $this->assertStringContainsString('id="btnCloseCartModal"', $content);
 
         // 3. Botones vaciar pedido confirmación y cancelación: min-h-[44px]
-        $this->assertStringContainsString('cartEjecutarVaciar()', $content);
-        $this->assertStringContainsString('cartCancelarVaciar()', $content);
+        $this->assertMatchesRegularExpression('/data-mo-confirmar(?!-)/', $content);
+        $this->assertStringContainsString('data-mo-conservar', $content);
 
         // 4. Botón agregar al carrito: min-h-[44px] min-w-[44px]
         $this->assertStringContainsString('btn-cart-add', $content);
@@ -1186,13 +1187,16 @@ class AdversarialPublicMenuTest extends TestCase
         $response->assertSee('aria-modal="true"', false);
         $response->assertSee('aria-labelledby="cartDrawerTitle"', false);
 
-        // Escape key dismiss handler
-        $response->assertSee("e.key === 'Escape' || e.key === 'Esc'", false);
-        $response->assertSee('closeCartModal()', false);
+        // Escape key dismiss handler, ahora en la presentación del cajón (ya no hay script en línea)
+        $response->assertSee('data-mo-cerrar', false);
+        $presentacion = (string) file_get_contents(resource_path('js/pedido/presentacion-hoja.js'));
+        $this->assertStringContainsString("e.key === 'Escape' || e.key === 'Esc'", $presentacion);
+        $this->assertStringContainsString("e.key === 'Tab'", $presentacion);
 
         // Focus management: moves focus to close button when opened, restores to bar when closed
-        $response->assertSee('closeBtn.focus()', false);
-        $response->assertSee('bar.focus()', false);
+        $this->assertStringContainsString("document.getElementById('btnCloseCartModal')?.focus()", $presentacion);
+        $controlador = (string) file_get_contents(resource_path('js/pedido/controlador.js'));
+        $this->assertStringContainsString("(barra.hidden ? document.querySelector(selector('agregar')) : barra)?.focus()", $controlador);
     }
 
     // =========================================================================
@@ -1218,13 +1222,19 @@ class AdversarialPublicMenuTest extends TestCase
         $response = $this->get(route('menu.publico', ['slug' => $restaurante->slug]));
         $response->assertOk();
 
-        // Check that escapeHtml function is defined and correctly escapes &, <, >, ", '
-        $response->assertSee('function escapeHtml(str)', false);
-        $response->assertSee("replace(/'/g, '&#39;')", false);
-        $response->assertSee('replace(/"/g, \'&quot;\')', false);
+        // Ya no se arma HTML con texto del cliente (no hay escapeHtml porque no hay innerHTML): todo entra con textContent.
+        foreach (['menu-pedido.js', 'pedido/controlador.js', 'pedido/presentacion-hoja.js', 'pedido/migracion.js', 'pedido/mensaje.js'] as $archivo) {
+            $codigo = (string) file_get_contents(resource_path('js/'.$archivo));
+            foreach (['innerHTML', 'outerHTML', 'insertAdjacentHTML', 'document.write', 'eval('] as $peligroso) {
+                $this->assertStringNotContainsString($peligroso, $codigo, "$archivo usa $peligroso");
+            }
+        }
 
-        // Check encodeURIComponent is used when constructing WhatsApp deep link
-        $response->assertSee('encodeURIComponent(msg)', false);
+        // Las notas pierden las marcas de WhatsApp y el enlace se codifica con encodeURIComponent
+        $mensaje = (string) file_get_contents(resource_path('js/pedido/mensaje.js'));
+        $this->assertStringContainsString('encodeURIComponent(mensaje)', $mensaje);
+        $this->assertStringContainsString('const MARCAS_DE_FORMATO = /[*_~`]/g;', $mensaje);
+        $response->assertDontSee('encodeURIComponent', false);
     }
 
     public function test_restaurant_name_template_literal_xss_in_script_tag(): void
@@ -1274,11 +1284,12 @@ class AdversarialPublicMenuTest extends TestCase
         $response->assertOk();
 
         $content = $response->getContent();
-        preg_match_all('#<script>(.*?)</script>#s', $content, $bloques);
-        $script = implode('', $bloques[1]);
 
-        $this->assertStringContainsString('const NOMBRE = '.Js::from($payload)->toHtml().';', $script);
-        $this->assertStringNotContainsString('alert(document.domain);', str_replace(Js::from($payload)->toHtml(), '', $script));
+        // El nombre ya no va dentro de un script: solo vive en un atributo escapado y no rompe nada fuera de él.
+        $this->assertSame($payload, $this->atributosDelContenedorDePedido($content)['restaurante']);
+        $this->assertSinScriptNiManejadoresDelPedido($content);
+        preg_match_all('#<script\b(?![^>]*\bsrc=)[^>]*>(.*?)</script>#s', $content, $bloques);
+        $this->assertStringNotContainsString('alert(document.domain);', implode('', $bloques[1]));
     }
 
     public function test_dish_name_with_newline_creates_unbroken_or_broken_js_string(): void
@@ -1318,8 +1329,10 @@ class AdversarialPublicMenuTest extends TestCase
         $response->assertOk();
 
         $content = $response->getContent();
-        // The newline must be escaped as a JS literal, never raw inside the onclick attribute.
-        $this->assertStringContainsString('nombre: '.Js::from("Taco\nAl Pastor")->toHtml(), $content);
-        $this->assertStringNotContainsString("nombre: 'Taco\nAl Pastor'", $content);
+        // El salto de línea viaja como dato de un atributo data-nombre (no hay JS armado con texto) y el botón sigue completo.
+        $botones = $this->botonesDeAgregar($content);
+        $this->assertCount(1, $botones);
+        $this->assertSame("Taco\nAl Pastor", $botones[0]['nombre']);
+        $this->assertSinScriptNiManejadoresDelPedido($content);
     }
 }

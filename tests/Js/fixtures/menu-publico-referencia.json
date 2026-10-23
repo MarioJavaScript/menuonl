@@ -1,0 +1,299 @@
+{
+  "origen": "Generado con el script en línea de menu.publico.blade.php (git HEAD de la rama refactor-pedido-menu-publico, antes del PR 3) ejecutado en Node con un DOM simulado. Los casos normal-* deben seguir idénticos; los rara-* guardan lo que producía antes y cambian a propósito (docs/pedido-compartido.md, secciones 7 y 8).",
+  "casos": [
+    {
+      "id": "normal-variante-nota-cocina",
+      "cambiaAPropósito": false,
+      "moneda": "MXN",
+      "locale": "es-MX",
+      "numero": "525512345678",
+      "restaurante": "Cafe Mezquite",
+      "mesa": "3",
+      "notaCocina": "Sin cubiertos",
+      "carritoAntiguo": [
+        {
+          "producto_id": 1,
+          "variante_id": 2,
+          "nombre": "Latte",
+          "variante_nombre": "Grande",
+          "precio": 55,
+          "cantidad": 2,
+          "notas": "sin azucar"
+        },
+        {
+          "producto_id": 3,
+          "variante_id": null,
+          "nombre": "Chai",
+          "variante_nombre": null,
+          "precio": 50,
+          "cantidad": 1,
+          "notas": ""
+        }
+      ],
+      "urlAntes": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Cafe%20Mezquite*%3A%0A%0A*Mesa%3A*%203%0A%0A*Pedido%3A*%0A%E2%80%A2%202x%20Latte%20(Grande)%20-%20%24110.00%0A%20%20_Nota%3A%20sin%20azucar_%0A%E2%80%A2%201x%20Chai%20-%20%2450.00%0A%0A*Nota%20para%20la%20cocina%3A*%20Sin%20cubiertos%0A%0A*Total%3A*%20%24160.00",
+      "totalAntes": "$160.00"
+    },
+    {
+      "id": "normal-para-llevar",
+      "cambiaAPropósito": false,
+      "moneda": "MXN",
+      "locale": "es-MX",
+      "numero": "525512345678",
+      "restaurante": "Cafe Mezquite",
+      "mesa": "   ",
+      "notaCocina": "",
+      "carritoAntiguo": [
+        {
+          "producto_id": 1,
+          "variante_id": null,
+          "nombre": "Latte",
+          "variante_nombre": null,
+          "precio": 55,
+          "cantidad": 1,
+          "notas": ""
+        }
+      ],
+      "urlAntes": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Cafe%20Mezquite*%3A%0A%0A*Mesa%3A*%20Para%20llevar%0A%0A*Pedido%3A*%0A%E2%80%A2%201x%20Latte%20-%20%2455.00%0A%0A*Total%3A*%20%2455.00",
+      "totalAntes": "$55.00"
+    },
+    {
+      "id": "normal-mesa-con-espacio-y-guion",
+      "cambiaAPropósito": false,
+      "moneda": "MXN",
+      "locale": "es-MX",
+      "numero": "525512345678",
+      "restaurante": "Cafe Mezquite",
+      "mesa": "Terraza 2",
+      "notaCocina": "",
+      "carritoAntiguo": [
+        {
+          "producto_id": 4,
+          "variante_id": null,
+          "nombre": "Pan de elote",
+          "variante_nombre": null,
+          "precio": 32.5,
+          "cantidad": 3,
+          "notas": ""
+        }
+      ],
+      "urlAntes": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Cafe%20Mezquite*%3A%0A%0A*Mesa%3A*%20Terraza%202%0A%0A*Pedido%3A*%0A%E2%80%A2%203x%20Pan%20de%20elote%20-%20%2497.50%0A%0A*Total%3A*%20%2497.50",
+      "totalAntes": "$97.50"
+    },
+    {
+      "id": "normal-decimales",
+      "cambiaAPropósito": false,
+      "moneda": "MXN",
+      "locale": "es-MX",
+      "numero": "525512345678",
+      "restaurante": "Cafe Mezquite",
+      "mesa": "7",
+      "notaCocina": "Sin cebolla, con cubiertos",
+      "carritoAntiguo": [
+        {
+          "producto_id": 5,
+          "variante_id": null,
+          "nombre": "Taco",
+          "variante_nombre": null,
+          "precio": 19.99,
+          "cantidad": 3,
+          "notas": ""
+        },
+        {
+          "producto_id": 6,
+          "variante_id": 9,
+          "nombre": "Agua",
+          "variante_nombre": "Jamaica 1L",
+          "precio": 24.5,
+          "cantidad": 2,
+          "notas": "sin hielo"
+        }
+      ],
+      "urlAntes": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Cafe%20Mezquite*%3A%0A%0A*Mesa%3A*%207%0A%0A*Pedido%3A*%0A%E2%80%A2%203x%20Taco%20-%20%2459.97%0A%E2%80%A2%202x%20Agua%20(Jamaica%201L)%20-%20%2449.00%0A%20%20_Nota%3A%20sin%20hielo_%0A%0A*Nota%20para%20la%20cocina%3A*%20Sin%20cebolla%2C%20con%20cubiertos%0A%0A*Total%3A*%20%24108.97",
+      "totalAntes": "$108.97"
+    },
+    {
+      "id": "normal-usd",
+      "cambiaAPropósito": false,
+      "moneda": "USD",
+      "locale": "en-US",
+      "numero": "525512345678",
+      "restaurante": "Cafe Mezquite",
+      "mesa": "1",
+      "notaCocina": "",
+      "carritoAntiguo": [
+        {
+          "producto_id": 7,
+          "variante_id": null,
+          "nombre": "Burger",
+          "variante_nombre": null,
+          "precio": 12.99,
+          "cantidad": 2,
+          "notas": ""
+        }
+      ],
+      "urlAntes": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Cafe%20Mezquite*%3A%0A%0A*Mesa%3A*%201%0A%0A*Pedido%3A*%0A%E2%80%A2%202x%20Burger%20-%20%2425.98%20USD%0A%0A*Total%3A*%20%2425.98%20USD",
+      "totalAntes": "$25.98 USD"
+    },
+    {
+      "id": "normal-eur",
+      "cambiaAPropósito": false,
+      "moneda": "EUR",
+      "locale": "es-ES",
+      "numero": "525512345678",
+      "restaurante": "Cafe Mezquite",
+      "mesa": "B-2",
+      "notaCocina": "",
+      "carritoAntiguo": [
+        {
+          "producto_id": 8,
+          "variante_id": null,
+          "nombre": "Tortilla",
+          "variante_nombre": null,
+          "precio": 7.5,
+          "cantidad": 4,
+          "notas": ""
+        }
+      ],
+      "urlAntes": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Cafe%20Mezquite*%3A%0A%0A*Mesa%3A*%20B-2%0A%0A*Pedido%3A*%0A%E2%80%A2%204x%20Tortilla%20-%2030%2C00%C2%A0%E2%82%AC%0A%0A*Total%3A*%2030%2C00%C2%A0%E2%82%AC",
+      "totalAntes": "30,00 €"
+    },
+    {
+      "id": "normal-cop-ambiguo",
+      "cambiaAPropósito": false,
+      "moneda": "COP",
+      "locale": "es-CO",
+      "numero": "525512345678",
+      "restaurante": "Cafe Mezquite",
+      "mesa": "2",
+      "notaCocina": "",
+      "carritoAntiguo": [
+        {
+          "producto_id": 9,
+          "variante_id": null,
+          "nombre": "Bandeja",
+          "variante_nombre": null,
+          "precio": 25000,
+          "cantidad": 1,
+          "notas": ""
+        }
+      ],
+      "urlAntes": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Cafe%20Mezquite*%3A%0A%0A*Mesa%3A*%202%0A%0A*Pedido%3A*%0A%E2%80%A2%201x%20Bandeja%20-%20%24%C2%A025.000%20COP%0A%0A*Total%3A*%20%24%C2%A025.000%20COP",
+      "totalAntes": "$ 25.000 COP"
+    },
+    {
+      "id": "normal-acentos-y-enie",
+      "cambiaAPropósito": false,
+      "moneda": "MXN",
+      "locale": "es-MX",
+      "numero": "525512345678",
+      "restaurante": "La Cañita",
+      "mesa": "Ñandú_1",
+      "notaCocina": "Más picante",
+      "carritoAntiguo": [
+        {
+          "producto_id": 10,
+          "variante_id": null,
+          "nombre": "Jalapeño relleno",
+          "variante_nombre": null,
+          "precio": 40,
+          "cantidad": 2,
+          "notas": "bien caliente"
+        }
+      ],
+      "urlAntes": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*La%20Ca%C3%B1ita*%3A%0A%0A*Mesa%3A*%20%C3%91and%C3%BA_1%0A%0A*Pedido%3A*%0A%E2%80%A2%202x%20Jalape%C3%B1o%20relleno%20-%20%2480.00%0A%20%20_Nota%3A%20bien%20caliente_%0A%0A*Nota%20para%20la%20cocina%3A*%20M%C3%A1s%20picante%0A%0A*Total%3A*%20%2480.00",
+      "totalAntes": "$80.00"
+    },
+    {
+      "id": "rara-mesa-simbolos",
+      "cambiaAPropósito": true,
+      "moneda": "MXN",
+      "locale": "es-MX",
+      "numero": "525512345678",
+      "restaurante": "Cafe Mezquite",
+      "mesa": "Barra/2",
+      "notaCocina": "",
+      "carritoAntiguo": [
+        {
+          "producto_id": 1,
+          "variante_id": null,
+          "nombre": "Latte",
+          "variante_nombre": null,
+          "precio": 55,
+          "cantidad": 1,
+          "notas": ""
+        }
+      ],
+      "urlAntes": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Cafe%20Mezquite*%3A%0A%0A*Mesa%3A*%20Barra%2F2%0A%0A*Pedido%3A*%0A%E2%80%A2%201x%20Latte%20-%20%2455.00%0A%0A*Total%3A*%20%2455.00",
+      "totalAntes": "$55.00"
+    },
+    {
+      "id": "rara-mesa-numeral",
+      "cambiaAPropósito": true,
+      "moneda": "MXN",
+      "locale": "es-MX",
+      "numero": "525512345678",
+      "restaurante": "Cafe Mezquite",
+      "mesa": "Mesa #3",
+      "notaCocina": "",
+      "carritoAntiguo": [
+        {
+          "producto_id": 1,
+          "variante_id": null,
+          "nombre": "Latte",
+          "variante_nombre": null,
+          "precio": 55,
+          "cantidad": 1,
+          "notas": ""
+        }
+      ],
+      "urlAntes": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Cafe%20Mezquite*%3A%0A%0A*Mesa%3A*%20Mesa%20%233%0A%0A*Pedido%3A*%0A%E2%80%A2%201x%20Latte%20-%20%2455.00%0A%0A*Total%3A*%20%2455.00",
+      "totalAntes": "$55.00"
+    },
+    {
+      "id": "rara-notas-con-marcas",
+      "cambiaAPropósito": true,
+      "moneda": "MXN",
+      "locale": "es-MX",
+      "numero": "525512345678",
+      "restaurante": "Cafe Mezquite",
+      "mesa": "3",
+      "notaCocina": "sin *hielo*\ny ~nada~",
+      "carritoAntiguo": [
+        {
+          "producto_id": 1,
+          "variante_id": null,
+          "nombre": "Latte",
+          "variante_nombre": null,
+          "precio": 55,
+          "cantidad": 1,
+          "notas": "con _leche_ *extra*"
+        }
+      ],
+      "urlAntes": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Cafe%20Mezquite*%3A%0A%0A*Mesa%3A*%203%0A%0A*Pedido%3A*%0A%E2%80%A2%201x%20Latte%20-%20%2455.00%0A%20%20_Nota%3A%20con%20_leche_%20*extra*_%0A%0A*Nota%20para%20la%20cocina%3A*%20sin%20*hielo*%0Ay%20~nada~%0A%0A*Total%3A*%20%2455.00",
+      "totalAntes": "$55.00"
+    },
+    {
+      "id": "rara-cantidad-fuera-de-limite",
+      "cambiaAPropósito": true,
+      "moneda": "MXN",
+      "locale": "es-MX",
+      "numero": "525512345678",
+      "restaurante": "Cafe Mezquite",
+      "mesa": "3",
+      "notaCocina": "",
+      "carritoAntiguo": [
+        {
+          "producto_id": 1,
+          "variante_id": null,
+          "nombre": "Latte",
+          "variante_nombre": null,
+          "precio": 55,
+          "cantidad": 500,
+          "notas": ""
+        }
+      ],
+      "urlAntes": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Cafe%20Mezquite*%3A%0A%0A*Mesa%3A*%203%0A%0A*Pedido%3A*%0A%E2%80%A2%20500x%20Latte%20-%20%2427%2C500.00%0A%0A*Total%3A*%20%2427%2C500.00",
+      "totalAntes": "$27,500.00"
+    }
+  ]
+}

@@ -352,7 +352,7 @@ class PedidoWhatsappBarTest extends TestCase
             foreach ([$menu, $sitio] as $respuesta) {
                 $respuesta->assertDontSee('data-bar-', false)->assertDontSee('bar-pedido', false)->assertDontSee('bar-reserva', false)->assertDontSee('sitio-f', false);
             }
-            $menu->assertSee('cartAddItem', false)->assertSee('menuonl_cart_otro-'.$clave, false);
+            $menu->assertSee('data-mo-agregar', false)->assertSee('data-clave="menuonl_cart_m_otro-'.$clave.'"', false)->assertDontSee('cartAddItem', false);
             $restaurante->delete();
         }
     }
