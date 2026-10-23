@@ -5,16 +5,19 @@
 // - localStorage guarda solo identificadores, cantidades y notas. Cada carga se vuelve a contrastar con los platillos de la página:
 //   lo que ya no existe o está agotado se descarta.
 // - Todo el contenido se inserta con textContent y nodos del DOM; no hay HTML armado con texto ni manejadores en línea.
-// - El formato del mensaje vive en pedido/mensaje.js y debe mantenerse igual al de menu.publico.
+// - El formato del mensaje vive en pedido/mensaje.js y es el mismo para E, F, G, H y menu.publico.
 // - Cada plantilla lo inicia desde su propio archivo con el prefijo de sus atributos de datos (data-{prefijo}-*) y la clave
 //   de localStorage que usa por defecto.
+// - Tercer parámetro opcional (menu.publico lo usa; E, F, G y H no): `presentacion` (fábrica de abrir, cerrar, estaAbierto y mostrarToast
+//   para un cajón que no es un <dialog>) y `textoAgregado` (texto del aviso al agregar). Sin él, el comportamiento es el de siempre.
 import { LIMITES, armarEnlace, centavos, crearFormateador, limpiarMesa, limpiarTexto, totalizar } from './mensaje.js';
 
 /**
- * @param {string} prefijo Prefijo de los atributos de datos de la plantilla (cal, bar, pas, piz).
+ * @param {string} prefijo Prefijo de los atributos de datos de la plantilla (cal, bar, pas, piz, mo).
  * @param {string} claveDefecto Clave de localStorage si el servidor no manda data-clave.
+ * @param {{presentacion?: (contexto: {dialogo: HTMLElement, barra: HTMLElement, alCerrar: () => void}) => {abrir: () => void, cerrar: () => void, estaAbierto: () => boolean, mostrarToast: (texto: string) => void}, textoAgregado?: (etiqueta: string) => string}} [opciones]
  */
-export function iniciarPedido(prefijo, claveDefecto) {
+export function iniciarPedido(prefijo, claveDefecto, opciones = {}) {
     const atributo = (nombre) => `data-${prefijo}-${nombre}`;
     const selector = (nombre) => `[${atributo(nombre)}]`;
     const raiz = document.querySelector(selector('pedido'));
@@ -62,7 +65,6 @@ export function iniciarPedido(prefijo, claveDefecto) {
     });
 
     let lineas = [];
-    let temporizadorToast = null;
 
     const cargar = () => {
         try {
@@ -106,14 +108,7 @@ export function iniciarPedido(prefijo, claveDefecto) {
         }
     };
 
-    const mostrarToast = (texto) => {
-        toast.textContent = texto;
-        toast.hidden = false;
-        clearTimeout(temporizadorToast);
-        temporizadorToast = setTimeout(() => {
-            toast.hidden = true;
-        }, 2500);
-    };
+    const mostrarToast = (texto) => presentacion.mostrarToast(texto);
 
     const datosDeLineas = () => lineas.map((linea) => {
         const articulo = catalogo.get(linea.llave);
@@ -140,7 +135,16 @@ export function iniciarPedido(prefijo, claveDefecto) {
             const etiqueta = linea.variante ? `${linea.nombre} (${linea.variante})` : linea.nombre;
 
             fila.dataset.llave = linea.llave;
-            fila.querySelector(selector('nombre')).textContent = etiqueta;
+            const ranuraVariante = fila.querySelector(selector('variante'));
+
+            if (ranuraVariante) {
+                fila.querySelector(selector('nombre')).textContent = linea.nombre;
+                ranuraVariante.textContent = linea.variante ? `(${linea.variante})` : '';
+                ranuraVariante.hidden = !linea.variante;
+            } else {
+                fila.querySelector(selector('nombre')).textContent = etiqueta;
+            }
+
             fila.querySelector(selector('subtotal')).textContent = formatear(linea.cantidad * linea.precio);
             fila.querySelector(selector('cantidad')).textContent = String(linea.cantidad);
 
@@ -204,7 +208,8 @@ export function iniciarPedido(prefijo, claveDefecto) {
 
         guardar();
         pintar();
-        mostrarToast(`${articulo.nombreVariante ? `${articulo.nombre} (${articulo.nombreVariante})` : articulo.nombre} agregado al pedido.`);
+        const etiqueta = articulo.nombreVariante ? `${articulo.nombre} (${articulo.nombreVariante})` : articulo.nombre;
+        mostrarToast(opciones.textoAgregado ? opciones.textoAgregado(etiqueta) : `${etiqueta} agregado al pedido.`);
     };
 
     const reiniciarAvisos = () => {
@@ -214,31 +219,49 @@ export function iniciarPedido(prefijo, claveDefecto) {
         avisoEnlace.textContent = '';
     };
 
-    const abrir = () => {
-        reiniciarAvisos();
-
-        if (typeof dialogo.showModal === 'function') {
-            dialogo.showModal();
-        } else {
-            dialogo.setAttribute('open', '');
-        }
-
-        barra.setAttribute('aria-expanded', 'true');
-    };
-
-    const cerrar = () => {
-        if (typeof dialogo.close === 'function') {
-            dialogo.close();
-        } else {
-            dialogo.removeAttribute('open');
-        }
-    };
-
-    dialogo.addEventListener('close', () => {
+    const alCerrar = () => {
         reiniciarAvisos();
         barra.setAttribute('aria-expanded', 'false');
         (barra.hidden ? document.querySelector(selector('agregar')) : barra)?.focus();
-    });
+    };
+
+    let temporizadorToast = null;
+    const presentacionNativa = {
+        abrir: () => {
+            if (typeof dialogo.showModal === 'function') {
+                dialogo.showModal();
+            } else {
+                dialogo.setAttribute('open', '');
+            }
+        },
+        cerrar: () => {
+            if (typeof dialogo.close === 'function') {
+                dialogo.close();
+            } else {
+                dialogo.removeAttribute('open');
+            }
+        },
+        estaAbierto: () => dialogo.open,
+        mostrarToast: (texto) => {
+            toast.textContent = texto;
+            toast.hidden = false;
+            clearTimeout(temporizadorToast);
+            temporizadorToast = setTimeout(() => {
+                toast.hidden = true;
+            }, 2500);
+        },
+    };
+    const presentacion = opciones.presentacion ? opciones.presentacion({ dialogo, barra, alCerrar }) : presentacionNativa;
+
+    const abrir = () => {
+        reiniciarAvisos();
+        presentacion.abrir();
+        barra.setAttribute('aria-expanded', 'true');
+    };
+
+    const cerrar = () => presentacion.cerrar();
+
+    dialogo.addEventListener('close', alCerrar);
 
     const enviar = () => {
         const detalle = datosDeLineas();
@@ -339,7 +362,7 @@ export function iniciarPedido(prefijo, claveDefecto) {
     document.addEventListener('click', (evento) => {
         const boton = evento.target.closest(selector('agregar'));
 
-        if (boton && !dialogo.open) {
+        if (boton && !presentacion.estaAbierto()) {
             agregar(boton);
         }
     });

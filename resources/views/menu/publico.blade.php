@@ -1,4 +1,9 @@
+@php
+    $numeroPedidos = $restaurante->whatsappPedidosDigitos();
+    $puedePedir = $restaurante->pedidos_activos && $estaAbierto && $numeroPedidos !== null;
+@endphp
 <x-layout.publico
+    :pedido-js="$puedePedir ? 'resources/js/menu-pedido.js' : null"
     :titulo="$restaurante->traduccion($idioma)->nombre.' · Menú'"
     :descripcion="$restaurante->traduccion($idioma)->descripcion"
     :lang="str_replace('_', '-', app()->getLocale())"
@@ -18,7 +23,6 @@
         </div>
 
         @php
-            $puedePedir = $restaurante->pedidos_activos && $estaAbierto && filled($restaurante->whatsapp_pedidos);
             $ahora = now($restaurante->zona_horaria);
             $diaHoy = (int) $ahora->dayOfWeek;
             $turnosHoy = $horarios->where('dia_semana', $diaHoy)->where('cerrado', false)->sortBy('abre');
@@ -132,7 +136,7 @@
                                 Para ordenar, pídele a tu mesero.
                             @elseif (! $estaAbierto)
                                 Estamos cerrados.@if ($proximaApertura) Abrimos {{ $proximaApertura }}.@endif Puedes ver el menú; los pedidos se activan al abrir.
-                            @elseif (! filled($restaurante->whatsapp_pedidos))
+                            @elseif ($numeroPedidos === null)
                                 Por ahora no recibimos pedidos aquí. Pídele a tu mesero.
                             @endif
                         </span>
@@ -327,41 +331,51 @@
             </div>
         </div>
 
-        <!-- Floating Cart Bar (Enabled only if $puedePedir) -->
+        <!-- Pedido por WhatsApp (solo si $puedePedir). Lo anima resources/js/menu-pedido.js con los data-* de este contenedor. -->
         @if ($puedePedir)
+            <div
+                data-mo-pedido
+                data-numero="{{ $numeroPedidos }}"
+                data-restaurante="{{ $restaurante->nombre }}"
+                data-moneda="{{ strtoupper($restaurante->moneda) }}"
+                data-locale="{{ \App\Services\FormatoMoneda::locale($idioma, $restaurante->moneda) }}"
+                data-mesa="{{ $mesa }}"
+                data-clave="{{ 'menuonl_cart_m_'.$restaurante->slug }}"
+                data-clave-antigua="{{ 'menuonl_cart_'.$restaurante->slug }}"
+            >
+            <!-- Floating Cart Bar -->
             <button
                 type="button"
                 id="floatingCartBar"
                 class="floating-cart-bar focus-visible:ring-2 focus-visible:ring-foco focus-visible:ring-offset-2 focus-visible:outline-none"
-                style="display: none;"
-                onclick="openCartModal()"
+                hidden
+                data-mo-barra
                 aria-haspopup="dialog"
                 aria-expanded="false"
                 aria-controls="cartModalBackdrop"
                 aria-label="Ver pedido"
             >
                 <div class="flex items-center gap-3">
-                    <span id="cartCountBadge" class="bg-acento-texto text-acento font-extrabold text-xs px-2.5 py-1 rounded-full min-w-[24px] text-center">
+                    <span id="cartCountBadge" data-mo-cuenta class="bg-acento-texto text-acento font-extrabold text-xs px-2.5 py-1 rounded-full min-w-[24px] text-center">
                         0
                     </span>
                     <span class="font-bold text-sm">Ver pedido</span>
                 </div>
                 <div class="font-extrabold text-base">
-                    <span id="cartTotalSummary">{{ \App\Services\FormatoMoneda::formatear(0, $restaurante->moneda, $idioma) }}</span>
+                    <span id="cartTotalSummary" data-mo-barra-total>{{ \App\Services\FormatoMoneda::formatear(0, $restaurante->moneda, $idioma) }}</span>
                 </div>
             </button>
 
             <!-- Cart Drawer Modal -->
             <div
                 id="cartModalBackdrop"
+                data-mo-dialogo
                 class="cart-modal-backdrop"
-                onclick="closeCartModal(event)"
-                @hoja-cerrar="closeCartModal(null, true)"
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="cartDrawerTitle"
             >
-                <div class="cart-drawer" onclick="event.stopPropagation()" x-data="hoja" :style="estilo">
+                <div class="cart-drawer" x-data="hoja" :style="estilo">
                     <div class="hoja-cabecera flex items-center justify-between pb-3 border-b divisor mb-4" @pointerdown="empezar" @pointermove="mover" @pointerup="soltar" @pointercancel="soltar">
                         <span class="hoja-asa" aria-hidden="true"></span>
                         <h3 id="cartDrawerTitle" class="text-lg font-bold text-texto-fuerte" style="font-family: var(--mo-fuente-titulo)">Tu pedido</h3>
@@ -369,7 +383,8 @@
                             <button
                                 type="button"
                                 id="btnVaciarCarrito"
-                                onclick="cartConfirmarVaciar()"
+                                data-mo-vaciar
+                                hidden
                                 class="btn-texto focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none"
                             >
                                 Vaciar pedido
@@ -377,7 +392,7 @@
                             <button
                                 type="button"
                                 id="btnCloseCartModal"
-                                onclick="closeCartModal()"
+                                data-mo-cerrar
                                 class="btn-icono min-w-[44px] min-h-[44px] focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none"
                                 aria-label="Cerrar pedido"
                             >
@@ -389,19 +404,19 @@
                     </div>
 
                     <!-- Inline Confirmation Banner for Vaciar Pedido (initially hidden) -->
-                    <div id="vaciarConfirmBanner" class="hidden mb-4 aviso aviso-peligro flex-col" role="alertdialog" aria-labelledby="vaciarConfirmTitulo">
+                    <div id="vaciarConfirmBanner" data-mo-confirmar-vaciar hidden class="mb-4 aviso aviso-peligro flex-col" role="alertdialog" aria-labelledby="vaciarConfirmTitulo">
                         <p id="vaciarConfirmTitulo" class="aviso-titulo mb-2">¿Quitar todo de tu pedido?</p>
                         <div class="flex flex-wrap items-center gap-2">
                             <button
                                 type="button"
-                                onclick="cartCancelarVaciar()"
+                                data-mo-conservar
                                 class="btn-secundario focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none"
                             >
                                 Conservar
                             </button>
                             <button
                                 type="button"
-                                onclick="cartEjecutarVaciar()"
+                                data-mo-confirmar
                                 class="btn-peligro focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none"
                             >
                                 Vaciar pedido
@@ -410,17 +425,43 @@
                     </div>
 
                     <!-- Confirmation shown after handing the order to WhatsApp -->
-                    <div id="pedidoEnviadoBanner" class="hidden mb-4 aviso aviso-exito flex-col" role="status" tabindex="-1">
+                    <div id="pedidoEnviadoBanner" data-mo-enviado hidden class="mb-4 aviso aviso-exito flex-col" role="status" tabindex="-1">
                         <p class="mb-2"><span class="aviso-titulo">Abrimos WhatsApp con tu pedido.</span> Tócale enviar ahí para que nos llegue.</p>
                         <div class="flex flex-wrap items-center gap-2">
-                            <button type="button" onclick="cartPedidoEnviado(true)" class="btn-primario focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none">Ya lo mandé</button>
-                            <button type="button" onclick="cartPedidoEnviado(false)" class="btn-secundario focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none">Todavía no</button>
+                            <button type="button" data-mo-listo class="btn-primario focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none">Ya lo mandé</button>
+                            <button type="button" data-mo-aun-no class="btn-secundario focus-visible:ring-2 focus-visible:ring-foco focus-visible:outline-none">Todavía no</button>
                         </div>
                     </div>
 
+                    <!-- Aviso cuando el mensaje es largo y WhatsApp no lo aceptaría completo -->
+                    <p data-mo-aviso-envio hidden role="status" class="mb-4 aviso"></p>
+
                     <!-- Cart items list -->
                     <div id="cartItemsContainer" class="mb-4">
-                        <!-- Rendered dynamically by JS -->
+                        <p data-mo-vacio class="py-6 text-center text-texto-suave text-sm">Tu pedido está vacío. Toca "Agregar" en un platillo.</p>
+                        <div data-mo-lineas></div>
+                        <template data-mo-plantilla-linea>
+                            <div class="py-3 border-b divisor">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h4 class="text-sm font-bold text-texto-fuerte"><span data-mo-nombre></span> <span data-mo-variante class="text-xs text-texto-suave font-normal"></span></h4>
+                                        <span class="text-xs font-semibold text-texto-medio" data-mo-subtotal></span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <button type="button" data-mo-menos class="btn-cant min-w-[44px] min-h-[44px]">
+                                            <span aria-hidden="true">-</span>
+                                        </button>
+                                        <span class="text-sm font-extrabold text-texto-fuerte px-2 min-w-[24px] text-center"><span class="sr-only">Cantidad: </span><span data-mo-cantidad></span></span>
+                                        <button type="button" data-mo-mas-uno class="btn-cant min-w-[44px] min-h-[44px]">
+                                            <span aria-hidden="true">+</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="mt-2">
+                                    <input type="text" placeholder="Nota. Ej. sin picante" data-mo-nota class="campo" />
+                                </div>
+                            </div>
+                        </template>
                     </div>
 
                     <!-- Table & Notes Form -->
@@ -432,6 +473,7 @@
                             <input
                                 type="text"
                                 id="inputMesa"
+                                data-mo-mesa
                                 value="{{ $mesa ?? '' }}"
                                 placeholder='Ej. 4, o escribe "Para llevar"'
                                 class="campo"
@@ -444,6 +486,7 @@
                             </label>
                             <textarea
                                 id="inputNotasGenerales"
+                                data-mo-cocina
                                 rows="2"
                                 placeholder="Ej. Sin cebolla, con cubiertos"
                                 class="campo campo-area"
@@ -453,14 +496,14 @@
                         <!-- Summary -->
                         <div class="flex items-center justify-between text-base font-extrabold text-texto-fuerte pt-2">
                             <span>Total</span>
-                            <span id="modalCartTotal">{{ \App\Services\FormatoMoneda::formatear(0, $restaurante->moneda, $idioma) }}</span>
+                            <span id="modalCartTotal" data-mo-total>{{ \App\Services\FormatoMoneda::formatear(0, $restaurante->moneda, $idioma) }}</span>
                         </div>
 
                         <!-- WhatsApp Submit Button -->
                         <button
                             type="button"
                             id="btnEnviarWhatsApp"
-                            onclick="enviarPedidoWhatsApp()"
+                            data-mo-enviar
                             class="btn-whatsapp w-full min-h-[48px] py-3 px-4 text-sm shadow-lg focus-visible:ring-2 focus-visible:ring-foco focus-visible:ring-offset-2 focus-visible:outline-none"
                         >
                             <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24" aria-hidden="true">
@@ -471,380 +514,6 @@
                     </div>
                 </div>
             </div>
+            </div>
         @endif
-
-        <!-- Client-Side Cart Script (Isolated under localStorage menuonl_cart_{slug}) -->
-        <script>
-            (function() {
-                const NOMBRE = @js($restaurante->nombre);
-                const CART_KEY = @js('menuonl_cart_'.$restaurante->slug);
-                const MONEDA = @js($restaurante->moneda);
-                const WHATSAPP_NUM = @js(preg_replace('/[^0-9]/', '', (string) $restaurante->whatsapp_pedidos));
-                const PUEDE_PEDIR = @js((bool) $puedePedir);
-                const IDIOMA = @js(\App\Services\FormatoMoneda::locale($idioma, $restaurante->moneda));
-                let formateador;
-                try {
-                    formateador = new Intl.NumberFormat(IDIOMA, { style: 'currency', currency: MONEDA });
-                } catch (e) {
-                    formateador = null;
-                }
-                function fmt(valor) {
-                    if (!formateador) return Number(valor).toFixed(2) + ' ' + escapeHtml(MONEDA);
-                    const partes = formateador.formatToParts(valor);
-                    const simboloAmbiguo = MONEDA !== 'MXN' && partes.some(p => p.type === 'currency' && p.value === '$');
-                    return formateador.format(valor) + (simboloAmbiguo ? ' ' + escapeHtml(MONEDA) : '');
-                }
-                let toastTimeout = null;
-
-                function escapeHtml(str) {
-                    if (!str) return '';
-                    return String(str)
-                        .replace(/&/g, '&amp;')
-                        .replace(/</g, '&lt;')
-                        .replace(/>/g, '&gt;')
-                        .replace(/"/g, '&quot;')
-                        .replace(/'/g, '&#39;');
-                }
-
-                function mostrarToast(mensaje) {
-                    const toast = document.getElementById('cartToast');
-                    const toastMsg = document.getElementById('cartToastMessage');
-                    if (!toast || !toastMsg) return;
-                    toastMsg.textContent = mensaje;
-                    toast.classList.add('visible');
-                    if (toastTimeout) clearTimeout(toastTimeout);
-                    toastTimeout = setTimeout(function() {
-                        toast.classList.remove('visible');
-                    }, 2500);
-                }
-                window.mostrarNotificacionCarrito = mostrarToast;
-
-                function loadCart() {
-                    try {
-                        const raw = localStorage.getItem(CART_KEY);
-                        return raw ? JSON.parse(raw) : [];
-                    } catch (e) {
-                        return [];
-                    }
-                }
-
-                function saveCart(cart) {
-                    try {
-                        localStorage.setItem(CART_KEY, JSON.stringify(cart));
-                    } catch (e) {}
-                    renderCart();
-                }
-
-                window.cartAddItem = function(item) {
-                    if (!PUEDE_PEDIR) return;
-                    const cart = loadCart();
-                    const existingIndex = cart.findIndex(c => c.producto_id === item.producto_id && c.variante_id === item.variante_id);
-
-                    if (existingIndex > -1) {
-                        cart[existingIndex].cantidad += (item.cantidad || 1);
-                    } else {
-                        cart.push({
-                            producto_id: item.producto_id,
-                            variante_id: item.variante_id || null,
-                            nombre: item.nombre,
-                            variante_nombre: item.variante_nombre || null,
-                            precio: parseFloat(item.precio),
-                            cantidad: item.cantidad || 1,
-                            notas: item.notas || ''
-                        });
-                    }
-                    saveCart(cart);
-                    mostrarToast(item.nombre + (item.variante_nombre ? ' (' + item.variante_nombre + ')' : '') + ' agregado');
-                };
-
-                window.cartUpdateQty = function(index, delta) {
-                    const cart = loadCart();
-                    if (!cart[index]) return;
-                    cart[index].cantidad += delta;
-                    if (cart[index].cantidad <= 0) {
-                        cart.splice(index, 1);
-                    }
-                    saveCart(cart);
-                };
-
-                window.cartUpdateItemNotes = function(index, notes) {
-                    const cart = loadCart();
-                    if (!cart[index]) return;
-                    cart[index].notas = notes;
-                    try {
-                        localStorage.setItem(CART_KEY, JSON.stringify(cart));
-                    } catch (e) {}
-                };
-
-                window.cartConfirmarVaciar = function() {
-                    const banner = document.getElementById('vaciarConfirmBanner');
-                    if (banner) banner.classList.remove('hidden');
-                };
-
-                window.cartCancelarVaciar = function() {
-                    const banner = document.getElementById('vaciarConfirmBanner');
-                    if (banner) banner.classList.add('hidden');
-                };
-
-                window.cartEjecutarVaciar = function() {
-                    saveCart([]);
-                    cartCancelarVaciar();
-                    mostrarToast('Vaciaste tu pedido.');
-                };
-
-                window.openCartModal = function() {
-                    const modal = document.getElementById('cartModalBackdrop');
-                    if (modal) modal.classList.remove('cerrando');
-                    if (modal) modal.classList.add('open');
-                    const bar = document.getElementById('floatingCartBar');
-                    if (bar) bar.setAttribute('aria-expanded', 'true');
-                    document.body.style.overflow = 'hidden';
-                    const closeBtn = document.getElementById('btnCloseCartModal');
-                    if (closeBtn) closeBtn.focus();
-                };
-
-                window.closeCartModal = function(e, inmediato) {
-                    if (e && e.target && e.target !== document.getElementById('cartModalBackdrop')) {
-                        return;
-                    }
-                    const modal = document.getElementById('cartModalBackdrop');
-                    const bar = document.getElementById('floatingCartBar');
-                    const terminar = function() {
-                        if (modal) modal.classList.remove('open', 'cerrando');
-                    };
-                    if (modal && modal.classList.contains('open') && !inmediato && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-                        modal.classList.add('cerrando');
-                        setTimeout(terminar, 200);
-                    } else {
-                        terminar();
-                    }
-                    if (bar) bar.setAttribute('aria-expanded', 'false');
-                    document.body.style.overflow = '';
-                    cartCancelarVaciar();
-                    const enviado = document.getElementById('pedidoEnviadoBanner');
-                    if (enviado) enviado.classList.add('hidden');
-                    if (bar && bar.style.display !== 'none' && !e) {
-                        bar.focus();
-                    }
-                };
-
-                document.addEventListener('keydown', function(e) {
-                    if (e.key === 'Tab') {
-                        const abierto = document.getElementById('cartModalBackdrop');
-                        if (abierto && abierto.classList.contains('open')) {
-                            const foco = Array.from(abierto.querySelectorAll('button, input, textarea'))
-                                .filter(el => !el.disabled && el.offsetParent !== null);
-                            if (foco.length) {
-                                const primero = foco[0];
-                                const ultimo = foco[foco.length - 1];
-                                if (e.shiftKey && (document.activeElement === primero || !abierto.contains(document.activeElement))) {
-                                    e.preventDefault();
-                                    ultimo.focus();
-                                } else if (!e.shiftKey && (document.activeElement === ultimo || !abierto.contains(document.activeElement))) {
-                                    e.preventDefault();
-                                    primero.focus();
-                                }
-                            }
-                        }
-                    }
-                    if (e.key === 'Escape' || e.key === 'Esc') {
-                        const modal = document.getElementById('cartModalBackdrop');
-                        if (modal && modal.classList.contains('open')) {
-                            closeCartModal();
-                        }
-                    }
-                });
-
-                window.enviarPedidoWhatsApp = function() {
-                    const cart = loadCart();
-                    if (cart.length === 0) {
-                        mostrarToast('Tu pedido está vacío.');
-                        return;
-                    }
-
-                    const mesaInput = document.getElementById('inputMesa');
-                    const mesaVal = mesaInput ? mesaInput.value.trim() : '';
-                    const mesaText = mesaVal ? mesaVal : 'Para llevar';
-
-                    const notasGeneralesInput = document.getElementById('inputNotasGenerales');
-                    const notasGenerales = notasGeneralesInput ? notasGeneralesInput.value.trim() : '';
-
-                    let total = 0;
-                    let itemsText = '';
-
-                    cart.forEach(item => {
-                        const itemSub = item.precio * item.cantidad;
-                        total += itemSub;
-                        const vName = item.variante_nombre ? ` (${item.variante_nombre})` : '';
-                        itemsText += `• ${item.cantidad}x ${item.nombre}${vName} - ${fmt(itemSub)}\n`;
-                        if (item.notas && item.notas.trim()) {
-                            itemsText += `  _Nota: ${item.notas.trim()}_\n`;
-                        }
-                    });
-
-                    let msg = `Hola, quiero pedir en *${NOMBRE}*:\n\n`;
-                    msg += `*Mesa:* ${mesaText}\n\n`;
-                    msg += `*Pedido:*\n${itemsText}\n`;
-                    if (notasGenerales) {
-                        msg += `*Nota para la cocina:* ${notasGenerales}\n\n`;
-                    }
-                    msg += `*Total:* ${fmt(total)}`;
-
-                    const url = `https://wa.me/${WHATSAPP_NUM}?text=${encodeURIComponent(msg)}`;
-                    window.open(url, '_blank', 'noopener,noreferrer');
-
-                    const banner = document.getElementById('pedidoEnviadoBanner');
-                    if (banner) {
-                        banner.classList.remove('hidden');
-                        banner.focus();
-                    }
-                };
-
-                window.cartPedidoEnviado = function(vaciar) {
-                    const banner = document.getElementById('pedidoEnviadoBanner');
-                    if (banner) banner.classList.add('hidden');
-                    if (vaciar) {
-                        saveCart([]);
-                        const nota = document.getElementById('inputNotasGenerales');
-                        if (nota) nota.value = '';
-                        closeCartModal();
-                        mostrarToast('Listo. Vaciamos tu pedido.');
-                    }
-                };
-
-                function renderCart() {
-                    if (!PUEDE_PEDIR) return;
-                    const cart = loadCart();
-                    const bar = document.getElementById('floatingCartBar');
-                    const badge = document.getElementById('cartCountBadge');
-                    const barTotal = document.getElementById('cartTotalSummary');
-                    const modalTotal = document.getElementById('modalCartTotal');
-                    const itemsContainer = document.getElementById('cartItemsContainer');
-                    const btnVaciar = document.getElementById('btnVaciarCarrito');
-                    const btnEnviar = document.getElementById('btnEnviarWhatsApp');
-
-                    let totalQty = 0;
-                    let totalPrice = 0;
-
-                    cart.forEach(item => {
-                        totalQty += item.cantidad;
-                        totalPrice += (item.precio * item.cantidad);
-                    });
-
-                    if (badge) badge.textContent = totalQty;
-                    if (barTotal) barTotal.textContent = fmt(totalPrice);
-                    if (modalTotal) modalTotal.textContent = fmt(totalPrice);
-
-                    if (bar) {
-                        bar.style.display = totalQty > 0 ? 'flex' : 'none';
-                        bar.setAttribute('aria-label', `Ver pedido: ${totalQty} ${totalQty === 1 ? 'platillo' : 'platillos'}, total ${fmt(totalPrice)}`);
-                    }
-
-                    if (btnVaciar) {
-                        btnVaciar.style.display = totalQty > 0 ? 'inline-block' : 'none';
-                    }
-
-                    if (btnEnviar) {
-                        btnEnviar.disabled = (totalQty === 0);
-                        btnEnviar.setAttribute('aria-disabled', totalQty === 0 ? 'true' : 'false');
-                    }
-
-                    if (itemsContainer) {
-                        const activo = document.activeElement;
-                        const claveFoco = activo && itemsContainer.contains(activo) ? activo.dataset.qty : null;
-                        if (cart.length === 0) {
-                            itemsContainer.innerHTML = '<p class="py-6 text-center text-texto-suave text-sm">Tu pedido está vacío. Toca "Agregar" en un platillo.</p>';
-                        } else {
-                            let html = '';
-                            cart.forEach((item, idx) => {
-                                const cantidad = parseInt(item.cantidad, 10) || 0;
-                                const precio = Number(item.precio) || 0;
-                                const vName = item.variante_nombre ? `<span class="text-xs text-texto-suave font-normal">(${escapeHtml(item.variante_nombre)})</span>` : '';
-                                const itemNombreEsc = escapeHtml(item.nombre);
-                                html += `
-                                    <div class="py-3 border-b divisor">
-                                        <div class="flex items-center justify-between">
-                                            <div>
-                                                <h4 class="text-sm font-bold text-texto-fuerte">${itemNombreEsc} ${vName}</h4>
-                                                <span class="text-xs font-semibold text-texto-medio">${fmt(precio * cantidad)}</span>
-                                            </div>
-                                            <div class="flex items-center gap-2">
-                                                <button
-                                                    type="button"
-                                                    onclick="cartUpdateQty(${idx}, -1)"
-                                                    data-qty="${idx}:-1"
-                                                    aria-label="Quitar uno de ${itemNombreEsc}"
-                                                    class="btn-cant min-w-[44px] min-h-[44px]"
-                                                >
-                                                    <span aria-hidden="true">-</span>
-                                                </button>
-                                                <span class="text-sm font-extrabold text-texto-fuerte px-2 min-w-[24px] text-center"><span class="sr-only">Cantidad: </span>${cantidad}</span>
-                                                <button
-                                                    type="button"
-                                                    onclick="cartUpdateQty(${idx}, 1)"
-                                                    data-qty="${idx}:1"
-                                                    aria-label="Agregar uno más de ${itemNombreEsc}"
-                                                    class="btn-cant min-w-[44px] min-h-[44px]"
-                                                >
-                                                    <span aria-hidden="true">+</span>
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div class="mt-2">
-                                            <input
-                                                type="text"
-                                                placeholder="Nota. Ej. sin picante"
-                                                aria-label="Nota para ${itemNombreEsc}"
-                                                value="${item.notas ? escapeHtml(item.notas) : ''}"
-                                                oninput="cartUpdateItemNotes(${idx}, this.value)"
-                                                onchange="cartUpdateItemNotes(${idx}, this.value)"
-                                                class="campo"
-                                            />
-                                        </div>
-                                    </div>
-                                `;
-                            });
-                            itemsContainer.innerHTML = html;
-                        }
-                        if (claveFoco) {
-                            const [i, d] = claveFoco.split(':');
-                            const cercano = Math.max(0, Math.min(Number(i), cart.length - 1)) + ':' + d;
-                            const destino = itemsContainer.querySelector('[data-qty="' + claveFoco + '"]')
-                                || itemsContainer.querySelector('[data-qty="' + cercano + '"]')
-                                || document.getElementById('btnCloseCartModal');
-                            if (destino) destino.focus();
-                        }
-                    }
-                }
-
-                document.addEventListener('DOMContentLoaded', renderCart);
-
-                document.addEventListener('DOMContentLoaded', function() {
-                    if (!('IntersectionObserver' in window)) return;
-                    const pills = Array.from(document.querySelectorAll('.sticky-nav a[href^="#"]'));
-                    const porId = new Map(pills.map(a => [a.getAttribute('href').slice(1), a]));
-                    const visibles = new Set();
-                    const marcar = function() {
-                        const primero = Array.from(porId.keys()).find(id => visibles.has(id));
-                        pills.forEach(a => a.removeAttribute('aria-current'));
-                        if (primero) {
-                            const a = porId.get(primero);
-                            a.setAttribute('aria-current', 'true');
-                            const scroller = a.closest('.nav-scroller');
-                            if (scroller) {
-                                scroller.scrollTo({ left: Math.max(0, a.offsetLeft - (scroller.clientWidth / 2) + (a.offsetWidth / 2)), behavior: 'smooth' });
-                            }
-                        }
-                    };
-                    const obs = new IntersectionObserver(function(entradas) {
-                        entradas.forEach(en => en.isIntersecting ? visibles.add(en.target.id) : visibles.delete(en.target.id));
-                        marcar();
-                    }, { rootMargin: '-20% 0px -70% 0px' });
-                    porId.forEach((a, id) => {
-                        const sec = document.getElementById(id);
-                        if (sec) obs.observe(sec);
-                    });
-                });
-            })();
-        </script>
 </x-layout.publico>

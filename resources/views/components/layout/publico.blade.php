@@ -9,6 +9,7 @@
     'acento' => null,
     'acentoTexto' => null,
     'js' => 'resources/js/app.js',
+    'pedidoJs' => null,
 ])
 <!DOCTYPE html>
 <html lang="{{ $lang }}" @class([$htmlClass => filled($htmlClass)])>
@@ -62,7 +63,7 @@
         <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
         <link rel="stylesheet" href="{{ asset('css/menuonl.css').'?v='.filemtime(public_path('css/menuonl.css')) }}">
         @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
-            @vite(['resources/css/app.css', $js])
+            @vite(array_values(array_filter(['resources/css/app.css', $js, $pedidoJs])))
         @endif
         {{ $head ?? '' }}
     </head>

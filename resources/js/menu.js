@@ -1,8 +1,9 @@
 import Alpine from '@alpinejs/csp';
+import { iniciarNavegacionCategorias } from './navegacion-categorias.js';
 
 /*
  * JS del menú público. Se usa la compilación CSP de Alpine porque la política de seguridad
- * de la página no permite 'unsafe-eval'. Todo lo demás (carrito, WhatsApp) va en línea en la vista.
+ * de la página no permite 'unsafe-eval'. El pedido por WhatsApp vive en pedido/ y se carga con menu-pedido.js.
  */
 const sinMovimiento = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -67,17 +68,8 @@ Alpine.data('hoja', () => ({
         this.desplazamiento = alto;
         setTimeout(() => {
             this.$dispatch('hoja-cerrar');
-            if (this.$el.closest('#cartModalBackdrop') && typeof window.closeCartModal === 'function') {
-                window.closeCartModal(null, true);
-            }
             this.desplazamiento = 0;
         }, sinMovimiento() ? 0 : 200);
-    },
-
-    closeCartModal() {
-        if (typeof window.closeCartModal === 'function') {
-            window.closeCartModal(null, true);
-        }
     },
 }));
 
@@ -285,13 +277,9 @@ Alpine.data('cabecera', () => ({
             this.$root.classList.toggle('cabecera-compacta', compacta);
         }).observe(centinela);
     },
-
-    closeCartModal() {
-        if (typeof window.closeCartModal === 'function') {
-            window.closeCartModal(null, true);
-        }
-    },
 }));
+
+iniciarNavegacionCategorias();
 
 window.Alpine = Alpine;
 Alpine.start();

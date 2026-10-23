@@ -352,7 +352,7 @@ class PedidoWhatsappPastelTest extends TestCase
             foreach ([$menu, $sitio] as $respuesta) {
                 $respuesta->assertDontSee('data-pas-', false)->assertDontSee('pas-pedido', false)->assertDontSee('pas-reserva', false)->assertDontSee('sitio-g', false);
             }
-            $menu->assertSee('cartAddItem', false)->assertSee('menuonl_cart_otro-'.$clave, false);
+            $menu->assertSee('data-mo-agregar', false)->assertSee('data-clave="menuonl_cart_m_otro-'.$clave.'"', false)->assertDontSee('cartAddItem', false);
             $restaurante->delete();
         }
     }

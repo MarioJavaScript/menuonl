@@ -75,13 +75,12 @@
                                 @if ($variante->disponible)
                                     <button
                                         type="button"
-                                        onclick="cartAddItem({
-                                            producto_id: {{ $prod->id }},
-                                            variante_id: {{ $variante->id }},
-                                            nombre: @js($prodNom),
-                                            variante_nombre: @js($varNom),
-                                            precio: {{ $variante->precio }}
-                                        })"
+                                        data-mo-agregar
+                                        data-producto="{{ $prod->id }}"
+                                        data-variante="{{ $variante->id }}"
+                                        data-nombre="{{ $prodNom }}"
+                                        data-nombre-variante="{{ $varNom }}"
+                                        data-precio="{{ $variante->precio }}"
                                         aria-label="Agregar {{ $prodNom }} ({{ $varNom }}) al pedido"
                                         class="btn-cart-add min-w-[44px] min-h-[44px] px-3 py-2 text-xs focus-visible:ring-2 focus-visible:ring-foco focus-visible:ring-offset-2 focus-visible:outline-none"
                                     >
@@ -104,11 +103,12 @@
             @if ($prod->disponible)
                 <button
                     type="button"
-                    onclick="cartAddItem({
-                        producto_id: {{ $prod->id }},
-                        nombre: @js($prodNom),
-                        precio: {{ $prod->precioVigente() }}
-                    })"
+                    data-mo-agregar
+                    data-producto="{{ $prod->id }}"
+                    data-variante=""
+                    data-nombre="{{ $prodNom }}"
+                    data-nombre-variante=""
+                    data-precio="{{ $prod->precioVigente() }}"
                     aria-label="Agregar {{ $prodNom }} al pedido"
                     class="btn-cart-add min-h-[44px] min-w-[44px] px-4 py-2.5 text-xs sm:text-sm gap-2 focus-visible:ring-2 focus-visible:ring-foco focus-visible:ring-offset-2 focus-visible:outline-none"
                 >

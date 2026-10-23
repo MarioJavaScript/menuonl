@@ -1,8 +1,8 @@
 // Pedido por WhatsApp compartido por las plantillas E, F, G y H: reglas puras (limpieza, importes y mensaje). Sin DOM, para poder probarlas con Node.
 //
-// IMPORTANTE: el formato del mensaje debe mantenerse IGUAL al de menu.publico (resources/views/menu/publico.blade.php,
-// función enviarPedidoWhatsApp). Si cambia allá, cambia aquí, y viceversa. La prueba de equivalencia
-// (tests/Js/pedido-compartido-equivalencia.test.mjs) fija el resultado contra datos de referencia.
+// IMPORTANTE: menu.publico (resources/views/menu/publico.blade.php) usa este mismo módulo, así que el formato del mensaje es uno solo.
+// Las pruebas de equivalencia (tests/Js/pedido-compartido-equivalencia.test.mjs y tests/Js/menu-publico-pedido.test.mjs) fijan el
+// resultado contra datos de referencia generados con el código anterior.
 
 export const LIMITES = {
     cantidad: 20,

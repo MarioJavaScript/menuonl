@@ -12,12 +12,13 @@ use App\Models\Restaurante;
 use App\Models\Scopes\RestauranteScope;
 use App\Models\VarianteTraduccion;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Js;
 use PHPUnit\Framework\Attributes\DataProvider;
+use Tests\Concerns\LeeElPedidoDelMenuPublico;
 use Tests\TestCase;
 
 class MenuPublicoContextoJsTest extends TestCase
 {
+    use LeeElPedidoDelMenuPublico;
     use RefreshDatabase;
 
     protected function tearDown(): void
@@ -90,102 +91,70 @@ class MenuPublicoContextoJsTest extends TestCase
         return ['restaurante' => $restaurante, 'producto' => $nombreProducto, 'variante' => $nombreVariante];
     }
 
-    private function extraerScriptDelCarrito(string $html): string
-    {
-        preg_match_all('#<script>(.*?)</script>#s', $html, $coincidencias);
-        $bloques = array_filter($coincidencias[1], fn (string $bloque): bool => str_contains($bloque, 'CART_KEY'));
-
-        $this->assertCount(1, $bloques, 'No se encontró exactamente un bloque de script del carrito.');
-
-        return (string) array_values($bloques)[0];
-    }
-
     #[DataProvider('nombresHostiles')]
-    public function test_el_script_del_carrito_pasa_los_datos_como_literales_js_escapados(string $nombre, string $slug): void
+    public function test_los_datos_del_pedido_llegan_como_atributos_escapados_y_no_como_script(string $nombre, string $slug): void
     {
         $menu = $this->crearMenuPedible($nombre, $slug);
 
         $html = $this->get(route('menu.publico', ['slug' => $slug]))->assertOk()->getContent();
-        $script = $this->extraerScriptDelCarrito($html);
+        $atributos = $this->atributosDelContenedorDePedido($html);
 
-        $literalNombre = Js::from($nombre)->toHtml();
-        $literalSlug = Js::from('menuonl_cart_'.$slug)->toHtml();
-
-        $this->assertStringContainsString($literalNombre, $script);
-        $this->assertStringContainsString($literalSlug, $script);
-        $this->assertStringContainsString(Js::from($menu['restaurante']->moneda)->toHtml(), $script);
+        // Decodificados por un parser HTML real, los atributos devuelven exactamente lo que escribió el dueño.
+        $this->assertSame($nombre, $atributos['restaurante']);
+        $this->assertSame('menuonl_cart_m_'.$slug, $atributos['clave']);
+        $this->assertSame('menuonl_cart_'.$slug, $atributos['clave-antigua']);
+        $this->assertSame($menu['restaurante']->moneda, $atributos['moneda']);
+        $this->assertSame('525512345678', $atributos['numero']);
         $this->assertStringNotContainsString('</script><img', $html);
-
-        // Fuera de los literales generados, ningún rastro de los datos del restaurante debe quedar en el script.
-        $resto = str_replace([$literalNombre, $literalSlug], '', $script);
-        foreach (['alert(1)', '`x`', 'evil.test', '<img', 'Tacos', 'Tony', 'Special', 'Norte'] as $fragmento) {
-            $this->assertStringNotContainsString($fragmento, $resto, "Rastro crudo de '{$fragmento}' fuera de un literal JS.");
-        }
-        $this->assertStringNotContainsString('{{', $script);
-        $this->assertStringNotContainsString('&#039;', $script);
+        $this->assertStringNotContainsString('<img src=x', $html);
+        $this->assertSinScriptNiManejadoresDelPedido($html);
     }
 
-    public function test_un_apostrofo_no_sale_como_entidad_html_dentro_del_script(): void
+    public function test_un_apostrofo_se_decodifica_bien_en_el_atributo_y_no_queda_doble_codificado(): void
     {
-        $this->crearMenuPedible('Tony\'s "Special"', 'tonys-special');
+        $this->crearMenuPedible("Tony's \"Special\"", 'tonys-special');
 
         $html = $this->get(route('menu.publico', ['slug' => 'tonys-special']))->assertOk()->getContent();
-        $script = $this->extraerScriptDelCarrito($html);
 
-        $this->assertStringNotContainsString('Tony&#039;s', $script);
-        $this->assertStringNotContainsString('tony&#039;s', $script);
-        $this->assertStringNotContainsString('Tony&quot;', $script);
-        $this->assertStringContainsString(Js::from('Tony\'s "Special"')->toHtml(), $script);
-        $this->assertStringContainsString('en *${NOMBRE}*', $script);
+        $this->assertSame("Tony's \"Special\"", $this->atributosDelContenedorDePedido($html)['restaurante']);
+        $this->assertStringNotContainsString('&amp;#039;', $html);
+        $this->assertStringNotContainsString('&amp;quot;', $html);
     }
 
-    public function test_plantilla_de_mensaje_whatsapp_en_script_usa_textos_aprobados_del_lote_1(): void
+    public function test_el_formato_del_mensaje_aprobado_vive_en_el_modulo_compartido(): void
     {
-        $this->crearMenuPedible('El Buen Taco', 'el-buen-taco');
+        $mensaje = (string) file_get_contents(resource_path('js/pedido/mensaje.js'));
 
-        $html = $this->get(route('menu.publico', ['slug' => 'el-buen-taco']))->assertOk()->getContent();
-        $script = $this->extraerScriptDelCarrito($html);
-
-        // Estructura aprobada en ecf3c15
-        $this->assertStringContainsString('Hola, quiero pedir en *${NOMBRE}*:\n\n', $script);
-        $this->assertStringContainsString('*Mesa:* ${mesaText}\n\n', $script);
-        $this->assertStringContainsString('*Pedido:*\n${itemsText}\n', $script);
-        $this->assertStringContainsString('*Nota para la cocina:* ${notasGenerales}\n\n', $script);
-        $this->assertStringContainsString('*Total:* ${fmt(total)}', $script);
-        $this->assertStringContainsString("mesaVal ? mesaVal : 'Para llevar'", $script);
+        // Estructura aprobada en ecf3c15; ahora la arma pedido/mensaje.js y la fija tests/Js/menu-publico-pedido.test.mjs contra la referencia.
+        $this->assertStringContainsString('Hola, quiero pedir en *${restaurante}*:\n\n', $mensaje);
+        $this->assertStringContainsString('*Mesa:* ${mesaTexto}\n\n', $mensaje);
+        $this->assertStringContainsString('*Pedido:*\n${items}\n', $mensaje);
+        $this->assertStringContainsString('*Nota para la cocina:* ${cocina}\n\n', $mensaje);
+        $this->assertStringContainsString('*Total:* ${formatear(total)}', $mensaje);
+        $this->assertStringContainsString("|| 'Para llevar'", $mensaje);
 
         // Textos anteriores obsoletos no deben existir
-        $this->assertStringNotContainsString('¡Hola! Quiero hacer el siguiente pedido', $script);
-        $this->assertStringNotContainsString('*Ubicación/Mesa:*', $script);
-        $this->assertStringNotContainsString('*Detalle del pedido:*', $script);
-        $this->assertStringNotContainsString('*Indicaciones:*', $script);
-        $this->assertStringNotContainsString('*Total estimado:*', $script);
-        $this->assertStringNotContainsString('Para llevar / Sin mesa', $script);
+        foreach (['¡Hola! Quiero hacer el siguiente pedido', '*Ubicación/Mesa:*', '*Detalle del pedido:*', '*Indicaciones:*', '*Total estimado:*', 'Para llevar / Sin mesa'] as $obsoleto) {
+            $this->assertStringNotContainsString($obsoleto, $mensaje);
+        }
     }
 
-    public function test_los_onclick_de_agregar_al_carrito_no_se_rompen_con_nombres_hostiles(): void
+    public function test_los_botones_de_agregar_al_carrito_no_se_rompen_con_nombres_hostiles(): void
     {
-        $menu = $this->crearMenuPedible('Tony\'s "Special"', 'tonys-special');
+        $menu = $this->crearMenuPedible("Tony's \"Special\"", 'tonys-special');
 
         $html = $this->get(route('menu.publico', ['slug' => 'tonys-special']))->assertOk()->getContent();
+        $botones = $this->botonesDeAgregar($html);
 
-        preg_match_all('/onclick="(cartAddItem\([^"]*\))"/s', $html, $coincidencias);
-        $this->assertCount(2, $coincidencias[1], 'Se esperaban dos botones de agregar (simple y con variante).');
-
-        $literalProducto = Js::from($menu['producto'])->toHtml();
-        $literalVariante = Js::from($menu['variante'])->toHtml();
-
-        foreach ($coincidencias[1] as $onclick) {
-            $this->assertStringContainsString($literalProducto, $onclick);
-            $this->assertStringNotContainsString('&#039;', $onclick);
-
-            $resto = str_replace([$literalProducto, $literalVariante], '', $onclick);
-            foreach (['`', '${', 'Plato', 'Grande', '\\'] as $fragmento) {
-                $this->assertStringNotContainsString($fragmento, $resto, "Rastro crudo de '{$fragmento}' fuera de un literal JS.");
-            }
-        }
-
-        $this->assertStringContainsString($literalVariante, implode('', $coincidencias[1]));
+        $this->assertCount(2, $botones, 'Se esperaban dos botones de agregar (simple y con variante).');
+        usort($botones, fn (array $a, array $b): int => strcmp($a['variante'], $b['variante']));
+        $this->assertSame([$menu['producto'], $menu['producto']], array_column($botones, 'nombre'));
+        $this->assertContains($menu['variante'], array_column($botones, 'nombre-variante'));
+        $this->assertSame('', $botones[0]['variante'], 'El platillo simple no manda variante.');
+        $this->assertMatchesRegularExpression('/\A\d+\z/', $botones[1]['variante']);
+        $this->assertMatchesRegularExpression('/\A\d{1,8}\.\d{2}\z/', $botones[0]['precio']);
+        $this->assertMatchesRegularExpression('/\A\d{1,8}\.\d{2}\z/', $botones[1]['precio']);
+        $this->assertSinScriptNiManejadoresDelPedido($html);
     }
 
     /**
@@ -262,14 +231,13 @@ class MenuPublicoContextoJsTest extends TestCase
 
         // Verificar que no existen tags <script> no autorizados
         $this->assertStringNotContainsString('<script>alert(', $html);
+        $this->assertSinScriptNiManejadoresDelPedido($html);
 
-        // Verificar que los botones de agregar al pedido conservan su onclick intacto
-        preg_match_all('/onclick="(cartAddItem\([^"]*\))"/s', $html, $coincidencias);
-        $this->assertCount(2, $coincidencias[1], 'Los 2 botones deben tener atributos onclick bien cerrados sin ser partidos por comillas dobles.');
-
-        // Verificar que el literal Js::from fue emitido y escapa comillas correctamente
-        $literalJs = Js::from($payload)->toHtml();
-        $this->assertStringContainsString($literalJs, $html);
+        // Los 2 botones de agregar al pedido siguen completos y devuelven el nombre original (sin romper el atributo)
+        $botones = $this->botonesDeAgregar($html);
+        $this->assertCount(2, $botones, 'Los 2 botones deben conservar sus atributos data-* bien cerrados sin ser partidos por comillas dobles.');
+        $this->assertSame([$payload, $payload], array_column($botones, 'nombre'));
+        $this->assertContains($payload, array_column($botones, 'nombre-variante'));
 
         // Verificar que en atributos aria-label las comillas dobles están codificadas como entidades HTML
         if (str_contains($payload, '"')) {

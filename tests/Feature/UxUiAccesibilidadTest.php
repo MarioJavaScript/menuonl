@@ -243,8 +243,8 @@ class UxUiAccesibilidadTest extends TestCase
         $response->assertSee('<span class="sr-only">Precio original:</span>', false);
         $response->assertSee('<span class="sr-only">Precio de oferta:</span>', false);
 
-        // Manejador global de tecla Escape para cerrar cajón modal
-        $response->assertSee("e.key === 'Escape' || e.key === 'Esc'", false);
+        // Manejador global de tecla Escape para cerrar cajón modal (vive en la presentación del cajón, no en un script en línea)
+        $this->assertStringContainsString("e.key === 'Escape' || e.key === 'Esc'", (string) file_get_contents(resource_path('js/pedido/presentacion-hoja.js')));
 
         // Notificación Toast accesible con role="status" y aria-live="polite"
         $response->assertSee('id="cartToast"', false);
@@ -1237,7 +1237,8 @@ class UxUiAccesibilidadTest extends TestCase
         $respuesta->assertSee('x-data="hoja"', false);
         $respuesta->assertSee('class="hoja-asa" aria-hidden="true"', false);
         $respuesta->assertSee('min-w-[44px] min-h-[44px]', false);
-        $respuesta->assertSee("e.key === 'Escape' || e.key === 'Esc'", false);
+        $this->assertStringContainsString("e.key === 'Escape' || e.key === 'Esc'", (string) file_get_contents(resource_path('js/pedido/presentacion-hoja.js')));
+        $this->assertStringContainsString("dialogo.addEventListener('hoja-cerrar'", (string) file_get_contents(resource_path('js/pedido/presentacion-hoja.js')));
     }
 
     public function test_solo_el_menu_publico_carga_alpine_y_sin_dependencias_de_animacion(): void
