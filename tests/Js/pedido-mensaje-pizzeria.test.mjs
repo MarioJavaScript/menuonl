@@ -21,7 +21,8 @@ test('limpiarTexto quita control, marcas de formato y recorta', () => {
 });
 
 test('limpiarMesa deja letras, numeros, espacio, guion y guion bajo hasta 20', () => {
-    assert.equal(limpiarMesa('<b>Mesa 3</b>'), 'bMesa 3b');
+    assert.equal(limpiarMesa('<b>Mesa 3</b>'), 'b Mesa 3 b');
+    assert.equal(limpiarMesa('Barra/2'), 'Barra 2');
     assert.equal(limpiarMesa('a'.repeat(40)).length, 20);
     assert.equal(limpiarMesa('3'), '3');
     assert.equal(limpiarMesa('***'), '');

@@ -1,0 +1,1476 @@
+{
+  "limites": {
+    "cantidad": 20,
+    "lineas": 30,
+    "notaLinea": 80,
+    "notaCocina": 200,
+    "mesa": 20,
+    "enlace": 2000
+  },
+  "casos": [
+    {
+      "nombre": "normal con variante, nota y cocina",
+      "moneda": "MXN",
+      "locale": "es-MX",
+      "numero": "525512345678",
+      "restaurante": "Cafe Mezquite",
+      "mesa": "3",
+      "notaCocina": "Sin cubiertos",
+      "lineas": [
+        {
+          "cantidad": 2,
+          "nombre": "Latte",
+          "variante": "Grande",
+          "nota": "sin azucar",
+          "precio": 5500
+        },
+        {
+          "cantidad": 1,
+          "nombre": "Chai",
+          "variante": "",
+          "nota": "",
+          "precio": 5000
+        }
+      ],
+      "esperado": {
+        "resultado": {
+          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Cafe%20Mezquite*%3A%0A%0A*Mesa%3A*%203%0A%0A*Pedido%3A*%0A%E2%80%A2%202x%20Latte%20(Grande)%20-%20%24110.00%0A%20%20_Nota%3A%20sin%20azucar_%0A%E2%80%A2%201x%20Chai%20-%20%2450.00%0A%0A*Nota%20para%20la%20cocina%3A*%20Sin%20cubiertos%0A%0A*Total%3A*%20%24160.00",
+          "omitidas": 0,
+          "sinNotaCocina": false
+        },
+        "total": 16000,
+        "totalFormateado": "$160.00"
+      }
+    },
+    {
+      "nombre": "normal sin mesa y sin cocina (Para llevar)",
+      "moneda": "MXN",
+      "locale": "es-MX",
+      "numero": "525512345678",
+      "restaurante": "Cafe Mezquite",
+      "mesa": "   ",
+      "notaCocina": "",
+      "lineas": [
+        {
+          "cantidad": 1,
+          "nombre": "Latte",
+          "variante": "",
+          "nota": "",
+          "precio": 5500
+        }
+      ],
+      "esperado": {
+        "resultado": {
+          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Cafe%20Mezquite*%3A%0A%0A*Mesa%3A*%20Para%20llevar%0A%0A*Pedido%3A*%0A%E2%80%A2%201x%20Latte%20-%20%2455.00%0A%0A*Total%3A*%20%2455.00",
+          "omitidas": 0,
+          "sinNotaCocina": false
+        },
+        "total": 5500,
+        "totalFormateado": "$55.00"
+      }
+    },
+    {
+      "nombre": "normal con acentos, eñes y emoji",
+      "moneda": "MXN",
+      "locale": "es-MX",
+      "numero": "525512345678",
+      "restaurante": "Taquería Ñandú",
+      "mesa": "Terraza 2",
+      "notaCocina": "Sin cebolla, con limón.",
+      "lineas": [
+        {
+          "cantidad": 3,
+          "nombre": "Mar de Cortés",
+          "variante": "Doble",
+          "nota": "bien cocido 🙂",
+          "precio": 29000
+        },
+        {
+          "cantidad": 1,
+          "nombre": "Crème brûlée",
+          "variante": "",
+          "nota": "",
+          "precio": 8950
+        }
+      ],
+      "esperado": {
+        "resultado": {
+          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Taquer%C3%ADa%20%C3%91and%C3%BA*%3A%0A%0A*Mesa%3A*%20Terraza%202%0A%0A*Pedido%3A*%0A%E2%80%A2%203x%20Mar%20de%20Cort%C3%A9s%20(Doble)%20-%20%24870.00%0A%20%20_Nota%3A%20bien%20cocido%20%F0%9F%99%82_%0A%E2%80%A2%201x%20Cr%C3%A8me%20br%C3%BBl%C3%A9e%20-%20%2489.50%0A%0A*Nota%20para%20la%20cocina%3A*%20Sin%20cebolla%2C%20con%20lim%C3%B3n.%0A%0A*Total%3A*%20%24959.50",
+          "omitidas": 0,
+          "sinNotaCocina": false
+        },
+        "total": 95950,
+        "totalFormateado": "$959.50"
+      }
+    },
+    {
+      "nombre": "normal con centavos y cantidad maxima",
+      "moneda": "MXN",
+      "locale": "es-MX",
+      "numero": "525512345678",
+      "restaurante": "Pizzería H",
+      "mesa": "A-1",
+      "notaCocina": "",
+      "lineas": [
+        {
+          "cantidad": 20,
+          "nombre": "Pizza",
+          "variante": "Familiar",
+          "nota": "",
+          "precio": 12999
+        },
+        {
+          "cantidad": 7,
+          "nombre": "Refresco",
+          "variante": "",
+          "nota": "",
+          "precio": 1
+        }
+      ],
+      "esperado": {
+        "resultado": {
+          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Pizzer%C3%ADa%20H*%3A%0A%0A*Mesa%3A*%20A-1%0A%0A*Pedido%3A*%0A%E2%80%A2%2020x%20Pizza%20(Familiar)%20-%20%242%2C599.80%0A%E2%80%A2%207x%20Refresco%20-%20%240.07%0A%0A*Total%3A*%20%242%2C599.87",
+          "omitidas": 0,
+          "sinNotaCocina": false
+        },
+        "total": 259987,
+        "totalFormateado": "$2,599.87"
+      }
+    },
+    {
+      "nombre": "normal en dolares",
+      "moneda": "USD",
+      "locale": "es-US",
+      "numero": "15551234567",
+      "restaurante": "Bar Uno",
+      "mesa": "12",
+      "notaCocina": "Extra hielo",
+      "lineas": [
+        {
+          "cantidad": 2,
+          "nombre": "Negroni",
+          "variante": "Doble",
+          "nota": "",
+          "precio": 1050
+        }
+      ],
+      "esperado": {
+        "resultado": {
+          "url": "https://wa.me/15551234567?text=Hola%2C%20quiero%20pedir%20en%20*Bar%20Uno*%3A%0A%0A*Mesa%3A*%2012%0A%0A*Pedido%3A*%0A%E2%80%A2%202x%20Negroni%20(Doble)%20-%20%2421.00%20USD%0A%0A*Nota%20para%20la%20cocina%3A*%20Extra%20hielo%0A%0A*Total%3A*%20%2421.00%20USD",
+          "omitidas": 0,
+          "sinNotaCocina": false
+        },
+        "total": 2100,
+        "totalFormateado": "$21.00 USD"
+      }
+    },
+    {
+      "nombre": "hostil: html, marcas de formato y control en notas y mesa",
+      "moneda": "MXN",
+      "locale": "es-MX",
+      "numero": "525512345678",
+      "restaurante": "Rest </script><img src=x onerror=alert(1)>\"'&`${alert(1)}",
+      "mesa": "<b>Mesa 3</b> *x* \u0000\n</script><img src=x onerror=alert(1)>\"'&`${alert(1)}",
+      "notaCocina": "*sin* _nada_ ~x~ `y`\n\n\t</script><img src=x onerror=alert(1)>\"'&`${alert(1)} fin",
+      "lineas": [
+        {
+          "cantidad": 1,
+          "nombre": "Plato </script><img src=x onerror=alert(1)>\"'&`${alert(1)}",
+          "variante": "Var </script><img src=x onerror=alert(1)>\"'&`${alert(1)}",
+          "nota": "*nota* _x_\r\n\u0007 </script><img src=x onerror=alert(1)>\"'&`${alert(1)}    doble  espacio",
+          "precio": 5000
+        }
+      ],
+      "esperado": {
+        "resultado": {
+          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Rest%20%3C%2Fscript%3E%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E%22'%26%60%24%7Balert(1)%7D*%3A%0A%0A*Mesa%3A*%20b%20Mesa%203%20b%20x%20script%0A%0A*Pedido%3A*%0A%E2%80%A2%201x%20Plato%20%3C%2Fscript%3E%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E%22'%26%60%24%7Balert(1)%7D%20(Var%20%3C%2Fscript%3E%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E%22'%26%60%24%7Balert(1)%7D)%20-%20%2450.00%0A%20%20_Nota%3A%20nota%20x%20%3C%2Fscript%3E%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E%22'%26%24%7Balert(1)%7D%20doble%20espacio_%0A%0A*Nota%20para%20la%20cocina%3A*%20sin%20nada%20x%20y%20%3C%2Fscript%3E%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E%22'%26%24%7Balert(1)%7D%20fin%0A%0A*Total%3A*%20%2450.00",
+          "omitidas": 0,
+          "sinNotaCocina": false
+        },
+        "total": 5000,
+        "totalFormateado": "$50.00"
+      }
+    },
+    {
+      "nombre": "hostil: urls y saltos",
+      "moneda": "MXN",
+      "locale": "es-MX",
+      "numero": "525512345678",
+      "restaurante": "A&B=C?d#e%20",
+      "mesa": "a%0Ab&c=d",
+      "notaCocina": "https://x.test/?a=1&b=2#h",
+      "lineas": [
+        {
+          "cantidad": 1,
+          "nombre": "Plato & más",
+          "variante": "50% / 100%",
+          "nota": "??#&=",
+          "precio": 100
+        }
+      ],
+      "esperado": {
+        "resultado": {
+          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*A%26B%3DC%3Fd%23e%2520*%3A%0A%0A*Mesa%3A*%20a%200Ab%20c%20d%0A%0A*Pedido%3A*%0A%E2%80%A2%201x%20Plato%20%26%20m%C3%A1s%20(50%25%20%2F%20100%25)%20-%20%241.00%0A%20%20_Nota%3A%20%3F%3F%23%26%3D_%0A%0A*Nota%20para%20la%20cocina%3A*%20https%3A%2F%2Fx.test%2F%3Fa%3D1%26b%3D2%23h%0A%0A*Total%3A*%20%241.00",
+          "omitidas": 0,
+          "sinNotaCocina": false
+        },
+        "total": 100,
+        "totalFormateado": "$1.00"
+      }
+    },
+    {
+      "nombre": "hostil: nota y mesa excedidas",
+      "moneda": "MXN",
+      "locale": "es-MX",
+      "numero": "525512345678",
+      "restaurante": "Largo",
+      "mesa": "mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm",
+      "notaCocina": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "lineas": [
+        {
+          "cantidad": 1,
+          "nombre": "Plato",
+          "variante": "",
+          "nota": "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn",
+          "precio": 100
+        }
+      ],
+      "esperado": {
+        "resultado": {
+          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Largo*%3A%0A%0A*Mesa%3A*%20mmmmmmmmmmmmmmmmmmmm%0A%0A*Pedido%3A*%0A%E2%80%A2%201x%20Plato%20-%20%241.00%0A%20%20_Nota%3A%20nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn_%0A%0A*Nota%20para%20la%20cocina%3A*%20cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc%0A%0A*Total%3A*%20%241.00",
+          "omitidas": 0,
+          "sinNotaCocina": false
+        },
+        "total": 100,
+        "totalFormateado": "$1.00"
+      }
+    },
+    {
+      "nombre": "largo: enlace recortado, omite platillos y conserva el total",
+      "moneda": "MXN",
+      "locale": "es-MX",
+      "numero": "525512345678",
+      "restaurante": "Cafe Mezquite",
+      "mesa": "3",
+      "notaCocina": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "lineas": [
+        {
+          "cantidad": 3,
+          "nombre": "Platillo numero 0 con nombre bastante largo ñandú",
+          "variante": "Grande",
+          "nota": "nota larga para ocupar espacio 0",
+          "precio": 12345
+        },
+        {
+          "cantidad": 3,
+          "nombre": "Platillo numero 1 con nombre bastante largo ñandú",
+          "variante": "Grande",
+          "nota": "nota larga para ocupar espacio 1",
+          "precio": 12345
+        },
+        {
+          "cantidad": 3,
+          "nombre": "Platillo numero 2 con nombre bastante largo ñandú",
+          "variante": "Grande",
+          "nota": "nota larga para ocupar espacio 2",
+          "precio": 12345
+        },
+        {
+          "cantidad": 3,
+          "nombre": "Platillo numero 3 con nombre bastante largo ñandú",
+          "variante": "Grande",
+          "nota": "nota larga para ocupar espacio 3",
+          "precio": 12345
+        },
+        {
+          "cantidad": 3,
+          "nombre": "Platillo numero 4 con nombre bastante largo ñandú",
+          "variante": "Grande",
+          "nota": "nota larga para ocupar espacio 4",
+          "precio": 12345
+        },
+        {
+          "cantidad": 3,
+          "nombre": "Platillo numero 5 con nombre bastante largo ñandú",
+          "variante": "Grande",
+          "nota": "nota larga para ocupar espacio 5",
+          "precio": 12345
+        },
+        {
+          "cantidad": 3,
+          "nombre": "Platillo numero 6 con nombre bastante largo ñandú",
+          "variante": "Grande",
+          "nota": "nota larga para ocupar espacio 6",
+          "precio": 12345
+        },
+        {
+          "cantidad": 3,
+          "nombre": "Platillo numero 7 con nombre bastante largo ñandú",
+          "variante": "Grande",
+          "nota": "nota larga para ocupar espacio 7",
+          "precio": 12345
+        },
+        {
+          "cantidad": 3,
+          "nombre": "Platillo numero 8 con nombre bastante largo ñandú",
+          "variante": "Grande",
+          "nota": "nota larga para ocupar espacio 8",
+          "precio": 12345
+        },
+        {
+          "cantidad": 3,
+          "nombre": "Platillo numero 9 con nombre bastante largo ñandú",
+          "variante": "Grande",
+          "nota": "nota larga para ocupar espacio 9",
+          "precio": 12345
+        },
+        {
+          "cantidad": 3,
+          "nombre": "Platillo numero 10 con nombre bastante largo ñandú",
+          "variante": "Grande",
+          "nota": "nota larga para ocupar espacio 10",
+          "precio": 12345
+        },
+        {
+          "cantidad": 3,
+          "nombre": "Platillo numero 11 con nombre bastante largo ñandú",
+          "variante": "Grande",
+          "nota": "nota larga para ocupar espacio 11",
+          "precio": 12345
+        },
+        {
+          "cantidad": 3,
+          "nombre": "Platillo numero 12 con nombre bastante largo ñandú",
+          "variante": "Grande",
+          "nota": "nota larga para ocupar espacio 12",
+          "precio": 12345
+        },
+        {
+          "cantidad": 3,
+          "nombre": "Platillo numero 13 con nombre bastante largo ñandú",
+          "variante": "Grande",
+          "nota": "nota larga para ocupar espacio 13",
+          "precio": 12345
+        },
+        {
+          "cantidad": 3,
+          "nombre": "Platillo numero 14 con nombre bastante largo ñandú",
+          "variante": "Grande",
+          "nota": "nota larga para ocupar espacio 14",
+          "precio": 12345
+        },
+        {
+          "cantidad": 3,
+          "nombre": "Platillo numero 15 con nombre bastante largo ñandú",
+          "variante": "Grande",
+          "nota": "nota larga para ocupar espacio 15",
+          "precio": 12345
+        },
+        {
+          "cantidad": 3,
+          "nombre": "Platillo numero 16 con nombre bastante largo ñandú",
+          "variante": "Grande",
+          "nota": "nota larga para ocupar espacio 16",
+          "precio": 12345
+        },
+        {
+          "cantidad": 3,
+          "nombre": "Platillo numero 17 con nombre bastante largo ñandú",
+          "variante": "Grande",
+          "nota": "nota larga para ocupar espacio 17",
+          "precio": 12345
+        },
+        {
+          "cantidad": 3,
+          "nombre": "Platillo numero 18 con nombre bastante largo ñandú",
+          "variante": "Grande",
+          "nota": "nota larga para ocupar espacio 18",
+          "precio": 12345
+        },
+        {
+          "cantidad": 3,
+          "nombre": "Platillo numero 19 con nombre bastante largo ñandú",
+          "variante": "Grande",
+          "nota": "nota larga para ocupar espacio 19",
+          "precio": 12345
+        },
+        {
+          "cantidad": 3,
+          "nombre": "Platillo numero 20 con nombre bastante largo ñandú",
+          "variante": "Grande",
+          "nota": "nota larga para ocupar espacio 20",
+          "precio": 12345
+        },
+        {
+          "cantidad": 3,
+          "nombre": "Platillo numero 21 con nombre bastante largo ñandú",
+          "variante": "Grande",
+          "nota": "nota larga para ocupar espacio 21",
+          "precio": 12345
+        },
+        {
+          "cantidad": 3,
+          "nombre": "Platillo numero 22 con nombre bastante largo ñandú",
+          "variante": "Grande",
+          "nota": "nota larga para ocupar espacio 22",
+          "precio": 12345
+        },
+        {
+          "cantidad": 3,
+          "nombre": "Platillo numero 23 con nombre bastante largo ñandú",
+          "variante": "Grande",
+          "nota": "nota larga para ocupar espacio 23",
+          "precio": 12345
+        },
+        {
+          "cantidad": 3,
+          "nombre": "Platillo numero 24 con nombre bastante largo ñandú",
+          "variante": "Grande",
+          "nota": "nota larga para ocupar espacio 24",
+          "precio": 12345
+        },
+        {
+          "cantidad": 3,
+          "nombre": "Platillo numero 25 con nombre bastante largo ñandú",
+          "variante": "Grande",
+          "nota": "nota larga para ocupar espacio 25",
+          "precio": 12345
+        },
+        {
+          "cantidad": 3,
+          "nombre": "Platillo numero 26 con nombre bastante largo ñandú",
+          "variante": "Grande",
+          "nota": "nota larga para ocupar espacio 26",
+          "precio": 12345
+        },
+        {
+          "cantidad": 3,
+          "nombre": "Platillo numero 27 con nombre bastante largo ñandú",
+          "variante": "Grande",
+          "nota": "nota larga para ocupar espacio 27",
+          "precio": 12345
+        },
+        {
+          "cantidad": 3,
+          "nombre": "Platillo numero 28 con nombre bastante largo ñandú",
+          "variante": "Grande",
+          "nota": "nota larga para ocupar espacio 28",
+          "precio": 12345
+        },
+        {
+          "cantidad": 3,
+          "nombre": "Platillo numero 29 con nombre bastante largo ñandú",
+          "variante": "Grande",
+          "nota": "nota larga para ocupar espacio 29",
+          "precio": 12345
+        }
+      ],
+      "esperado": {
+        "resultado": {
+          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Cafe%20Mezquite*%3A%0A%0A*Mesa%3A*%203%0A%0A*Pedido%3A*%0A%E2%80%A2%203x%20Platillo%20numero%200%20con%20nombre%20bastante%20largo%20%C3%B1and%C3%BA%20(Grande)%20-%20%24370.35%0A%20%20_Nota%3A%20nota%20larga%20para%20ocupar%20espacio%200_%0A%E2%80%A2%203x%20Platillo%20numero%201%20con%20nombre%20bastante%20largo%20%C3%B1and%C3%BA%20(Grande)%20-%20%24370.35%0A%20%20_Nota%3A%20nota%20larga%20para%20ocupar%20espacio%201_%0A%E2%80%A2%203x%20Platillo%20numero%202%20con%20nombre%20bastante%20largo%20%C3%B1and%C3%BA%20(Grande)%20-%20%24370.35%0A%20%20_Nota%3A%20nota%20larga%20para%20ocupar%20espacio%202_%0A%E2%80%A2%203x%20Platillo%20numero%203%20con%20nombre%20bastante%20largo%20%C3%B1and%C3%BA%20(Grande)%20-%20%24370.35%0A%20%20_Nota%3A%20nota%20larga%20para%20ocupar%20espacio%203_%0A%E2%80%A2%203x%20Platillo%20numero%204%20con%20nombre%20bastante%20largo%20%C3%B1and%C3%BA%20(Grande)%20-%20%24370.35%0A%20%20_Nota%3A%20nota%20larga%20para%20ocupar%20espacio%204_%0A%E2%80%A2%203x%20Platillo%20numero%205%20con%20nombre%20bastante%20largo%20%C3%B1and%C3%BA%20(Grande)%20-%20%24370.35%0A%20%20_Nota%3A%20nota%20larga%20para%20ocupar%20espacio%205_%0A%E2%80%A2%203x%20Platillo%20numero%206%20con%20nombre%20bastante%20largo%20%C3%B1and%C3%BA%20(Grande)%20-%20%24370.35%0A%20%20_Nota%3A%20nota%20larga%20para%20ocupar%20espacio%206_%0A%E2%80%A2%203x%20Platillo%20numero%207%20con%20nombre%20bastante%20largo%20%C3%B1and%C3%BA%20(Grande)%20-%20%24370.35%0A%20%20_Nota%3A%20nota%20larga%20para%20ocupar%20espacio%207_%0A%E2%80%A2%20%E2%80%A6%20y%2022%20platillos%20m%C3%A1s%20(te%20los%20confirmamos%20por%20aqu%C3%AD)%0A%0A*Nota%20para%20la%20cocina%3A*%20aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%0A%0A*Total%3A*%20%2411%2C110.50",
+          "omitidas": 22,
+          "sinNotaCocina": false
+        },
+        "total": 1111050,
+        "totalFormateado": "$11,110.50"
+      }
+    },
+    {
+      "nombre": "largo: nombres y notas largos con muchas omitidas",
+      "moneda": "MXN",
+      "locale": "es-MX",
+      "numero": "525512345678",
+      "restaurante": "Cafe",
+      "mesa": "1",
+      "notaCocina": "",
+      "lineas": [
+        {
+          "cantidad": 1,
+          "nombre": "ññññññññññññññññññññññññññññññ0",
+          "variante": "Grande",
+          "nota": "ññññññññññññññññññññññññññññññ",
+          "precio": 100
+        },
+        {
+          "cantidad": 1,
+          "nombre": "ññññññññññññññññññññññññññññññ1",
+          "variante": "Grande",
+          "nota": "ññññññññññññññññññññññññññññññ",
+          "precio": 100
+        },
+        {
+          "cantidad": 1,
+          "nombre": "ññññññññññññññññññññññññññññññ2",
+          "variante": "Grande",
+          "nota": "ññññññññññññññññññññññññññññññ",
+          "precio": 100
+        },
+        {
+          "cantidad": 1,
+          "nombre": "ññññññññññññññññññññññññññññññ3",
+          "variante": "Grande",
+          "nota": "ññññññññññññññññññññññññññññññ",
+          "precio": 100
+        },
+        {
+          "cantidad": 1,
+          "nombre": "ññññññññññññññññññññññññññññññ4",
+          "variante": "Grande",
+          "nota": "ññññññññññññññññññññññññññññññ",
+          "precio": 100
+        },
+        {
+          "cantidad": 1,
+          "nombre": "ññññññññññññññññññññññññññññññ5",
+          "variante": "Grande",
+          "nota": "ññññññññññññññññññññññññññññññ",
+          "precio": 100
+        },
+        {
+          "cantidad": 1,
+          "nombre": "ññññññññññññññññññññññññññññññ6",
+          "variante": "Grande",
+          "nota": "ññññññññññññññññññññññññññññññ",
+          "precio": 100
+        },
+        {
+          "cantidad": 1,
+          "nombre": "ññññññññññññññññññññññññññññññ7",
+          "variante": "Grande",
+          "nota": "ññññññññññññññññññññññññññññññ",
+          "precio": 100
+        },
+        {
+          "cantidad": 1,
+          "nombre": "ññññññññññññññññññññññññññññññ8",
+          "variante": "Grande",
+          "nota": "ññññññññññññññññññññññññññññññ",
+          "precio": 100
+        },
+        {
+          "cantidad": 1,
+          "nombre": "ññññññññññññññññññññññññññññññ9",
+          "variante": "Grande",
+          "nota": "ññññññññññññññññññññññññññññññ",
+          "precio": 100
+        },
+        {
+          "cantidad": 1,
+          "nombre": "ññññññññññññññññññññññññññññññ10",
+          "variante": "Grande",
+          "nota": "ññññññññññññññññññññññññññññññ",
+          "precio": 100
+        },
+        {
+          "cantidad": 1,
+          "nombre": "ññññññññññññññññññññññññññññññ11",
+          "variante": "Grande",
+          "nota": "ññññññññññññññññññññññññññññññ",
+          "precio": 100
+        },
+        {
+          "cantidad": 1,
+          "nombre": "ññññññññññññññññññññññññññññññ12",
+          "variante": "Grande",
+          "nota": "ññññññññññññññññññññññññññññññ",
+          "precio": 100
+        },
+        {
+          "cantidad": 1,
+          "nombre": "ññññññññññññññññññññññññññññññ13",
+          "variante": "Grande",
+          "nota": "ññññññññññññññññññññññññññññññ",
+          "precio": 100
+        },
+        {
+          "cantidad": 1,
+          "nombre": "ññññññññññññññññññññññññññññññ14",
+          "variante": "Grande",
+          "nota": "ññññññññññññññññññññññññññññññ",
+          "precio": 100
+        },
+        {
+          "cantidad": 1,
+          "nombre": "ññññññññññññññññññññññññññññññ15",
+          "variante": "Grande",
+          "nota": "ññññññññññññññññññññññññññññññ",
+          "precio": 100
+        },
+        {
+          "cantidad": 1,
+          "nombre": "ññññññññññññññññññññññññññññññ16",
+          "variante": "Grande",
+          "nota": "ññññññññññññññññññññññññññññññ",
+          "precio": 100
+        },
+        {
+          "cantidad": 1,
+          "nombre": "ññññññññññññññññññññññññññññññ17",
+          "variante": "Grande",
+          "nota": "ññññññññññññññññññññññññññññññ",
+          "precio": 100
+        },
+        {
+          "cantidad": 1,
+          "nombre": "ññññññññññññññññññññññññññññññ18",
+          "variante": "Grande",
+          "nota": "ññññññññññññññññññññññññññññññ",
+          "precio": 100
+        },
+        {
+          "cantidad": 1,
+          "nombre": "ññññññññññññññññññññññññññññññ19",
+          "variante": "Grande",
+          "nota": "ññññññññññññññññññññññññññññññ",
+          "precio": 100
+        },
+        {
+          "cantidad": 1,
+          "nombre": "ññññññññññññññññññññññññññññññ20",
+          "variante": "Grande",
+          "nota": "ññññññññññññññññññññññññññññññ",
+          "precio": 100
+        },
+        {
+          "cantidad": 1,
+          "nombre": "ññññññññññññññññññññññññññññññ21",
+          "variante": "Grande",
+          "nota": "ññññññññññññññññññññññññññññññ",
+          "precio": 100
+        },
+        {
+          "cantidad": 1,
+          "nombre": "ññññññññññññññññññññññññññññññ22",
+          "variante": "Grande",
+          "nota": "ññññññññññññññññññññññññññññññ",
+          "precio": 100
+        },
+        {
+          "cantidad": 1,
+          "nombre": "ññññññññññññññññññññññññññññññ23",
+          "variante": "Grande",
+          "nota": "ññññññññññññññññññññññññññññññ",
+          "precio": 100
+        },
+        {
+          "cantidad": 1,
+          "nombre": "ññññññññññññññññññññññññññññññ24",
+          "variante": "Grande",
+          "nota": "ññññññññññññññññññññññññññññññ",
+          "precio": 100
+        },
+        {
+          "cantidad": 1,
+          "nombre": "ññññññññññññññññññññññññññññññ25",
+          "variante": "Grande",
+          "nota": "ññññññññññññññññññññññññññññññ",
+          "precio": 100
+        },
+        {
+          "cantidad": 1,
+          "nombre": "ññññññññññññññññññññññññññññññ26",
+          "variante": "Grande",
+          "nota": "ññññññññññññññññññññññññññññññ",
+          "precio": 100
+        },
+        {
+          "cantidad": 1,
+          "nombre": "ññññññññññññññññññññññññññññññ27",
+          "variante": "Grande",
+          "nota": "ññññññññññññññññññññññññññññññ",
+          "precio": 100
+        },
+        {
+          "cantidad": 1,
+          "nombre": "ññññññññññññññññññññññññññññññ28",
+          "variante": "Grande",
+          "nota": "ññññññññññññññññññññññññññññññ",
+          "precio": 100
+        },
+        {
+          "cantidad": 1,
+          "nombre": "ññññññññññññññññññññññññññññññ29",
+          "variante": "Grande",
+          "nota": "ññññññññññññññññññññññññññññññ",
+          "precio": 100
+        }
+      ],
+      "esperado": {
+        "resultado": {
+          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Cafe*%3A%0A%0A*Mesa%3A*%201%0A%0A*Pedido%3A*%0A%E2%80%A2%201x%20%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B10%20(Grande)%20-%20%241.00%0A%20%20_Nota%3A%20%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1_%0A%E2%80%A2%201x%20%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B11%20(Grande)%20-%20%241.00%0A%20%20_Nota%3A%20%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1_%0A%E2%80%A2%201x%20%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B12%20(Grande)%20-%20%241.00%0A%20%20_Nota%3A%20%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1_%0A%E2%80%A2%201x%20%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B13%20(Grande)%20-%20%241.00%0A%20%20_Nota%3A%20%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1_%0A%E2%80%A2%20%E2%80%A6%20y%2026%20platillos%20m%C3%A1s%20(te%20los%20confirmamos%20por%20aqu%C3%AD)%0A%0A*Total%3A*%20%2430.00",
+          "omitidas": 26,
+          "sinNotaCocina": false
+        },
+        "total": 3000,
+        "totalFormateado": "$30.00"
+      }
+    },
+    {
+      "nombre": "largo: nombre de restaurante largo omite pocas",
+      "moneda": "MXN",
+      "locale": "es-MX",
+      "numero": "525512345678",
+      "restaurante": "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR",
+      "mesa": "3",
+      "notaCocina": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "lineas": [
+        {
+          "cantidad": 1,
+          "nombre": "Plato 0 zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+          "variante": "",
+          "nota": "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn",
+          "precio": 100
+        },
+        {
+          "cantidad": 1,
+          "nombre": "Plato 1 zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+          "variante": "",
+          "nota": "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn",
+          "precio": 101
+        },
+        {
+          "cantidad": 1,
+          "nombre": "Plato 2 zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+          "variante": "",
+          "nota": "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn",
+          "precio": 102
+        },
+        {
+          "cantidad": 1,
+          "nombre": "Plato 3 zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+          "variante": "",
+          "nota": "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn",
+          "precio": 103
+        },
+        {
+          "cantidad": 1,
+          "nombre": "Plato 4 zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+          "variante": "",
+          "nota": "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn",
+          "precio": 104
+        },
+        {
+          "cantidad": 1,
+          "nombre": "Plato 5 zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+          "variante": "",
+          "nota": "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn",
+          "precio": 105
+        },
+        {
+          "cantidad": 1,
+          "nombre": "Plato 6 zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+          "variante": "",
+          "nota": "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn",
+          "precio": 106
+        },
+        {
+          "cantidad": 1,
+          "nombre": "Plato 7 zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+          "variante": "",
+          "nota": "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn",
+          "precio": 107
+        },
+        {
+          "cantidad": 1,
+          "nombre": "Plato 8 zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+          "variante": "",
+          "nota": "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn",
+          "precio": 108
+        },
+        {
+          "cantidad": 1,
+          "nombre": "Plato 9 zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+          "variante": "",
+          "nota": "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn",
+          "precio": 109
+        },
+        {
+          "cantidad": 1,
+          "nombre": "Plato 10 zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+          "variante": "",
+          "nota": "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn",
+          "precio": 110
+        },
+        {
+          "cantidad": 1,
+          "nombre": "Plato 11 zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+          "variante": "",
+          "nota": "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn",
+          "precio": 111
+        }
+      ],
+      "esperado": {
+        "resultado": {
+          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR*%3A%0A%0A*Mesa%3A*%203%0A%0A*Pedido%3A*%0A%E2%80%A2%201x%20Plato%200%20zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz%20-%20%241.00%0A%20%20_Nota%3A%20nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn_%0A%E2%80%A2%201x%20Plato%201%20zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz%20-%20%241.01%0A%20%20_Nota%3A%20nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn_%0A%E2%80%A2%201x%20Plato%202%20zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz%20-%20%241.02%0A%20%20_Nota%3A%20nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn_%0A%E2%80%A2%201x%20Plato%203%20zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz%20-%20%241.03%0A%20%20_Nota%3A%20nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn_%0A%E2%80%A2%201x%20Plato%204%20zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz%20-%20%241.04%0A%20%20_Nota%3A%20nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn_%0A%E2%80%A2%201x%20Plato%205%20zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz%20-%20%241.05%0A%20%20_Nota%3A%20nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn_%0A%E2%80%A2%201x%20Plato%206%20zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz%20-%20%241.06%0A%20%20_Nota%3A%20nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn_%0A%E2%80%A2%201x%20Plato%207%20zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz%20-%20%241.07%0A%20%20_Nota%3A%20nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn_%0A%E2%80%A2%201x%20Plato%208%20zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz%20-%20%241.08%0A%20%20_Nota%3A%20nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn_%0A%E2%80%A2%20%E2%80%A6%20y%203%20platillos%20m%C3%A1s%20(te%20los%20confirmamos%20por%20aqu%C3%AD)%0A%0A*Nota%20para%20la%20cocina%3A*%20xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx%0A%0A*Total%3A*%20%2412.66",
+          "omitidas": 3,
+          "sinNotaCocina": false
+        },
+        "total": 1266,
+        "totalFormateado": "$12.66"
+      }
+    },
+    {
+      "nombre": "largo: ni sin platillos cabe, se quita la nota de cocina",
+      "moneda": "MXN",
+      "locale": "es-MX",
+      "numero": "525512345678",
+      "restaurante": "ññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññ",
+      "mesa": "3",
+      "notaCocina": "hola",
+      "lineas": [
+        {
+          "cantidad": 1,
+          "nombre": "P",
+          "variante": "",
+          "nota": "",
+          "precio": 100
+        }
+      ],
+      "esperado": {
+        "resultado": {
+          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1*%3A%0A%0A*Mesa%3A*%203%0A%0A*Pedido%3A*%0A%E2%80%A2%20%E2%80%A6%20y%201%20platillo%20m%C3%A1s%20(te%20los%20confirmamos%20por%20aqu%C3%AD)%0A%0A*Total%3A*%20%241.00",
+          "omitidas": 1,
+          "sinNotaCocina": true
+        },
+        "total": 100,
+        "totalFormateado": "$1.00"
+      }
+    },
+    {
+      "nombre": "numero invalido corto",
+      "moneda": "MXN",
+      "locale": "es-MX",
+      "numero": "1234567",
+      "restaurante": "R",
+      "mesa": "1",
+      "notaCocina": "",
+      "lineas": [
+        {
+          "cantidad": 1,
+          "nombre": "P",
+          "variante": "",
+          "nota": "",
+          "precio": 100
+        }
+      ],
+      "esperado": {
+        "resultado": null,
+        "total": 100,
+        "totalFormateado": "$1.00"
+      }
+    },
+    {
+      "nombre": "numero invalido con letras",
+      "moneda": "MXN",
+      "locale": "es-MX",
+      "numero": "52551234abc",
+      "restaurante": "R",
+      "mesa": "1",
+      "notaCocina": "",
+      "lineas": [
+        {
+          "cantidad": 1,
+          "nombre": "P",
+          "variante": "",
+          "nota": "",
+          "precio": 100
+        }
+      ],
+      "esperado": {
+        "resultado": null,
+        "total": 100,
+        "totalFormateado": "$1.00"
+      }
+    },
+    {
+      "nombre": "numero valido de 20 digitos",
+      "moneda": "MXN",
+      "locale": "es-MX",
+      "numero": "12345678901234567890",
+      "restaurante": "R",
+      "mesa": "1",
+      "notaCocina": "",
+      "lineas": [
+        {
+          "cantidad": 1,
+          "nombre": "P",
+          "variante": "",
+          "nota": "",
+          "precio": 100
+        }
+      ],
+      "esperado": {
+        "resultado": {
+          "url": "https://wa.me/12345678901234567890?text=Hola%2C%20quiero%20pedir%20en%20*R*%3A%0A%0A*Mesa%3A*%201%0A%0A*Pedido%3A*%0A%E2%80%A2%201x%20P%20-%20%241.00%0A%0A*Total%3A*%20%241.00",
+          "omitidas": 0,
+          "sinNotaCocina": false
+        },
+        "total": 100,
+        "totalFormateado": "$1.00"
+      }
+    },
+    {
+      "nombre": "moneda invalida usa el respaldo",
+      "moneda": "XXX_MALA",
+      "locale": "es",
+      "numero": "525512345678",
+      "restaurante": "R",
+      "mesa": "1",
+      "notaCocina": "",
+      "lineas": [
+        {
+          "cantidad": 2,
+          "nombre": "P",
+          "variante": "",
+          "nota": "",
+          "precio": 1050
+        }
+      ],
+      "esperado": {
+        "resultado": {
+          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*R*%3A%0A%0A*Mesa%3A*%201%0A%0A*Pedido%3A*%0A%E2%80%A2%202x%20P%20-%2021.00%20XXX_MALA%0A%0A*Total%3A*%2021.00%20XXX_MALA",
+          "omitidas": 0,
+          "sinNotaCocina": false
+        },
+        "total": 2100,
+        "totalFormateado": "21.00 XXX_MALA"
+      }
+    },
+    {
+      "nombre": "normal con mesa con diagonal",
+      "moneda": "MXN",
+      "locale": "es-MX",
+      "numero": "525512345678",
+      "restaurante": "Cafe Mezquite",
+      "mesa": "Barra/2",
+      "notaCocina": "Sin cubiertos",
+      "lineas": [
+        {
+          "cantidad": 2,
+          "nombre": "Latte",
+          "variante": "Grande",
+          "nota": "sin azucar",
+          "precio": 5500
+        },
+        {
+          "cantidad": 1,
+          "nombre": "Chai",
+          "variante": "",
+          "nota": "",
+          "precio": 5000
+        }
+      ],
+      "esperado": {
+        "resultado": {
+          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Cafe%20Mezquite*%3A%0A%0A*Mesa%3A*%20Barra%202%0A%0A*Pedido%3A*%0A%E2%80%A2%202x%20Latte%20(Grande)%20-%20%24110.00%0A%20%20_Nota%3A%20sin%20azucar_%0A%E2%80%A2%201x%20Chai%20-%20%2450.00%0A%0A*Nota%20para%20la%20cocina%3A*%20Sin%20cubiertos%0A%0A*Total%3A*%20%24160.00",
+          "omitidas": 0,
+          "sinNotaCocina": false
+        },
+        "total": 16000,
+        "totalFormateado": "$160.00"
+      }
+    },
+    {
+      "nombre": "normal con mesa con numeral",
+      "moneda": "MXN",
+      "locale": "es-MX",
+      "numero": "525512345678",
+      "restaurante": "Cafe Mezquite",
+      "mesa": "Mesa #3",
+      "notaCocina": "Sin cubiertos",
+      "lineas": [
+        {
+          "cantidad": 2,
+          "nombre": "Latte",
+          "variante": "Grande",
+          "nota": "sin azucar",
+          "precio": 5500
+        },
+        {
+          "cantidad": 1,
+          "nombre": "Chai",
+          "variante": "",
+          "nota": "",
+          "precio": 5000
+        }
+      ],
+      "esperado": {
+        "resultado": {
+          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Cafe%20Mezquite*%3A%0A%0A*Mesa%3A*%20Mesa%203%0A%0A*Pedido%3A*%0A%E2%80%A2%202x%20Latte%20(Grande)%20-%20%24110.00%0A%20%20_Nota%3A%20sin%20azucar_%0A%E2%80%A2%201x%20Chai%20-%20%2450.00%0A%0A*Nota%20para%20la%20cocina%3A*%20Sin%20cubiertos%0A%0A*Total%3A*%20%24160.00",
+          "omitidas": 0,
+          "sinNotaCocina": false
+        },
+        "total": 16000,
+        "totalFormateado": "$160.00"
+      }
+    },
+    {
+      "nombre": "normal con mesa con parentesis",
+      "moneda": "MXN",
+      "locale": "es-MX",
+      "numero": "525512345678",
+      "restaurante": "Cafe Mezquite",
+      "mesa": "Terraza (2)",
+      "notaCocina": "Sin cubiertos",
+      "lineas": [
+        {
+          "cantidad": 2,
+          "nombre": "Latte",
+          "variante": "Grande",
+          "nota": "sin azucar",
+          "precio": 5500
+        },
+        {
+          "cantidad": 1,
+          "nombre": "Chai",
+          "variante": "",
+          "nota": "",
+          "precio": 5000
+        }
+      ],
+      "esperado": {
+        "resultado": {
+          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Cafe%20Mezquite*%3A%0A%0A*Mesa%3A*%20Terraza%202%0A%0A*Pedido%3A*%0A%E2%80%A2%202x%20Latte%20(Grande)%20-%20%24110.00%0A%20%20_Nota%3A%20sin%20azucar_%0A%E2%80%A2%201x%20Chai%20-%20%2450.00%0A%0A*Nota%20para%20la%20cocina%3A*%20Sin%20cubiertos%0A%0A*Total%3A*%20%24160.00",
+          "omitidas": 0,
+          "sinNotaCocina": false
+        },
+        "total": 16000,
+        "totalFormateado": "$160.00"
+      }
+    }
+  ],
+  "limpiarTexto": [
+    {
+      "entrada": "  sin *azucar*\n_ni_ \u0000hielo~`  ",
+      "maximo": 80,
+      "esperado": "sin azucar ni hielo"
+    },
+    {
+      "entrada": "  sin *azucar*\n_ni_ \u0000hielo~`  ",
+      "maximo": 200,
+      "esperado": "sin azucar ni hielo"
+    },
+    {
+      "entrada": "  sin *azucar*\n_ni_ \u0000hielo~`  ",
+      "maximo": 5,
+      "esperado": "sin a"
+    },
+    {
+      "entrada": "  sin *azucar*\n_ni_ \u0000hielo~`  ",
+      "maximo": 0,
+      "esperado": ""
+    },
+    {
+      "entrada": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "maximo": 80,
+      "esperado": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    },
+    {
+      "entrada": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "maximo": 200,
+      "esperado": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    },
+    {
+      "entrada": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "maximo": 5,
+      "esperado": "xxxxx"
+    },
+    {
+      "entrada": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "maximo": 0,
+      "esperado": ""
+    },
+    {
+      "entrada": null,
+      "maximo": 80,
+      "esperado": ""
+    },
+    {
+      "entrada": null,
+      "maximo": 200,
+      "esperado": ""
+    },
+    {
+      "entrada": null,
+      "maximo": 5,
+      "esperado": ""
+    },
+    {
+      "entrada": null,
+      "maximo": 0,
+      "esperado": ""
+    },
+    {
+      "entrada": "__undefined__",
+      "maximo": 80,
+      "esperado": ""
+    },
+    {
+      "entrada": "__undefined__",
+      "maximo": 200,
+      "esperado": ""
+    },
+    {
+      "entrada": "__undefined__",
+      "maximo": 5,
+      "esperado": ""
+    },
+    {
+      "entrada": "__undefined__",
+      "maximo": 0,
+      "esperado": ""
+    },
+    {
+      "entrada": 42,
+      "maximo": 80,
+      "esperado": "42"
+    },
+    {
+      "entrada": 42,
+      "maximo": 200,
+      "esperado": "42"
+    },
+    {
+      "entrada": 42,
+      "maximo": 5,
+      "esperado": "42"
+    },
+    {
+      "entrada": 42,
+      "maximo": 0,
+      "esperado": ""
+    },
+    {
+      "entrada": "",
+      "maximo": 80,
+      "esperado": ""
+    },
+    {
+      "entrada": "",
+      "maximo": 200,
+      "esperado": ""
+    },
+    {
+      "entrada": "",
+      "maximo": 5,
+      "esperado": ""
+    },
+    {
+      "entrada": "",
+      "maximo": 0,
+      "esperado": ""
+    },
+    {
+      "entrada": "  a​b",
+      "maximo": 80,
+      "esperado": "a​b"
+    },
+    {
+      "entrada": "  a​b",
+      "maximo": 200,
+      "esperado": "a​b"
+    },
+    {
+      "entrada": "  a​b",
+      "maximo": 5,
+      "esperado": "a​b"
+    },
+    {
+      "entrada": "  a​b",
+      "maximo": 0,
+      "esperado": ""
+    },
+    {
+      "entrada": "a\t\tb\r\nc",
+      "maximo": 80,
+      "esperado": "a b c"
+    },
+    {
+      "entrada": "a\t\tb\r\nc",
+      "maximo": 200,
+      "esperado": "a b c"
+    },
+    {
+      "entrada": "a\t\tb\r\nc",
+      "maximo": 5,
+      "esperado": "a b c"
+    },
+    {
+      "entrada": "a\t\tb\r\nc",
+      "maximo": 0,
+      "esperado": ""
+    },
+    {
+      "entrada": "🙂🙂🙂",
+      "maximo": 80,
+      "esperado": "🙂🙂🙂"
+    },
+    {
+      "entrada": "🙂🙂🙂",
+      "maximo": 200,
+      "esperado": "🙂🙂🙂"
+    },
+    {
+      "entrada": "🙂🙂🙂",
+      "maximo": 5,
+      "esperado": "🙂🙂🙂"
+    },
+    {
+      "entrada": "🙂🙂🙂",
+      "maximo": 0,
+      "esperado": ""
+    },
+    {
+      "entrada": "</script><img src=x onerror=alert(1)>\"'&`${alert(1)}",
+      "maximo": 80,
+      "esperado": "</script><img src=x onerror=alert(1)>\"'&${alert(1)}"
+    },
+    {
+      "entrada": "</script><img src=x onerror=alert(1)>\"'&`${alert(1)}",
+      "maximo": 200,
+      "esperado": "</script><img src=x onerror=alert(1)>\"'&${alert(1)}"
+    },
+    {
+      "entrada": "</script><img src=x onerror=alert(1)>\"'&`${alert(1)}",
+      "maximo": 5,
+      "esperado": "</scr"
+    },
+    {
+      "entrada": "</script><img src=x onerror=alert(1)>\"'&`${alert(1)}",
+      "maximo": 0,
+      "esperado": ""
+    },
+    {
+      "entrada": "*_~`",
+      "maximo": 80,
+      "esperado": ""
+    },
+    {
+      "entrada": "*_~`",
+      "maximo": 200,
+      "esperado": ""
+    },
+    {
+      "entrada": "*_~`",
+      "maximo": 5,
+      "esperado": ""
+    },
+    {
+      "entrada": "*_~`",
+      "maximo": 0,
+      "esperado": ""
+    }
+  ],
+  "limpiarMesa": [
+    {
+      "entrada": "<b>Mesa 3</b>",
+      "esperado": "b Mesa 3 b"
+    },
+    {
+      "entrada": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "esperado": "aaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "entrada": "3",
+      "esperado": "3"
+    },
+    {
+      "entrada": "***",
+      "esperado": ""
+    },
+    {
+      "entrada": "  Terraza   2 ",
+      "esperado": "Terraza 2"
+    },
+    {
+      "entrada": "Mesa #3",
+      "esperado": "Mesa 3"
+    },
+    {
+      "entrada": "Barra/2",
+      "esperado": "Barra 2"
+    },
+    {
+      "entrada": "Terraza (2)",
+      "esperado": "Terraza 2"
+    },
+    {
+      "entrada": "Ñandú_1-b",
+      "esperado": "Ñandú_1-b"
+    },
+    {
+      "entrada": null,
+      "esperado": ""
+    },
+    {
+      "entrada": "__undefined__",
+      "esperado": ""
+    },
+    {
+      "entrada": "🙂 1",
+      "esperado": "1"
+    },
+    {
+      "entrada": "\n3\n",
+      "esperado": "3"
+    },
+    {
+      "entrada": "a\nb",
+      "esperado": "a b"
+    },
+    {
+      "entrada": "Mesa(3)",
+      "esperado": "Mesa 3"
+    },
+    {
+      "entrada": "  (2)  ",
+      "esperado": "2"
+    },
+    {
+      "entrada": "A.B",
+      "esperado": "A B"
+    },
+    {
+      "entrada": "xxxxxxxxxxxxxxxxxxx/y",
+      "esperado": "xxxxxxxxxxxxxxxxxxx"
+    },
+    {
+      "entrada": "Ñandú/1",
+      "esperado": "Ñandú 1"
+    },
+    {
+      "entrada": "5°piso",
+      "esperado": "5 piso"
+    },
+    {
+      "entrada": "a - b",
+      "esperado": "a - b"
+    },
+    {
+      "entrada": "/",
+      "esperado": ""
+    },
+    {
+      "entrada": "🙂/1",
+      "esperado": "1"
+    },
+    {
+      "entrada": "Mesa\t4",
+      "esperado": "Mesa 4"
+    }
+  ],
+  "centavos": [
+    {
+      "entrada": "78.00",
+      "esperado": 7800
+    },
+    {
+      "entrada": "9.5",
+      "esperado": 950
+    },
+    {
+      "entrada": "0",
+      "esperado": 0
+    },
+    {
+      "entrada": "0.01",
+      "esperado": 1
+    },
+    {
+      "entrada": "123456789.99",
+      "esperado": 12345678999
+    },
+    {
+      "entrada": "",
+      "esperado": "NaN"
+    },
+    {
+      "entrada": "-1",
+      "esperado": "NaN"
+    },
+    {
+      "entrada": "1e3",
+      "esperado": "NaN"
+    },
+    {
+      "entrada": "12,5",
+      "esperado": "NaN"
+    },
+    {
+      "entrada": "abc",
+      "esperado": "NaN"
+    },
+    {
+      "entrada": "1.234",
+      "esperado": "NaN"
+    },
+    {
+      "entrada": null,
+      "esperado": "NaN"
+    },
+    {
+      "entrada": "__undefined__",
+      "esperado": "NaN"
+    },
+    {
+      "entrada": "999999999999",
+      "esperado": "NaN"
+    },
+    {
+      "entrada": " 5.00 ",
+      "esperado": 500
+    },
+    {
+      "entrada": ".5",
+      "esperado": "NaN"
+    },
+    {
+      "entrada": "5.",
+      "esperado": "NaN"
+    }
+  ],
+  "importes": [
+    {
+      "centavos": 100,
+      "moneda": "MXN",
+      "locale": "es-MX",
+      "esperado": "$1.00"
+    },
+    {
+      "centavos": 1050,
+      "moneda": "USD",
+      "locale": "es-US",
+      "esperado": "$10.50 USD"
+    },
+    {
+      "centavos": 0,
+      "moneda": "MXN",
+      "locale": "es-MX",
+      "esperado": "$0.00"
+    },
+    {
+      "centavos": 99999999,
+      "moneda": "MXN",
+      "locale": "es-MX",
+      "esperado": "$999,999.99"
+    },
+    {
+      "centavos": 1050,
+      "moneda": "XXX_MALA",
+      "locale": "es",
+      "esperado": "10.50 XXX_MALA"
+    },
+    {
+      "centavos": 1,
+      "moneda": "EUR",
+      "locale": "es-ES",
+      "esperado": "0,01 €"
+    },
+    {
+      "centavos": 250000,
+      "moneda": "ARS",
+      "locale": "es-AR",
+      "esperado": "$ 2.500,00 ARS"
+    }
+  ]
+}
