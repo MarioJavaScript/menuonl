@@ -28,7 +28,7 @@ class ReservaPublicaController extends Controller
 
             $fecha = CarbonImmutable::createFromFormat('Y-m-d', $datos['fecha'], $restaurante->zona_horaria)->startOfDay();
             $hoy = now($restaurante->zona_horaria)->startOfDay();
-            $franjas = $restaurante->reservas_activas && $fecha >= $hoy && $fecha <= $hoy->addDays((int) config('menuonl.reservas.max_dias'))
+            $franjas = $restaurante->reservasDisponibles() && $fecha >= $hoy && $fecha <= $hoy->addDays((int) config('menuonl.reservas.max_dias'))
                 ? $this->reservas->franjas($restaurante, $fecha, (int) ($datos['personas'] ?? 1))
                 : [];
 

@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Restaurante;
 use App\Models\Scopes\RestauranteScope;
 use App\Services\SitioPublicoDatos;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 /**
@@ -22,12 +24,19 @@ class SitioPublicoController extends Controller
 
     public function __construct(private SitioPublicoDatos $datos) {}
 
-    public function mostrar(string $slug): Response
+    public function mostrar(Request $request, string $slug): Response|RedirectResponse
     {
         $restaurante = Restaurante::where('slug', $slug)->first();
 
         if ($restaurante === null || ! $restaurante->isActivo() || $restaurante->trashed()) {
             return response()->view('menu.no-disponible', [], 404)->withHeaders(self::SECURITY_HEADERS);
+        }
+
+        // Solo menú no tiene página de sitio: va al menú. 302 y no 301, para que el sitio pueda volver al subir de plan.
+        if (! $restaurante->tieneSitio()) {
+            return redirect()
+                ->route('menu.publico', [...$request->query(), 'slug' => $slug], 302)
+                ->withHeaders([...self::SECURITY_HEADERS, 'Cache-Control' => 'public, max-age=30']);
         }
 
         try {
