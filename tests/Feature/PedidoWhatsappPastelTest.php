@@ -363,7 +363,7 @@ class PedidoWhatsappPastelTest extends TestCase
 
         $respuesta = $this->actingAs($usuario)->getJson('/api/v1/panel/panel-e/ajustes')->assertOk();
 
-        $this->assertContains('CafePastel', collect($respuesta->json('data.plantillas'))->where('clave', 'g')->pluck('nombre')->all());
+        $this->assertContains('Café pastel', collect($respuesta->json('data.plantillas'))->where('clave', 'g')->pluck('nombre')->all());
         $this->assertStringContainsString('A.plantillas.map', (string) file_get_contents(resource_path('js/panel.js')));
     }
 }

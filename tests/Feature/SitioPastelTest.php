@@ -113,8 +113,8 @@ class SitioPastelTest extends TestCase
 
     public function test_el_catalogo_registra_la_plantilla_g_cafepastel(): void
     {
-        $this->assertSame(['a', 'b', 'c', 'd', 'e', 'f', 'g'], array_keys(Catalogos::plantillasSitio()));
-        $this->assertSame('CafePastel', Catalogos::plantillasSitio()['g']['nombre']);
+        $this->assertSame(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'], array_keys(Catalogos::plantillasSitio()));
+        $this->assertSame('Café pastel', Catalogos::plantillasSitio()['g']['nombre']);
     }
 
     public function test_el_panel_permite_elegir_la_plantilla_g(): void

@@ -113,7 +113,7 @@ class SitioBarTest extends TestCase
 
     public function test_el_catalogo_registra_la_plantilla_f_bar(): void
     {
-        $this->assertSame(['a', 'b', 'c', 'd', 'e', 'f', 'g'], array_keys(Catalogos::plantillasSitio()));
+        $this->assertSame(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'], array_keys(Catalogos::plantillasSitio()));
         $this->assertSame('Bar', Catalogos::plantillasSitio()['f']['nombre']);
     }
 
