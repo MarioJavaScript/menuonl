@@ -370,7 +370,7 @@ class MenuPublicoTest extends TestCase
         // Add schedule so restaurant is open
         Horario::factory()->create([
             'restaurante_id' => $restaurante->id,
-            'dia_semana' => (int) now()->dayOfWeek,
+            'dia_semana' => now($restaurante->zona_horaria)->dayOfWeek,
             'abre' => '00:00:00',
             'cierra' => '23:59:59',
             'cerrado' => false,
