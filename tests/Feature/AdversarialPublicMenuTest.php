@@ -686,7 +686,7 @@ class AdversarialPublicMenuTest extends TestCase
         // Force open
         Horario::factory()->create([
             'restaurante_id' => $restaurante->id,
-            'dia_semana' => Carbon::now()->dayOfWeek,
+            'dia_semana' => Carbon::now($restaurante->zona_horaria)->dayOfWeek,
             'abre' => '00:00:00',
             'cierra' => '23:59:59',
             'cerrado' => false,
@@ -1213,7 +1213,7 @@ class AdversarialPublicMenuTest extends TestCase
         ]);
         Horario::factory()->create([
             'restaurante_id' => $restaurante->id,
-            'dia_semana' => Carbon::now()->dayOfWeek,
+            'dia_semana' => Carbon::now($restaurante->zona_horaria)->dayOfWeek,
             'abre' => '00:00:00',
             'cierra' => '23:59:59',
             'cerrado' => false,
@@ -1249,7 +1249,7 @@ class AdversarialPublicMenuTest extends TestCase
         ]);
         Horario::factory()->create([
             'restaurante_id' => $restaurante->id,
-            'dia_semana' => Carbon::now()->dayOfWeek,
+            'dia_semana' => Carbon::now($restaurante->zona_horaria)->dayOfWeek,
             'abre' => '00:00:00',
             'cierra' => '23:59:59',
             'cerrado' => false,
@@ -1274,7 +1274,7 @@ class AdversarialPublicMenuTest extends TestCase
         ]);
         Horario::factory()->create([
             'restaurante_id' => $restaurante->id,
-            'dia_semana' => Carbon::now()->dayOfWeek,
+            'dia_semana' => Carbon::now($restaurante->zona_horaria)->dayOfWeek,
             'abre' => '00:00:00',
             'cierra' => '23:59:59',
             'cerrado' => false,
