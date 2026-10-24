@@ -2,6 +2,7 @@
 
 namespace App\Filament\Concerns;
 
+use App\Enums\Capacidad;
 use App\Models\Restaurante;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
@@ -12,10 +13,12 @@ use Filament\Schemas\Components\EmbeddedSchema;
 use Filament\Schemas\Components\Form;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\Alignment;
+use Illuminate\Support\Arr;
 
 /**
  * Página del panel que edita columnas del restaurante activo. Mismo permiso que "Datos del restaurante":
- * solo quien puede `update` sobre el restaurante (propietario y superadmin) la ve y la guarda.
+ * solo quien puede `update` sobre el restaurante (propietario y superadmin) la ve y la guarda, y solo si el plan
+ * del restaurante incluye la capacidad de la página (el superadmin no tiene ese techo).
  */
 trait EditaAjustesDelRestaurante
 {
@@ -28,7 +31,28 @@ trait EditaAjustesDelRestaurante
     {
         $restaurante = Filament::getTenant();
 
-        return $restaurante instanceof Restaurante && (auth()->user()?->can('update', $restaurante) ?? false);
+        $usuario = auth()->user();
+
+        return $restaurante instanceof Restaurante
+            && $usuario !== null
+            && $usuario->can('update', $restaurante)
+            && $restaurante->permiteA($usuario, static::capacidad());
+    }
+
+    /**
+     * Capacidad del plan que esta página necesita.
+     */
+    abstract protected static function capacidad(): Capacidad;
+
+    /**
+     * Columnas que la persona puede guardar desde esta página; null significa todas las que declara el formulario.
+     * Es la defensa real: aunque llegue otro campo en la petición, aquí se descarta.
+     *
+     * \return list<string>|null
+     */
+    protected function camposEditables(Restaurante $restaurante): ?array
+    {
+        return null;
     }
 
     public function mount(): void
@@ -68,6 +92,11 @@ trait EditaAjustesDelRestaurante
 
         $restaurante = Filament::getTenant();
         $datos = $this->prepararDatos($restaurante, $this->form->getState());
+        $permitidos = $this->camposEditables($restaurante);
+
+        if ($permitidos !== null) {
+            $datos = Arr::only($datos, $permitidos);
+        }
 
         $restaurante->update($datos);
 

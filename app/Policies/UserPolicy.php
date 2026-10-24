@@ -2,8 +2,10 @@
 
 namespace App\Policies;
 
+use App\Enums\Capacidad;
 use App\Models\Scopes\RestauranteScope;
 use App\Models\User;
+use App\Policies\Concerns\ConsultaElPlanDelRestaurante;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -12,9 +14,17 @@ use Illuminate\Support\Facades\DB;
  */
 class UserPolicy
 {
+    use ConsultaElPlanDelRestaurante;
+
     public function viewAny(User $actor): bool
     {
-        return $actor->isSuperadmin() || $actor->esPropietarioDe(RestauranteScope::resolveRestauranteId());
+        if ($actor->isSuperadmin()) {
+            return true;
+        }
+
+        $restauranteId = RestauranteScope::resolveRestauranteId();
+
+        return $actor->esPropietarioDe($restauranteId) && $this->planIncluye($restauranteId, Capacidad::Equipo);
     }
 
     public function view(User $actor, User $objetivo): bool

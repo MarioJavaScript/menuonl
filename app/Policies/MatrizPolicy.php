@@ -2,8 +2,10 @@
 
 namespace App\Policies;
 
+use App\Enums\Capacidad;
 use App\Models\Scopes\RestauranteScope;
 use App\Models\User;
+use App\Policies\Concerns\ConsultaElPlanDelRestaurante;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -11,15 +13,24 @@ use Illuminate\Database\Eloquent\Model;
  *
  * Levels are 'superadmin' (platform flag) and the pivot roles 'propietario' and 'editor'.
  * A user who is not a member of the restaurant in question has no level and is always denied.
+ * When CAPACIDAD is set, the restaurant's plan is a ceiling: everyone but the superadmin is denied
+ * if the plan does not include that capability (docs/planes.md, 2.3).
  */
 abstract class MatrizPolicy
 {
+    use ConsultaElPlanDelRestaurante;
+
     /**
      * Abilities granted to each level. A missing level or ability means denied.
      *
      * @var array<string, list<string>>
      */
     protected const array PERMISOS = [];
+
+    /**
+     * Capability the restaurant's plan must include for the abilities of this policy; null means no plan ceiling.
+     */
+    protected const ?Capacidad CAPACIDAD = null;
 
     /**
      * Abilities that bulk actions map onto a single-record ability.
@@ -51,7 +62,23 @@ abstract class MatrizPolicy
             return false;
         }
 
+        if ($nivel !== 'superadmin' && ! $this->planIncluyeCapacidad($restauranteId)) {
+            return false;
+        }
+
         return in_array($habilidad, static::PERMISOS[$nivel] ?? [], true);
+    }
+
+    /**
+     * Whether the plan of the restaurant includes the capability this policy depends on.
+     */
+    protected function planIncluyeCapacidad(?int $restauranteId): bool
+    {
+        if (static::CAPACIDAD === null) {
+            return true;
+        }
+
+        return $this->planIncluye($restauranteId, static::CAPACIDAD);
     }
 
     /**

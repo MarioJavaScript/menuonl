@@ -2,6 +2,8 @@
 
 namespace App\Filament\Pages\Tenancy;
 
+use App\Enums\Capacidad;
+use App\Models\Restaurante;
 use App\Services\Catalogos;
 use App\Services\EnlaceGoogleMaps;
 use Filament\Actions\Action;
@@ -16,6 +18,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Text;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 
@@ -27,6 +30,19 @@ use Illuminate\Validation\ValidationException;
 class EditRestauranteProfile extends EditTenantProfile
 {
     private const int MAX_CONSULTAS_POR_MINUTO = 10;
+
+    /**
+     * Además del permiso sobre el restaurante, el plan debe incluir la edición de los datos (el superadmin no tiene ese techo).
+     */
+    public static function canView(Model $tenant): bool
+    {
+        $usuario = auth()->user();
+
+        return parent::canView($tenant)
+            && $tenant instanceof Restaurante
+            && $usuario !== null
+            && $tenant->permiteA($usuario, Capacidad::EditarDatos);
+    }
 
     public static function getLabel(): string
     {
@@ -43,6 +59,7 @@ class EditRestauranteProfile extends EditTenantProfile
                 ->label(__('panel.enlaces.ver_sitio'))
                 ->icon('heroicon-o-arrow-top-right-on-square')
                 ->color('gray')
+                ->visible(fn (): bool => Filament::getTenant()?->tieneSitio() ?? false)
                 ->url(fn (): ?string => Filament::getTenant() ? route('sitio.publico', ['slug' => Filament::getTenant()->slug]) : null)
                 ->openUrlInNewTab(),
             Action::make('ver_menu')

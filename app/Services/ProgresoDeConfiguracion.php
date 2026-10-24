@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\Capacidad;
 use App\Filament\Pages\Apariencia;
 use App\Filament\Pages\PedidosYReservas;
 use App\Filament\Pages\Tenancy\EditRestauranteProfile;
@@ -63,16 +64,19 @@ class ProgresoDeConfiguracion
     private function pasos(Restaurante $restaurante, User $usuario): array
     {
         $puedeEditar = $usuario->can('update', $restaurante);
+        $puedeEditarDatos = $puedeEditar && $restaurante->permiteA($usuario, Capacidad::EditarDatos);
+        $puedeEditarDiseno = $puedeEditar && $restaurante->permiteA($usuario, Capacidad::EditarDiseno);
+        $puedeEditarTelefonos = $puedeEditar && $restaurante->permiteA($usuario, Capacidad::EditarTelefonos);
         $candidatos = [
             ['categoria', $usuario->can('viewAny', Categoria::class), $restaurante->categorias()->exists(), true, fn (): string => CategoriaResource::getUrl('create')],
             ['platillo', $usuario->can('viewAny', Producto::class), $restaurante->productos()->exists(), true, fn (): string => ProductoResource::getUrl('create')],
             ['horario', $usuario->can('viewAny', Horario::class), $this->tieneHorario($restaurante), false, fn (): string => HorarioResource::getUrl('index')],
             ['contacto', $usuario->can('viewAny', Contacto::class), $restaurante->contactos()->where('visible', true)->exists(), false, fn (): string => ContactoResource::getUrl('index')],
-            ['descripcion', $puedeEditar, filled(trim((string) $restaurante->descripcion)), false, fn (): string => EditRestauranteProfile::getUrl()],
-            ['mapa', $puedeEditar, $restaurante->latitud !== null && $restaurante->longitud !== null, false, fn (): string => EditRestauranteProfile::getUrl()],
-            ['logotipo', $puedeEditar, filled($restaurante->logo), false, fn (): string => Apariencia::getUrl()],
-            ['portada', $puedeEditar, filled($restaurante->portada), false, fn (): string => Apariencia::getUrl()],
-            ['whatsapp', $puedeEditar && $restaurante->pedidos_activos, filled($restaurante->whatsapp_pedidos), true, fn (): string => PedidosYReservas::getUrl()],
+            ['descripcion', $puedeEditarDatos, filled(trim((string) $restaurante->descripcion)), false, fn (): string => EditRestauranteProfile::getUrl()],
+            ['mapa', $puedeEditarDatos, $restaurante->latitud !== null && $restaurante->longitud !== null, false, fn (): string => EditRestauranteProfile::getUrl()],
+            ['logotipo', $puedeEditarDiseno, filled($restaurante->logo), false, fn (): string => Apariencia::getUrl()],
+            ['portada', $puedeEditarDiseno, filled($restaurante->portada), false, fn (): string => Apariencia::getUrl()],
+            ['whatsapp', $puedeEditarTelefonos && $restaurante->pedidos_activos, filled($restaurante->whatsapp_pedidos), true, fn (): string => PedidosYReservas::getUrl()],
         ];
 
         $pasos = [];
@@ -87,13 +91,13 @@ class ProgresoDeConfiguracion
     }
 
     /**
-     * Avisos que no cuentan para el porcentaje: reservas abiertas al público sin un horario que las respalde.
+     * Avisos que no cuentan para el porcentaje: reservas abiertas al público (si el plan las incluye) sin un horario que las respalde.
      *
      * @return list<array{clave: string, url: string}>
      */
     private function avisos(Restaurante $restaurante, User $usuario): array
     {
-        if ($restaurante->reservas_activas && ! $this->tieneHorario($restaurante) && $usuario->can('viewAny', Horario::class)) {
+        if ($restaurante->reservasDisponibles() && ! $this->tieneHorario($restaurante) && $usuario->can('viewAny', Horario::class)) {
             return [['clave' => 'reservas_sin_horario', 'url' => HorarioResource::getUrl('index')]];
         }
 
