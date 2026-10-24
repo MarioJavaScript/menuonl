@@ -339,7 +339,7 @@ class WebpImageServiceChallengerTest extends TestCase
      */
     public function test_boundary_exact_4096px_is_accepted_and_downscaled(): void
     {
-        ini_set('memory_limit', '256M');
+        ini_set('memory_limit', '512M'); // Ensure sufficient memory for large image processing
         Storage::fake('public');
 
         // Create 4096 x 2048 image (exactly on boundary)
