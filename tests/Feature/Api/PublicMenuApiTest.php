@@ -607,29 +607,44 @@ class PublicMenuApiTest extends TestCase
         $response2->assertJsonPath('data.puede_pedir', false);
     }
 
-    public function test_public_menu_api_responds_with_cors_headers_for_localhost_3000(): void
+    public function test_public_menu_api_responds_with_cors_headers_for_configured_origin(): void
     {
+        config(['cors.allowed_origins' => ['https://cliente.example']]);
+        $restaurante = Restaurante::factory()->create();
+
+        $response = $this->withHeader('Origin', 'https://cliente.example')
+            ->getJson(route('api.v1.menu.show', ['slug' => $restaurante->slug]));
+
+        $response->assertOk();
+        $response->assertHeader('Access-Control-Allow-Origin', 'https://cliente.example');
+    }
+
+    public function test_public_menu_api_responds_to_options_preflight(): void
+    {
+        config(['cors.allowed_origins' => ['https://cliente.example']]);
+        $restaurante = Restaurante::factory()->create();
+
+        $response = $this->withHeaders([
+            'Origin' => 'https://cliente.example',
+            'Access-Control-Request-Method' => 'GET',
+            'Access-Control-Request-Headers' => 'Content-Type, Accept',
+        ])->options('/api/v1/menu/'.$restaurante->slug);
+
+        $this->assertContains($response->getStatusCode(), [200, 204]);
+        $response->assertHeader('Access-Control-Allow-Origin', 'https://cliente.example');
+        $this->assertTrue($response->headers->has('Access-Control-Allow-Methods'));
+    }
+
+    public function test_cors_does_not_allow_any_origin_by_default(): void
+    {
+        $this->assertSame([], array_values(array_filter((array) config('cors.allowed_origins'))));
+
         $restaurante = Restaurante::factory()->create();
 
         $response = $this->withHeader('Origin', 'http://localhost:3000')
             ->getJson(route('api.v1.menu.show', ['slug' => $restaurante->slug]));
 
         $response->assertOk();
-        $response->assertHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
-    }
-
-    public function test_public_menu_api_responds_to_options_preflight(): void
-    {
-        $restaurante = Restaurante::factory()->create();
-
-        $response = $this->withHeaders([
-            'Origin' => 'http://localhost:3000',
-            'Access-Control-Request-Method' => 'GET',
-            'Access-Control-Request-Headers' => 'Content-Type, Accept',
-        ])->options('/api/v1/menu/'.$restaurante->slug);
-
-        $this->assertContains($response->getStatusCode(), [200, 204]);
-        $response->assertHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
-        $this->assertTrue($response->headers->has('Access-Control-Allow-Methods'));
+        $this->assertNull($response->headers->get('Access-Control-Allow-Origin'));
     }
 }
