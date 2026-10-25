@@ -341,6 +341,7 @@ Antes, cualquier archivo inválido en la API de `/panel` se reportaba como "dema
 - **Imágenes:** ya se reprocesan siempre a WebP con nombre aleatorio (`WebpImageService`, `tests/Feature/ImagenesSeguridadTest.php`); falta la regla de Nginx que impida ejecutar PHP en `storage/`.
 - **`composer audit`** ya corre en CI; correrlo también periódicamente sobre el servidor (o con Dependabot).
 - **Datos de contacto de soporte:** `ContactoSoporte` (`app/Services/ContactoSoporte.php`) no tiene número escrito en el código.
+- **Pendiente menor, "Reintentar lectura" (`menu/no-disponible.blade.php`):** el `href` se arma con `request()->fullUrl()`, así que refleja el host y el query string de la petición (Blade lo escapa; no es un riesgo de XSS ni revela si el código o el slug existe, y las pruebas de 404 lo normalizan con `Tests\Concerns\Normaliza404`). Convendría un `href` relativo (por ejemplo, la ruta sin esquema ni host) para no depender del host recibido. Solo anotado; no se cambió código.
 
 | Ya está | Falta | Riesgo si no se hace |
 |---|---|---|
