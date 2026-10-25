@@ -1,9 +1,9 @@
 /*
- * MENUONL: tokens y componentes compartidos por las páginas públicas.
+ * Tokens y componentes compartidos por las páginas públicas.
  * Es una hoja estática (cacheable por el navegador) que funciona con o sin build de Vite.
  * Las capas se declaran aquí primero para que las utilidades de Tailwind siempre ganen.
  *
- * Apariencia: <html data-apariencia="light|dark"> fija el modo; sin el atributo se sigue al sistema.
+ * Apariencia: <html data-apariencia="light|dark|system"> fija el modo; sin el atributo se ve en claro y "system" sigue al sistema.
  * La preferencia se guarda en localStorage("filament:theme:mode"), la misma clave que usa el panel.
  * Los valores de color se miden contra WCAG AA (texto 4.5:1, bordes de controles 3:1). Ver DISEÑO.md.
  */
@@ -200,9 +200,9 @@
         color-scheme: light;
     }
 
-    /* ---- Color en modo oscuro: sigue al sistema salvo que la persona elija "Claro" ---- */
+    /* ---- Color en modo oscuro: solo si la persona eligió "Automático" (sin preferencia guardada se ve en claro) ---- */
     @media (prefers-color-scheme: dark) {
-        :root:not([data-apariencia="light"]) {
+        :root[data-apariencia="system"] {
             --mo-fondo: #000000;
             --mo-superficie: #1c1c1e;
             --mo-superficie-2: #2c2c2e;
@@ -233,7 +233,7 @@
             --mo-sombra-media: 0 4px 16px -4px rgba(0, 0, 0, 0.6);
             color-scheme: dark;
         }
-        :root:not([data-apariencia="light"]) [data-tema="calido"] {
+        :root[data-apariencia="system"] [data-tema="calido"] {
             --mo-fondo: #17130f;
             --mo-superficie: #211b16;
             --mo-superficie-2: #2c251e;
@@ -264,7 +264,7 @@
             --mo-sombra-media: 0 4px 16px -4px rgba(0, 0, 0, 0.6);
             color-scheme: dark;
         }
-        :root:not([data-apariencia="light"]) [data-tema="editorial"] {
+        :root[data-apariencia="system"] [data-tema="editorial"] {
             --mo-fondo: #0f0f14;
             --mo-superficie: #17171e;
             --mo-superficie-2: #20202a;
@@ -295,7 +295,7 @@
             --mo-sombra-media: 0 4px 16px -4px rgba(0, 0, 0, 0.6);
             color-scheme: dark;
         }
-        :root:not([data-apariencia="light"]) [data-tema="rustico"] {
+        :root[data-apariencia="system"] [data-tema="rustico"] {
             --mo-fondo: #16150f;
             --mo-superficie: #201f17;
             --mo-superficie-2: #2a2920;
