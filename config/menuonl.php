@@ -125,6 +125,20 @@ return [
         'retencion_dias' => (int) env('BACKUP_RETENTION_DAYS', 14),
         'mysqldump_path' => env('BACKUP_MYSQLDUMP_PATH', 'mysqldump'),
         'timeout_segundos' => (int) env('BACKUP_TIMEOUT_SECONDS', 1800),
+        // Hora del respaldo diario en la zona indicada (poco tráfico en México: ~04:00 hora de Ciudad de México).
+        'hora' => env('BACKUP_TIME', '04:00'),
+        'zona_horaria' => env('BACKUP_TIMEZONE', 'America/Mexico_City'),
+        // Usuario de base de datos propio y de solo lectura para el respaldo (opcional; si falta se usa el de la aplicación).
+        'db_usuario' => env('BACKUP_DB_USERNAME'),
+        'db_password' => env('BACKUP_DB_PASSWORD'),
+        // Cliente y credenciales para restaurar (opcionales; si faltan se usa la conexión de la aplicación).
+        'mysql_path' => env('BACKUP_MYSQL_PATH', 'mysql'),
+        'restauracion' => [
+            'usuario' => env('RESTORE_DB_USERNAME'),
+            'password' => env('RESTORE_DB_PASSWORD'),
+        ],
+        // verificar-produccion avisa cuando el último respaldo es más viejo que esto.
+        'horas_maximas_sin_respaldo' => (int) env('BACKUP_MAX_AGE_HOURS', 36),
     ],
 
 ];

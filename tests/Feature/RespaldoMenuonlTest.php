@@ -229,7 +229,8 @@ class RespaldoMenuonlTest extends TestCase
             ->filter(fn ($evento): bool => str_contains((string) $evento->command, 'menuonl:backup'));
 
         $this->assertCount(1, $eventos);
-        $this->assertSame('0 3 * * *', $eventos->first()->expression);
+        $this->assertSame('0 4 * * *', $eventos->first()->expression);
+        $this->assertSame('America/Mexico_City', (string) $eventos->first()->timezone);
         $this->assertTrue($eventos->first()->withoutOverlapping);
     }
 }
