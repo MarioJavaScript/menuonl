@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Restaurante;
+use App\Models\Scopes\RestauranteScope;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\DemoRestauranteSeeder;
@@ -45,6 +46,24 @@ class GuardaSeederDemoTest extends TestCase
         ];
     }
 
+    /**
+     * El contexto de restaurante es estático y sobrevive entre pruebas: si otra lo dejó fijado, el seeder (que crea
+     * restaurantes con ids nuevos) choca con él en cuanto los ids no coinciden (MariaDB no reinicia el autoincremento).
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        RestauranteScope::setRestauranteId(null);
+    }
+
+    protected function tearDown(): void
+    {
+        RestauranteScope::setRestauranteId(null);
+
+        parent::tearDown();
+    }
+
     private function enEntorno(string $entorno): void
     {
         $this->app->detectEnvironment(fn (): string => $entorno);
@@ -79,7 +98,8 @@ class GuardaSeederDemoTest extends TestCase
         );
 
         $this->assertNotSame(0, $codigo);
-        $this->assertStringContainsString('entorno actual: production', $salida->fetch());
+        // Symfony parte el mensaje según el ancho de la terminal (80 por defecto sin tty, como en CI): se compara sin espacios.
+        $this->assertStringContainsString('entornoactual:production', preg_replace('/\s+/', '', $salida->fetch()));
         $this->assertSame(0, User::query()->where('email', 'like', '%@menuonl.test')->count());
     }
 
