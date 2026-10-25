@@ -18,7 +18,7 @@ Prioridad: **P0** bloquea publicar con clientes reales, **P1** antes del primer 
 
 | # | Hallazgo | Prioridad |
 |---|---|---|
-| H1 | **Las páginas públicas mandan cookies de sesión junto con `Cache-Control: public`.** Medido en local contra `/{slug}/menu` y `/{slug}`: ambas responden con `Set-Cookie: laravel-session` y `XSRF-TOKEN` y `Cache-Control: max-age=30, public`. `/q/{codigo}` también abre sesión (medido con un código inexistente, que da 404; falta medir uno válido). Cloudflare no guarda en caché respuestas con `Set-Cookie` por defecto, así que **hoy el menú no se serviría desde el borde** (RNF-02 y RNF-09 no se cumplirían). Peor: si alguien activa "Cache Everything" para forzarlo, una cookie de sesión de un visitante podría servirse a otros. Además, con `SESSION_DRIVER=database`, cada visita anónima (y cada bot) escribe una fila en `sessions`. | P0 |
+| H1 | **RESUELTO.** `/{slug}`, `/{slug}/menu`, `/q/{codigo}`, `/m/{slug}` y `/s/{slug}` ya no pasan por `EncryptCookies`, `AddQueuedCookiesToResponse`, `StartSession`, `ShareErrorsFromSession` ni `PreventRequestForgery` (`routes/web.php`, variable `$middlewareDeSesion`): sin `Set-Cookie`, sin fila en `sessions`, sin token CSRF. Conservan el límite `throttle:menu-publico` y sus `Cache-Control`. Pruebas: `tests/Feature/PaginasPublicasSinSesionTest.php`. Quedan igual con sesión: `/admin`, `/panel`, `/api/v1/panel/*`, `/invitaciones/*` y `/` (portada). Descripción original: **Las páginas públicas mandaban cookies de sesión junto con `Cache-Control: public`.** Medido en local contra `/{slug}/menu` y `/{slug}`: ambas responden con `Set-Cookie: laravel-session` y `XSRF-TOKEN` y `Cache-Control: max-age=30, public`. `/q/{codigo}` también abre sesión (medido con un código inexistente, que da 404; falta medir uno válido). Cloudflare no guarda en caché respuestas con `Set-Cookie` por defecto, así que **hoy el menú no se serviría desde el borde** (RNF-02 y RNF-09 no se cumplirían). Peor: si alguien activa "Cache Everything" para forzarlo, una cookie de sesión de un visitante podría servirse a otros. Además, con `SESSION_DRIVER=database`, cada visita anónima (y cada bot) escribe una fila en `sessions`. | P0 |
 | H2 | **RESUELTO.** `DemoRestauranteSeeder` ahora se niega a correr fuera de `local` y `testing` (lanza un error claro y termina con código distinto de cero; prueba en `tests/Feature/GuardaSeederDemoTest.php`). Descripción original: `DemoRestauranteSeeder` crea `superadmin@menuonl.test` con contraseña `password` y no tiene ninguna guarda de entorno.** La guarda (`local`/`testing`) está solo en `DatabaseSeeder`. Un `php artisan db:seed --class=DemoRestauranteSeeder` en producción crea un superadmin con contraseña pública. | P0 |
 | H3 | **RESUELTO.** Existe `php artisan menuonl:crear-superadmin` (ver punto 7; pruebas en `tests/Feature/CrearSuperadminTest.php`). Descripción original: **No había forma segura de crear el primer superadmin.** No existe comando; hoy habría que usar `tinker` con `forceFill(['es_superadmin' => true])` (el campo no es asignable en masa). Sin superadmin no se puede crear ningún restaurante ni invitar a nadie. | P0 |
 | H4 | **Los trabajos en cola necesitan un proceso `queue:work`** y el repositorio no trae su configuración. `PurgarCacheRestauranteJob` (`app/Jobs/PurgarCacheRestauranteJob.php`) implementa `ShouldQueue` y `QUEUE_CONNECTION=database`: sin worker, la purga de Cloudflare al cambiar un menú o un plan **nunca se ejecuta**. | P0 |
@@ -76,7 +76,7 @@ Se parte de `.env.example`. La columna "Producción" es el valor esperado; las m
 | `LOG_CHANNEL` / `LOG_STACK` | `stack` / `daily` | **NO** `single`: un solo archivo sin rotación crece sin límite. `LOG_DAILY_DAYS` (por defecto 14) controla cuántos se guardan. |
 | `LOG_LEVEL` | `warning` (o `error`) | **NO** `debug`. |
 | `DB_CONNECTION` | `mariadb` | **NO** `sqlite` (es el valor del ejemplo). Más `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` (descomentar). |
-| `SESSION_DRIVER` | `database` o `redis` | Ver H1: lo ideal es que las páginas públicas no abran sesión. |
+| `SESSION_DRIVER` | `database` o `redis` | Las páginas públicas ya no abren sesión (H1 resuelto); solo la usan el panel, las invitaciones y la portada. |
 | `SESSION_SECURE_COOKIE` / `SESSION_SAME_SITE` | `true` / `lax` | Ya vienen así en el ejemplo. `http_only` es `true` por defecto (`config/session.php`). |
 | `SESSION_LIFETIME` | 120 (min) o menos para el panel | |
 | `CACHE_STORE` | `redis` (o `database`) | Es el nivel L1 del menú (`MenuCacheService`, TTL 24 h). Con `database` funciona, solo es más lento. |
@@ -198,7 +198,7 @@ Orden recomendado para un despliegue (la primera vez y las siguientes). Idealmen
 ### Checklist
 
 - [ ] Dominio en Cloudflare con proxy naranja y SSL/TLS **Full (strict)** con certificado de origen. Activar HSTS desde Cloudflare (la aplicación no manda `Strict-Transport-Security`).
-- [ ] **Resolver H1 antes de cualquier regla de caché** (cookies en páginas públicas).
+- [x] H1 resuelto (cookies en páginas públicas). Falta confirmar en producción con `curl -sI https://dominio/{slug}/menu` que no hay `Set-Cookie`, antes de cualquier regla de caché.
 - [ ] Caché del sitio y del menú: el origen ya manda `Cache-Control: public, max-age=30` en el sitio (`stale-while-revalidate=300`) y `max-age=30, stale-while-revalidate=86400` en el menú (`app/Http/Controllers/SitioPublicoController.php`, `MenuPublicoController.php`). Regla de caché: **"Eligible for cache" + "Respect origin TTL"** (no "Cache Everything" con TTL fijo) solo para `/{slug}` y `/{slug}/menu`.
 - [ ] Reglas de **no caché / bypass**: `/admin*`, `/panel*`, `/api/*`, `/livewire*`, `/q/*`, `/invitaciones/*`, `/storage/*` (las imágenes tienen nombres aleatorios, se pueden cachear aparte con TTL largo), `/build/*` (archivos con hash, TTL largo), `/up`.
 - [ ] Purga automática: `PurgarCacheRestauranteJob` borra `https://{dominio}/{slug}/menu` y `https://{dominio}/{slug}` (solo esas dos URL exactas). Se dispara con `MenuCacheService::invalidateRestaurante()` al cambiar datos del restaurante, y **al cambiar el plan** (`Restaurante::cambiarPlan()` llama `triggerMenuCachePurge()`). Requiere worker (H4) y token válido.
@@ -247,7 +247,7 @@ Medido en local con el kernel HTTP de Laravel:
 ### 6.4 Cookies, sesiones y CSRF
 
 - **Ya está:** `session.secure` por entorno, `http_only` verdadero, `same_site=lax`, token CSRF en Filament y Livewire.
-- **Falta:** H1 (sesiones y cookies en páginas públicas); decidir Redis para sesiones si el tráfico crece.
+- **Hecho:** H1 (páginas públicas sin sesión ni cookies). **Falta:** decidir Redis para sesiones si el tráfico crece.
 
 ### 6.5 Mensaje amable cuando falla el archivo temporal de la subida de imágenes
 
@@ -329,7 +329,7 @@ Cada PR es independiente y revisable por separado. Ninguno cambia la lógica de 
 
 | # | PR | Resuelve | Prioridad |
 |---|---|---|---|
-| 1 | **Páginas públicas sin sesión ni cookies:** que `/{slug}`, `/{slug}/menu`, `/q/{codigo}` y `/api/v1/menu/*` no usen el grupo `web` completo (sin `StartSession`, `EncryptCookies`, `PreventRequestForgery`); prueba que la respuesta no trae `Set-Cookie`. Verificar que el formulario de reservas y el carrito (`localStorage`) no dependen de la sesión. | H1, RNF-02, RNF-09 | P0 |
+| 1 | ~~**Páginas públicas sin sesión ni cookies**~~ **Hecho** (las rutas web públicas excluyen los middleware de sesión; el menú, el sitio y los QR no necesitan sesión; la API pública de reservas ya estaba en el grupo `api`). Planteamiento original: que `/{slug}`, `/{slug}/menu`, `/q/{codigo}` y `/api/v1/menu/*` no usen el grupo `web` completo (sin `StartSession`, `EncryptCookies`, `PreventRequestForgery`); prueba que la respuesta no trae `Set-Cookie`. Verificar que el formulario de reservas y el carrito (`localStorage`) no dependen de la sesión. | H1, RNF-02, RNF-09 | P0 |
 | 2 | ~~**Guarda de entorno en `DemoRestauranteSeeder`**~~ **Hecho:** solo corre en `local` y `testing`, con prueba. | H2 | P0 |
 | 3 | ~~**Comando `menuonl:crear-superadmin`**~~ **Hecho** (interactivo, contraseña oculta y confirmada, mínimo 12 caracteres, `--confirmo-otro-superadmin`; sin Historial por no tener restaurante). Planteamiento original: pide nombre, correo y contraseña sin eco (o genera una), valida longitud, asigna `es_superadmin` con `forceFill`, nunca imprime la contraseña, y se niega si ya existe el correo; prueba. | H3 | P0 |
 | 4 | **Documentación de procesos (sin código de app):** `docs/` con ejemplo de Nginx (límites, `storage`, cabeceras), `php.ini`, Supervisor para `queue:work` y cron de `schedule:run`; y `.env.production.example` con los valores del punto 2. | H4, punto 1 y 2 | P0 |

@@ -4,8 +4,13 @@ use App\Http\Controllers\InvitacionAceptarController;
 use App\Http\Controllers\PlanSinPanelController;
 use App\Http\Controllers\PortadaController;
 use App\Models\User;
+use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use Illuminate\Cookie\Middleware\EncryptCookies;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Http\Request;
+use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 Route::get('/', PortadaController::class)->name('portada');
 
@@ -28,7 +33,17 @@ use App\Http\Controllers\RutaAnteriorController;
 use App\Http\Controllers\SitioPublicoController;
 use App\Services\Catalogos;
 
-Route::middleware('throttle:menu-publico')->group(function (): void {
+// Public pages are stateless: no session, cookies or CSRF token, so Cloudflare can cache them (docs/despliegue.md, H1).
+// Language comes from ?lang= and the table from ?mesa=; reservations and orders use the stateless /api/v1 routes.
+$middlewareDeSesion = [
+    EncryptCookies::class,
+    AddQueuedCookiesToResponse::class,
+    StartSession::class,
+    ShareErrorsFromSession::class,
+    PreventRequestForgery::class,
+];
+
+Route::middleware('throttle:menu-publico')->withoutMiddleware($middlewareDeSesion)->group(function (): void {
     Route::get('/q/{codigo}', [QrRedirectController::class, 'redirigir'])
         ->where('codigo', '.*')
         ->name('qr.redirect');
@@ -61,7 +76,7 @@ Route::middleware('auth')
 
 // Public restaurant pages. They MUST stay last: /{slug} is a catch-all for one segment and is kept away from
 // the application's own prefixes by the reserved slugs (Catalogos::slugsReservados()).
-Route::middleware('throttle:menu-publico')->group(function (): void {
+Route::middleware('throttle:menu-publico')->withoutMiddleware($middlewareDeSesion)->group(function (): void {
     Route::get('/{slug}/menu', [MenuPublicoController::class, 'mostrar'])
         ->where('slug', Catalogos::patronSlugRuta())
         ->name('menu.publico');
