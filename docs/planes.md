@@ -1,4 +1,4 @@
-# Planes de venta de Menuonl: análisis y propuesta (Fase 1)
+# Planes de venta de Menubly: análisis y propuesta (Fase 1)
 
 Estado: **solo análisis. No hay código ni migraciones escritas.** Espera tu aprobación. No se hizo `git add`, `commit` ni `push`, y no se tocó `frontend/`, el diseño de las plantillas ni `/panel`.
 
@@ -82,7 +82,7 @@ El acceso a cada módulo vive en `PermisosPanel::modulosDe()` y se aplica con `M
 | Dirección anterior del menú | `GET /m/{slug}` (301) | ✔ | ✔ | ✔ |
 | Dirección anterior del sitio | `GET /s/{slug}` (301 a `/{slug}`) | ✔ | ✔ | queda 301 a `/{slug}` y de ahí 302 al menú |
 | API pública del menú | `/api/v1/menu/{slug}` | ✔ | ✔ | ✔ |
-| Portada de Menuonl (`/`) | `PortadaController` | no depende del plan | | |
+| Portada de Menubly (`/`) | `PortadaController` | no depende del plan | | |
 
 ### 1.4 Tabla campo por campo: quién lo cambia
 

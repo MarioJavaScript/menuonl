@@ -23,7 +23,7 @@ La vista `e` usa un layout propio (`components/sitio/cafeteria`) con su hoja y s
 
 ## Datos: de dónde sale cada bloque
 
-| Bloque del prototipo | Campo / relación de Menuonl | Estado |
+| Bloque del prototipo | Campo / relación de Menubly | Estado |
 |---|---|---|
 | Nombre (cabecera, pie) | `restaurantes.nombre` | Listo |
 | Slogan | `restaurantes.eslogan` | Listo; se omite si está vacío |
@@ -38,8 +38,8 @@ La vista `e` usa un layout propio (`components/sitio/cafeteria`) con su hoja y s
 | Platillos: foto | `productos.imagen` | Listo; sin foto, recuadro neutro |
 | Platillos: precio | `Producto::precioVigente()` con `FormatoMoneda` | Listo |
 | Precio anterior tachado | `productos.precio` cuando hay `precio_oferta` menor | Listo |
-| Variantes con precio | `producto_variantes` | Existe en Menuonl, no en el prototipo; se muestran como lista bajo el platillo |
-| Etiquetas dietéticas / agotado | `etiquetas`, `disponible` | Existe en Menuonl, no en el prototipo; se muestran como marcas |
+| Variantes con precio | `producto_variantes` | Existe en Menubly, no en el prototipo; se muestran como lista bajo el platillo |
+| Etiquetas dietéticas / agotado | `etiquetas`, `disponible` | Existe en Menubly, no en el prototipo; se muestran como marcas |
 | Banda "Nueva bebida" (platillo destacado) | Primer producto `destacado` con foto y, si lo hay, con etiqueta `nuevo` | Parcial |
 | Datos de la banda (Jarabe, Base, Tamaño) | No existe | Falta; se omite. Se muestran las etiquetas del platillo |
 | Textos "Nueva", "de temporada", "bebida" | Fijos del prototipo | Se reemplazan por "Nuevo" (si tiene etiqueta `nuevo`) o "Recomendado"; nada inventado |
@@ -50,7 +50,7 @@ La vista `e` usa un layout propio (`components/sitio/cafeteria`) con su hoja y s
 | WhatsApp | `whatsapp_pedidos` o `contactos` tipo `whatsapp` | Listo |
 | Instagram | `contactos` tipo `instagram` | Listo |
 | Facebook / mapa | `contactos` tipo `facebook`, coordenadas | Existe; se agrega como enlace |
-| Pie con nota de ejemplo | "Sitio creado con Menuonl" como las otras plantillas | Listo |
+| Pie con nota de ejemplo | "Sitio creado con Menubly" como las otras plantillas | Listo |
 | Reservaciones | `reservas_activas` | Hecho en la fase 2: sección `#reservar` con el mismo servidor y `sitio.js` |
 | Idiomas del menú | `restaurante_idiomas` | El prototipo no los tiene; se agrega un selector mínimo si hay más de uno |
 

@@ -1,6 +1,6 @@
 # División de Trabajo y Contrato de Integración — Mitad B (Frente Público, QR y WhatsApp)
 
-Este documento define la frontera exacta entre **Mitad A** y **Mitad B** del proyecto **MENUONL v1.0** para que ambos desarrolladores trabajen en paralelo **sin conflictos de Git**.
+Este documento define la frontera exacta entre **Mitad A** y **Mitad B** del proyecto **Menubly v1.0** para que ambos desarrolladores trabajen en paralelo **sin conflictos de Git**.
 
 ---
 

@@ -11,6 +11,7 @@ use App\Http\Middleware\ExigeDosFactores;
 use App\Models\Restaurante;
 use App\Services\PermisosPanel;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
+use Filament\Enums\ThemeMode;
 use Filament\Facades\Filament;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -65,10 +66,11 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::BODY_END,
                 fn (): string => Filament::getTenant() ? view('filament.hooks.barra-inferior')->render() : '',
             )
-            ->brandName('MENUONL')
+            ->brandName(fn (): string => (string) config('app.name'))
             ->brandLogo(fn () => view('filament.logo'))
             ->brandLogoHeight('2rem')
             ->favicon(asset('favicon.svg'))
+            ->defaultThemeMode(ThemeMode::Light)
             ->colors([
                 'primary' => Color::Amber,
                 'gray' => Color::Zinc,

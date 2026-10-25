@@ -296,7 +296,7 @@
             </div>
 
             <p class="url">{{ $url }}</p>
-            <p class="footnote">Sin necesidad de descargar aplicaciones · MENUONL</p>
+            <p class="footnote">Sin necesidad de descargar aplicaciones · {{ config('app.name') }}</p>
         </div>
     </body>
 </html>

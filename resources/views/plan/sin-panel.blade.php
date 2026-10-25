@@ -4,7 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="robots" content="noindex">
-    <meta name="color-scheme" content="light dark">
+    <meta name="color-scheme" content="light">
+    <script src="{{ asset('js/apariencia.js').'?v='.filemtime(public_path('js/apariencia.js')) }}"></script>
     <title>{{ __('panel.plan_sin_panel.titulo') }}</title>
     <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
     <style>
@@ -17,8 +18,17 @@
             --acento: #8a5300;
             --acento-texto: #ffffff;
         }
+        :root[data-apariencia="dark"] {
+            --fondo: #17171b;
+            --tarjeta: #212126;
+            --texto: #f2f1ee;
+            --suave: #b9b8c0;
+            --borde: #3a3a42;
+            --acento: #f0b34a;
+            --acento-texto: #1a1204;
+        }
         @media (prefers-color-scheme: dark) {
-            :root {
+            :root[data-apariencia="system"] {
                 --fondo: #17171b;
                 --tarjeta: #212126;
                 --texto: #f2f1ee;

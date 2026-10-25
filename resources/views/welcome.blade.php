@@ -1,5 +1,5 @@
 <x-layout.publico
-    titulo="MENUONL — Menú Digital Interactivo para Restaurantes"
+    :titulo="config('app.name').' — Menú Digital Interactivo para Restaurantes'"
     descripcion="Plataforma de menú digital interactivo con códigos QR de alta definición, pedidos directos a WhatsApp y gestión en tiempo real para restaurantes y cafeterías."
     html-class="scroll-smooth"
     tema="calido"
@@ -8,9 +8,9 @@
         <!-- Barra de Navegación Superior -->
         <header class="sticky top-0 z-40 w-full backdrop-blur-md bg-fondo/90 border-b border-borde transition-colors">
             <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-                <a href="{{ url('/') }}" class="inline-flex items-center gap-2.5 min-h-[44px] font-bold tracking-tight text-lg text-texto-fuerte focus:outline-none focus-visible:ring-2 focus-visible:ring-foco rounded-lg px-2 py-1" aria-label="MENUONL - Inicio">
+                <a href="{{ url('/') }}" class="inline-flex items-center gap-2.5 min-h-[44px] font-bold tracking-tight text-lg text-texto-fuerte focus:outline-none focus-visible:ring-2 focus-visible:ring-foco rounded-lg px-2 py-1" aria-label="{{ config('app.name') }} - Inicio">
                     <span class="w-8 h-8 rounded-xl bg-accion text-accion-texto flex items-center justify-center font-black text-sm shadow-sm">M</span>
-                    <span class="text-base tracking-wide font-extrabold">MENUONL</span>
+                    <span class="text-base tracking-wide font-extrabold">{{ config('app.name') }}</span>
                 </a>
 
                 <nav class="flex items-center gap-2 sm:gap-3" aria-label="Navegación principal">
@@ -207,7 +207,7 @@
         <!-- Pie de Página Sobrio y Accesible -->
         <footer class="w-full border-t border-borde py-8 text-center text-xs text-texto-suave">
             <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <p>&copy; {{ date('Y') }} MENUONL. Todos los derechos reservados. Diseñado para la hostelería moderna.</p>
+                <p>&copy; {{ date('Y') }} {{ config('app.name') }}. Todos los derechos reservados. Diseñado para la hostelería moderna.</p>
                 <div class="flex items-center gap-4">
                     <a href="{{ url('/admin') }}" class="inline-flex items-center min-h-[44px] px-2 hover:text-texto-fuerte transition-colors rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-foco">Administración</a>
                     @if ($demoUrl)

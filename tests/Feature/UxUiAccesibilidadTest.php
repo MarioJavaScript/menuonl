@@ -78,7 +78,7 @@ class UxUiAccesibilidadTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertViewIs('welcome');
-        $response->assertSee('MENUONL');
+        $response->assertSee(config('app.name'));
         $response->assertSee('La carta digital que tus comensales recordarán.');
         $response->assertSee('Entrar al panel');
         $response->assertSee('Acceder a la administración');
@@ -395,7 +395,7 @@ class UxUiAccesibilidadTest extends TestCase
         $response->assertSee('Carta no disponible');
         $response->assertSee('carta impresa');
         $response->assertSee('Reintentar lectura');
-        $response->assertSee('Ir a la portada de MENUONL');
+        $response->assertSee('Ir a la portada de '.config('app.name'));
         $response->assertSee('min-h-[44px]');
     }
 
@@ -467,7 +467,7 @@ class UxUiAccesibilidadTest extends TestCase
         // Botones de acción claros con soporte de impresión
         $response->assertSee('Imprimir ficha de mesa');
         $response->assertSee('Volver al panel');
-        $response->assertSee('Sin necesidad de descargar aplicaciones · MENUONL');
+        $response->assertSee('Sin necesidad de descargar aplicaciones · '.config('app.name'));
     }
 
     // =========================================================================
@@ -1086,7 +1086,7 @@ class UxUiAccesibilidadTest extends TestCase
 
             $respuesta->assertSee('css/menuonl.css', false);
             $respuesta->assertSee('favicon.svg', false);
-            $respuesta->assertSee('<meta name="color-scheme" content="light dark">', false);
+            $respuesta->assertSee('<meta name="color-scheme" content="light">', false);
             $this->assertStringNotContainsString('<style>', $respuesta->getContent(), "$url no debe llevar CSS en línea duplicado.");
         }
     }
@@ -1199,7 +1199,7 @@ class UxUiAccesibilidadTest extends TestCase
 
         $panel = Filament::getPanel('admin');
 
-        $this->assertSame('MENUONL', $panel->getBrandName());
+        $this->assertSame(config('app.name'), $panel->getBrandName());
         $this->assertStringContainsString('favicon.svg', (string) $panel->getFavicon());
 
         $boton = (string) FilamentView::renderHook(PanelsRenderHook::USER_MENU_BEFORE);

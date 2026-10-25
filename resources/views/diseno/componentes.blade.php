@@ -8,7 +8,7 @@
     $iconoAlerta = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 7.5v5.5m0 3.5h.01"/></svg>';
     $iconoOk = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="m8 12.5 2.5 2.5L16 9.5"/></svg>';
 @endphp
-<x-layout.publico titulo="Componentes · MENUONL" :tema="$tema" noindex>
+<x-layout.publico :titulo="'Componentes · '.config('app.name')" :tema="$tema" noindex>
     <x-slot:head>
         <style>
             .muestra { max-width: 64rem; margin: 0 auto; padding: var(--mo-espacio-8) var(--mo-espacio-4) var(--mo-espacio-16); }

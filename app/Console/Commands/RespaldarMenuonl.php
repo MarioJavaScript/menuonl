@@ -20,7 +20,7 @@ class RespaldarMenuonl extends Command
 
     public function handle(RespaldoService $respaldos): int
     {
-        $this->info('Iniciando respaldo de MENUONL (base de datos e imágenes)...');
+        $this->info('Iniciando respaldo de '.config('app.name').' (base de datos e imágenes)...');
 
         try {
             $respaldo = $respaldos->crear();

@@ -15,7 +15,7 @@ La rama `plantilla-bar` ya trae la plantilla `f` (Bar, commit `096e3bf`). Usar `
 
 ## Datos: de dónde sale cada bloque
 
-| Bloque del prototipo | Campo / relación de Menuonl | Estado |
+| Bloque del prototipo | Campo / relación de Menubly | Estado |
 |---|---|---|
 | Encabezado: logo y nombre | `restaurantes.logo` y `nombre` | Listo; sin logo solo el nombre |
 | Navegación Inicio, Menú, Reservar | `route('sitio.publico')`, `route('menu.publico')` | Listo; "Reservar" solo con reservas activas |
@@ -26,14 +26,14 @@ La rama `plantilla-bar` ya trae la plantilla `f` (Bar, commit `096e3bf`). Usar `
 | Texto "Estás en la mesa N. Puedes pedir desde tu celular." | `?mesa=` | Solo en el menú, y solo si se puede pedir; el sitio no lo muestra |
 | Datos rápidos: "Hoy" con el horario del día y "Visítanos" | `horarios` y `contactos` tipo `direccion` | Listo; cada dato se omite si falta (el de hoy se omite si hoy está cerrado y no hay otro dato) |
 | "Nuestras favoritas": tres tarjetas pastel por categoría con foto | Categorías de los `destacados` de `SitioPublicoDatos` (nombre de categoría y foto de un platillo) | Parcial: ver nota |
-| Sección "Sobre {nombre}" con `foto_descripcion` | `descripcion` | La foto extra (`foto_descripcion`) no existe en Menuonl: se omite la foto y el texto ocupa el ancho; la sección sin descripción se omite |
+| Sección "Sobre {nombre}" con `foto_descripcion` | `descripcion` | La foto extra (`foto_descripcion`) no existe en Menubly: se omite la foto y el texto ocupa el ancho; la sección sin descripción se omite |
 | "Postre del día" (platillo destacado) | Primer `destacado` visible, "Nuevo" si lleva la etiqueta `nuevo` | Se renombra "Nuevo" / "Recomendado" (ver "Textos") |
 | Vista previa del menú (6 platillos) | `destacados` (hasta 6) | Parcial: ver riesgos |
 | Horario con el día de hoy resaltado | `horarios` (lunes primero) y el día actual en la zona del restaurante | Listo; se omite si todos los días están cerrados |
 | Ubicación: dirección y "Cómo llegar" | `contactos` tipo `direccion` y `mapa_url` | Listo; cada parte se omite si falta |
 | Reservas: nombre, teléfono, personas, fecha, hora, nota | Formulario real reutilizado (ids, `data-url`, `data-disp`) | Listo; la hora es una lista de franjas libres del servidor; la confirmación simulada se sustituye por la real |
 | Contacto: Llamar, WhatsApp, Instagram (+ Facebook en el pie) | `contactos` vía `SitioPublicoDatos` | Listo; cada botón se omite si falta su dato |
-| Pie rasgado: nombre, dirección, enlaces, redes | Los mismos datos | Listo; "© año nombre" se sustituye por "Sitio creado con Menuonl", como e y f |
+| Pie rasgado: nombre, dirección, enlaces, redes | Los mismos datos | Listo; "© año nombre" se sustituye por "Sitio creado con Menubly", como e y f |
 | Menú: encabezado con eslogan, filtros por categoría | `categorias` visibles con traducción; `eslogan` | Listo; "Todos" solo con más de una categoría; el eslogan se omite si falta |
 | Tarjeta de platillo: foto 4:3, nombre, descripción, etiquetas, precio | `productos`, traducción, `etiquetas`, `FormatoMoneda` | Listo; sin foto, recuadro neutro |
 | Precio anterior tachado | `precio` cuando `precioVigente()` es menor | Listo |
@@ -47,7 +47,7 @@ La rama `plantilla-bar` ya trae la plantilla `f` (Bar, commit `096e3bf`). Usar `
 | Fotos de Pitaya (`assets/img/*.webp`) | Prototipo | No se copian; se usan las del restaurante |
 | Datos inventados de Pitaya (dirección, teléfono, redes) | Prototipo | No se llevan |
 
-No hay testimonios, datos nutricionales ni otro bloque que Menuonl no guarde, salvo la foto extra de "Sobre", que se omite.
+No hay testimonios, datos nutricionales ni otro bloque que Menubly no guarde, salvo la foto extra de "Sobre", que se omite.
 
 Nota sobre "Nuestras favoritas": `SitioPublicoDatos` no entrega la lista de categorías, solo el nombre de la categoría de cada destacado. La sección se arma con las categorías distintas de los destacados visibles (hasta tres, cada una con la foto de su primer destacado que tenga foto) y se omite si salen menos de dos. Las tarjetas enlazan al menú, sin ancla por categoría. Alternativa más fiel, que no se hace sin aprobación: añadir una clave `categorias` a `SitioPublicoDatos::para()` (aditiva; las vistas de a a f la ignoran), con id y nombre de cada categoría, para enlazar a cada una y mostrar las tres primeras aunque no tengan destacados.
 
@@ -58,7 +58,7 @@ Opciones:
 1. **Derivarlos de los campos que ya existen (recomendada).** El prototipo usa el eslogan como título y el nombre en un rótulo cursivo ("Bienvenidos a {nombre}"). Aquí: el nombre es el `h1`; el eslogan, si existe, va como rótulo cursivo encima del título (sin el "Bienvenidos a" fijo); la descripción va en la sección "Sobre". Cada uno se omite si está vacío. Sin migración ni formulario nuevo.
 2. **Campos nuevos** para los rótulos cursivos de cada sección ("Para endulzar el día", "Un vistazo", "Escríbenos"...). No hace falta: esos rótulos son texto fijo de interfaz (el prototipo los tiene en el JS), igual que en e. Quedan como texto fijo de la plantilla.
 
-Recomiendo la 1. Los rótulos cursivos de las secciones se mantienen, pero solo los que no afirman nada sobre el negocio ("Escríbenos", "Guárdanos un lugar", "Un vistazo", "Tu mesa, a tu ritmo"); "Hecho cada día", "Postre del día" y "Hoy en la vitrina" afirman cosas que Menuonl no sabe y se omiten o se reemplazan por "Nuevo" / "Recomendado".
+Recomiendo la 1. Los rótulos cursivos de las secciones se mantienen, pero solo los que no afirman nada sobre el negocio ("Escríbenos", "Guárdanos un lugar", "Un vistazo", "Tu mesa, a tu ritmo"); "Hecho cada día", "Postre del día" y "Hoy en la vitrina" afirman cosas que Menubly no sabe y se omiten o se reemplazan por "Nuevo" / "Recomendado".
 
 ## Menú por plantilla
 

@@ -141,7 +141,7 @@ class SitioCafeteriaTest extends TestCase
             ->assertSee('Calle Real 45')->assertSee('tel:5511112222', false)->assertSee('https://wa.me/525512345678', false)
             ->assertSee('https://instagram.com/mezquite.cafe', false)->assertSee('07:00 – 21:00')
             ->assertSee('alt="Portada de Café Mezquite"', false)
-            ->assertSee('Sitio creado con Menuonl')
+            ->assertSee('Sitio creado con '.config('app.name'))
             ->assertSee(route('menu.publico', ['slug' => 'cafe-mezquite']), false)
             ->assertSee(route('sitio.publico', ['slug' => 'cafe-mezquite']), false);
         $this->assertSame(1, substr_count($respuesta->getContent(), '<h1'));

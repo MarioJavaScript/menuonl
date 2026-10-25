@@ -140,7 +140,7 @@ class SitioBarTest extends TestCase
             ->assertSee('Ocaso')->assertSee('Cócteles para cuando cae el sol')->assertSee('Coctelería de barra corta.')
             ->assertSee('Calle Serdán 118')->assertSee('tel:5511112222', false)->assertSee('https://wa.me/525512345678', false)
             ->assertSee('https://instagram.com/ocaso.bar', false)->assertSee('18:00 – 23:59')
-            ->assertSee('alt="Portada de Ocaso"', false)->assertSee('Sitio creado con Menuonl')
+            ->assertSee('alt="Portada de Ocaso"', false)->assertSee('Sitio creado con '.config('app.name'))
             ->assertSee('Ver el menú')->assertSee('Reservar mesa')
             ->assertSee(route('menu.publico', ['slug' => 'ocaso']), false);
         $this->assertSame(1, substr_count($respuesta->getContent(), '<h1'));

@@ -19,6 +19,6 @@
                 </ul>
             </nav>
         </div>
-        <p class="pas-pie__copia">Sitio creado con Menuonl</p>
+        <p class="pas-pie__copia">Sitio creado con {{ config('app.name') }}</p>
     </div>
 </footer>

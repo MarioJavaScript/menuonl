@@ -1,12 +1,12 @@
 /*
- * Apariencia antes de pintar: misma clave que el panel (light, dark o system).
+ * Apariencia antes de pintar: misma clave que el panel (light, dark o system). Sin preferencia guardada se ve en claro.
  * Vive en un archivo propio (y no en línea) para que la política de contenido pueda prohibir scripts en línea.
  * Se carga sin defer en el <head> de x-layout.publico para aplicar el modo antes del primer pintado.
  */
 (function () {
     var clave = 'filament:theme:mode';
     function aplicar(modo) {
-        if (modo === 'light' || modo === 'dark') {
+        if (modo === 'light' || modo === 'dark' || modo === 'system') {
             document.documentElement.setAttribute('data-apariencia', modo);
         } else {
             document.documentElement.removeAttribute('data-apariencia');
@@ -27,7 +27,7 @@
         });
     });
     document.addEventListener('DOMContentLoaded', function () {
-        var actual = guardado === 'light' || guardado === 'dark' ? guardado : 'system';
+        var actual = guardado === 'dark' || guardado === 'system' ? guardado : 'light';
         document.querySelectorAll('[data-apariencia-opcion]').forEach(function (opcion) {
             opcion.checked = opcion.value === actual;
         });

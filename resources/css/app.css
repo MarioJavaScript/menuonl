@@ -1,5 +1,21 @@
 @import 'tailwindcss';
 
+/*
+ * `dark:` sigue la misma regla que menuonl.css: solo con data-apariencia="dark", o con "system" cuando el sistema es oscuro.
+ * Sin preferencia guardada (sin atributo) se ve en claro.
+ */
+@custom-variant dark {
+    &:where([data-apariencia='dark'], [data-apariencia='dark'] *) {
+        @slot;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        &:where([data-apariencia='system'], [data-apariencia='system'] *) {
+            @slot;
+        }
+    }
+}
+
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 

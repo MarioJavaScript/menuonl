@@ -1,5 +1,5 @@
 <x-layout.publico
-    :titulo="'Menú no disponible — '.config('app.name', 'MENUONL')"
+    :titulo="'Menú no disponible — '.config('app.name')"
     tema="calido"
     class="flex min-h-screen items-center justify-center p-6"
 >
@@ -38,7 +38,7 @@
         </button>
 
         <a href="{{ url('/') }}" class="mt-3 inline-flex items-center justify-center min-h-[44px] px-3 text-xs text-texto-suave hover:text-texto-fuerte transition-colors rounded-lg focus-visible:ring-2 focus-visible:ring-foco focus:outline-none">
-            Ir a la portada de MENUONL
+            Ir a la portada de {{ config('app.name') }}
         </a>
     </main>
 </x-layout.publico>

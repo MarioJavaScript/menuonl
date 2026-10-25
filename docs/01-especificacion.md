@@ -1,11 +1,11 @@
-# MENUONL — Especificación del sistema
+# Menubly — Especificación del sistema
 
 Menú digital con QR para restaurantes (multi-restaurante).
 Versión 1.0 · 15 de octubre de 2026
 
 ## 1. Visión general
 
-MENUONL es una plataforma en la que **varios restaurantes** publican su menú. El comensal lo abre al **escanear un código QR**, sin instalar nada. Cada restaurante administra desde un panel web sus **platillos, precios, fotos, contactos y horarios**, y los cambios se ven en el menú público al instante.
+Menubly es una plataforma en la que **varios restaurantes** publican su menú. El comensal lo abre al **escanear un código QR**, sin instalar nada. Cada restaurante administra desde un panel web sus **platillos, precios, fotos, contactos y horarios**, y los cambios se ven en el menú público al instante.
 
 ### 1.1 Actores
 
