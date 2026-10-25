@@ -4,9 +4,11 @@ namespace App\Filament\Resources\Restaurantes\Pages;
 
 use App\Enums\PlanRestaurante;
 use App\Filament\Resources\Restaurantes\RestauranteResource;
+use App\Models\Invitacion;
 use App\Models\Restaurante;
 use App\Models\RestauranteIdioma;
 use App\Services\InvitacionService;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Gate;
@@ -56,11 +58,36 @@ class CreateRestaurante extends CreateRecord
             'orden' => 0,
         ]));
 
-        app(InvitacionService::class)->invitar(
+        $invitacion = app(InvitacionService::class)->invitar(
             $restaurante,
             $this->data['email_propietario'],
             'propietario',
             auth()->user(),
         );
+
+        $this->avisarDelEnvio($invitacion->fresh() ?? $invitacion);
+    }
+
+    /**
+     * The restaurant is already saved: a mail problem never undoes it, it only asks the superadmin to resend.
+     */
+    private function avisarDelEnvio(Invitacion $invitacion): void
+    {
+        if ($invitacion->envioFallido()) {
+            Notification::make()
+                ->warning()
+                ->title('El restaurante se creó, pero el correo de invitación no salió')
+                ->body('La invitación para '.$invitacion->email.' quedó guardada. Revisa la configuración de correo y reenvíala desde Restaurantes (acción "Reenviar invitación").')
+                ->persistent()
+                ->send();
+
+            return;
+        }
+
+        Notification::make()
+            ->success()
+            ->title('Invitación en cola')
+            ->body('El correo para '.$invitacion->email.' se enviará en unos momentos. Si falla, verás un aviso en Restaurantes y podrás reenviarlo.')
+            ->send();
     }
 }

@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Mail\InvitacionMail;
+use App\Jobs\EnviarInvitacionJob;
 use App\Models\Invitacion;
 use App\Models\Restaurante;
 use App\Models\Scopes\RestauranteScope;
@@ -10,8 +10,9 @@ use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Throwable;
 
 /**
  * Creates, finds and consumes user invitations.
@@ -28,8 +29,9 @@ class InvitacionService
     /**
      * Invite an email to a restaurant and send the link.
      *
-     * Earlier pending invitations for the same email and restaurant are replaced. The mail is sent
-     * synchronously on purpose: queueing it would write the plain token into the jobs table.
+     * Earlier pending invitations for the same email and restaurant are replaced. The invitation is always
+     * created; the email goes out through the queue (EnviarInvitacionJob, encrypted because it carries the plain
+     * token), so a mail failure never breaks the caller: it flags the invitation so it can be resent.
      *
      * @throws AuthorizationException when the inviter is neither superadmin nor propietario or gerente of the restaurant
      */
@@ -64,9 +66,73 @@ class InvitacionService
             ]));
         });
 
-        Mail::to($email)->send(new InvitacionMail($invitacion, $restaurante, $token));
+        $this->enviarEnCola($invitacion, $token);
 
         return $invitacion;
+    }
+
+    /**
+     * Resend a pending invitation with a fresh token and a fresh expiry date, on the same row.
+     *
+     * The previous link stops working, and any job still carrying the previous token does nothing, so the invitation
+     * is neither duplicated nor sent twice with different links.
+     *
+     * @throws AuthorizationException when the user is neither superadmin nor propietario or gerente of the restaurant
+     * @throws \LogicException when the invitation was already accepted
+     */
+    public function reenviar(Invitacion $invitacion, ?User $usuario): Invitacion
+    {
+        $restaurante = Restaurante::query()->withoutGlobalScopes()->findOrFail($invitacion->restaurante_id);
+
+        if (
+            $usuario !== null
+            && ! $usuario->isSuperadmin()
+            && ! in_array($usuario->rolEn($restaurante), ['propietario', 'gerente'], true)
+        ) {
+            throw new AuthorizationException('Solo un propietario o gerente puede reenviar invitaciones.');
+        }
+
+        $token = Str::random(self::LONGITUD_TOKEN);
+
+        $renovada = $this->consulta()
+            ->whereKey($invitacion->getKey())
+            ->whereNull('aceptada_en')
+            ->update([
+                'token' => self::hashear($token),
+                'expira_en' => now()->addDays(self::DIAS_VIGENCIA),
+                'enviada_en' => null,
+                'envio_fallido_en' => null,
+                'envio_error' => null,
+            ]);
+
+        if ($renovada !== 1) {
+            throw new \LogicException('La invitación ya fue aceptada o ya no existe.');
+        }
+
+        $invitacion = $this->consulta()->findOrFail($invitacion->getKey());
+        $this->enviarEnCola($invitacion, $token);
+
+        return $invitacion->refresh();
+    }
+
+    /**
+     * Queue the email. If even queueing fails (queue down), the invitation stays created and is flagged as failed.
+     */
+    private function enviarEnCola(Invitacion $invitacion, string $token): void
+    {
+        try {
+            EnviarInvitacionJob::dispatch($invitacion->getKey(), $token)->afterCommit();
+        } catch (Throwable $e) {
+            Log::warning('InvitacionService: no se pudo encolar el correo de la invitación.', [
+                'invitacion_id' => $invitacion->getKey(),
+                'excepcion' => $e::class,
+            ]);
+
+            $this->consulta()->whereKey($invitacion->getKey())->update([
+                'envio_fallido_en' => now(),
+                'envio_error' => EnviarInvitacionJob::resumirError($e, $token),
+            ]);
+        }
     }
 
     /**

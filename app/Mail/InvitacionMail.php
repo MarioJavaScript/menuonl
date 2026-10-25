@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use App\Models\Invitacion;
 use App\Models\Restaurante;
+use App\Services\TextoMarkdown;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
@@ -30,7 +31,8 @@ class InvitacionMail extends Mailable
             markdown: 'emails.invitacion',
             with: [
                 'url' => route('invitaciones.mostrar', ['token' => $this->token]),
-                'nombreRestaurante' => $this->restaurante->nombre,
+                'nombreRestaurante' => TextoMarkdown::escapar($this->restaurante->nombre),
+                'nombreApp' => TextoMarkdown::escapar((string) config('app.name')),
                 'rol' => $this->invitacion->rol === 'propietario' ? 'Propietario' : 'Editor',
                 'expiraEn' => $this->invitacion->expira_en,
             ],

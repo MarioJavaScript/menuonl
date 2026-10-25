@@ -1,0 +1,28 @@
+# Worker de colas de Menuonl para systemd (alternativa a Supervisor; ver deploy/README.md).
+# Es una plantilla: cada instancia es un proceso. Copiar a /etc/systemd/system/, ajustar rutas y usuario, y ejecutar:
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now menuonl-worker@1 menuonl-worker@2
+#
+# Restart=always: "php artisan queue:restart" (en cada despliegue) hace que el worker termine después de su trabajo
+# actual, y systemd lo vuelve a levantar con el código nuevo. Lo mismo ocurre cada hora por --max-time.
+# TimeoutStopSec debe ser mayor que --timeout para no cortar un trabajo a la mitad.
+[Unit]
+Description=Menuonl queue worker %i
+After=network.target mariadb.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/menuonl
+ExecStart=/usr/bin/php /var/www/menuonl/artisan queue:work --sleep=3 --tries=3 --timeout=60 --max-time=3600
+Restart=always
+RestartSec=5
+TimeoutStopSec=90
+KillMode=mixed
+StandardOutput=append:/var/www/menuonl/storage/logs/worker.log
+StandardError=inherit
+
+[Install]
+WantedBy=multi-user.target
