@@ -8,13 +8,14 @@ use App\Models\Restaurante;
 use App\Models\Scopes\RestauranteScope;
 use App\Services\Catalogos;
 use App\Services\MenuCacheService;
+use App\Services\PoliticaDeContenido;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 class MenuPublicoController extends Controller
 {
     private const SECURITY_HEADERS = [
-        'Content-Security-Policy' => "default-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:;",
+        'Content-Security-Policy' => PoliticaDeContenido::MENU,
         'X-Content-Type-Options' => 'nosniff',
         'X-Frame-Options' => 'SAMEORIGIN',
     ];

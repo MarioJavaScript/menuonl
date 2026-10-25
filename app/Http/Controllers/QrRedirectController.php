@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CodigoQr;
 use App\Rules\CodigoQrValido;
+use App\Services\PoliticaDeContenido;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -11,7 +12,7 @@ use Illuminate\Http\Response;
 class QrRedirectController extends Controller
 {
     private const SECURITY_HEADERS = [
-        'Content-Security-Policy' => "default-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:;",
+        'Content-Security-Policy' => PoliticaDeContenido::MENU,
         'X-Content-Type-Options' => 'nosniff',
         'X-Frame-Options' => 'SAMEORIGIN',
     ];

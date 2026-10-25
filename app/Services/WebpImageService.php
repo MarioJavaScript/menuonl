@@ -148,6 +148,42 @@ class WebpImageService
         return 'No pudimos leer esa imagen. Prueba con otra en JPG, PNG o WebP.';
     }
 
+    public function mensajeTipoNoPermitido(): string
+    {
+        return 'Ese tipo de archivo no se puede subir. Elige una foto en JPG, PNG o WebP.';
+    }
+
+    /**
+     * PHP or the web server cut the upload by their own size limit (upload_max_filesize, post_max_size), which can be
+     * lower than ours, so the limit quoted in mensajeDemasiadoGrande() would be misleading.
+     */
+    public function mensajeLimiteDelServidor(): string
+    {
+        return 'El servidor no pudo recibir la foto porque supera el tamaño que acepta. Prueba con una más pequeña; si ya es pequeña, avisa a soporte.';
+    }
+
+    public function mensajeSubidaIncompleta(): string
+    {
+        return 'La foto no llegó completa. Revisa tu conexión e inténtalo de nuevo.';
+    }
+
+    public function mensajeArchivoTemporal(): string
+    {
+        return 'No pudimos guardar tu foto en este momento. Intenta de nuevo en unos minutos; si sigue pasando, avisa a soporte.';
+    }
+
+    /**
+     * Message for a PHP upload error code (UPLOAD_ERR_*). The detail goes to the log, never to the person.
+     */
+    public function mensajeParaErrorDeSubida(int $codigo): string
+    {
+        return match ($codigo) {
+            UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => $this->mensajeLimiteDelServidor(),
+            UPLOAD_ERR_PARTIAL, UPLOAD_ERR_NO_FILE => $this->mensajeSubidaIncompleta(),
+            default => $this->mensajeArchivoTemporal(),
+        };
+    }
+
     /**
      * Resize to fit the box, strip all metadata (the canvas is rebuilt), convert to WebP and store on the public disk.
      *
@@ -421,7 +457,7 @@ class WebpImageService
         $mime = $this->getRealMimeType($path);
 
         if (! array_key_exists($mime, self::ALLOWED_MIMES)) {
-            $this->rechazar($this->mensajeIlegible(), 'tipo-no-permitido', ['mime' => $mime]);
+            $this->rechazar($this->mensajeTipoNoPermitido(), 'tipo-no-permitido', ['mime' => $mime]);
         }
 
         // Dimensions come from the header: nothing is decoded yet, so a decompression bomb costs nothing

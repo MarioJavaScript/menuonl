@@ -11,6 +11,7 @@ use App\Models\Producto;
 use App\Models\ProductoVariante;
 use App\Models\Restaurante;
 use App\Observers\AuditableObserver;
+use App\Rules\SubidaRecibida;
 use Filament\Auth\Http\Responses\Contracts\LoginResponse;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -32,6 +33,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Subida temporal de Livewire/Filament: explica por qué falló (límite del servidor, subida incompleta, archivo temporal).
+        config(['livewire.temporary_file_upload.rules' => [new SubidaRecibida]]);
+
         RateLimiter::for('invitaciones', fn (Request $request): Limit => Limit::perMinute(10)->by($request->ip()));
         RateLimiter::for('menu-publico', fn (Request $request): Limit => Limit::perMinute(300)->by($request->ip()));
 

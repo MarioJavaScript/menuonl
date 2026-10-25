@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Restaurante;
 use App\Models\Scopes\RestauranteScope;
+use App\Services\PoliticaDeContenido;
 use App\Services\SitioPublicoDatos;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,7 +17,7 @@ use Illuminate\Http\Response;
 class SitioPublicoController extends Controller
 {
     private const SECURITY_HEADERS = [
-        'Content-Security-Policy' => "default-src 'self' 'unsafe-inline'; img-src 'self' data: https:; form-action 'self'; frame-ancestors 'self'",
+        'Content-Security-Policy' => PoliticaDeContenido::SITIO,
         'X-Content-Type-Options' => 'nosniff',
         'X-Frame-Options' => 'SAMEORIGIN',
         'Referrer-Policy' => 'strict-origin-when-cross-origin',

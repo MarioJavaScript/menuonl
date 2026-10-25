@@ -1170,8 +1170,11 @@ class UxUiAccesibilidadTest extends TestCase
         $respuesta->assertSee('Claro');
         $respuesta->assertSee('Oscuro');
 
-        $respuesta->assertSee("var clave = 'filament:theme:mode';", false);
-        $respuesta->assertSee("document.documentElement.setAttribute('data-apariencia', modo);", false);
+        // La lógica vive en un archivo propio (la CSP no admite scripts en línea): la página lo carga y el archivo la contiene.
+        $respuesta->assertSee('js/apariencia.js', false);
+        $guion = (string) file_get_contents(public_path('js/apariencia.js'));
+        $this->assertStringContainsString("var clave = 'filament:theme:mode';", $guion);
+        $this->assertStringContainsString("document.documentElement.setAttribute('data-apariencia', modo);", $guion);
     }
 
     public function test_portada_usa_tokens_y_no_colores_fijos_ni_consultas_en_la_vista(): void

@@ -34,9 +34,9 @@ class ImagenRestauranteUpload
             ->maxSize((int) ceil((int) config('menuonl.imagenes.max_bytes') / 1024))
             ->validationMessages([
                 'max' => $imagenes->mensajeDemasiadoGrande(),
-                'image' => $imagenes->mensajeIlegible(),
-                'mimetypes' => $imagenes->mensajeIlegible(),
-                'uploaded' => $imagenes->mensajeDemasiadoGrande(),
+                'image' => $imagenes->mensajeTipoNoPermitido(),
+                'mimetypes' => $imagenes->mensajeTipoNoPermitido(),
+                'uploaded' => $imagenes->mensajeArchivoTemporal(),
             ])
             ->helperText($imagenes->ayudaDeSubida($perfil))
             ->disk('public')
