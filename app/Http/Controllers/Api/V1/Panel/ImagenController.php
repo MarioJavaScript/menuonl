@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -89,25 +90,34 @@ class ImagenController extends Controller
 
     /**
      * The uploaded file. Size, type and pixels are checked by WebpImageService with the same messages as Filament;
-     * here only the cases where PHP never delivered the file (limits of upload_max_filesize or post_max_size).
+     * here only the cases where PHP never delivered a usable file, each with its own message. The PHP error code goes
+     * to the log, never to the person.
      */
     private function archivo(Request $request): UploadedFile
     {
-        $demasiadoGrande = $this->imagenes->mensajeDemasiadoGrande();
-
         // Over post_max_size PHP drops the whole body, so the file is simply missing
         if (! $request->hasFile('imagen') && (int) $request->server('CONTENT_LENGTH') > 0 && $request->all() === []) {
-            throw ValidationException::withMessages(['imagen' => $demasiadoGrande]);
+            Log::warning('Subida de imagen descartada por PHP (¿post_max_size?).', ['bytes' => (int) $request->server('CONTENT_LENGTH')]);
+
+            throw ValidationException::withMessages(['imagen' => $this->imagenes->mensajeLimiteDelServidor()]);
         }
 
-        $request->validate([
-            'imagen' => ['required', 'file'],
-        ], [
-            'imagen.required' => 'Elige una imagen.',
-            'imagen.file' => $demasiadoGrande,
-            'imagen.uploaded' => $demasiadoGrande,
-        ]);
+        $archivo = $request->file('imagen');
 
-        return $request->file('imagen');
+        if ($archivo === null) {
+            throw ValidationException::withMessages(['imagen' => 'Elige una imagen.']);
+        }
+
+        if (! $archivo instanceof UploadedFile) {
+            throw ValidationException::withMessages(['imagen' => $this->imagenes->mensajeTipoNoPermitido()]);
+        }
+
+        if (! $archivo->isValid()) {
+            Log::error('Subida de imagen fallida antes de procesarla.', ['codigo_php' => $archivo->getError()]);
+
+            throw ValidationException::withMessages(['imagen' => $this->imagenes->mensajeParaErrorDeSubida($archivo->getError())]);
+        }
+
+        return $archivo;
     }
 }

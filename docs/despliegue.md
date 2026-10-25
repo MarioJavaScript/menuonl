@@ -23,7 +23,7 @@ Prioridad: **P0** bloquea publicar con clientes reales, **P1** antes del primer 
 | H3 | **RESUELTO.** Existe `php artisan menuonl:crear-superadmin` (ver punto 7; pruebas en `tests/Feature/CrearSuperadminTest.php`). Descripción original: **No había forma segura de crear el primer superadmin.** No existe comando; hoy habría que usar `tinker` con `forceFill(['es_superadmin' => true])` (el campo no es asignable en masa). Sin superadmin no se puede crear ningún restaurante ni invitar a nadie. | P0 |
 | H4 | **RESUELTO.** Hay configuración lista en `deploy/` (Supervisor, systemd y un `desplegar.sh` con `queue:restart`), documentada en `deploy/README.md` (cómo comprobar que el worker vive y qué hacer con trabajos fallidos), y el comando `menuonl:verificar-produccion` lo comprueba con un trabajo de prueba. Las tablas `jobs` y `failed_jobs` ya tienen migración. Descripción original: **Los trabajos en cola necesitan un proceso `queue:work`** y el repositorio no trae su configuración. `PurgarCacheRestauranteJob` (`app/Jobs/PurgarCacheRestauranteJob.php`) implementa `ShouldQueue` y `QUEUE_CONNECTION=database`: sin worker, la purga de Cloudflare al cambiar un menú o un plan **nunca se ejecuta**. | P0 |
 | H5 | **RESUELTO (invitaciones).** El correo de la invitación sale por la cola (`EnviarInvitacionJob`, cifrado porque lleva el enlace): un fallo de SMTP ya no rompe el alta, la invitación queda guardada y marcada, el superadmin ve "Correo no enviado" en Restaurantes y puede reenviarla (enlace nuevo, misma fila, sin duplicados). `menuonl:verificar-produccion` falla si `MAIL_MAILER` es `log` o `array`. Falta probar un envío real con el SMTP definitivo. Descripción original: **Correo:** `MAIL_MAILER=log` por defecto (`.env.example`, `config/mail.php`). Las invitaciones (`app/Services/InvitacionService.php`) se mandan **sincrónicas** a propósito (el token no debe pasar por la tabla `jobs`). Con el mailer `log` el propietario nunca recibe su invitación; con un SMTP caído, crear un restaurante falla *después* de haberlo guardado. | P0 |
-| H6 | **La política de contenido (CSP) no protege de XSS en la práctica y solo existe en las páginas públicas.** Es `default-src 'self' 'unsafe-inline'`, que permite scripts en línea. `/admin/login` no manda CSP, `X-Frame-Options` ni `X-Content-Type-Options` (medido), y en el código solo tres controladores públicos (sitio, menú y `/q`) añaden esas cabeceras, así que `/panel` e `/invitaciones/*` tampoco las tendrían (deducido, no medido). Nadie manda HSTS. | P1 |
+| H6 | **RESUELTO en lo que se pudo hacer con seguridad; queda una parte documentada (punto 6.1).** Todas las respuestas llevan `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` y `Permissions-Policy`; `/admin` tiene una CSP con nonce, `/panel` e `/invitaciones` una estricta, las páginas públicas ya no permiten scripts en línea y HSTS sale solo en producción por https. **Falta:** quitar `'unsafe-eval'` del admin y `'unsafe-inline'` de los estilos. Descripción original: **La política de contenido (CSP) no protege de XSS en la práctica y solo existe en las páginas públicas.** Es `default-src 'self' 'unsafe-inline'`, que permite scripts en línea. `/admin/login` no manda CSP, `X-Frame-Options` ni `X-Content-Type-Options` (medido), y en el código solo tres controladores públicos (sitio, menú y `/q`) añaden esas cabeceras, así que `/panel` e `/invitaciones/*` tampoco las tendrían (deducido, no medido). Nadie manda HSTS. | P1 |
 | H7 | **RESUELTO.** El respaldo puede usar un usuario propio de solo lectura (`BACKUP_DB_USERNAME`/`BACKUP_DB_PASSWORD`; si faltan, cae al de la aplicación). Permisos exactos y cómo crearlo: punto 4. Descripción original: **El respaldo usa las credenciales de base de datos de la aplicación**, que según [02-seguridad.md](02-seguridad.md) §1 deberían ser solo `SELECT/INSERT/UPDATE/DELETE`. `mysqldump --single-transaction --routines --triggers` necesita más permisos, y las migraciones necesitan DDL. Hay que decidir usuarios de base de datos separados. | P1 |
 | H8 | **RESUELTO.** Existe `php artisan menuonl:restaurar-respaldo` y un procedimiento de ensayo paso a paso (punto 4). **Falta ejecutarlo contra MariaDB real.** Descripción original: **No hay comando de restauración.** Existe `menuonl:backup-verify` (descifra y revisa), pero restaurar es un procedimiento manual que nunca se ha ensayado. | P1 |
 | H9 | **El `.env.example` de la rama actual trae un número de WhatsApp que parece real** (`SOPORTE_WHATSAPP=526333345729`, cambio sin commit). El ejemplo debe ir vacío; el número real solo en el `.env` del servidor. | P1 |
@@ -249,7 +249,7 @@ Pendientes del ensayo: un respaldo con volumen real (miles de imágenes: tiempo,
 
 ### Checklist
 
-- [ ] Dominio en Cloudflare con proxy naranja y SSL/TLS **Full (strict)** con certificado de origen. Activar HSTS desde Cloudflare (la aplicación no manda `Strict-Transport-Security`).
+- [ ] Dominio en Cloudflare con proxy naranja y SSL/TLS **Full (strict)** con certificado de origen. La aplicación manda `Strict-Transport-Security` sola (solo en producción y por https, 7 días al principio, ver 6.1); no actives también HSTS en Cloudflare con otra duración hasta decidir cuál manda, y sube la duración por etapas.
 - [x] H1 resuelto (cookies en páginas públicas). Falta confirmar en producción con `curl -sI https://dominio/{slug}/menu` que no hay `Set-Cookie`, antes de cualquier regla de caché.
 - [ ] Caché del sitio y del menú: el origen ya manda `Cache-Control: public, max-age=30` en el sitio (`stale-while-revalidate=300`) y `max-age=30, stale-while-revalidate=86400` en el menú (`app/Http/Controllers/SitioPublicoController.php`, `MenuPublicoController.php`). Regla de caché: **"Eligible for cache" + "Respect origin TTL"** (no "Cache Everything" con TTL fijo) solo para `/{slug}` y `/{slug}/menu`.
 - [ ] Reglas de **no caché / bypass**: `/admin*`, `/panel*`, `/api/*`, `/livewire*`, `/q/*`, `/invitaciones/*`, `/storage/*` (las imágenes tienen nombres aleatorios, se pueden cachear aparte con TTL largo), `/build/*` (archivos con hash, TTL largo), `/up`.
@@ -273,18 +273,33 @@ Pendientes del ensayo: un respaldo con volumen real (miles de imágenes: tiempo,
 
 ## 6. Seguridad pendiente
 
-### 6.1 Política de contenido (CSP) y cabeceras
+### 6.1 Política de contenido (CSP) y cabeceras (H6, resuelto)
 
-Medido en local con el kernel HTTP de Laravel:
+El middleware `App\Http\Middleware\CabecerasDeSeguridad` (registrado como global en `bootstrap/app.php`) añade a **todas** las respuestas, sin pisar lo que ponga un controlador, y sin tocar sesión ni cookies (las páginas públicas siguen siendo cacheables):
 
-| Ruta | CSP | X-Frame-Options | nosniff | HSTS |
-|---|---|---|---|---|
-| `/{slug}/menu`, `/{slug}`, `/q/*` | sí (`default-src 'self' 'unsafe-inline' ...`) | `SAMEORIGIN` | sí | no |
-| `/admin/login` (y todo `/admin`) | **no** | **no** | **no** | no |
-| `/panel`, `/invitaciones/*` | no medido; el código no las añade | no medido | no medido | no |
+| Cabecera | Valor |
+|---|---|
+| `X-Content-Type-Options` | `nosniff` |
+| `X-Frame-Options` | `SAMEORIGIN` (y `frame-ancestors 'self'` en la CSP) |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` |
+| `Permissions-Policy` | `accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()` (nada de eso se usa; solo funciones que reconocen los navegadores actuales, sin `run-ad-auction`, `join-ad-interest-group` ni otras de publicidad, que generan avisos en consola. Si esos avisos aparecen en producción no vienen de la aplicación: revisa Cloudflare o el servidor web) |
+| `Content-Security-Policy` | solo en respuestas HTML; según el grupo de rutas (abajo) |
+| `Strict-Transport-Security` | `max-age=604800` (7 días) **solo** si `APP_ENV=production` y la petición llegó por https; sin `includeSubDomains` ni `preload` |
 
-- **Scripts y estilos en línea:** hay 2 bloques `<script>` en línea en las vistas (uno en `resources/views/components/layout/publico.blade.php`, usado por el sitio y el menú; el otro en la página de diseño, solo local) y unos 43 usos de `style=`/`onclick=` en todas las vistas. Filament/Livewire/Alpine también emiten scripts en línea y usan `eval` en su build estándar. Por eso la CSP actual necesita `'unsafe-inline'` y, para `/admin`, una CSP estricta no es viable sin trabajo (el repositorio ya depende de `@alpinejs/csp`, lo que sugiere esa intención, pero el panel de Filament no lo usa).
-- **Plan de endurecimiento recomendado:** (1) un middleware global de cabeceras de seguridad (`X-Content-Type-Options`, `X-Frame-Options`/`frame-ancestors`, `Referrer-Policy`, `Permissions-Policy`) que cubra `/admin`, `/panel` e `/invitaciones`; (2) HSTS desde Cloudflare; (3) CSP en modo **Report-Only** primero, con nonce para scripts propios en las páginas públicas y de `/panel` (que usa Vite, sin Filament), quitando `'unsafe-inline'` de `script-src` allí; (4) dejar `/admin` con una CSP más laxa (con las excepciones que Filament necesita) y documentarla.
+Políticas por grupo (`app/Services/PoliticaDeContenido.php`):
+
+| Grupo | `script-src` | Notas |
+|---|---|---|
+| `/{slug}`, `/{slug}/menu`, `/q/*` (públicas) | `'self'` | **Sin `'unsafe-inline'` en scripts.** El único script en línea (apariencia clara/oscura) pasó a `public/js/apariencia.js`. Sin nonce a propósito: el HTML debe ser igual en cada petición para que Cloudflare lo cachee. `default-src` conserva `'unsafe-inline'` solo para estilos (hay unos 40 atributos `style=`). |
+| `/panel`, `/invitaciones/*` | `'self'` | Vite propio, sin scripts en línea. `connect-src 'self'`, `object-src 'none'`, `base-uri 'self'`. |
+| `/admin` (Filament y Livewire) | `'self' 'nonce-…' 'unsafe-eval'` | Nonce nuevo por petición (`Vite::useCspNonce()`); Filament y Livewire lo ponen a sus scripts en línea. Estilos: `'unsafe-inline'` y `fonts.bunny.net` (la tipografía por defecto de Filament). |
+
+- **Por qué `'unsafe-eval'` en el admin:** Alpine (versión estándar, la que usan Filament y Livewire) evalúa las expresiones de las plantillas con `new Function`. Livewire trae una versión compatible con CSP, pero las plantillas de Filament usan expresiones que esa versión no soporta (no se probó en un navegador; es la razón conocida de que Filament no la active), así que no se activó. Mientras Filament no lo soporte, `'unsafe-eval'` es lo que falta endurecer: un XSS en `/admin` aún podría ejecutar código vía `eval`, aunque ya no por scripts en línea ni atributos `on…=`.
+- **Por qué `'unsafe-inline'` sigue en estilos:** Filament y las plantillas del sitio usan atributos `style=`. El riesgo de XSS por estilos es mucho menor que por scripts.
+- **Desarrollo:** con `npm run dev` (archivo `public/hot`) y fuera de producción, la CSP admite el servidor de Vite (y su websocket) automáticamente.
+- **HSTS, por etapas:** empezamos en 7 días (`HSTS_MAX_AGE=604800`; `0` lo apaga). Si tras una semana todo el tráfico va bien por https, súbelo a 30 días (`2592000`) y luego a 6 meses o 1 año. `includeSubDomains` y `preload` **no** se envían todavía: `preload` es casi irreversible y `includeSubDomains` obligaría a que cualquier subdominio tenga https. Detrás de Cloudflare el esquema real llega por `X-Forwarded-Proto`: depende de `TRUSTED_PROXIES` (punto 5); si `isSecure()` fuera falso, la cabecera simplemente no sale.
+- **Estáticos:** las imágenes, CSS y JS que sirve Nginx directamente no pasan por Laravel; añade ahí `X-Content-Type-Options: nosniff` (pendiente en el ejemplo de Nginx, PR 4).
+- **Pruebas:** `tests/Feature/CabecerasDeSeguridadTest.php` (cada cabecera en cada grupo, nonce y scripts en línea del admin, HTML público idéntico entre peticiones, HSTS solo en producción con https).
 
 ### 6.2 Límite de intentos de login
 
@@ -301,11 +316,23 @@ Medido en local con el kernel HTTP de Laravel:
 - **Ya está:** `session.secure` por entorno, `http_only` verdadero, `same_site=lax`, token CSRF en Filament y Livewire.
 - **Hecho:** H1 (páginas públicas sin sesión ni cookies). **Falta:** decidir Redis para sesiones si el tráfico crece.
 
-### 6.5 Mensaje amable cuando falla el archivo temporal de la subida de imágenes
+### 6.5 Mensajes claros cuando falla la subida de una foto (resuelto)
 
-- **Ya está:** mensajes claros para "demasiado grande" e "ilegible" tanto en Filament (`ImagenRestauranteUpload`) como en la API de `/panel` (`ImagenController::archivo()`), con el mismo texto (`WebpImageService::mensajeDemasiadoGrande()`).
-- **Falta:** cuando PHP no puede guardar el archivo temporal (`UPLOAD_ERR_NO_TMP_DIR`, `UPLOAD_ERR_CANT_WRITE`, disco lleno, `storage/app/private/livewire-tmp` sin permisos), `ImagenController::archivo()` responde igual "demasiado grande" a **cualquier** archivo inválido (`imagen.file`/`imagen.uploaded` usan el mismo mensaje), lo cual es engañoso; y en Filament/Livewire el fallo de la subida temporal no tiene un mensaje propio (el usuario ve el error genérico del componente). Hay que distinguir el código de error de `UploadedFile::getError()`, mostrar algo como "No pudimos recibir tu foto en este momento. Intenta de nuevo en unos minutos" y registrar el detalle con `Log::error`.
-- **Riesgo:** el primer cliente con un servidor mal permisionado verá "tu foto es demasiado grande" con una foto pequeña, y no sabrá a quién escribirle.
+Antes, cualquier archivo inválido en la API de `/panel` se reportaba como "demasiado grande". Ahora cada caso tiene su texto (`WebpImageService`), igual en `/panel` y en `/admin`:
+
+| Caso | Mensaje | Dónde se detecta |
+|---|---|---|
+| Pesa más que nuestro límite (10 MB) | "La foto es demasiado grande. Prueba con una de menos de 10 MB." | `validateImage()`; regla `max` de Filament; regla de subida temporal |
+| Tipo no permitido (PDF, SVG, GIF, texto…) | "Ese tipo de archivo no se puede subir. Elige una foto en JPG, PNG o WebP." | `validateImage()` (tipo real, no la extensión); reglas `image`/`mimetypes` de Filament; API de `/panel` si no es un archivo |
+| Límite del servidor (`upload_max_filesize`, `post_max_size`) | "El servidor no pudo recibir la foto porque supera el tamaño que acepta. Prueba con una más pequeña; si ya es pequeña, avisa a soporte." | `UPLOAD_ERR_INI_SIZE/FORM_SIZE`; cuerpo mayor que `post_max_size` (Laravel responde 413 y `bootstrap/app.php` lo traduce, con el mismo formato de errores, en `/api/v1/panel/*` y en la subida temporal de Livewire) |
+| Subida incompleta | "La foto no llegó completa. Revisa tu conexión e inténtalo de nuevo." | `UPLOAD_ERR_PARTIAL`; archivo ausente en la subida temporal |
+| Falla el archivo temporal | "No pudimos guardar tu foto en este momento. Intenta de nuevo en unos minutos; si sigue pasando, avisa a soporte." | `UPLOAD_ERR_NO_TMP_DIR/CANT_WRITE/EXTENSION`; regla `uploaded` de Filament |
+| Imagen ilegible o dañada | "No pudimos leer esa imagen. Prueba con otra en JPG, PNG o WebP." | sin cambios |
+
+- Nunca se muestran rutas ni códigos de PHP: el código (`codigo_php`) se registra con `Log::error` (`Subida de imagen fallida antes de procesarla.` / `Subida temporal de imagen fallida.`).
+- La subida temporal de Livewire/Filament usa `App\Rules\SubidaRecibida` (configurada en `AppServiceProvider`) en lugar de `required|file|max:12288`: Laravel marca cualquier subida inválida con un "uploaded" genérico cuando el campo lleva reglas de archivo, y esa regla es la que sí distingue el motivo.
+- Pruebas: `tests/Feature/ErroresDeSubidaDeImagenTest.php` (cada código de PHP, 413, tipo no permitido, límite propio, sin rutas en los mensajes) y `ImagenesSeguridadTest.php`.
+- **Falta (operativo):** `upload_max_filesize`/`post_max_size` y `client_max_body_size` de Nginx deben ser ≥ 12 MB (punto 2); si Nginx corta antes que PHP responde su propia página 413 y la persona verá el error genérico del navegador.
 
 ### 6.6 Otros puntos de seguridad
 
@@ -317,7 +344,7 @@ Medido en local con el kernel HTTP de Laravel:
 
 | Ya está | Falta | Riesgo si no se hace |
 |---|---|---|
-| Login con límite propio, 2FA obligatoria con recordatorio por middleware, CSP y cabeceras en las páginas públicas, imágenes reprocesadas, aislamiento por restaurante, tokens de invitación con hash. | Cabeceras de seguridad en `/admin`, `/panel` e `/invitaciones`; CSP útil (sin `unsafe-inline`) al menos en públicas y `/panel`; HSTS; mensaje correcto para fallos de archivo temporal; procedimiento de recuperación de 2FA. | Clickjacking y XSS con menos barreras en el panel; mensajes engañosos al cliente; bloqueo permanente del superadmin si pierde su 2FA. |
+| Login con límite propio, 2FA obligatoria con recordatorio por middleware, CSP y cabeceras de seguridad en todas las respuestas (nonce en `/admin`, sin scripts en línea en lo demás), HSTS en producción, mensajes de subida de fotos por caso, imágenes reprocesadas, aislamiento por restaurante, tokens de invitación con hash. | Quitar `'unsafe-eval'` del admin (depende de Filament/Alpine); `'unsafe-inline'` en estilos; subir HSTS por etapas; cabeceras en los estáticos de Nginx; procedimiento de recuperación de 2FA. | Clickjacking y XSS con menos barreras en el panel; mensajes engañosos al cliente; bloqueo permanente del superadmin si pierde su 2FA. |
 
 ---
 
@@ -387,14 +414,14 @@ Cada PR es independiente y revisable por separado. Ninguno cambia la lógica de 
 | 4 | ~~**Documentación de procesos**~~ **Hecho en parte:** `deploy/` trae Supervisor, systemd, `desplegar.sh` y `deploy/README.md` (worker, `queue:restart`, comprobación y trabajos fallidos). **Falta:** ejemplo de Nginx (límites, `storage`, cabeceras), `php.ini` y `.env.production.example`. | H4, punto 1 y 2 | P0 |
 | 5 | ~~**Correo de producción**~~ **Hecho en parte:** el envío va por la cola, un fallo no deja el restaurante a medias, se reenvía desde Restaurantes, y `menuonl:verificar-produccion` rechaza `log`/`array`. **Falta:** `menuonl:probar-correo {destino}` para validar el SMTP definitivo con un envío real. | H5 | P0 |
 | 6 | **Quitar el número real de `.env.example`:** dejar `SOPORTE_WHATSAPP=` vacía y revisar que ningún dato personal esté en el repositorio. | H9 | P1 |
-| 7 | **Cabeceras de seguridad globales:** middleware con `X-Content-Type-Options`, `X-Frame-Options`/`frame-ancestors`, `Referrer-Policy` y `Permissions-Policy` para `/admin`, `/panel`, `/invitaciones` y la API; pruebas por ruta. HSTS se configura en Cloudflare. | H6 | P1 |
-| 8 | **Mensaje amable para fallos del archivo temporal de subida:** distinguir `UPLOAD_ERR_*` en `ImagenController::archivo()` y en `ImagenRestauranteUpload`, con texto propio y `Log::error`; pruebas con un archivo inválido simulado. | punto 6.5 | P1 |
+| 7 | ~~**Cabeceras de seguridad globales**~~ **Hecho** (punto 6.1: middleware global, CSP por grupo, HSTS en la aplicación; pruebas por ruta). Planteamiento original: middleware con `X-Content-Type-Options`, `X-Frame-Options`/`frame-ancestors`, `Referrer-Policy` y `Permissions-Policy` para `/admin`, `/panel`, `/invitaciones` y la API; pruebas por ruta. HSTS se configura en Cloudflare. | H6 | P1 |
+| 8 | ~~**Mensaje amable para fallos del archivo temporal de subida**~~ **Hecho** (punto 6.5; un mensaje por caso). Planteamiento original: distinguir `UPLOAD_ERR_*` en `ImagenController::archivo()` y en `ImagenRestauranteUpload`, con texto propio y `Log::error`; pruebas con un archivo inválido simulado. | punto 6.5 | P1 |
 | 9 | ~~**Usuarios de base de datos y respaldo**~~ **Hecho** (`BACKUP_DB_*` opcional, permisos documentados en el punto 4; falta confirmarlos con MariaDB real). Planteamiento original: decidir y documentar permisos (migraciones, aplicación, respaldo) y permitir una conexión de respaldo propia (`BACKUP_DB_*`) en `RespaldoService`; prueba del armado del comando. | H7 | P1 |
 | 10 | ~~**Comando de restauración asistida**~~ **Hecho** como `menuonl:restaurar-respaldo` (punto 4), con ensayo documentado; **falta** que `backup-verify` importe el SQL a una base temporal en CI. Planteamiento original: `menuonl:backup-restore` (descarga, descifra, importa a una base indicada y copia imágenes a una carpeta), más un ensayo documentado; y que `backup-verify` importe el SQL a SQLite/MariaDB temporal en CI. | H8, punto 4 | P1 |
 | 11 | **Alertas de respaldo y colas** (**en parte:** `Log::error` al fallar y `[AVISO]` de 36 h en `verificar-produccion`; **falta** la notificación activa): notificación por correo (o webhook) cuando `menuonl:backup` falla o no hay respaldo reciente (comando programado de vigilancia), y cuando `failed_jobs` crece. | puntos 4 y 8 | P1 |
 | 12 | **Reglas de Cloudflare como documento + prueba de humo:** `docs/` con las reglas exactas (caché, bypass, rate limiting) y un script de comprobación con `curl` (cabeceras de caché, ausencia de `Set-Cookie`, `CF-Cache-Status`). Depende del PR 1. | punto 5 | P1 |
 | 13 | ~~**Zona horaria del respaldo**~~ **Hecho** (04:00 `America/Mexico_City`, configurable). Planteamiento original: programar `menuonl:backup` en `America/Mexico_City` (o en una hora de baja carga) y documentarlo. | H10 | P2 |
-| 14 | **CSP en modo Report-Only** para páginas públicas y `/panel`, con nonce para los scripts propios; revisar violaciones y luego aplicar sin `unsafe-inline` en `script-src`. | H6 | P2 |
+| 14 | ~~**CSP sin `unsafe-inline` en scripts**~~ **Hecho** sin pasar por Report-Only (no hay scripts en línea fuera de Filament; el admin usa nonce). **Falta:** observar en un navegador real que `/admin` no registra violaciones (consola) y, a futuro, quitar `'unsafe-eval'`. Planteamiento original: CSP en modo Report-Only para páginas públicas y `/panel`, con nonce para los scripts propios; revisar violaciones y luego aplicar sin `unsafe-inline` en `script-src`. | H6 | P2 |
 | 15 | **Mejorar `/up`:** comprobar base de datos (y caché) con una ruta de salud dedicada, sin exponer detalles. | punto 8 | P2 |
 | 16 | **Purga de variantes con parámetros** (`?lang`, `?mesa`) y reintentos del trabajo `PurgarCacheRestauranteJob` (`tries`/`backoff`) con aviso al agotar. | punto 5 | P2 |
 | 17 | **Rotación de logs y configuración de monitoreo externo** (documento + variables), y Sentry/Flare opcional. | punto 8 | P2 |
@@ -407,10 +434,11 @@ Orden sugerido: 1 → 2 → 3 → 4 → 5 (quitan lo que hoy bloquea), luego 6�
 ## Qué no se pudo verificar
 
 - **Nada se probó en un servidor real.** Los versiones de PHP/MariaDB, `php.ini`, Nginx, Supervisor y cron son lo que el código requiere según lo leído; falta comprobarlo en el VPS. Las extensiones se verificaron solo en el equipo de desarrollo (PHP 8.4.26 con todas presentes).
-- **Cabeceras de la tabla del punto 6.1** se midieron en local (kernel HTTP de Laravel, con `APP_ENV=local`) y con la base de desarrollo; en producción puede variar si Nginx o Cloudflare añaden cabeceras. La presencia de `Set-Cookie` en las páginas públicas (H1) es del propio código, no depende del entorno, pero no se probó contra Cloudflare.
+- **Cabeceras y CSP del punto 6.1** se comprobaron con pruebas automáticas (kernel HTTP de Laravel) y con `php artisan serve` leyendo las cabeceras de `/admin/login`; **ningún navegador real las ejecutó** (no había Chrome instalado en el equipo de desarrollo), así que no se ha visto si la consola registra violaciones de CSP en Filament (login, tablas, subida de archivos, selectores), en `/panel` o en las plantillas a–h; en producción puede variar si Nginx o Cloudflare añaden o cambian cabeceras (p. ej. otro HSTS). La presencia de `Set-Cookie` en las páginas públicas (H1) es del propio código, no depende del entorno, pero no se probó contra Cloudflare.
 - **Cómo se comporta Cloudflare** con `stale-while-revalidate`, con cookies y con las reglas propuestas: no se probó; son recomendaciones a partir de su documentación general.
 - **Respaldos:** `mysqldump` real contra MariaDB, subida a R2/B2 y restauración completa nunca se ejecutaron (las pruebas de desarrollo simulan el volcado). Los permisos de base de datos que necesita el volcado (H7) son una estimación, no una prueba. Tampoco se ejecutó contra MariaDB real el cliente `mysql` de la restauración, el `RENAME TABLE` entre bases ni los permisos del usuario de restauración (`CREATE`, `DROP`, `ALTER`, `RENAME` sobre las bases auxiliares); las pruebas simulan el cliente y verifican qué se le pide y en qué orden.
 - **Correo:** no se probó ningún proveedor SMTP.
+- **Subidas de fotos:** los mensajes de 413 y de errores de archivo temporal se probaron con códigos de error simulados; no se forzó un fallo real de PHP/Nginx ni se vio cómo los muestra FilePond en Filament.
 - **Rendimiento y límites:** no se midieron subidas de 10–12 MB con el `php.ini` y Nginx propuestos, ni un respaldo con miles de imágenes.
 - **`route:cache` y `config:cache`:** `route:cache` se probó en desarrollo y funciona (se limpió después); `config:cache` se dedujo de que todo `env()` está dentro de `config/`.
 - **Versión de producción de librerías** (libzip para AES-256, Livewire, Filament): se asume la del `composer.lock`.

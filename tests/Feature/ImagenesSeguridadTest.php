@@ -25,6 +25,8 @@ class ImagenesSeguridadTest extends TestCase
 {
     use ArmaEscenarioDePanel, RefreshDatabase;
 
+    private const string TIPO_NO_PERMITIDO = 'Ese tipo de archivo no se puede subir. Elige una foto en JPG, PNG o WebP.';
+
     private const string ILEGIBLE = 'No pudimos leer esa imagen. Prueba con otra en JPG, PNG o WebP.';
 
     private const string DEMASIADO_GRANDE = 'La foto es demasiado grande. Prueba con una de menos de 10 MB.';
@@ -133,10 +135,10 @@ class ImagenesSeguridadTest extends TestCase
     public static function archivosHostiles(): array
     {
         return [
-            'svg renombrado como png' => ['logo.png', '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>', self::ILEGIBLE],
-            'php con extension de imagen' => ['foto.jpg', '<?php echo 1; ?>', self::ILEGIBLE],
-            'html con extension de imagen' => ['foto.png', '<html><body><script>alert(1)</script></body></html>', self::ILEGIBLE],
-            'texto cualquiera' => ['foto.webp', 'esto no es una imagen', self::ILEGIBLE],
+            'svg renombrado como png' => ['logo.png', '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>', self::TIPO_NO_PERMITIDO],
+            'php con extension de imagen' => ['foto.jpg', '<?php echo 1; ?>', self::TIPO_NO_PERMITIDO],
+            'html con extension de imagen' => ['foto.png', '<html><body><script>alert(1)</script></body></html>', self::TIPO_NO_PERMITIDO],
+            'texto cualquiera' => ['foto.webp', 'esto no es una imagen', self::TIPO_NO_PERMITIDO],
             'archivo vacio' => ['foto.png', '', self::ILEGIBLE],
             'archivo mayor de 10 MB' => ['foto.jpg', str_repeat('A', 10 * 1024 * 1024 + 1), self::DEMASIADO_GRANDE],
         ];
@@ -150,8 +152,8 @@ class ImagenesSeguridadTest extends TestCase
     public static function archivosHostilesConstruidos(): array
     {
         return [
-            'gif' => ['animada.gif', 'gif', self::ILEGIBLE],
-            'gif renombrado como jpg' => ['animada.jpg', 'gif', self::ILEGIBLE],
+            'gif' => ['animada.gif', 'gif', self::TIPO_NO_PERMITIDO],
+            'gif renombrado como jpg' => ['animada.jpg', 'gif', self::TIPO_NO_PERMITIDO],
             'png con codigo php al final' => ['foto.png', 'polyglotPng', self::ILEGIBLE],
             'jpg con codigo php al final' => ['foto.jpg', 'polyglotJpg', self::ILEGIBLE],
             'jpg truncado' => ['foto.jpg', 'jpgTruncado', self::ILEGIBLE],

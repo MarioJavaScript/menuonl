@@ -109,6 +109,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Cabeceras de seguridad
+    |--------------------------------------------------------------------------
+    |
+    | `hsts_segundos`: duración de Strict-Transport-Security. Solo se envía con APP_ENV=production y una petición https,
+    | y sin includeSubDomains ni preload. 0 lo desactiva. Valor inicial prudente: 7 días (ver docs/despliegue.md, 6.1).
+    |
+    */
+
+    'seguridad' => [
+        'hsts_segundos' => (int) env('HSTS_MAX_AGE', 604800),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Respaldos (RNF-06)
     |--------------------------------------------------------------------------
     |

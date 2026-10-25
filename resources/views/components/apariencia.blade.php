@@ -1,4 +1,4 @@
-{{-- Control segmentado de apariencia. La lógica vive en el script de x-layout.publico. --}}
+{{-- Control segmentado de apariencia. La lógica vive en public/js/apariencia.js (cargado por x-layout.publico). --}}
 @props(['nombre' => 'apariencia'])
 <fieldset {{ $attributes->class(['segmentado']) }}>
     <legend>Apariencia</legend>
