@@ -1,12 +1,20 @@
 @import '../../../../vendor/filament/filament/resources/css/theme.css';
+@import '@fontsource-variable/space-grotesk';
+@import '@fontsource-variable/figtree';
 
 @source '../../../../app/Filament/**/*';
 @source '../../../../resources/views/filament/**/*';
 
 /*
- * MENUONL · tema del panel. Mismos tokens (--mo-*) que public/css/menuonl.css en su estilo Clásico.
+ * MENUBLY · tema del panel (docs/integracion-dashboard.md, PR 1).
+ * Dos familias de tokens: --mb-* (paleta, tipografía, foco y medidas del panel nuevo) y --mo-* (los de siempre, que
+ * comparte con el menú público y que la barra inferior aún usa; no se tocan). Las escalas primary y gray de Filament
+ * salen de App\Services\PaletaDelPanel, la misma fuente que leen las pruebas de contraste.
  * Filament pone la clase .dark en <html> según localStorage("filament:theme:mode"); el menú público
  * lee la misma clave, así que la apariencia elegida se recuerda en todo el sistema. Ver DISEÑO.md.
+ *
+ * Regla de color: el azul bebé (#7CC4F8) y el azul de marca (#2B7FD6) son superficie o, en oscuro, acción sobre texto
+ * marino; nunca texto ni botón sobre claro. Texto y botones en claro usan --mb-accion (#1B62B5) o --mb-tinta (#12355B).
  */
 @theme {
     --radius-lg: 0.625rem;
@@ -27,6 +35,35 @@
     --mo-foco: #0066cc;
     --mo-tactil: 44px;
     --mo-sombra-flotante: 0 12px 32px -8px rgba(0, 0, 0, 0.3);
+
+    /* Menubly: superficies, texto y acción (claro) */
+    --mb-lienzo: #f3f9ff;
+    --mb-superficie: #ffffff;
+    --mb-superficie-2: #e8f1fa;
+    --mb-tinta: #12355b;
+    --mb-tinta-2: #44607f;
+    --mb-tinta-3: #587390;
+    --mb-accion: #1b62b5;
+    --mb-accion-hover: #154e94;
+    --mb-sobre-accion: #eaf6ff;
+    --mb-foco: #1b62b5;
+    --mb-linea: #d5e4f2;
+    --mb-borde-control: #6f8ca9;
+
+    /* Tipografía: Space Grotesk solo en títulos de página, sección y modal; Figtree en el resto */
+    --mb-fuente-titulo: 'Space Grotesk Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --mb-fuente-texto: 'Figtree Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+    /* Medidas */
+    --mb-objetivo: 2.75rem;
+    --mb-foco-grosor: 3px;
+    --mb-r-md: 0.75rem;
+    --mb-r-lg: 1.25rem;
+
+    /* Sombras tintadas con el marino */
+    --mb-sombra-1: 0 1px 2px rgb(18 53 91 / 0.07);
+    --mb-sombra-2: 0 6px 20px rgb(18 53 91 / 0.1);
+    --mb-sombra-3: 0 18px 48px rgb(18 53 91 / 0.22);
 }
 
 :root.dark {
@@ -40,51 +77,70 @@
     --mo-texto-medio: #d1d1d6;
     --mo-texto-suave: #a1a1a6;
     --mo-foco: #4da3ff;
+
+    /* Menubly (oscuro): fondo marino profundo y azul bebé como acción; no es una inversión del claro */
+    --mb-lienzo: #0b1f36;
+    --mb-superficie: #12304f;
+    --mb-superficie-2: #17395c;
+    --mb-tinta: #eaf4ff;
+    --mb-tinta-2: #a9c4de;
+    --mb-tinta-3: #94b2d0;
+    --mb-accion: #7cc4f8;
+    --mb-accion-hover: #9dd2fa;
+    --mb-sobre-accion: #0b1f36;
+    --mb-foco: #a3d6fb;
+    --mb-linea: #23476f;
+    --mb-borde-control: #6f93b8;
+
+    --mb-sombra-1: 0 1px 2px rgb(0 0 0 / 0.4);
+    --mb-sombra-2: 0 6px 20px rgb(0 0 0 / 0.35);
+    --mb-sombra-3: 0 18px 48px rgb(0 0 0 / 0.55);
 }
 
-/* Tipografía del sistema en lugar de Inter: Filament declara --font-family en :root, html:root gana. */
+/* Figtree en todo el panel: Filament declara --font-family en :root, html:root gana. */
 html:root {
-    --font-family: var(--mo-fuente);
+    --font-family: var(--mb-fuente-texto);
 }
 
 @layer components {
-    /* Fondo y superficies con la escala de grises del sistema */
+    /* Fondo y texto: con la escala gray azulada de Filament (PaletaDelPanel) el lienzo y la tinta ya coinciden */
     .fi-body {
-        background-color: var(--mo-fondo);
+        background-color: var(--mb-lienzo);
+        color: var(--mb-tinta);
     }
 
-    /* Foco visible y del mismo color en todo el panel */
+    /* Foco visible y del mismo color en todo el panel: un solo contorno de 3 px (el anillo de botones se anula abajo) */
     .fi-body :is(a, button, [role='button'], [tabindex]):focus-visible {
-        outline: 2px solid var(--mo-foco);
+        outline: var(--mb-foco-grosor) solid var(--mb-foco);
         outline-offset: 2px;
     }
 
     /* Bordes de campos con contraste de 3:1 (WCAG 1.4.11) */
     .fi-input-wrp:not(.fi-invalid):not(:focus-within) {
-        --tw-ring-color: var(--mo-borde-control);
+        --tw-ring-color: var(--mb-borde-control);
     }
 
     .fi-checkbox-input:not(:checked),
     .fi-radio-input:not(:checked) {
-        --tw-ring-color: var(--mo-borde-control);
+        --tw-ring-color: var(--mb-borde-control);
     }
 
     /* Interruptor apagado: pista visible (antes gris claro de 1.3:1) */
     .fi-toggle.fi-toggle-off {
-        background-color: var(--mo-superficie-2);
-        box-shadow: inset 0 0 0 1px var(--mo-borde-control);
+        background-color: var(--mb-superficie-2);
+        box-shadow: inset 0 0 0 1px var(--mb-borde-control);
     }
 
     /* Botones secundarios: borde visible */
     .fi-btn:not(.fi-color):not(.fi-outlined),
     .fi-btn.fi-color-gray:not(.fi-outlined) {
-        --tw-ring-color: var(--mo-borde-control);
+        --tw-ring-color: var(--mb-borde-control);
     }
 
     /* Áreas táctiles de 44 px en botones y acciones de fila */
     .fi-btn,
     .fi-icon-btn {
-        min-height: var(--mo-tactil);
+        min-height: var(--mb-objetivo);
     }
 
     .fi-ta-actions .fi-link {
@@ -92,27 +148,33 @@ html:root {
     }
 
     .fi-icon-btn {
-        min-width: var(--mo-tactil);
+        min-width: var(--mb-objetivo);
     }
 
     /* Subir imagen: borde punteado visible */
     .fi-fo-file-upload .filepond--panel-root {
-        border: 1.5px dashed var(--mo-borde-control);
-        background-color: var(--mo-superficie);
+        border: 1.5px dashed var(--mb-borde-control);
+        background-color: var(--mb-superficie);
     }
 
-    /* Títulos de página con más aire, al estilo de iOS */
+    /* Títulos de página, sección y modal con la tipografía de marca; con más aire, al estilo de iOS */
+    .fi-header-heading,
+    .fi-section-header-heading,
+    .fi-modal-heading {
+        font-family: var(--mb-fuente-titulo);
+    }
+
     .fi-header-heading {
         letter-spacing: -0.02em;
     }
 
     .fi-header-subheading {
-        color: var(--mo-texto-suave);
+        color: var(--mb-tinta-2);
     }
 
     /* Avisos temporales: superficie elevada */
     .fi-no-notification {
-        box-shadow: var(--mo-sombra-flotante);
+        box-shadow: var(--mb-sombra-3);
     }
 
     /* ---- Barra inferior del panel en móvil (se oculta desde lg, donde aparece el menú lateral) ---- */
@@ -173,4 +235,35 @@ html:root {
             padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
         }
     }
+}
+
+/*
+ * Ajustes de color y foco que deben ganarle a las utilidades de Filament (viven en @layer utilities): por eso van sin capa.
+ * Todos usan las variables que Filament ya lee (--hover-bg, --dark-bg, --tw-ring-color), no clases nuevas.
+ */
+
+/* Foco: el contorno de 3 px sustituye al anillo de Filament en botones y botones de ícono (no se suman) */
+.fi-body :is(.fi-btn, .fi-icon-btn):focus-visible {
+    --tw-ring-shadow: 0 0 #0000;
+}
+
+/* Botón primario, claro: el hover pasa al tono 700 (más oscuro) para que el cambio se note; texto sigue en el tono 50 */
+.fi-btn.fi-color-primary:not(.fi-outlined) {
+    --hover-bg: var(--color-700);
+}
+
+/* Botón primario, oscuro: azul bebé con texto marino (8.79:1), en lugar del azul de acción de Filament */
+.dark .fi-btn.fi-color-primary:not(.fi-outlined) {
+    --dark-bg: var(--color-400);
+    --dark-text: var(--color-950);
+    --dark-hover-bg: var(--color-300);
+    --dark-hover-text: var(--color-950);
+}
+
+/* Anillos de foco en oscuro: el tono 500 de Filament da 2.72:1 sobre la superficie; se usa el foco del tema (8.69:1) */
+.dark .fi-input-wrp:not(.fi-disabled):not(.fi-invalid):focus-within,
+.dark .fi-toggle:focus-visible,
+.dark .fi-checkbox-input:focus,
+.dark .fi-radio-input:focus {
+    --tw-ring-color: var(--mb-foco);
 }

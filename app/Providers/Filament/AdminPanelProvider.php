@@ -9,10 +9,12 @@ use App\Filament\Widgets\ResumenRestauranteWidget;
 use App\Http\Middleware\AutenticaPanelAdmin;
 use App\Http\Middleware\ExigeDosFactores;
 use App\Models\Restaurante;
+use App\Services\PaletaDelPanel;
 use App\Services\PermisosPanel;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Enums\ThemeMode;
 use Filament\Facades\Filament;
+use Filament\FontProviders\LocalFontProvider;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -20,7 +22,6 @@ use Filament\Navigation\NavigationGroup;
 use Filament\Navigation\NavigationItem;
 use Filament\Panel;
 use Filament\PanelProvider;
-use Filament\Support\Colors\Color;
 use Filament\Support\Icons\Heroicon;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -70,11 +71,9 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogo(fn () => view('filament.logo'))
             ->brandLogoHeight('2rem')
             ->favicon(asset('favicon.svg'))
+            ->font('Figtree Variable', provider: LocalFontProvider::class)
             ->defaultThemeMode(ThemeMode::Light)
-            ->colors([
-                'primary' => Color::Amber,
-                'gray' => Color::Zinc,
-            ])
+            ->colors(PaletaDelPanel::colores())
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
