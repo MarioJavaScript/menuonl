@@ -3,7 +3,9 @@
 namespace App\Console\Commands;
 
 use App\Services\ContactoSoporte;
+use App\Services\RespaldoService;
 use App\Services\SondaDeCola;
+use Carbon\CarbonImmutable;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -27,7 +29,7 @@ class VerificarProduccionMenuonl extends Command
      */
     private array $resultados = [];
 
-    public function handle(SondaDeCola $sonda): int
+    public function handle(SondaDeCola $sonda, RespaldoService $respaldos): int
     {
         $this->revisar('APP_ENV', config('app.env') === 'production', 'es "production"', 'es "'.config('app.env').'"; debe ser "production"');
         $this->revisar('APP_DEBUG', config('app.debug') === false, 'está apagado', 'está encendido; debe ser false (muestra errores internos)');
@@ -44,6 +46,7 @@ class VerificarProduccionMenuonl extends Command
 
         $this->revisarWorker($sonda, in_array($cola, ['sync', 'null'], true));
         $this->avisos();
+        $this->avisarDelUltimoRespaldo($respaldos);
 
         $fallas = array_filter($this->resultados, fn (array $r): bool => ! $r['ok']);
 
@@ -98,6 +101,34 @@ class VerificarProduccionMenuonl extends Command
         }
 
         $this->revisar('Worker de colas', $vivo, 'procesó el trabajo de prueba', 'no procesó el trabajo de prueba en '.max(0, (int) $this->option('espera')).' s; revisa Supervisor o systemd (deploy/README.md)');
+    }
+
+    /**
+     * Warns when the newest backup in the disk is older than the allowed age (or there is none). Never changes the exit code.
+     */
+    private function avisarDelUltimoRespaldo(RespaldoService $respaldos): void
+    {
+        $maximo = max(1, (int) config('menuonl.respaldos.horas_maximas_sin_respaldo'));
+
+        try {
+            $fecha = $respaldos->fechaDelUltimoRespaldo();
+        } catch (Throwable $e) {
+            $this->line('  <comment>[AVISO]</comment>  No se pudo consultar el disco de respaldos ('.class_basename($e).'); revisa BACKUP_* en el .env.');
+
+            return;
+        }
+
+        if ($fecha === null) {
+            $this->line('  <comment>[AVISO]</comment>  No hay ningún respaldo en el disco de respaldos: php artisan menuonl:backup');
+
+            return;
+        }
+
+        $horas = (int) floor(abs($fecha->diffInHours(CarbonImmutable::now('UTC'))));
+
+        $horas > $maximo
+            ? $this->line("  <comment>[AVISO]</comment>  El último respaldo exitoso tiene {$horas} horas (máximo {$maximo}). Revisa storage/logs/laravel.log y el cron de schedule:run.")
+            : $this->line("  <info>[OK]</info>     Último respaldo hace {$horas} horas");
     }
 
     /**

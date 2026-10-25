@@ -4,10 +4,12 @@ namespace Tests\Feature;
 
 use App\Jobs\LatidoColasJob;
 use App\Services\SondaDeCola;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Concerns\ArmaEscenarioDePanel;
@@ -28,10 +30,19 @@ class VerificarProduccionTest extends TestCase
         'services.cloudflare.api_token' => 'token-cloudflare-secreto',
     ];
 
+    protected function tearDown(): void
+    {
+        CarbonImmutable::setTestNow();
+        parent::tearDown();
+    }
+
     protected function setUp(): void
     {
         parent::setUp();
         $this->setUpEscenarioDePanel();
+
+        Storage::fake('backups');
+        config(['menuonl.respaldos.disco' => 'backups']);
 
         $this->configurarProduccionCorrecta();
         $this->sondaQueResponde(true);
@@ -248,5 +259,80 @@ class VerificarProduccionTest extends TestCase
         $marca = (new SondaDeCola)->iniciar();
 
         Queue::assertPushed(LatidoColasJob::class, fn (LatidoColasJob $job): bool => $job->marca === $marca);
+    }
+
+    private function subirRespaldoDeHaceHoras(int $horas): void
+    {
+        $fecha = CarbonImmutable::now('UTC')->subHours($horas);
+        Storage::disk('backups')->put('menuonl-'.$fecha->format('Ymd-His').'.zip', 'contenido');
+    }
+
+    /**
+     * @return array<string, array{0: int, 1: bool}>
+     */
+    public static function antiguedadesDeRespaldo(): array
+    {
+        return [
+            'recién hecho' => [1, false],
+            'justo en el límite' => [36, false],
+            'poco más viejo que el límite' => [37, true],
+            'de hace días' => [96, true],
+        ];
+    }
+
+    #[DataProvider('antiguedadesDeRespaldo')]
+    public function test_avisa_sin_fallar_solo_si_el_ultimo_respaldo_pasa_de_36_horas(int $horas, bool $avisa): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-10-20 12:00:00', 'UTC'));
+        $this->subirRespaldoDeHaceHoras($horas);
+
+        [$codigo, $salida] = $this->ejecutar();
+
+        $this->assertSame(0, $codigo, 'El aviso de respaldo no cambia el código de salida.');
+        $this->assertSame($avisa, str_contains($salida, "El último respaldo exitoso tiene {$horas} horas"));
+        $this->assertSame(! $avisa, str_contains($salida, "Último respaldo hace {$horas} horas"));
+        $this->assertStringContainsString('Todo en orden', $salida);
+    }
+
+    public function test_usa_el_respaldo_mas_reciente_y_no_el_primero_que_encuentra(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-10-20 12:00:00', 'UTC'));
+        $this->subirRespaldoDeHaceHoras(200);
+        $this->subirRespaldoDeHaceHoras(5);
+
+        [, $salida] = $this->ejecutar();
+
+        $this->assertStringContainsString('Último respaldo hace 5 horas', $salida);
+        $this->assertStringNotContainsString('[AVISO]  El último respaldo', $salida);
+    }
+
+    public function test_sin_ningun_respaldo_avisa_sin_fallar(): void
+    {
+        [$codigo, $salida] = $this->ejecutar();
+
+        $this->assertSame(0, $codigo);
+        $this->assertStringContainsString('No hay ningún respaldo', $salida);
+    }
+
+    public function test_el_limite_de_horas_se_puede_configurar(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-10-20 12:00:00', 'UTC'));
+        config(['menuonl.respaldos.horas_maximas_sin_respaldo' => 12]);
+        $this->subirRespaldoDeHaceHoras(13);
+
+        [, $salida] = $this->ejecutar();
+
+        $this->assertStringContainsString('tiene 13 horas (máximo 12)', $salida);
+    }
+
+    public function test_si_no_se_puede_leer_el_disco_de_respaldos_avisa_sin_fallar_ni_imprimir_el_error(): void
+    {
+        config(['menuonl.respaldos.disco' => 'disco-que-no-existe']);
+
+        [$codigo, $salida] = $this->ejecutar();
+
+        $this->assertSame(0, $codigo);
+        $this->assertStringContainsString('No se pudo consultar el disco de respaldos', $salida);
+        $this->assertStringContainsString('Todo en orden', $salida);
     }
 }

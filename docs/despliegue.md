@@ -24,10 +24,10 @@ Prioridad: **P0** bloquea publicar con clientes reales, **P1** antes del primer 
 | H4 | **RESUELTO.** Hay configuración lista en `deploy/` (Supervisor, systemd y un `desplegar.sh` con `queue:restart`), documentada en `deploy/README.md` (cómo comprobar que el worker vive y qué hacer con trabajos fallidos), y el comando `menuonl:verificar-produccion` lo comprueba con un trabajo de prueba. Las tablas `jobs` y `failed_jobs` ya tienen migración. Descripción original: **Los trabajos en cola necesitan un proceso `queue:work`** y el repositorio no trae su configuración. `PurgarCacheRestauranteJob` (`app/Jobs/PurgarCacheRestauranteJob.php`) implementa `ShouldQueue` y `QUEUE_CONNECTION=database`: sin worker, la purga de Cloudflare al cambiar un menú o un plan **nunca se ejecuta**. | P0 |
 | H5 | **RESUELTO (invitaciones).** El correo de la invitación sale por la cola (`EnviarInvitacionJob`, cifrado porque lleva el enlace): un fallo de SMTP ya no rompe el alta, la invitación queda guardada y marcada, el superadmin ve "Correo no enviado" en Restaurantes y puede reenviarla (enlace nuevo, misma fila, sin duplicados). `menuonl:verificar-produccion` falla si `MAIL_MAILER` es `log` o `array`. Falta probar un envío real con el SMTP definitivo. Descripción original: **Correo:** `MAIL_MAILER=log` por defecto (`.env.example`, `config/mail.php`). Las invitaciones (`app/Services/InvitacionService.php`) se mandan **sincrónicas** a propósito (el token no debe pasar por la tabla `jobs`). Con el mailer `log` el propietario nunca recibe su invitación; con un SMTP caído, crear un restaurante falla *después* de haberlo guardado. | P0 |
 | H6 | **La política de contenido (CSP) no protege de XSS en la práctica y solo existe en las páginas públicas.** Es `default-src 'self' 'unsafe-inline'`, que permite scripts en línea. `/admin/login` no manda CSP, `X-Frame-Options` ni `X-Content-Type-Options` (medido), y en el código solo tres controladores públicos (sitio, menú y `/q`) añaden esas cabeceras, así que `/panel` e `/invitaciones/*` tampoco las tendrían (deducido, no medido). Nadie manda HSTS. | P1 |
-| H7 | **El respaldo usa las credenciales de base de datos de la aplicación**, que según [02-seguridad.md](02-seguridad.md) §1 deberían ser solo `SELECT/INSERT/UPDATE/DELETE`. `mysqldump --single-transaction --routines --triggers` necesita más permisos, y las migraciones necesitan DDL. Hay que decidir usuarios de base de datos separados. | P1 |
-| H8 | **No hay comando de restauración.** Existe `menuonl:backup-verify` (descifra y revisa), pero restaurar es un procedimiento manual que nunca se ha ensayado. | P1 |
+| H7 | **RESUELTO.** El respaldo puede usar un usuario propio de solo lectura (`BACKUP_DB_USERNAME`/`BACKUP_DB_PASSWORD`; si faltan, cae al de la aplicación). Permisos exactos y cómo crearlo: punto 4. Descripción original: **El respaldo usa las credenciales de base de datos de la aplicación**, que según [02-seguridad.md](02-seguridad.md) §1 deberían ser solo `SELECT/INSERT/UPDATE/DELETE`. `mysqldump --single-transaction --routines --triggers` necesita más permisos, y las migraciones necesitan DDL. Hay que decidir usuarios de base de datos separados. | P1 |
+| H8 | **RESUELTO.** Existe `php artisan menuonl:restaurar-respaldo` y un procedimiento de ensayo paso a paso (punto 4). **Falta ejecutarlo contra MariaDB real.** Descripción original: **No hay comando de restauración.** Existe `menuonl:backup-verify` (descifra y revisa), pero restaurar es un procedimiento manual que nunca se ha ensayado. | P1 |
 | H9 | **El `.env.example` de la rama actual trae un número de WhatsApp que parece real** (`SOPORTE_WHATSAPP=526333345729`, cambio sin commit). El ejemplo debe ir vacío; el número real solo en el `.env` del servidor. | P1 |
-| H10 | **El respaldo diario corre a las 03:00 UTC** (`routes/console.php`, `config/app.php` tiene `timezone => UTC`): son las 21:00 en Ciudad de México, en pleno servicio de cena. | P2 |
+| H10 | **RESUELTO.** Corre a las 04:00 hora de Ciudad de México (`BACKUP_TIME`, `BACKUP_TIMEZONE`; zona explícita en el programador). Descripción original: **El respaldo diario corre a las 03:00 UTC** (`routes/console.php`, `config/app.php` tiene `timezone => UTC`): son las 21:00 en Ciudad de México, en pleno servicio de cena. | P2 |
 
 ---
 
@@ -141,7 +141,7 @@ Orden recomendado para un despliegue (la primera vez y las siguientes). Idealmen
 ### Verificación final antes de abrir a clientes
 
 - [ ] `php artisan about` muestra `Environment: production`, `Debug Mode: OFF`, `Cache: config/routes/views cached`.
-- [ ] `php artisan schedule:list` lista `menuonl:backup` a las 03:00 y el cron del servidor está activo.
+- [ ] `php artisan schedule:list` lista `menuonl:backup` a las 04:00 (hora de Ciudad de México) y el cron del servidor está activo.
 - [ ] `php artisan menuonl:verificar-produccion` termina en cero (ver abajo); `php artisan queue:failed` está vacío.
 - [ ] Una invitación real llega por correo y su enlace abre con `https`.
 - [ ] Subir una foto de 9 MB desde el celular funciona; una de 13 MB muestra el mensaje amable.
@@ -162,7 +162,7 @@ Revisa la configuración de producción y dice con claridad qué está mal. Term
 | `APP_LOCALE` | no es `es` |
 | Worker de colas | encola un trabajo de prueba (`LatidoColasJob`) y ningún worker lo procesa en `--espera` segundos (15 por defecto); también falla si `CACHE_STORE` es `array` o `null`, porque entonces no se puede comprobar |
 
-Opciones: `--espera=30` (segundos de espera al worker) y `--sin-worker` (omite esa comprobación; no recomendado). Además avisa (`[AVISO]`, sin afectar el código de salida) si hay trabajos en `failed_jobs`. Pruebas: `tests/Feature/VerificarProduccionTest.php`.
+Opciones: `--espera=30` (segundos de espera al worker) y `--sin-worker` (omite esa comprobación; no recomendado). Además avisa (`[AVISO]`, sin afectar el código de salida) si hay trabajos en `failed_jobs` y si el **último respaldo tiene más de 36 horas** (`BACKUP_MAX_AGE_HOURS`), no hay ninguno o no se puede leer el disco de respaldos. Es un aviso y no una falla porque en un servidor recién instalado todavía no hay respaldo; revísalo igual antes del primer cliente. Pruebas: `tests/Feature/VerificarProduccionTest.php`.
 
 El comando lee la configuración **tal como la ve la aplicación**: si usas `config:cache`, corre `php artisan optimize` antes de verificar.
 
@@ -178,37 +178,70 @@ El comando lee la configuración **tal como la ve la aplicación**: si usas `con
 
 - **Qué respalda:** el volcado de la base (`database.sql` con `mysqldump --single-transaction --routines --triggers`, o `VACUUM INTO` para SQLite), **todas** las imágenes en `storage/app/public/restaurantes/` y un `manifest.json` (fecha, nombre del volcado, número de imágenes). **No** respalda `.env`, `APP_KEY`, configuración de Nginx/PHP, ni `storage/app/private` (las subidas temporales no importan).
 - **Cifrado:** un `.zip` con AES-256 (`BACKUP_ARCHIVE_PASSWORD`). Los nombres de archivo dentro del zip **no** van cifrados. Sin contraseña, el comando se niega a respaldar.
-- **Cuándo:** `routes/console.php` programa `menuonl:backup` todos los días a las 03:00 (zona de la aplicación, hoy UTC → 21:00 en Ciudad de México), con `withoutOverlapping()` y un `Log::error` si falla. Requiere el cron de `schedule:run`.
+- **Cuándo:** `routes/console.php` programa `menuonl:backup` todos los días a las **04:00 hora de Ciudad de México** (`BACKUP_TIME=04:00`, `BACKUP_TIMEZONE=America/Mexico_City`; la zona va explícita en el programador y no depende de `APP_TIMEZONE`, que sigue en UTC). Un valor mal escrito en el `.env` cae a 04:00 / Ciudad de México. Con `withoutOverlapping()` y un `Log::error` si falla (`menuonl:backup - ...`, tanto del comando como del programador). Requiere el cron de `schedule:run`. Hoy no existe un mecanismo de aviso al superadmin (correo/webhook), así que el aviso es el log más el `[AVISO]` de `menuonl:verificar-produccion` cuando el último respaldo supera las 36 horas; la alerta externa sigue pendiente (PR 11).
+- **Integridad:** el `manifest.json` lleva el SHA-256 del volcado (`sha256_base`); `menuonl:backup-verify` y la restauración lo comprueban antes de tocar nada. Los respaldos anteriores a este campo se siguen aceptando y solo se validan por contenido.
+- **Usuario de base de datos del respaldo:** ver "Usuario de solo lectura" más abajo.
 - **Dónde:** disco `backups` de `config/filesystems.php` (S3 compatible: Cloudflare R2 o Backblaze B2), `visibility: private`. Nombre: `{BACKUP_PREFIX}-AAAAMMDD-HHMMSS.zip`.
 - **Retención:** `aplicarRetencion()` borra los que tengan más de `BACKUP_RETENTION_DAYS` (14) según la fecha del **nombre**, y solo toca archivos con el patrón del comando.
-- **Comprobaciones:** al subir compara el tamaño remoto con el local. `menuonl:backup-verify [archivo]` descarga el más reciente (o el indicado), revisa Zip Slip y tamaño (tope de 2 GB descomprimido), lo descifra en una carpeta temporal y comprueba `manifest.json`, que el volcado exista y contenga `CREATE TABLE` (solo mira los primeros 5 MB) y que el número de imágenes coincida. **No importa la base.**
+- **Comprobaciones:** al subir compara el tamaño remoto con el local. `menuonl:backup-verify [archivo]` descarga el más reciente (o el indicado), revisa Zip Slip y tamaño (tope de 2 GB descomprimido), lo descifra en una carpeta temporal y comprueba `manifest.json`, que el volcado exista y contenga `CREATE TABLE` (solo mira los primeros 5 MB) y que el número de imágenes coincida. **No importa la base** (la restauración sí lo hace, ver abajo).
 - **Frecuencia efectiva (RPO):** hasta 24 horas de datos perdidos en el peor caso.
 
-### Cómo se restaura (no existe comando; procedimiento manual)
+### Usuario de solo lectura para el respaldo (H7)
 
-1. Descargar el `.zip` más reciente del bucket (panel de R2/B2 o `aws s3 cp --endpoint-url ...`).
-2. Obtener `BACKUP_ARCHIVE_PASSWORD` del gestor de contraseñas.
-3. Extraer con 7-Zip o `7z x -p archivo.zip -o/ruta/restauracion` (el `unzip` estándar no abre AES; `7z` sí).
-4. Crear una base vacía e importar: `mariadb -u usuario -p base < database.sql`.
-5. Copiar `restaurantes/` a `storage/app/public/restaurantes/` y ajustar el dueño al usuario de PHP.
-6. Restablecer el `.env` desde su copia segura (con el **mismo** `APP_KEY`) y correr `php artisan migrate --force` si el esquema del respaldo es anterior al código.
-7. `php artisan optimize:clear`, `php artisan queue:restart`, y comprobar login, un menú y una imagen.
+Variables opcionales: `BACKUP_DB_USERNAME` y `BACKUP_DB_PASSWORD`. Si `BACKUP_DB_USERNAME` está vacío se usa el usuario de la aplicación (comportamiento anterior). La contraseña viaja a `mysqldump` por la variable de entorno `MYSQL_PWD`, nunca en la línea de comandos.
 
-### Plan de prueba de restauración (hacerlo antes del primer cliente, y luego cada trimestre)
+El volcado usa `--single-transaction --routines --triggers --no-tablespaces`. Permisos mínimos **estimados** para MariaDB (no verificados contra un servidor real; ajústalos con el primer respaldo de prueba):
 
-- [ ] Servidor o base de pruebas **distinta** de producción.
-- [ ] `php artisan menuonl:backup` en el servidor: salida 0, el archivo aparece en el bucket con tamaño razonable.
-- [ ] `php artisan menuonl:backup-verify`: salida 0.
-- [ ] Restauración manual completa (pasos 1–7 de arriba) en la base de pruebas; cronometrar el tiempo.
-- [ ] Verificar: cuenta de superadmin entra con 2FA, `SELECT COUNT(*)` coincide en `restaurantes`, `productos`, `reservas`, un menú público abre con sus imágenes.
-- [ ] Probar un respaldo con datos reales de volumen (miles de imágenes): tiempo, memoria y espacio temporal (el zip se arma en `sys_get_temp_dir()`).
-- [ ] Probar la retención: tras 15 días no hay respaldos con más de 14.
-- [ ] Probar un fallo a propósito (contraseña de bucket mala) y comprobar que se ve en el log y, cuando exista, en la alerta (punto 8).
-- [ ] Anotar el tiempo total de restauración (RTO) en este documento.
+```sql
+CREATE USER 'menuonl_respaldo'@'localhost' IDENTIFIED BY '<contraseña larga y única>';
+GRANT SELECT, SHOW VIEW, TRIGGER, EVENT ON `menuonl`.* TO 'menuonl_respaldo'@'localhost';
+-- --routines lee mysql.proc en MariaDB; si mysqldump se queja de "SHOW CREATE PROCEDURE", agrega:
+-- GRANT SELECT ON `mysql`.`proc` TO 'menuonl_respaldo'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+- `SELECT`: leer las tablas. `SHOW VIEW`: volcar vistas. `TRIGGER`: volcar disparadores. `EVENT`: volcar eventos (si no usas eventos puedes quitarlo). `LOCK TABLES` **no** hace falta porque se usa `--single-transaction`; `RELOAD`/`PROCESS` tampoco por `--no-tablespaces`.
+- Es de solo lectura: no puede modificar ni borrar datos aunque se filtre su contraseña. Usa un bucket y una contraseña distintos a los de la aplicación.
+- Prueba: `mysqldump -u menuonl_respaldo -p --single-transaction --routines --triggers --no-tablespaces menuonl > /dev/null` y luego `php artisan menuonl:backup`.
+
+### Restaurar: `php artisan menuonl:restaurar-respaldo` (H8)
+
+```
+php artisan menuonl:restaurar-respaldo [nombre] [--base-destino=] [--sobrescribir-base-activa]
+    [--carpeta-imagenes=] [--sobrescribir-imagenes] [--sin-imagenes] [--confirmo] [--confirmo-base=]
+```
+
+- **Qué respaldo:** el `nombre` indicado (`menuonl-AAAAMMDD-HHMMSS.zip`) o, sin argumento, el más reciente.
+- **Antes de tocar nada:** descarga el `.zip`, valida entradas (Zip Slip, tamaño), lo descifra con `BACKUP_ARCHIVE_PASSWORD` y comprueba `manifest.json`, el SHA-256 del volcado, que haya tablas y que las imágenes coincidan. Si algo falla termina con código 1, un mensaje claro y **sin escribir nada** (la carpeta temporal se borra).
+- **Por defecto no toca lo activo:** restaura en una base **nueva** (MariaDB: `<base>_restaurada_<fecha>`; SQLite: `storage/app/restauraciones/<respaldo>.sqlite`) y las imágenes en `storage/app/restauraciones/<respaldo>/restaurantes`. No sobrescribe una base con tablas ni un archivo o carpeta existentes.
+- **Confirmación:** muestra un plan y pide confirmar. Sin terminal interactiva exige `--confirmo`.
+- **Reemplazar la base activa** exige `--sobrescribir-base-activa` y escribir el nombre exacto de la base (sin terminal: `--confirmo-base=<nombre>`). En MariaDB importa primero a una base temporal `<base>_rest_<hex>` y, si todo salió bien, hace un único `RENAME TABLE` (atómico) que aparta las tablas actuales en `<base>_previa_<fecha>` (se conservan para volver atrás; bórralas cuando confirmes). Se niega si la base tiene vistas, disparadores o rutinas (RENAME no las mueve con seguridad): en ese caso restaura en otra base y cambia `DB_DATABASE`. En SQLite copia a un archivo temporal, revisa `PRAGMA integrity_check`, guarda `<archivo>.previa-<fecha>` y hace `rename`.
+- **Reemplazar las imágenes en uso** exige `--sobrescribir-imagenes`: se copian a una carpeta de preparación junto a la final y se publican con `rename`; la carpeta anterior queda como `restaurantes.previa-<fecha>`. `--sin-imagenes` las omite.
+- **Si algo falla a mitad:** se borran las bases/carpetas auxiliares y la activa sigue como estaba; queda un `Log::error('menuonl:restaurar-respaldo - La restauración falló.')`.
+- **Credenciales:** por defecto las de la conexión de la aplicación; para restaurar suele hacer falta un usuario que pueda crear bases: `RESTORE_DB_USERNAME`/`RESTORE_DB_PASSWORD` (opcionales). El cliente es `BACKUP_MYSQL_PATH` (`mysql` por defecto; en MariaDB reciente puede ser `mariadb`). Nada de esto se imprime; los errores del cliente ocultan la contraseña.
+- No restaura entre motores distintos (respaldo SQLite hacia MariaDB o al revés).
+- Pruebas: `tests/Feature/RestaurarRespaldoTest.php` (SQLite real) y `RestaurarRespaldoMariaDbTest.php` (cliente simulado).
+
+### Procedimiento de ensayo de restauración (antes del primer cliente, y luego cada trimestre)
+
+Hazlo en un servidor de pruebas o, como mínimo, **sin** `--sobrescribir-base-activa`.
+
+1. `php artisan menuonl:backup` → salida 0; el archivo aparece en el bucket con tamaño razonable.
+2. `php artisan menuonl:backup-verify` → salida 0.
+3. Restaurar a una base nueva y cronometrar: `time php artisan menuonl:restaurar-respaldo --base-destino=menuonl_ensayo` (confirma con `s`; en un script añade `--confirmo`). Anota el tiempo: es tu RTO.
+4. Comparar conteos en MariaDB: `SELECT COUNT(*) FROM menuonl.restaurantes` contra `menuonl_ensayo.restaurantes`; repite con `productos` y `reservas`. Pueden diferir en lo creado después del respaldo (hasta 24 h).
+5. Apuntar una copia de la aplicación a la base restaurada (`DB_DATABASE=menuonl_ensayo` en un `.env` de pruebas con el **mismo** `APP_KEY`), correr `php artisan migrate --force` si el esquema del respaldo es anterior al código, y comprobar: el superadmin entra con 2FA, un menú público abre y sus imágenes cargan (copiadas de `storage/app/restauraciones/<respaldo>/restaurantes`).
+6. Probar el camino de reemplazo en staging (no en producción): `php artisan menuonl:restaurar-respaldo --sobrescribir-base-activa --sobrescribir-imagenes`, escribir el nombre de la base, verificar la aplicación y que existen `<base>_previa_<fecha>` y `restaurantes.previa-<fecha>`; luego `php artisan optimize:clear` y `php artisan queue:restart`.
+7. Probar un archivo dañado: sube a un bucket de pruebas un `.zip` truncado con nombre `menuonl-AAAAMMDD-HHMMSS.zip` y comprueba que el comando falla con código 1 y no crea ninguna base.
+8. Probar un fallo del respaldo a propósito (contraseña de bucket mala): `menuonl:backup` falla, aparece `menuonl:backup - ...` en `storage/logs/laravel.log` y, pasadas 36 horas, `menuonl:verificar-produccion` muestra el `[AVISO]`.
+9. Borrar lo del ensayo: `DROP DATABASE menuonl_ensayo;` y `storage/app/restauraciones/`.
+10. Anotar fecha, tiempo total (RTO) y resultado en este documento.
+
+Pendientes del ensayo: un respaldo con volumen real (miles de imágenes: tiempo, memoria y espacio temporal; el zip se arma en `sys_get_temp_dir()`), y la retención (tras 15 días no hay respaldos con más de 14).
 
 | Ya está | Falta | Riesgo si no se hace |
 |---|---|---|
-| Respaldo cifrado diario con retención y verificación (`RespaldoService`, comandos `menuonl:backup` y `menuonl:backup-verify`, programación en `routes/console.php`, disco `backups`). Pruebas: `tests/Feature/RespaldoMenuonlTest.php` y relacionadas. | **(1)** Nunca se ejecutó contra MariaDB, R2/B2 ni un volumen real (lo reconoce `07-checklist-despliegue.md`). **(2)** Sin comando de restauración ni ensayo. **(3)** Sin alerta cuando falla (solo `Log::error`). **(4)** Usa las credenciales de la aplicación (H7). **(5)** Hora en UTC (H10). **(6)** `backup-verify` no importa el SQL. **(7)** Un fallo de retención deja el respaldo subido pero devuelve error, y no hay aviso si no se sube nada durante días. | Un respaldo que nunca se probó es una esperanza, no un respaldo. Perder la contraseña del zip o el `APP_KEY` vuelve irrecuperable el respaldo. Un fallo silencioso se descubre el día del desastre. |
+| Respaldo cifrado diario con retención y verificación (`RespaldoService`, comandos `menuonl:backup` y `menuonl:backup-verify`, programación en `routes/console.php`, disco `backups`). Pruebas: `tests/Feature/RespaldoMenuonlTest.php` y relacionadas. | **(1)** Nunca se ejecutó contra MariaDB, R2/B2 ni un volumen real (lo reconoce `07-checklist-despliegue.md`). **(2)** ~~Sin comando de restauración~~ resuelto (`menuonl:restaurar-respaldo`); falta **ejecutar el ensayo** contra MariaDB real. **(3)** Sin alerta activa cuando falla (solo `Log::error` y el aviso de 36 h en `verificar-produccion`). **(4)** ~~Credenciales de la aplicación~~ resuelto con `BACKUP_DB_*` (permisos sin verificar). **(5)** ~~Hora en UTC~~ resuelto (04:00 Ciudad de México). **(6)** `backup-verify` no importa el SQL (sí comprueba el SHA-256). **(7)** Un fallo de retención deja el respaldo subido pero devuelve error, y no hay aviso si no se sube nada durante días. | Un respaldo que nunca se probó es una esperanza, no un respaldo. Perder la contraseña del zip o el `APP_KEY` vuelve irrecuperable el respaldo. Un fallo silencioso se descubre el día del desastre. |
 
 ---
 
@@ -356,11 +389,11 @@ Cada PR es independiente y revisable por separado. Ninguno cambia la lógica de 
 | 6 | **Quitar el número real de `.env.example`:** dejar `SOPORTE_WHATSAPP=` vacía y revisar que ningún dato personal esté en el repositorio. | H9 | P1 |
 | 7 | **Cabeceras de seguridad globales:** middleware con `X-Content-Type-Options`, `X-Frame-Options`/`frame-ancestors`, `Referrer-Policy` y `Permissions-Policy` para `/admin`, `/panel`, `/invitaciones` y la API; pruebas por ruta. HSTS se configura en Cloudflare. | H6 | P1 |
 | 8 | **Mensaje amable para fallos del archivo temporal de subida:** distinguir `UPLOAD_ERR_*` en `ImagenController::archivo()` y en `ImagenRestauranteUpload`, con texto propio y `Log::error`; pruebas con un archivo inválido simulado. | punto 6.5 | P1 |
-| 9 | **Usuarios de base de datos y respaldo:** decidir y documentar permisos (migraciones, aplicación, respaldo) y permitir una conexión de respaldo propia (`BACKUP_DB_*`) en `RespaldoService`; prueba del armado del comando. | H7 | P1 |
-| 10 | **Comando de restauración asistida `menuonl:backup-restore`** (descarga, descifra, importa a una base indicada y copia imágenes a una carpeta), más un ensayo documentado; y que `backup-verify` importe el SQL a SQLite/MariaDB temporal en CI. | H8, punto 4 | P1 |
-| 11 | **Alertas de respaldo y colas:** notificación por correo (o webhook) cuando `menuonl:backup` falla o no hay respaldo reciente (comando programado de vigilancia), y cuando `failed_jobs` crece. | puntos 4 y 8 | P1 |
+| 9 | ~~**Usuarios de base de datos y respaldo**~~ **Hecho** (`BACKUP_DB_*` opcional, permisos documentados en el punto 4; falta confirmarlos con MariaDB real). Planteamiento original: decidir y documentar permisos (migraciones, aplicación, respaldo) y permitir una conexión de respaldo propia (`BACKUP_DB_*`) en `RespaldoService`; prueba del armado del comando. | H7 | P1 |
+| 10 | ~~**Comando de restauración asistida**~~ **Hecho** como `menuonl:restaurar-respaldo` (punto 4), con ensayo documentado; **falta** que `backup-verify` importe el SQL a una base temporal en CI. Planteamiento original: `menuonl:backup-restore` (descarga, descifra, importa a una base indicada y copia imágenes a una carpeta), más un ensayo documentado; y que `backup-verify` importe el SQL a SQLite/MariaDB temporal en CI. | H8, punto 4 | P1 |
+| 11 | **Alertas de respaldo y colas** (**en parte:** `Log::error` al fallar y `[AVISO]` de 36 h en `verificar-produccion`; **falta** la notificación activa): notificación por correo (o webhook) cuando `menuonl:backup` falla o no hay respaldo reciente (comando programado de vigilancia), y cuando `failed_jobs` crece. | puntos 4 y 8 | P1 |
 | 12 | **Reglas de Cloudflare como documento + prueba de humo:** `docs/` con las reglas exactas (caché, bypass, rate limiting) y un script de comprobación con `curl` (cabeceras de caché, ausencia de `Set-Cookie`, `CF-Cache-Status`). Depende del PR 1. | punto 5 | P1 |
-| 13 | **Zona horaria del respaldo:** programar `menuonl:backup` en `America/Mexico_City` (o en una hora de baja carga) y documentarlo. | H10 | P2 |
+| 13 | ~~**Zona horaria del respaldo**~~ **Hecho** (04:00 `America/Mexico_City`, configurable). Planteamiento original: programar `menuonl:backup` en `America/Mexico_City` (o en una hora de baja carga) y documentarlo. | H10 | P2 |
 | 14 | **CSP en modo Report-Only** para páginas públicas y `/panel`, con nonce para los scripts propios; revisar violaciones y luego aplicar sin `unsafe-inline` en `script-src`. | H6 | P2 |
 | 15 | **Mejorar `/up`:** comprobar base de datos (y caché) con una ruta de salud dedicada, sin exponer detalles. | punto 8 | P2 |
 | 16 | **Purga de variantes con parámetros** (`?lang`, `?mesa`) y reintentos del trabajo `PurgarCacheRestauranteJob` (`tries`/`backoff`) con aviso al agotar. | punto 5 | P2 |
@@ -376,7 +409,7 @@ Orden sugerido: 1 → 2 → 3 → 4 → 5 (quitan lo que hoy bloquea), luego 6�
 - **Nada se probó en un servidor real.** Los versiones de PHP/MariaDB, `php.ini`, Nginx, Supervisor y cron son lo que el código requiere según lo leído; falta comprobarlo en el VPS. Las extensiones se verificaron solo en el equipo de desarrollo (PHP 8.4.26 con todas presentes).
 - **Cabeceras de la tabla del punto 6.1** se midieron en local (kernel HTTP de Laravel, con `APP_ENV=local`) y con la base de desarrollo; en producción puede variar si Nginx o Cloudflare añaden cabeceras. La presencia de `Set-Cookie` en las páginas públicas (H1) es del propio código, no depende del entorno, pero no se probó contra Cloudflare.
 - **Cómo se comporta Cloudflare** con `stale-while-revalidate`, con cookies y con las reglas propuestas: no se probó; son recomendaciones a partir de su documentación general.
-- **Respaldos:** `mysqldump` real contra MariaDB, subida a R2/B2 y restauración completa nunca se ejecutaron (las pruebas de desarrollo simulan el volcado). Los permisos de base de datos que necesita el volcado (H7) son una estimación, no una prueba.
+- **Respaldos:** `mysqldump` real contra MariaDB, subida a R2/B2 y restauración completa nunca se ejecutaron (las pruebas de desarrollo simulan el volcado). Los permisos de base de datos que necesita el volcado (H7) son una estimación, no una prueba. Tampoco se ejecutó contra MariaDB real el cliente `mysql` de la restauración, el `RENAME TABLE` entre bases ni los permisos del usuario de restauración (`CREATE`, `DROP`, `ALTER`, `RENAME` sobre las bases auxiliares); las pruebas simulan el cliente y verifican qué se le pide y en qué orden.
 - **Correo:** no se probó ningún proveedor SMTP.
 - **Rendimiento y límites:** no se midieron subidas de 10–12 MB con el `php.ini` y Nginx propuestos, ni un respaldo con miles de imágenes.
 - **`route:cache` y `config:cache`:** `route:cache` se probó en desarrollo y funciona (se limpió después); `config:cache` se dedujo de que todo `env()` está dentro de `config/`.
