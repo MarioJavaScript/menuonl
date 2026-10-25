@@ -157,7 +157,7 @@ Cada PR se prueba con la suite correspondiente y, tras los PR 1–2, con revisi�
 | # | PR | Contenido | Probar a mano | Qué puede romperse |
 |---|---|---|---|---|
 | 0 | **Marca y modo claro (hecho)** | Nombre visible en `config('app.name')` (Menubly) en panel, pestañas, pie de menú y sitios, invitaciones, correos, QR imprimible, portada; sin preferencia guardada todo sale en claro; Automático/Claro/Oscuro se conservan | Ver sección 10 | Producción con `APP_NAME=MENUONL` viejo; páginas que dependían de `prefers-color-scheme` |
-| 1 | Tokens y tema | Tokens `--mb-*` en el tema del admin (sin tocar `--mo-*`), fuentes por Vite, color primario, foco, 44 px. Sin mover pantallas | Login, Inicio, una tabla, un formulario, subida de foto; claro/oscuro; 390 px | Selectores `fi-*` que no existen; contraste del botón; modo oscuro compartido con el menú público; fuentes bloqueadas por CSP |
+| 1 | **Tokens y tema (hecho, sección 11)** | Tokens `--mb-*` en el tema del admin (sin tocar `--mo-*`), fuentes por Vite, color primario, foco, 44 px. Sin mover pantallas | Login, Inicio, una tabla, un formulario, subida de foto; claro/oscuro; 390 px | Selectores `fi-*` que no existen; contraste del botón; modo oscuro compartido con el menú público; fuentes bloqueadas por CSP |
 | 2 | Layout | Barra lateral y barra inferior (el logotipo sigue siendo la M hasta que llegue el arte) | Navegación en celular; enlaces "Ver mi sitio/menú" | `UxUiAccesibilidadTest` (barra inferior, "Inicio"); `PanelNavegacionDuenoTest` |
 | 3 | Componentes `x-mb.*` | Glifo de plan, aviso, vacío, hoja, banner. Se prueban en `diseno/componentes` | La página de componentes | `PaginasDeDisenoTest` |
 | 4 | Banner de superadmin | `renderHook` + "Volver a la plataforma" | Entrar a un restaurante como superadmin y como propietario (no debe verse) | Barra pegajosa y su altura sobre la barra superior; toasts encima del banner |
@@ -199,3 +199,20 @@ A mano, en un navegador real (con el sistema operativo en modo oscuro):
 5. Con un carrito guardado de antes, abrir el menú y comprobar que sigue ahí (las claves `menuonl_cart_*` no cambiaron).
 6. Revisar la pestaña del navegador en `/`, `/admin` y una invitación; abrir el correo de una invitación de prueba y mirar el pie.
 7. En producción: cambiar `APP_NAME` en el `.env` y limpiar la caché de configuración; si no, seguirá saliendo el nombre viejo.
+
+## 11. PR 1 "Tokens y tema": qué se hizo
+
+- **Tokens:** `--mb-*` (superficies, texto, acción, foco, bordes de control, tipografía, medidas y sombras) en `:root` y `:root.dark` de `resources/css/filament/admin/theme.css`. Los `--mo-*` no se tocaron (los comparte el menú público y la barra inferior los sigue usando).
+- **Paleta de Filament:** `App\Services\PaletaDelPanel` (primary azul Menubly con 600 = `#1B62B5`, y gray azulado). Es la única fuente que leen el `AdminPanelProvider` y `TemaDelAdminTest`. Filament convierte los hex a OKLCH con 3 decimales; se comprobó que el redondeo vuelve al mismo hex de 8 bits.
+- **Botón primario:** claro con hover en el tono 700 (texto 50 sobre 700: 7.50:1); oscuro en azul bebé con texto marino (8.79:1, hover 10.31:1), con variables de Filament sobrescritas sin capa para ganar a sus utilidades.
+- **Foco:** un solo contorno de 3 px (`--mb-foco`) en enlaces, botones y elementos con `tabindex`; el anillo de Filament en `.fi-btn` y `.fi-icon-btn` se anula al enfocar para que no se sumen. En oscuro, los anillos de campos, interruptores, casillas y radios usan `--mb-foco` (el tono 500 de Filament daba 2.72:1).
+- **Tipografía:** Figtree en todo el panel (`--font-family`), Space Grotesk solo en `.fi-header-heading`, `.fi-section-header-heading` y `.fi-modal-heading`. Los paquetes `@fontsource-variable/*` se importan desde el tema y Vite emite los `.woff2` en `/build/assets` (mismo origen; no cambió la CSP). `->font('Figtree Variable', provider: LocalFontProvider::class)` evita que Filament precargue Inter, que el tema no usa; el enlace al CSS local de Inter (un archivo de `@font-face` sin descargar fuentes si no se usan) sigue porque lo registra Filament como asset.
+- **Objetivos táctiles:** 44 px (`--mb-objetivo`) en botones y botones de ícono, como antes.
+- **No se tocó:** layout, barra lateral, textos, `lang/es/panel.php`, la CSP, el menú público ni `/panel`.
+
+### Pendientes de accesibilidad (no resueltos en el PR 1)
+
+- **Íconos `gray-400` en modo claro:** `#8AA6C1` sobre blanco da **2.53:1**, por debajo del 3:1 que pide WCAG 1.4.11 para íconos que transmiten información. Filament ya los pintaba así (su gris por defecto daba un valor similar). Decidir en el PR 2 o 6 si se oscurecen a `gray-500` o se acompañan de texto.
+- **Texto de ayuda en claro:** `#587390` da **4.64:1** sobre el lienzo `#F3F9FF` (y 4.92:1 sobre blanco). Cumple 4.5:1 pero con **poco margen**; cualquier tono más claro o un fondo más oscuro lo rompe. `TemaDelAdminTest` lo vigila.
+- **Hover del botón primario en claro** pasó del tono 500 al 700 por pedido del diseño; el tono 500 se conserva (`#1F6CBF`) para anillos, interruptores y otros usos de Filament.
+- **Barra inferior móvil:** sigue con `--mo-*` (grises neutros) hasta el PR 2, así que su tono difiere un poco del resto del panel.
