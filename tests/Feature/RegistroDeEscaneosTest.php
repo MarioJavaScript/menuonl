@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\DataProvider;
+use RuntimeException;
 use Tests\Concerns\ArmaEscenarioDePanel;
 use Tests\TestCase;
 
@@ -102,9 +103,14 @@ class RegistroDeEscaneosTest extends TestCase
         $this->escanear($codigo);
 
         $this->assertCount(2, $sentencias, 'Una sentencia por escaneo y ninguna lectura previa de la tabla.');
+        $conflicto = match (DB::connection()->getDriverName()) {
+            'sqlite' => 'on conflict ("codigo_qr_id", "fecha", "tipo") do update set "conteo" = conteo + 1',
+            'mysql', 'mariadb' => 'on duplicate key update `conteo` = conteo + 1',
+            default => $this->fail('Driver sin sintaxis de upsert conocida en esta prueba: '.DB::connection()->getDriverName()),
+        };
         foreach ($sentencias as $sql) {
             $this->assertStringStartsWith('insert into', $sql);
-            $this->assertStringContainsString('on conflict ("codigo_qr_id", "fecha", "tipo") do update set "conteo" = conteo + 1', $sql);
+            $this->assertStringContainsString($conflicto, $sql);
         }
         $this->assertSame(2, EscaneoDiario::withoutGlobalScopes()->sole()->conteo);
     }
@@ -296,13 +302,17 @@ class RegistroDeEscaneosTest extends TestCase
         $codigo = $this->codigoDeMesa('7');
         $destino = route('menu.publico', ['slug' => $codigo->restaurante->slug, 'mesa' => '7']);
         Exceptions::fake();
-        Schema::drop('escaneos_diarios');
+        DB::beforeExecuting(function (string $sql): void {
+            if (str_contains($sql, 'escaneos_diarios')) {
+                throw new RuntimeException('Fallo simulado del conteo.');
+            }
+        });
 
         $this->get(route('qr.redirect', ['codigo' => $codigo->codigo], false))
             ->assertStatus(302)
             ->assertRedirect($destino);
 
-        Exceptions::assertReported(QueryException::class);
+        Exceptions::assertReported(RuntimeException::class);
     }
 
     public function test_la_respuesta_no_trae_cookies_ni_cabeceras_nuevas_por_contar(): void
