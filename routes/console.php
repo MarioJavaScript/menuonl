@@ -15,3 +15,9 @@ Schedule::command('menuonl:backup')
     ->timezone(RespaldoService::zonaHorariaProgramada())
     ->withoutOverlapping()
     ->onFailure(fn () => Log::error('menuonl:backup - El scheduler registró un respaldo fallido (RNF-06).'));
+
+Schedule::command('menuonl:purgar-escaneos')
+    ->dailyAt('04:30')
+    ->timezone(RespaldoService::zonaHorariaProgramada())
+    ->withoutOverlapping()
+    ->onFailure(fn () => Log::error('menuonl:purgar-escaneos - El scheduler registró una purga fallida.'));

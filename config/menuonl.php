@@ -155,4 +155,17 @@ return [
         'horas_maximas_sin_respaldo' => (int) env('BACKUP_MAX_AGE_HOURS', 36),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Métricas de escaneos QR/NFC
+    |--------------------------------------------------------------------------
+    |
+    | Agregado diario por código (sin IP, user-agent ni cookies). `menuonl:purgar-escaneos` borra lo más viejo que la
+    | retención; 400 días (13 meses) permiten comparar un año completo con el anterior. Nunca menos de 31.
+    |
+    */
+
+    'metricas' => [
+        'retencion_dias' => max(31, (int) env('METRICAS_RETENCION_DIAS', 400)),
+    ],
 ];

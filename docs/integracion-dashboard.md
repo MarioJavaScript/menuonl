@@ -166,11 +166,11 @@ Cada PR se prueba con la suite correspondiente y, tras los PR 1–2, con revisi�
 | 7 | Plataforma: restaurantes y ficha de plan | Lista, ficha, selector con "qué cambia" y "Deshacer" | Cambiar plan en ambos sentidos; reservas pendientes; suspender | `PlataformaPlanTest`, `PlanRestauranteMigracionTest` |
 | 8 | Usuarios e invitaciones, historial global | Pantallas de plataforma | Invitar, reenviar, revocar; filtros | `InvitacionesTest`, `EnvioInvitacionEnColaTest`, historial |
 | 9 | Respaldos y ajustes, **solo lectura** | Lista de respaldos (fecha, tipo, tamaño, estado) y valores de ajustes de plataforma; sin descargar, restaurar ni editar | Con respaldos reales en un entorno de prueba; sin respaldos | Lectura del almacenamiento; que no se filtre la contraseña de respaldos ni otros secretos de configuración |
-| 10 | Métricas: backend | Contador de escaneos QR/NFC **por mesa** en `/q/*`, tabla agregada por (código, día) sin IP ni cookies. Las reservas se cuentan desde `reservas` | Escanear un QR y ver el contador; carga concurrente | `QrRedirectYDescargaTest`, `QrScanBurstConcurrencyTest`, `QrNfcVolumenYN1Test`; rendimiento de la redirección |
+| 10 | **Métricas: backend (hecho, sección 13)** | Contador de escaneos QR/NFC **por mesa** en `/q/*`, tabla agregada por (código, día) sin IP ni cookies. Las reservas se cuentan desde `reservas` | Escanear un QR y ver el contador; carga concurrente | `QrRedirectYDescargaTest`, `QrScanBurstConcurrencyTest`, `QrNfcVolumenYN1Test`; rendimiento de la redirección |
 | 11 | Métricas: pantallas y resumen de plataforma | Resumen, métricas global/por restaurante con escaneos y reservas; **sin visitas** | Plan Completo vs otros; restaurante sin datos | Recorte por plan (`Capacidad::Metricas`); texto de privacidad cierto |
 | 12 | `/panel` y pantallas de sistema | `/panel` se queda (reservas) y solo recibe tokens de color; 404/500, "sin panel", login | Flujo de invitación completo; plan "Solo menú"; atender una reserva | `PlanSinPanelTest`, `PlanSinPanelDosFactoresTest`, `PanelApi*Test`, CSP de `/panel` |
 
-El PR 10 puede adelantarse (no depende del diseño) para ir acumulando datos mientras se hace lo visual.
+El PR 10 se adelantó (no depende del diseño) para ir acumulando datos mientras se hace lo visual.
 
 ## 9. Decisiones aprobadas
 
@@ -259,3 +259,40 @@ Contrastes (calculados desde los tokens, vigilados en `TemaDelAdminTest`):
 9. Preferencia de reducir movimiento activada en el sistema: el cajón y los cambios de color no se animan.
 10. Lector de pantalla: la barra se anuncia como "Principal"; "Pedidos" y "Hoy" se leen con su nombre completo; el acceso activo se anuncia como página actual.
 11. En un iPhone con muesca o barra de inicio: revisar el borde inferior (ver pendiente de `viewport-fit`).
+
+## 13. PR 10 "Métricas: backend": qué se hizo
+
+Solo backend, sin pantallas. Cuenta los escaneos de QR y NFC por mesa en `/q/{codigo}` y los guarda como un agregado diario.
+
+### Qué se guarda y qué no
+
+- Tabla `escaneos_diarios`: `restaurante_id`, `codigo_qr_id`, `fecha` (día local del restaurante), `tipo` (`qr` o `nfc`) y `conteo`. Llave única `(codigo_qr_id, fecha, tipo)`.
+- No se guarda IP, user-agent, cookies, sesión ni la hora del escaneo (la tabla ni siquiera tiene `created_at`/`updated_at`).
+- Cuenta solo la redirección válida (302). No cuentan los 404, ni `HEAD`, ni cargas anticipadas (`Sec-Purpose`, `Purpose`, `X-Moz`), ni user-agent que coincida con `/\bbot\b|crawler|spider|preview/i` (palabra completa para "bot": un teléfono "CUBOT" sí cuenta; hay prueba).
+- Corre para **todos los planes**. El plan solo limita la lectura: `EscaneoDiarioPolicy` (superadmin y propietario, y solo con plan Completo, `Capacidad::Metricas`). El gerente no tiene acceso.
+- Las reservas no se copian: se contarán desde `reservas`. No se cuentan visitas a páginas del menú.
+- El conteo se hace después de responder (`defer()`), con una sola sentencia atómica (`INSERT ... ON CONFLICT DO UPDATE` en SQLite, `ON DUPLICATE KEY UPDATE` en MariaDB; `conteo = conteo + 1`). Si falla, se registra el error y la redirección sale igual.
+
+### Los conteos son aproximados
+
+- El filtro de user-agent es mínimo y declarado: no detecta a todos los robots (p. ej. bingbot, Slackbot, WhatsApp o facebookexternalhit pueden contar; Googlebot solo se filtra por la palabra `bot` de su URL). Tampoco distingue una persona que escanea dos veces de dos personas.
+- El día es el de la zona horaria del restaurante (si es inválida, la de la aplicación). Cambiar la zona o el tipo del código a mitad de día reparte el conteo entre filas.
+- Mostrarlos en el PR 11 como "escaneos registrados", nunca como "personas" o "visitantes únicos".
+
+### Texto de privacidad correcto para el PR 11
+
+Las métricas no guardan IP ni cookies: solo cuántas veces se abrió el código de cada mesa en cada día. **No afirmar que el sistema nunca ve la IP**: la aplicación la usa en memoria para el límite de peticiones (`menu-publico`, clave de caché por IP) y el servidor y Cloudflare conservan sus propios registros de acceso. Redacción sugerida: "Contamos cuántas veces se escanea cada código por día. En ese conteo no guardamos tu IP, tu dispositivo ni cookies."
+
+### Retención
+
+400 días: `menuonl:purgar-escaneos` (diario a las 04:30 en la zona del respaldo, sin solaparse) borra lo anterior al corte en lotes de 1000. Configurable con `METRICAS_RETENCION_DIAS`, con mínimo de 31 días (`config/menuonl.php`, `metricas.retencion_dias`).
+
+### Herramienta manual de concurrencia (no es una prueba automática)
+
+`php artisan menuonl:probar-concurrencia-escaneos --procesos=8 --escaneos=50` lanza varios procesos PHP que cuentan el mismo código a la vez contra un SQLite temporal propio (WAL, espera de bloqueo de 10 s) y compara el total con el esperado. No corre en producción y nunca toca la base de la aplicación. Para probar MariaDB: `--conexion=NOMBRE`, donde la conexión debe existir y su base de datos terminar en `_test` o `_prueba`. En desarrollo dio 240 de 240 (6 procesos × 40).
+
+### Qué no se pudo verificar
+
+- MariaDB real (solo SQLite; la sentencia de `ON DUPLICATE KEY UPDATE` se comprobó en la gramática del framework, no contra el motor).
+- Que PHP-FPM libera al cliente antes de contar y que Cloudflare no cachea `/q/*`: pendientes anotados en `docs/despliegue.md`, sección 5.
+- Revisión manual con tinker: `App\Models\EscaneoDiario::withoutGlobalScopes()->latest('id')->limit(5)->get()` tras abrir un `/q/CODIGO` en el navegador.

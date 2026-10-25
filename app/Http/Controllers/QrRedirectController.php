@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CodigoQr;
 use App\Rules\CodigoQrValido;
 use App\Services\PoliticaDeContenido;
+use App\Services\RegistroDeEscaneos;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -20,7 +21,7 @@ class QrRedirectController extends Controller
     /**
      * Redirect a short QR code or NFC tag to the public menu or specific table.
      */
-    public function redirigir(Request $request, string $codigo): Response|RedirectResponse
+    public function redirigir(Request $request, string $codigo, RegistroDeEscaneos $escaneos): Response|RedirectResponse
     {
         if (preg_match(CodigoQrValido::PATRON, $codigo) !== 1) {
             return response()
@@ -44,6 +45,9 @@ class QrRedirectController extends Controller
                 ->view('menu.no-disponible', [], 404)
                 ->withHeaders(self::SECURITY_HEADERS);
         }
+
+        // Solo la redirección válida cuenta (los 404 no), y se cuenta después de responder: el conteo nunca la demora ni la rompe.
+        $escaneos->contarDespuesDeResponder($request, $qr);
 
         if ($qr->esMesa()) {
             return redirect()->route('menu.publico', [
