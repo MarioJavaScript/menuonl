@@ -1044,11 +1044,12 @@ class UxUiAccesibilidadTest extends TestCase
 
         $hook = (string) FilamentView::renderHook(PanelsRenderHook::BODY_END);
         $this->assertStringContainsString('class="mo-barra-inferior"', $hook);
-        $this->assertStringContainsString('aria-label="Accesos rápidos"', $hook);
+        $this->assertStringContainsString('aria-label="Principal"', $hook);
+        $this->assertStringNotContainsString('Accesos rápidos', $hook);
         $this->assertStringContainsString('Inicio', $hook);
         $this->assertStringContainsString('Platillos', $hook);
-        $this->assertStringContainsString('Categorías', $hook);
-        $this->assertStringContainsString('Horario', $hook);
+        $this->assertStringContainsString('Pedidos', $hook);
+        $this->assertStringContainsString('Apariencia', $hook);
         $this->assertStringContainsString('Más', $hook);
         $this->assertStringContainsString('aria-label="Más opciones del menú"', $hook);
 
