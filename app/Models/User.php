@@ -66,6 +66,32 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     }
 
     /**
+     * Whether this user should be shown the "your plan has no panel" screen instead of a bare 403: an active,
+     * non-superadmin account whose only active memberships are restaurants whose plan leaves the panel closed.
+     * Someone with at least one restaurant that does have the panel goes straight in, and never sees the screen.
+     */
+    public function debeVerElAvisoDePlanSinPanel(): bool
+    {
+        return $this->activo
+            && ! $this->isSuperadmin()
+            && $this->restaurantesConPanel()->isEmpty()
+            && $this->restaurantesSinPanelPorPlan()->isNotEmpty();
+    }
+
+    /**
+     * Active memberships in restaurants whose plan does not include the panel, by name for the notice.
+     *
+     * @return Collection<int, Restaurante>
+     */
+    public function restaurantesSinPanelPorPlan(): Collection
+    {
+        return $this->restaurantes()->wherePivot('activo', true)->get()
+            ->reject(fn (Restaurante $restaurante): bool => $restaurante->incluye(Capacidad::Panel))
+            ->sortBy('nombre')
+            ->values();
+    }
+
+    /**
      * Active restaurants whose plan lets their team into the panel (Solo menú does not).
      *
      * @return Collection<int, Restaurante>

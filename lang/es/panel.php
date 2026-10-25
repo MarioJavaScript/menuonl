@@ -331,6 +331,17 @@ return [
         ],
     ],
 
+    'plan_sin_panel' => [
+        'titulo' => 'Tu plan no incluye el panel',
+        'uno' => 'Hola. El plan de :restaurante no incluye el panel de administración.',
+        'varios' => 'Hola. El plan de estos restaurantes no incluye el panel de administración:',
+        'proveedor' => 'Los cambios en tu menú los gestiona tu proveedor.',
+        'con_whatsapp' => 'Si quieres cambiar algo, escríbenos por WhatsApp y con gusto te ayudamos.',
+        'sin_whatsapp' => 'Si quieres cambiar algo, contacta a tu proveedor.',
+        'boton_whatsapp' => 'Escribir por WhatsApp',
+        'cerrar_sesion' => 'Cerrar sesión',
+    ],
+
     'planes' => [
         'completo' => [
             'nombre' => 'Completo',
