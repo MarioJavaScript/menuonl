@@ -64,7 +64,7 @@ class ResumenRestauranteWidget extends Widget
             'estaAbierto' => $restaurante->estaAbiertoAhora(),
             'turnosHoy' => $turnosHoy,
             'agregarPlatilloUrl' => ProductoResource::canCreate() ? ProductoResource::getUrl('create') : null,
-            'sitioUrl' => route('sitio.publico', ['slug' => $restaurante->slug]),
+            'sitioUrl' => $restaurante->tieneSitio() ? route('sitio.publico', ['slug' => $restaurante->slug]) : null,
             'menuUrl' => route('menu.publico', ['slug' => $restaurante->slug]),
             'progreso' => $usuario ? app(ProgresoDeConfiguracion::class)->para($restaurante, $usuario) : null,
         ];

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Enums\Capacidad;
 use App\Filament\Components\ImagenRestauranteUpload;
 use App\Filament\Concerns\EditaAjustesDelRestaurante;
 use App\Services\AparienciaSitio;
@@ -35,6 +36,11 @@ class Apariencia extends Page
     protected static ?int $navigationSort = 10;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedPaintBrush;
+
+    protected static function capacidad(): Capacidad
+    {
+        return Capacidad::EditarDiseno;
+    }
 
     public static function getNavigationGroup(): string|UnitEnum|null
     {

@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\Capacidad;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -9,6 +10,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class ProductoVariantePolicy extends MatrizPolicy
 {
+    protected const ?Capacidad CAPACIDAD = Capacidad::EditarMenu;
+
     protected const array PERMISOS = [
         'superadmin' => ['viewAny', 'view', 'create', 'update', 'delete', 'restore', 'reorder'],
         'propietario' => ['viewAny', 'view', 'create', 'update', 'delete', 'restore', 'reorder'],

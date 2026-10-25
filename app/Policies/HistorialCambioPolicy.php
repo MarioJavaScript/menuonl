@@ -2,12 +2,16 @@
 
 namespace App\Policies;
 
+use App\Enums\Capacidad;
 use App\Models\HistorialCambio;
 use App\Models\Scopes\RestauranteScope;
 use App\Models\User;
+use App\Policies\Concerns\ConsultaElPlanDelRestaurante;
 
 class HistorialCambioPolicy
 {
+    use ConsultaElPlanDelRestaurante;
+
     /**
      * Determine whether the user can view audit log records.
      */
@@ -21,9 +25,9 @@ class HistorialCambioPolicy
             return true;
         }
 
-        $restauranteId = RestauranteScope::getRestauranteId();
+        $restauranteId = RestauranteScope::resolveRestauranteId();
         if ($restauranteId !== null) {
-            return $user->restaurantes()
+            return $this->planIncluye((int) $restauranteId, Capacidad::Equipo) && $user->restaurantes()
                 ->where('restaurantes.id', $restauranteId)
                 ->where('restaurante_usuario.rol', 'propietario')
                 ->exists();
@@ -52,7 +56,7 @@ class HistorialCambioPolicy
             return true;
         }
 
-        return $user->restaurantes()
+        return $this->planIncluye((int) $historialCambio->restaurante_id, Capacidad::Equipo) && $user->restaurantes()
             ->where('restaurantes.id', $historialCambio->restaurante_id)
             ->where('restaurante_usuario.rol', 'propietario')
             ->exists();

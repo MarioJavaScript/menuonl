@@ -8,11 +8,14 @@ use App\Filament\Resources\Contactos\Pages\ListContactos;
 use App\Filament\Resources\Contactos\Schemas\ContactoForm;
 use App\Filament\Resources\Contactos\Tables\ContactosTable;
 use App\Models\Contacto;
+use App\Policies\ContactoPolicy;
 use BackedEnum;
+use Filament\Facades\Filament;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class ContactoResource extends Resource
 {
@@ -33,6 +36,30 @@ class ContactoResource extends Resource
     public static function getNavigationGroup(): string|\UnitEnum|null
     {
         return __('panel.grupos.informacion');
+    }
+
+    /**
+     * Tipos de contacto que la persona puede ver y cambiar según el plan del restaurante; null significa todos.
+     *
+     * \return list<string>|null
+     */
+    public static function tiposPermitidos(): ?array
+    {
+        $usuario = auth()->user();
+
+        if ($usuario === null) {
+            return [];
+        }
+
+        return app(ContactoPolicy::class)->tiposPermitidos($usuario, Filament::getTenant()?->getKey());
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $consulta = parent::getEloquentQuery();
+        $tipos = static::tiposPermitidos();
+
+        return $tipos === null ? $consulta : $consulta->whereIn('tipo', $tipos);
     }
 
     public static function form(Schema $schema): Schema

@@ -8,6 +8,7 @@ use App\Filament\Pages\Tenancy\EditRestauranteProfile;
 use App\Filament\Widgets\ResumenRestauranteWidget;
 use App\Http\Middleware\ExigeDosFactores;
 use App\Models\Restaurante;
+use App\Services\PermisosPanel;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Facades\Filament;
 use Filament\Http\Middleware\Authenticate;
@@ -56,7 +57,7 @@ class AdminPanelProvider extends PanelProvider
 
                     return new HtmlString(view('filament.hooks.ver-menu-publico', [
                         'url' => route('menu.publico', ['slug' => $tenant->slug]),
-                        'sitioUrl' => route('sitio.publico', ['slug' => $tenant->slug]),
+                        'sitioUrl' => $tenant->tieneSitio() ? route('sitio.publico', ['slug' => $tenant->slug]) : null,
                     ])->render());
                 }
             )
@@ -91,7 +92,8 @@ class AdminPanelProvider extends PanelProvider
                     ->group(fn (): string => __('panel.grupos.pedidos'))
                     ->icon(Heroicon::OutlinedBolt)
                     ->sort(20)
-                    ->url(fn (): string => route('panel')),
+                    ->url(fn (): string => route('panel'))
+                    ->visible(fn (): bool => self::puedeUsarElPanelDeServicio()),
                 NavigationItem::make(fn (): string => __('panel.datos.nav'))
                     ->group(fn (): string => __('panel.grupos.informacion'))
                     ->icon(Heroicon::OutlinedBuildingStorefront)
@@ -128,6 +130,19 @@ class AdminPanelProvider extends PanelProvider
         }
 
         return $panel;
+    }
+
+    /**
+     * "Panel de servicio" solo se ofrece a quien tiene algún módulo en el restaurante activo (el plan es un techo).
+     */
+    private static function puedeUsarElPanelDeServicio(): bool
+    {
+        $tenant = Filament::getTenant();
+        $usuario = auth()->user();
+
+        return $tenant instanceof Restaurante
+            && $usuario !== null
+            && PermisosPanel::modulosDe($usuario, (int) $tenant->getKey()) !== [];
     }
 
     /**

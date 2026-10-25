@@ -60,10 +60,12 @@
 
             {{-- Accesos rápidos --}}
             <nav aria-label="{{ __('panel.inicio.accesos.titulo') }}" class="flex flex-wrap gap-2">
-                <x-filament::button tag="a" :href="$sitioUrl" target="_blank" rel="noopener noreferrer" color="gray" size="sm" icon="heroicon-o-arrow-top-right-on-square" icon-position="after">
-                    {{ __('panel.enlaces.ver_sitio') }}
-                    <span class="sr-only">{{ __('panel.enlaces.abre_en_otra_pestana') }}</span>
-                </x-filament::button>
+                \if ($sitioUrl)
+                    <x-filament::button tag="a" :href="$sitioUrl" target="_blank" rel="noopener noreferrer" color="gray" size="sm" icon="heroicon-o-arrow-top-right-on-square" icon-position="after">
+                        {{ __('panel.enlaces.ver_sitio') }}
+                        <span class="sr-only">{{ __('panel.enlaces.abre_en_otra_pestana') }}</span>
+                    </x-filament::button>
+                \endif
                 <x-filament::button tag="a" :href="$menuUrl" target="_blank" rel="noopener noreferrer" color="gray" size="sm" icon="heroicon-o-arrow-top-right-on-square" icon-position="after">
                     {{ __('panel.enlaces.ver_menu') }}
                     <span class="sr-only">{{ __('panel.enlaces.abre_en_otra_pestana') }}</span>

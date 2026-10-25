@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Contactos\Schemas;
 
+use App\Filament\Resources\Contactos\ContactoResource;
 use App\Rules\ValorContactoSeguro;
 use App\Services\Catalogos;
 use Filament\Forms\Components\Select;
@@ -12,6 +13,16 @@ use Filament\Schemas\Schema;
 
 class ContactoForm
 {
+    /**
+     * \return array<string, string>
+     */
+    private static function tiposDisponibles(): array
+    {
+        $tipos = ContactoResource::tiposPermitidos();
+
+        return $tipos === null ? Catalogos::tiposContacto() : array_intersect_key(Catalogos::tiposContacto(), array_flip($tipos));
+    }
+
     public static function configure(Schema $schema): Schema
     {
         return $schema
@@ -19,7 +30,7 @@ class ContactoForm
                 Select::make('tipo')
                     ->label('Tipo de canal')
                     ->placeholder('Selecciona un canal de contacto')
-                    ->options(Catalogos::tiposContacto())
+                    ->options(fn (): array => self::tiposDisponibles())
                     ->required()
                     ->live(),
                 TextInput::make('etiqueta')
