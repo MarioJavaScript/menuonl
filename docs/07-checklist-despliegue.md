@@ -35,7 +35,7 @@ RNF-06 se da por cumplido solo cuando los tres puntos de prueba (`menuonl:backup
 ## Interfaz (CSS y marca)
 
 - [ ] Correr `npm ci && npm run build` en cada despliegue. Sin `public/build` las utilidades de Tailwind no existen y las páginas públicas se ven sin estilos (`public/css/menuonl.css` solo cubre los tokens, el modo oscuro y los componentes propios).
-- [ ] Definir `APP_NAME=MENUONL` en el `.env` de producción: lo usan el título del navegador y el pie de los correos.
+- [ ] Definir `APP_NAME=Menubly` en el `.env` de producción: lo usan el título del navegador y el pie de los correos.
 - [ ] Servir `public/css/menuonl.css` y `public/favicon.svg` con caché larga en el CDN, y purgar el CDN si cambian.
 
 

@@ -1,4 +1,4 @@
-# MENUONL
+# Menubly
 
 Menú digital con QR (y NFC) para restaurantes, multi-restaurante.
 
@@ -42,7 +42,7 @@ El comensal escanea un QR, ve el menú al instante sin instalar ninguna app y, s
 | **Comensal** | Escanea el QR, consulta el menú público y envía su pedido por WhatsApp. No requiere registro ni aplicación instalada. |
 | **Propietario** | Acceso total a su restaurante: menú, precios, contactos, configuración, horarios y gestión de usuarios (invitaciones). Requiere 2FA activo en producción. |
 | **Editor** | Personal operativo del restaurante. Modifica menú, precios, contactos, horarios y códigos QR. Sin acceso a usuarios, invitaciones ni configuración general. |
-| **Superadmin** | Operador global de MENUONL. Da de alta, suspende y reactiva restaurantes, y consulta usuarios de la plataforma. Requiere 2FA activo en producción. |
+| **Superadmin** | Operador global de Menubly. Da de alta, suspende y reactiva restaurantes, y consulta usuarios de la plataforma. Requiere 2FA activo en producción. |
 
 ### Funcionalidades Principales
 

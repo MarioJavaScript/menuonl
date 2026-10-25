@@ -67,7 +67,7 @@ Se parte de `.env.example`. La columna "Producción" es el valor esperado; las m
 
 | Variable | Producción | Notas |
 |---|---|---|
-| `APP_NAME` | `MENUONL` | Título del navegador y pie de los correos. La marca comercial (Menubly/Menuonl) debe decidirse **antes** del primer QR impreso. |
+| `APP_NAME` | `Menubly` | Nombre visible de la plataforma: es el único valor de marca (`config('app.name')`); lo usan el título del navegador, el encabezado del panel, el pie de menús y sitios, las pantallas de invitación y el pie de los correos. **Hay que cambiarlo también en el `.env` de producción**: si queda `MENUONL`, eso es lo que se verá. Los identificadores internos (`menuonl:*`, `config/menuonl.php`, `BACKUP_PREFIX`, claves de `localStorage`) conservan `menuonl`. |
 | `APP_ENV` | `production` | **NO** `local`. Con `local` se registra la ruta de desarrollo `/diseno`, el seeder de demostración corre con `db:seed` y otras herramientas de desarrollo (por ejemplo las rutas de Boost) se comportan distinto; tras desplegar, revisar `php artisan route:list` para confirmar que no quedan rutas de desarrollo. `session.secure` también depende de esto. |
 | `APP_DEBUG` | `false` | **NO** `true`: expone trazas, variables y rutas. |
 | `APP_KEY` | generar con `php artisan key:generate --force` | Guardarla fuera del servidor. Si se pierde o cambia, se invalidan sesiones y lo cifrado. |

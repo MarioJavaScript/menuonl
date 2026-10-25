@@ -322,7 +322,7 @@ class RespaldoServiceAdversarialChallengerTest extends TestCase
     {
         // 1. Create a backup via the Spanish alias
         $this->artisan('menuonl:respaldar')
-            ->expectsOutputToContain('Iniciando respaldo de MENUONL')
+            ->expectsOutputToContain('Iniciando respaldo de '.config('app.name'))
             ->expectsOutputToContain('subido')
             ->assertExitCode(0);
 

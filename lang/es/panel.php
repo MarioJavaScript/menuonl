@@ -349,11 +349,11 @@ return [
         ],
         'sitio_menu' => [
             'nombre' => 'Sitio y menú',
-            'descripcion' => 'Sitio y menú públicos, con reservas. El propietario atiende las reservas, el horario y los teléfonos; lo demás lo cambia Menuonl.',
+            'descripcion' => 'Sitio y menú públicos, con reservas. El propietario atiende las reservas, el horario y los teléfonos; lo demás lo cambia '.config('app.name').'.',
         ],
         'solo_menu' => [
             'nombre' => 'Solo menú',
-            'descripcion' => 'Solo el menú público, sin página de sitio ni reservas. Los cambios los hace Menuonl.',
+            'descripcion' => 'Solo el menú público, sin página de sitio ni reservas. Los cambios los hace '.config('app.name').'.',
         ],
 
         'cambiar' => [

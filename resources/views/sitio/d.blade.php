@@ -143,7 +143,7 @@
 
 <footer class="d-pie"><div class="d-wrap d-pie-fila">
     <span class="d-logo">{{ $nombre }}</span>
-    <span>Sitio creado con Menuonl</span>
+    <span>Sitio creado con {{ config('app.name') }}</span>
 </div></footer>
 </div>
 </x-sitio.layout>

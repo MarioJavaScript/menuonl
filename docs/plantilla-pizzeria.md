@@ -9,7 +9,7 @@ Prototipo aprobado: Pizzería Lupita (`C:\Users\thexl\Desktop\proyectos\pizzeria
 
 ## Datos: de dónde sale cada bloque
 
-| Bloque del prototipo | Campo / relación de Menuonl | Estado |
+| Bloque del prototipo | Campo / relación de Menubly | Estado |
 |---|---|---|
 | Cabecera: franja de mantel, logo, nombre | `logo`, `nombre` | Listo; sin logo solo el nombre |
 | Navegación Inicio, Menú, Reservar | `route('sitio.publico')`, `route('menu.publico')` | Listo; "Reservar" solo con reservas activas |
@@ -17,13 +17,13 @@ Prototipo aprobado: Pizzería Lupita (`C:\Users\thexl\Desktop\proyectos\pizzeria
 | Portada: título, eslogan, descripción, "Hoy: horario", botones | `nombre`, `eslogan`, `descripcion`, `horarios`, `whatsapp_digitos` | Listo; cada parte se omite si falta |
 | Foto de portada en plato circular con dirección al pie | `portada`, `direccion` | Listo; sin foto, el texto ocupa el ancho. La dirección sobre la foto se omite (el texto sobre foto no se puede medir); la dirección va en "Ubicación" |
 | Botón "Escribir por WhatsApp" (saludo prellenado) | `whatsapp_digitos` | Listo; solo con número válido |
-| "Pizza de la casa" (platillo destacado) | Primer `destacado` visible: el marcado "Nuevo" o, si no hay, el primero con foto | Se renombra "Nuevo" / "Recomendado" (Menuonl no sabe si es pizza ni "de la casa"). Los tamaños con precio del prototipo no existen en `destacados`: se muestra el precio base |
+| "Pizza de la casa" (platillo destacado) | Primer `destacado` visible: el marcado "Nuevo" o, si no hay, el primero con foto | Se renombra "Nuevo" / "Recomendado" (Menubly no sabe si es pizza ni "de la casa"). Los tamaños con precio del prototipo no existen en `destacados`: se muestra el precio base |
 | "Lo que sale del horno" (vista previa, 6) | `destacados` (hasta 6) | Listo; el rótulo es texto fijo de interfaz de una plantilla de pizzería. Un platillo con variantes muestra su precio base; "Desde" no se inventa |
 | Horario con el día de hoy | `horarios` y día actual en la zona del restaurante | Listo; se omite si todos los días están cerrados |
 | Contacto: Llamar, WhatsApp, Instagram | `contactos` vía `SitioPublicoDatos` | Listo; cada botón se omite si falta su dato |
 | Ubicación: dirección y "Cómo llegar" | `direccion`, `mapa_url` | Listo; cada parte se omite si falta |
 | Reservas | Formulario real reutilizado (`sitio.js`, `data-url`, `data-disp`) | Listo; la confirmación simulada se sustituye por la real; la hora es una lista de franjas libres del servidor |
-| Pie: nombre, dirección, teléfono, redes, "© año" | Los mismos datos | Listo; "© año nombre" pasa a "Sitio creado con Menuonl", como e, f y g |
+| Pie: nombre, dirección, teléfono, redes, "© año" | Los mismos datos | Listo; "© año nombre" pasa a "Sitio creado con Menubly", como e, f y g |
 | Menú: título, filtros por categoría | `categorias` visibles con traducción; `eslogan` | Listo; "Todo" solo con más de una categoría; sin JavaScript se ven todas |
 | Tarjeta: foto circular, nombre, etiquetas, descripción, precio | `productos`, traducción, `etiquetas`, `FormatoMoneda` | Listo; sin foto, recuadro neutro circular |
 | Precio anterior tachado | `precio` si `precioVigente()` es menor | Listo |
@@ -31,7 +31,7 @@ Prototipo aprobado: Pizzería Lupita (`C:\Users\thexl\Desktop\proyectos\pizzeria
 | Agotado: etiqueta y sin botón | `disponible`, `mostrar_agotados` | Listo; con texto, no solo color |
 | Pedido: barra fija y diálogo | Pedido de e/f/g (barra + `<dialog>`) | Misma lógica; aspecto del prototipo (ver "Diseño") |
 | Pedido en `sessionStorage`, notas de 140 | `localStorage` solo con ids, cantidades y notas (80) | Se sigue lo decidido en e: clave `menuonl_cart_h_{slug}` |
-| Mensaje de WhatsApp recortable a 1800 caracteres | Formato único de `menu.publico`/e/f/g | Se usa el formato de Menuonl, no el del prototipo |
+| Mensaje de WhatsApp recortable a 1800 caracteres | Formato único de `menu.publico`/e/f/g | Se usa el formato de Menubly, no el del prototipo |
 | Reservas con validación y confirmación simuladas, `?demo=minimo`, "Cargando...", "Necesita JavaScript" | Prototipo | No aplican: todo se renderiza en el servidor |
 | Selector de idioma | `restaurante_idiomas` | No existe en el prototipo; se añade uno mínimo si hay más de un idioma, como en e, f y g |
 | Acento (`color_acento`) | `colorAcentoSeguro()` / `colorAcentoTexto()` | Ver "Acento" |

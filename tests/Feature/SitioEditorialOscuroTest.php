@@ -113,7 +113,7 @@ class SitioEditorialOscuroTest extends TestCase
             ->assertSee('Calle Real 45')->assertSee('tel:5511112222', false)->assertSee('https://wa.me/525512345678', false)
             ->assertSee('13:00 – 23:00')->assertSee('id="form-reserva"', false)
             ->assertSee('alt="Portada de La Casa Negra"', false)->assertSee('alt="Risotto de hongos"', false)
-            ->assertSee('Sitio creado con Menuonl')
+            ->assertSee('Sitio creado con '.config('app.name'))
             ->assertSee('--acento: #c9a24a;', false);
         $this->assertSame(1, substr_count($respuesta->getContent(), '<h1'));
     }

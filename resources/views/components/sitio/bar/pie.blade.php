@@ -8,6 +8,6 @@
                 @if (filled($d['facebook_url']))<li><a href="{{ $d['facebook_url'] }}" rel="noopener" aria-label="Facebook de {{ $d['r']->nombre }}"><svg class="bar-icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M14 8.5V7a1.5 1.5 0 0 1 1.5-1.5H17V2.5h-2.5A3.5 3.5 0 0 0 11 6v2.5H8.5v3H11V21h3v-9.5h2.6l.4-3z"/></svg></a></li>@endif
             </ul>
         @endif
-        <p class="bar-pie__nota">Sitio creado con Menuonl</p>
+        <p class="bar-pie__nota">Sitio creado con {{ config('app.name') }}</p>
     </div>
 </footer>

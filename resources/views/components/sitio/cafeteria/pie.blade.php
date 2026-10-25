@@ -13,6 +13,6 @@
                 @if ($hayContacto)<li><a class="cal-pie__enlace" href="#contacto">Contacto</a></li>@endif
             </ul>
         </nav>
-        <p class="cal-pie__nota">Sitio creado con Menuonl</p>
+        <p class="cal-pie__nota">Sitio creado con {{ config('app.name') }}</p>
     </div>
 </footer>

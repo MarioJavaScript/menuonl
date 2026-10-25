@@ -18,7 +18,7 @@ Prototipo aprobado: Ocaso, coctelería (carpeta `bar`, ver "Estado de las depend
 
 ## Datos: de dónde sale cada bloque
 
-| Bloque del prototipo | Campo / relación de Menuonl | Estado |
+| Bloque del prototipo | Campo / relación de Menubly | Estado |
 |---|---|---|
 | Nombre (encabezado, portada, pie) | `restaurantes.nombre` | Listo |
 | Logo junto al nombre | `restaurantes.logo` | Listo; sin logo se omite |
@@ -49,11 +49,11 @@ Prototipo aprobado: Ocaso, coctelería (carpeta `bar`, ver "Estado de las depend
 | Pedido: barra "Ver pedido", cajón, cantidades, nota por línea, enviar por WhatsApp | Pedido de e (ver "Script del pedido") | Listo; precios y nombres salen del servidor |
 | Selector de idioma | `restaurante_idiomas` | No existe en el prototipo; se añade un selector mínimo si hay más de uno, como e |
 | Acento (`color_acento`) | `colorAcentoSeguro()` / `colorAcentoTexto()` | Ver "Acento" |
-| `foto_alt` por platillo y `foto_portada_alt` | No existen en Menuonl | Se omite: el texto alternativo es el nombre del platillo y "Portada de {nombre}" |
+| `foto_alt` por platillo y `foto_portada_alt` | No existen en Menubly | Se omite: el texto alternativo es el nombre del platillo y "Portada de {nombre}" |
 | Aviso "es una solicitud de muestra" y datos inventados de Ocaso | Prototipo | No se llevan |
 | Fotos de Ocaso (`assets/img/*.webp`) | Prototipo | No se copian; se usan las del restaurante y, sin foto, un recuadro neutro |
 
-No hay testimonios, datos nutricionales ni otros bloques que Menuonl no guarde. El único texto del prototipo que no tiene dato propio es el de las etiquetas fijas de sección (Horario, Reservar, Contacto, Ubicación, "Ver el menú"), que son rótulos de interfaz, como en e.
+No hay testimonios, datos nutricionales ni otros bloques que Menubly no guarde. El único texto del prototipo que no tiene dato propio es el de las etiquetas fijas de sección (Horario, Reservar, Contacto, Ubicación, "Ver el menú"), que son rótulos de interfaz, como en e.
 
 ## Textos de la portada
 

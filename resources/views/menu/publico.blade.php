@@ -294,7 +294,7 @@
         <footer class="pie-publico">
             <div class="contenedor flex flex-col items-center gap-4">
                 <x-apariencia />
-                <p>Hecho con MENUONL</p>
+                <p>Hecho con {{ config('app.name') }}</p>
             </div>
         </footer>
 
