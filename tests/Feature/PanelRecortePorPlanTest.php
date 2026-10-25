@@ -87,9 +87,17 @@ class PanelRecortePorPlanTest extends TestCase
     }
 
     /**
+     * @return array<string, array{0: class-string}>
+     */
+    public static function pantallas(): array
+    {
+        return array_map(fn (array $caso): array => [$caso[0]], self::pantallasEnSitioMenu());
+    }
+
+    /**
      * @param  class-string  $recurso
      */
-    #[DataProvider('pantallasEnSitioMenu')]
+    #[DataProvider('pantallas')]
     public function test_el_propietario_de_plan_completo_y_el_superadmin_abren_todo(string $recurso): void
     {
         $this->entrar('completo');
