@@ -344,6 +344,69 @@ return [
             'nombre' => 'Solo menú',
             'descripcion' => 'Solo el menú público, sin página de sitio ni reservas. Los cambios los hace Menuonl.',
         ],
+
+        'cambiar' => [
+            'accion' => 'Cambiar plan',
+            'campo' => 'Plan',
+            'titulo' => 'Cambiar el plan de :restaurante',
+            'boton' => 'Sí, cambiar el plan',
+            'notificacion' => 'Plan cambiado a :plan',
+            'actual' => 'Plan actual: :plan.',
+            'sin_cambio' => 'Elige un plan distinto al actual para ver qué cambia.',
+            'gana' => 'El restaurante gana',
+            'pierde' => 'El restaurante pierde',
+            'sigue' => 'Lo que no cambia: el menú público, los códigos QR ya impresos y los pedidos por WhatsApp siguen funcionando. No se borra ningún dato; si el plan vuelve a subir, todo regresa como estaba.',
+            'superadmin' => 'Tú, como superadmin, sigues pudiendo editar todo el restaurante en cualquier plan.',
+            'reservas_pendientes' => '{1} Hay 1 reserva por confirmar. Se conserva, pero ya no se podrá atender desde el panel del restaurante.|[2,*] Hay :count reservas por confirmar. Se conservan, pero ya no se podrán atender desde el panel del restaurante.',
+            'ayuda_crear' => 'Lo que compró el restaurante. Puedes cambiarlo después desde la lista de restaurantes.',
+        ],
+
+        'capacidades' => [
+            'sitio' => [
+                'gana' => 'La página del sitio vuelve a mostrarse en su dirección, con la plantilla que ya tiene guardada.',
+                'pierde' => 'La página del sitio deja de mostrarse: quien abra su dirección será llevado al menú.',
+            ],
+            'reservas' => [
+                'gana' => 'Vuelven las reservas en línea, con la configuración que ya tenía guardada.',
+                'pierde' => 'Se cierran las reservas en línea. Las reservas ya hechas se conservan.',
+            ],
+            'panel' => [
+                'gana' => 'El propietario y su equipo pueden entrar al panel.',
+                'pierde' => 'El propietario y su equipo ya no pueden entrar al panel.',
+            ],
+            'editar_diseno' => [
+                'gana' => 'El propietario puede cambiar Apariencia (plantilla, estilo, color, logotipo y portada) y las fotos del restaurante.',
+                'pierde' => 'El propietario ya no puede cambiar Apariencia (plantilla, estilo, color, logotipo y portada) ni las fotos del restaurante.',
+            ],
+            'editar_menu' => [
+                'gana' => 'El propietario puede editar Platillos, Categorías y Recomendados.',
+                'pierde' => 'El propietario ya no puede editar Platillos, Categorías ni Recomendados.',
+            ],
+            'editar_datos' => [
+                'gana' => 'El propietario puede editar los datos del restaurante (nombre, descripción, mapa, idiomas) y todos sus contactos.',
+                'pierde' => 'El propietario ya no puede editar los datos del restaurante (nombre, descripción, mapa, idiomas) ni sus contactos, salvo los teléfonos si el plan los incluye.',
+            ],
+            'editar_telefonos' => [
+                'gana' => 'El propietario puede cambiar sus teléfonos y el número de WhatsApp de pedidos.',
+                'pierde' => 'El propietario ya no puede cambiar sus teléfonos ni el número de WhatsApp de pedidos.',
+            ],
+            'editar_horario' => [
+                'gana' => 'El propietario puede cambiar el horario.',
+                'pierde' => 'El propietario ya no puede cambiar el horario.',
+            ],
+            'qr' => [
+                'gana' => 'El propietario puede ver, crear y descargar códigos QR.',
+                'pierde' => 'El propietario ya no puede ver, crear ni descargar códigos QR. Los que ya están impresos siguen funcionando.',
+            ],
+            'equipo' => [
+                'gana' => 'El propietario puede manejar el equipo, las invitaciones y el historial de cambios.',
+                'pierde' => 'El propietario ya no puede manejar el equipo, las invitaciones ni el historial de cambios.',
+            ],
+            'servicio' => [
+                'gana' => 'El propietario puede usar el panel de servicio (/panel).',
+                'pierde' => 'El propietario ya no puede usar el panel de servicio (/panel).',
+            ],
+        ],
     ],
 
 ];

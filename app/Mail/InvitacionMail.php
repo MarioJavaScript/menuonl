@@ -30,7 +30,7 @@ class InvitacionMail extends Mailable
             markdown: 'emails.invitacion',
             with: [
                 'url' => route('invitaciones.mostrar', ['token' => $this->token]),
-                'restaurante' => $this->restaurante->nombre,
+                'nombreRestaurante' => $this->restaurante->nombre,
                 'rol' => $this->invitacion->rol === 'propietario' ? 'Propietario' : 'Editor',
                 'expiraEn' => $this->invitacion->expira_en,
             ],
