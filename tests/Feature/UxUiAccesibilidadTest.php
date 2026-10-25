@@ -397,6 +397,7 @@ class UxUiAccesibilidadTest extends TestCase
         $response->assertSee('Reintentar lectura');
         $response->assertSee('Ir a la portada de '.config('app.name'));
         $response->assertSee('min-h-[44px]');
+        $response->assertDontSee('onclick=', false);
     }
 
     public function test_restaurante_suspendido_muestra_pantalla_empatica_de_menu_no_disponible(): void
@@ -468,6 +469,8 @@ class UxUiAccesibilidadTest extends TestCase
         $response->assertSee('Imprimir ficha de mesa');
         $response->assertSee('Volver al panel');
         $response->assertSee('Sin necesidad de descargar aplicaciones · '.config('app.name'));
+        $response->assertSee('min-height: 44px', false);
+        $response->assertDontSee('onclick=', false);
     }
 
     // =========================================================================
@@ -512,6 +515,7 @@ class UxUiAccesibilidadTest extends TestCase
         $response->assertSee('Crear contraseña');
         $response->assertSee('Confirmar contraseña');
         $response->assertSee('Debe incluir al menos 10 caracteres combinando letras y números.');
+        $response->assertSee('border-borde-control', false);
     }
 
     // =========================================================================

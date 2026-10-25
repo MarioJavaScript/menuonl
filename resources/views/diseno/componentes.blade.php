@@ -203,7 +203,7 @@
         <span data-texto></span>
     </div>
 
-    <script>
+    <script @if (\Illuminate\Support\Facades\Vite::cspNonce()) nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}" @endif>
         (function () {
             var aviso = document.getElementById('avisoMuestra');
             var temporizador;

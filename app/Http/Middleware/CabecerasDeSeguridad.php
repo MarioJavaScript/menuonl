@@ -25,7 +25,7 @@ class CabecerasDeSeguridad
 
     public function handle(Request $request, Closure $next): Response
     {
-        $esAdmin = $request->is('admin', 'admin/*', 'livewire*', 'filament*');
+        $esAdmin = $request->is('admin', 'admin/*', 'livewire*', 'filament*', 'diseno');
 
         // El nonce debe existir antes de renderizar: Filament y Livewire lo leen de Vite::cspNonce().
         $nonce = $esAdmin ? Str::random(40) : null;

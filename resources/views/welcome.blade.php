@@ -31,8 +31,8 @@
             <section class="max-w-6xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20 pb-14">
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
                     <div class="lg:col-span-7 text-center lg:text-left">
-                        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-900 border border-amber-600/20 mb-6">
-                            <span class="w-2 h-2 rounded-full bg-amber-600 animate-pulse" aria-hidden="true"></span>
+                        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-900 dark:text-amber-300 border border-amber-600/20 dark:border-amber-400/30 mb-6">
+                            <span class="w-2 h-2 rounded-full bg-amber-600 dark:bg-amber-400 animate-pulse" aria-hidden="true"></span>
                             <span>Menú digital de nueva generación para restaurantes</span>
                         </div>
 
@@ -161,7 +161,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
                     <div class="p-8 rounded-3xl bg-superficie border border-borde shadow-sm flex flex-col justify-between">
                         <div>
-                            <div class="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-700 flex items-center justify-center mb-6">
+                            <div class="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-700 dark:text-amber-400 flex items-center justify-center mb-6">
                                 <svg class="w-6 h-6" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
                                 </svg>
@@ -175,7 +175,7 @@
 
                     <div class="p-8 rounded-3xl bg-superficie border border-borde shadow-sm flex flex-col justify-between">
                         <div>
-                            <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-700 flex items-center justify-center mb-6">
+                            <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 flex items-center justify-center mb-6">
                                 <svg class="w-6 h-6" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                                 </svg>
@@ -189,7 +189,7 @@
 
                     <div class="p-8 rounded-3xl bg-superficie border border-borde shadow-sm flex flex-col justify-between">
                         <div>
-                            <div class="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-700 flex items-center justify-center mb-6">
+                            <div class="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-700 dark:text-blue-400 flex items-center justify-center mb-6">
                                 <svg class="w-6 h-6" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
                                 </svg>

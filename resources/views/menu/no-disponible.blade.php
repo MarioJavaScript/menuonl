@@ -33,9 +33,9 @@
             </li>
         </ol>
 
-        <button type="button" onclick="window.location.reload()" class="btn-primario w-full min-h-[44px] py-3 text-sm focus-visible:ring-2 focus-visible:ring-foco focus:outline-none">
+        <a href="{{ request()->fullUrl() }}" class="btn-primario w-full min-h-[44px] py-3 text-sm focus-visible:ring-2 focus-visible:ring-foco focus:outline-none">
             Reintentar lectura
-        </button>
+        </a>
 
         <a href="{{ url('/') }}" class="mt-3 inline-flex items-center justify-center min-h-[44px] px-3 text-xs text-texto-suave hover:text-texto-fuerte transition-colors rounded-lg focus-visible:ring-2 focus-visible:ring-foco focus:outline-none">
             Ir a la portada de {{ config('app.name') }}

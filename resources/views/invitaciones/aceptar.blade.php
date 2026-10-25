@@ -33,7 +33,7 @@
             @if ($invitacion->rol === 'propietario')
                 Acceso completo para administrar menú, mesas, horarios, integrantes del equipo y ajustes del restaurante.
             @else
-                Podrás crear y actualizar platillos, precios, descripciones y disponibilidad de la carta digital.
+                Podrás crear y actualizar platillos, precios, descripciones y disponibilidad del menú digital.
             @endif
         </p>
     </div>
@@ -64,9 +64,10 @@
                         maxlength="255"
                         autocomplete="name"
                         placeholder="Ej. Sofía Morales"
-                        class="w-full min-h-[44px] px-4 py-3 rounded-xl border border-borde bg-fondo text-texto-fuerte text-sm focus:outline-none focus:ring-2 focus:ring-foco focus-visible:ring-2 focus-visible:ring-foco transition-all"
+                        @if ($errors->has('name')) aria-invalid="true" aria-describedby="name-error" @endif
+                        class="w-full min-h-[44px] px-4 py-3 rounded-xl border border-borde-control bg-fondo text-texto-fuerte text-sm focus:outline-none focus:ring-2 focus:ring-foco focus-visible:ring-2 focus-visible:ring-foco transition-all"
                     >
-                    @error('name') <p class="error text-xs text-peligro-texto mt-1" role="alert">{{ $message }}</p> @enderror
+                    @error('name') <p id="name-error" class="error text-xs text-peligro-texto mt-1" role="alert">{{ $message }}</p> @enderror
                 </div>
 
                 <div>
@@ -80,12 +81,14 @@
                         required
                         autocomplete="new-password"
                         placeholder="Mínimo 10 caracteres"
-                        class="w-full min-h-[44px] px-4 py-3 rounded-xl border border-borde bg-fondo text-texto-fuerte text-sm focus:outline-none focus:ring-2 focus:ring-foco focus-visible:ring-2 focus-visible:ring-foco transition-all"
+                        aria-describedby="{{ $errors->has('password') ? 'password-help password-error' : 'password-help' }}"
+                        @if ($errors->has('password')) aria-invalid="true" @endif
+                        class="w-full min-h-[44px] px-4 py-3 rounded-xl border border-borde-control bg-fondo text-texto-fuerte text-sm focus:outline-none focus:ring-2 focus:ring-foco focus-visible:ring-2 focus-visible:ring-foco transition-all"
                     >
-                    <p class="text-xs text-texto-suave mt-1">
+                    <p id="password-help" class="text-xs text-texto-suave mt-1">
                         Debe incluir al menos 10 caracteres combinando letras y números.
                     </p>
-                    @error('password') <p class="error text-xs text-peligro-texto mt-1" role="alert">{{ $message }}</p> @enderror
+                    @error('password') <p id="password-error" class="error text-xs text-peligro-texto mt-1" role="alert">{{ $message }}</p> @enderror
                 </div>
 
                 <div>
@@ -99,7 +102,7 @@
                         required
                         autocomplete="new-password"
                         placeholder="Repite tu contraseña"
-                        class="w-full min-h-[44px] px-4 py-3 rounded-xl border border-borde bg-fondo text-texto-fuerte text-sm focus:outline-none focus:ring-2 focus:ring-foco focus-visible:ring-2 focus-visible:ring-foco transition-all"
+                        class="w-full min-h-[44px] px-4 py-3 rounded-xl border border-borde-control bg-fondo text-texto-fuerte text-sm focus:outline-none focus:ring-2 focus:ring-foco focus-visible:ring-2 focus-visible:ring-foco transition-all"
                     >
                 </div>
             @endunless

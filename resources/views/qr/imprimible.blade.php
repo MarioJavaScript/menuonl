@@ -34,7 +34,9 @@
             .btn-print {
                 display: inline-flex;
                 align-items: center;
+                justify-content: center;
                 gap: 0.5rem;
+                min-height: 44px;
                 background-color: #0f172a;
                 color: #ffffff;
                 font-size: 0.875rem;
@@ -46,6 +48,11 @@
                 box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
                 text-decoration: none;
                 transition: background-color 0.15s, transform 0.1s;
+            }
+            .btn-action:focus-visible,
+            .btn-print:focus-visible {
+                outline: 3px solid #0f172a;
+                outline-offset: 2px;
             }
             .btn-action:hover,
             .btn-print:hover {
@@ -238,13 +245,13 @@
     </head>
     <body>
         <div class="no-print screen-actions">
-            <button class="btn-action btn-print" onclick="window.print()">
-                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button type="button" class="btn-action btn-print" data-imprimir>
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
                 </svg>
                 Imprimir ficha de mesa
             </button>
-            <button class="btn-action btn-back" onclick="window.close(); if(!window.closed) window.history.back();">
+            <button type="button" class="btn-action btn-back" data-volver>
                 Volver al panel
             </button>
         </div>
@@ -298,5 +305,16 @@
             <p class="url">{{ $url }}</p>
             <p class="footnote">Sin necesidad de descargar aplicaciones · {{ config('app.name') }}</p>
         </div>
+        <script @if (\Illuminate\Support\Facades\Vite::cspNonce()) nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}" @endif>
+            document.querySelector('[data-imprimir]')?.addEventListener('click', function () {
+                window.print();
+            });
+            document.querySelector('[data-volver]')?.addEventListener('click', function () {
+                window.close();
+                if (!window.closed) {
+                    window.history.back();
+                }
+            });
+        </script>
     </body>
 </html>
