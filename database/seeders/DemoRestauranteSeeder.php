@@ -7,6 +7,7 @@ use App\Models\Etiqueta;
 use App\Models\Restaurante;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use RuntimeException;
 
 class DemoRestauranteSeeder extends Seeder
 {
@@ -87,6 +88,8 @@ class DemoRestauranteSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->exigirEntornoDeDesarrollo();
+
         if (Restaurante::withTrashed()->where('slug', 'la-esquina')->exists()) {
             return;
         }
@@ -193,6 +196,25 @@ class DemoRestauranteSeeder extends Seeder
         }
 
         $producto->etiquetas()->attach(array_map(fn (string $codigo): int => $etiquetas[$codigo], $productoDemo['etiquetas']));
+    }
+
+    /**
+     * This seeder creates accounts with a publicly known password, so it refuses to run anywhere but local and testing,
+     * even when called directly with `db:seed --class=DemoRestauranteSeeder --force`.
+     *
+     * @throws RuntimeException
+     */
+    private function exigirEntornoDeDesarrollo(): void
+    {
+        if (app()->environment(['local', 'testing'])) {
+            return;
+        }
+
+        throw new RuntimeException(
+            'DemoRestauranteSeeder crea cuentas de prueba con una contraseña conocida y solo puede ejecutarse en los entornos '
+            .'local y testing (entorno actual: '.app()->environment().'). No se creó nada. '
+            .'Para el primer superadmin real usa: php artisan menuonl:crear-superadmin'
+        );
     }
 
     /**

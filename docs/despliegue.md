@@ -19,8 +19,8 @@ Prioridad: **P0** bloquea publicar con clientes reales, **P1** antes del primer 
 | # | Hallazgo | Prioridad |
 |---|---|---|
 | H1 | **Las páginas públicas mandan cookies de sesión junto con `Cache-Control: public`.** Medido en local contra `/{slug}/menu` y `/{slug}`: ambas responden con `Set-Cookie: laravel-session` y `XSRF-TOKEN` y `Cache-Control: max-age=30, public`. `/q/{codigo}` también abre sesión (medido con un código inexistente, que da 404; falta medir uno válido). Cloudflare no guarda en caché respuestas con `Set-Cookie` por defecto, así que **hoy el menú no se serviría desde el borde** (RNF-02 y RNF-09 no se cumplirían). Peor: si alguien activa "Cache Everything" para forzarlo, una cookie de sesión de un visitante podría servirse a otros. Además, con `SESSION_DRIVER=database`, cada visita anónima (y cada bot) escribe una fila en `sessions`. | P0 |
-| H2 | **`DemoRestauranteSeeder` crea `superadmin@menuonl.test` con contraseña `password` y no tiene ninguna guarda de entorno.** La guarda (`local`/`testing`) está solo en `DatabaseSeeder`. Un `php artisan db:seed --class=DemoRestauranteSeeder` en producción crea un superadmin con contraseña pública. | P0 |
-| H3 | **No hay forma segura de crear el primer superadmin.** No existe comando; hoy habría que usar `tinker` con `forceFill(['es_superadmin' => true])` (el campo no es asignable en masa). Sin superadmin no se puede crear ningún restaurante ni invitar a nadie. | P0 |
+| H2 | **RESUELTO.** `DemoRestauranteSeeder` ahora se niega a correr fuera de `local` y `testing` (lanza un error claro y termina con código distinto de cero; prueba en `tests/Feature/GuardaSeederDemoTest.php`). Descripción original: `DemoRestauranteSeeder` crea `superadmin@menuonl.test` con contraseña `password` y no tiene ninguna guarda de entorno.** La guarda (`local`/`testing`) está solo en `DatabaseSeeder`. Un `php artisan db:seed --class=DemoRestauranteSeeder` en producción crea un superadmin con contraseña pública. | P0 |
+| H3 | **RESUELTO.** Existe `php artisan menuonl:crear-superadmin` (ver punto 7; pruebas en `tests/Feature/CrearSuperadminTest.php`). Descripción original: **No había forma segura de crear el primer superadmin.** No existe comando; hoy habría que usar `tinker` con `forceFill(['es_superadmin' => true])` (el campo no es asignable en masa). Sin superadmin no se puede crear ningún restaurante ni invitar a nadie. | P0 |
 | H4 | **Los trabajos en cola necesitan un proceso `queue:work`** y el repositorio no trae su configuración. `PurgarCacheRestauranteJob` (`app/Jobs/PurgarCacheRestauranteJob.php`) implementa `ShouldQueue` y `QUEUE_CONNECTION=database`: sin worker, la purga de Cloudflare al cambiar un menú o un plan **nunca se ejecuta**. | P0 |
 | H5 | **Correo:** `MAIL_MAILER=log` por defecto (`.env.example`, `config/mail.php`). Las invitaciones (`app/Services/InvitacionService.php`) se mandan **sincrónicas** a propósito (el token no debe pasar por la tabla `jobs`). Con el mailer `log` el propietario nunca recibe su invitación; con un SMTP caído, crear un restaurante falla *después* de haberlo guardado. | P0 |
 | H6 | **La política de contenido (CSP) no protege de XSS en la práctica y solo existe en las páginas públicas.** Es `default-src 'self' 'unsafe-inline'`, que permite scripts en línea. `/admin/login` no manda CSP, `X-Frame-Options` ni `X-Content-Type-Options` (medido), y en el código solo tres controladores públicos (sitio, menú y `/q`) añaden esas cabeceras, así que `/panel` e `/invitaciones/*` tampoco las tendrían (deducido, no medido). Nadie manda HSTS. | P1 |
@@ -257,7 +257,7 @@ Medido en local con el kernel HTTP de Laravel:
 
 ### 6.6 Otros puntos de seguridad
 
-- **Seeders de prueba en producción (H2)** y número de WhatsApp real en el ejemplo (H9).
+- **Seeders de prueba en producción (H2, resuelto)** y número de WhatsApp real en el ejemplo (H9).
 - **Usuarios de base de datos** con permisos mínimos y MariaDB solo en `localhost` ([02-seguridad.md](02-seguridad.md) §1), conciliado con las necesidades de migración y respaldo (H7).
 - **Imágenes:** ya se reprocesan siempre a WebP con nombre aleatorio (`WebpImageService`, `tests/Feature/ImagenesSeguridadTest.php`); falta la regla de Nginx que impida ejecutar PHP en `storage/`.
 - **`composer audit`** ya corre en CI; correrlo también periódicamente sobre el servidor (o con Dependabot).
@@ -274,10 +274,14 @@ Medido en local con el kernel HTTP de Laravel:
 ### Flujo recomendado
 
 1. **Base limpia:** `php artisan migrate --force` y `php artisan db:seed --force` (solo `EtiquetaSeeder` en producción; confirmado en `database/seeders/DatabaseSeeder.php`). **Nunca** `--class=DemoRestauranteSeeder`.
-2. **Primer superadmin:** hoy no hay comando (H3). Mientras se crea, el procedimiento de emergencia en el servidor es, con una contraseña larga generada y sin dejarla en el historial del shell:
-   - `php artisan tinker` → crear el usuario con nombre, correo y contraseña, y asignar `es_superadmin` con `forceFill(...)->save()` (no está en `$fillable`, a propósito).
+2. **Primer superadmin:** `php artisan menuonl:crear-superadmin` (por SSH, en una terminal interactiva).
+   - Pide, en este orden: correo, nombre completo, contraseña y confirmación. La contraseña se escribe oculta y **nunca** se acepta como argumento, opción ni variable de entorno (no queda en el historial de la terminal), no se imprime y no se registra.
+   - Exige contraseña de al menos 12 caracteres, correo con formato válido y único (sin importar mayúsculas), y se niega a correr con `--no-interaction`.
+   - Si ya existe un superadmin, se niega; para crear otro (por ejemplo el de respaldo) hay que pasar `--confirmo-otro-superadmin`.
+   - Guarda la contraseña con el mismo hash que el resto de la aplicación (Argon2id si `HASH_DRIVER=argon2id`, como exige el punto 2), activa la cuenta y marca el correo como verificado. No usa `tinker` ni depende de `$fillable`.
+   - **Historial:** no se escribe ahí. Las filas de `historial_cambios` pertenecen a un restaurante (`restaurante_id` obligatorio) y un superadmin no tiene ninguno. Queda una línea en el registro de la aplicación (`storage/logs`): `menuonl:crear-superadmin - Superadmin creado.` con el id y el correo, sin contraseña.
    - Entrar a `/admin/login`: el sistema exige configurar la app de autenticación (2FA) antes de cualquier otra pantalla; guardar los códigos de recuperación.
-3. **Segundo superadmin** (respaldo) con el mismo procedimiento o invitándolo desde Plataforma.
+3. **Segundo superadmin** (respaldo) con el mismo comando y `--confirmo-otro-superadmin`.
 4. **Primer restaurante real:** Plataforma → Restaurantes → Crear: nombre, dirección corta (no reservada: `Catalogos::slugsReservados()`), moneda, idioma, zona horaria, **plan** (por defecto Completo), estado y correo del propietario. La aplicación crea el restaurante, siembra su idioma y envía una **invitación por correo** (`CreateRestaurante::afterCreate()`, `InvitacionService`), válida 7 días, de un solo uso. Requiere correo real configurado (H5).
 5. **El propietario** abre el enlace, define su contraseña, configura 2FA en su primer ingreso, y empieza a cargar su menú.
 6. **QR:** generarlos solo con `APP_URL` definitivo (los QR impresos codifican la URL de `APP_URL`).
@@ -290,7 +294,7 @@ Medido en local con el kernel HTTP de Laravel:
 
 | Ya está | Falta | Riesgo si no se hace |
 |---|---|---|
-| Alta de restaurante por Plataforma con selector de plan e invitación por correo (`app/Filament/Resources/Restaurantes/Pages/CreateRestaurante.php`); invitaciones con hash, caducidad y reemplazo (`InvitacionService`); `DatabaseSeeder` que solo carga demostración en `local`/`testing`. | Comando para crear el primer superadmin (H3). Guarda de entorno dentro de `DemoRestauranteSeeder` (H2). Una verificación de "no hay cuentas `@menuonl.test`" al desplegar. | Sin superadmin no se arranca; con el seeder de demostración, queda una cuenta con contraseña conocida. |
+| Alta de restaurante por Plataforma con selector de plan e invitación por correo (`app/Filament/Resources/Restaurantes/Pages/CreateRestaurante.php`); invitaciones con hash, caducidad y reemplazo (`InvitacionService`); `DatabaseSeeder` que solo carga demostración en `local`/`testing`; guarda de entorno también dentro de `DemoRestauranteSeeder` (H2); comando `menuonl:crear-superadmin` (H3). | Una verificación de "no hay cuentas `@menuonl.test`" al desplegar. | Sin superadmin no se arranca; con el seeder de demostración, queda una cuenta con contraseña conocida. |
 
 ---
 
@@ -326,8 +330,8 @@ Cada PR es independiente y revisable por separado. Ninguno cambia la lógica de 
 | # | PR | Resuelve | Prioridad |
 |---|---|---|---|
 | 1 | **Páginas públicas sin sesión ni cookies:** que `/{slug}`, `/{slug}/menu`, `/q/{codigo}` y `/api/v1/menu/*` no usen el grupo `web` completo (sin `StartSession`, `EncryptCookies`, `PreventRequestForgery`); prueba que la respuesta no trae `Set-Cookie`. Verificar que el formulario de reservas y el carrito (`localStorage`) no dependen de la sesión. | H1, RNF-02, RNF-09 | P0 |
-| 2 | **Guarda de entorno en `DemoRestauranteSeeder`:** que se niegue a correr si `app()->isProduction()`; prueba. | H2 | P0 |
-| 3 | **Comando `menuonl:crear-superadmin`:** pide nombre, correo y contraseña sin eco (o genera una), valida longitud, asigna `es_superadmin` con `forceFill`, nunca imprime la contraseña, y se niega si ya existe el correo; prueba. | H3 | P0 |
+| 2 | ~~**Guarda de entorno en `DemoRestauranteSeeder`**~~ **Hecho:** solo corre en `local` y `testing`, con prueba. | H2 | P0 |
+| 3 | ~~**Comando `menuonl:crear-superadmin`**~~ **Hecho** (interactivo, contraseña oculta y confirmada, mínimo 12 caracteres, `--confirmo-otro-superadmin`; sin Historial por no tener restaurante). Planteamiento original: pide nombre, correo y contraseña sin eco (o genera una), valida longitud, asigna `es_superadmin` con `forceFill`, nunca imprime la contraseña, y se niega si ya existe el correo; prueba. | H3 | P0 |
 | 4 | **Documentación de procesos (sin código de app):** `docs/` con ejemplo de Nginx (límites, `storage`, cabeceras), `php.ini`, Supervisor para `queue:work` y cron de `schedule:run`; y `.env.production.example` con los valores del punto 2. | H4, punto 1 y 2 | P0 |
 | 5 | **Correo de producción:** comando o prueba `menuonl:probar-correo {destino}` para validar SMTP antes del primer cliente; y que un fallo de envío de invitación no deje el restaurante a medias (reportar el error y permitir "Reenviar invitación"). | H5 | P0 |
 | 6 | **Quitar el número real de `.env.example`:** dejar `SOPORTE_WHATSAPP=` vacía y revisar que ningún dato personal esté en el repositorio. | H9 | P1 |
