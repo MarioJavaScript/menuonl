@@ -11,12 +11,13 @@ use App\Models\Restaurante;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\Concerns\ArmaEscenarioDePanel;
+use Tests\Concerns\Normaliza404;
 use Tests\TestCase;
 use ValueError;
 
 class CodigoNfcTest extends TestCase
 {
-    use ArmaEscenarioDePanel, RefreshDatabase;
+    use ArmaEscenarioDePanel, Normaliza404, RefreshDatabase;
 
     private Restaurante $a;
 
@@ -118,12 +119,15 @@ class CodigoNfcTest extends TestCase
         $nfc = CodigoQr::factory()->nfc()->inactivo()->create(['restaurante_id' => $this->a->id, 'codigo' => 'nfcapaga1']);
         $qr = CodigoQr::factory()->inactivo()->create(['restaurante_id' => $this->a->id, 'codigo' => 'qrapagado']);
 
-        $respuestaNfc = $this->get(route('qr.redirect', ['codigo' => $nfc->codigo]));
-        $respuestaQr = $this->get(route('qr.redirect', ['codigo' => $qr->codigo]));
+        $rutaNfc = route('qr.redirect', ['codigo' => $nfc->codigo], false);
+        $rutaQr = route('qr.redirect', ['codigo' => $qr->codigo], false);
+
+        $respuestaNfc = $this->get($rutaNfc);
+        $respuestaQr = $this->get($rutaQr);
 
         $respuestaNfc->assertNotFound()->assertViewIs('menu.no-disponible');
         $respuestaQr->assertNotFound()->assertViewIs('menu.no-disponible');
-        $this->assertSame($respuestaQr->getContent(), $respuestaNfc->getContent());
+        $this->assertMismo404SalvoLaUrlPedida([$rutaNfc => $respuestaNfc, $rutaQr => $respuestaQr]);
     }
 
     public function test_el_lote_de_mesas_respeta_el_tipo_elegido(): void

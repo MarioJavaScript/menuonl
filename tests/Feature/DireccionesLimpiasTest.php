@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Validator;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Concerns\ArmaEscenarioDePanel;
+use Tests\Concerns\Normaliza404;
 use Tests\TestCase;
 
 /**
@@ -23,7 +24,7 @@ use Tests\TestCase;
  */
 class DireccionesLimpiasTest extends TestCase
 {
-    use ArmaEscenarioDePanel, RefreshDatabase;
+    use ArmaEscenarioDePanel, Normaliza404, RefreshDatabase;
 
     protected function setUp(): void
     {
@@ -66,11 +67,12 @@ class DireccionesLimpiasTest extends TestCase
         $this->restauranteActivo('casa-borrada')->delete();
 
         foreach (['/%s', '/%s/menu'] as $plantilla) {
-            $cuerpos = [];
+            $respuestas = [];
             foreach (['no-existe', 'casa-lupita', 'casa-borrada'] as $slug) {
-                $cuerpos[] = $this->get(sprintf($plantilla, $slug))->assertNotFound()->getContent();
+                $ruta = sprintf($plantilla, $slug);
+                $respuestas[$ruta] = $this->get($ruta);
             }
-            $this->assertCount(1, array_unique($cuerpos), 'El 404 debe ser idéntico para '.$plantilla);
+            $this->assertMismo404SalvoLaUrlPedida($respuestas, 'El 404 debe ser idéntico para '.$plantilla.'.');
         }
     }
 
