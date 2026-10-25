@@ -11,5 +11,5 @@ La invitación es de un solo uso y caduca el {{ $expiraEn->format('d/m/Y H:i') }
 Si no esperabas este correo, puedes ignorarlo.
 
 Gracias,<br>
-{{ config('app.name') }}
+{{ $nombreApp }}
 </x-mail::message>

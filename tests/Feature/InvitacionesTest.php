@@ -14,6 +14,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Concerns\ArmaEscenarioDePanel;
 use Tests\TestCase;
 
@@ -95,8 +96,36 @@ class InvitacionesTest extends TestCase
         $this->assertTrue($invitacion->expira_en->equalTo(now()->addDays(7)));
     }
 
+    /**
+     * Texto que ve quien lee el correo: sin etiquetas y con las entidades HTML ya convertidas.
+     *
+     * El correo pasa por Markdown, que convierte `&#039;` y `&quot;` otra vez en `'` y `"`; comparar contra `e($nombre)`
+     * falla con esos caracteres, así que se compara contra lo que realmente se lee.
+     */
+    private static function textoVisible(string $html): string
+    {
+        return html_entity_decode(strip_tags($html), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    }
+
+    /**
+     * @return array<string, array{0: string}>
+     */
+    public static function nombresDeRestauranteConCaracteresEspeciales(): array
+    {
+        return [
+            'apóstrofo' => ["O'Connell Hermanos"],
+            'comillas dobles' => ['Taquería "El Güero"'],
+            'ampersand' => ['Pérez & Hijos'],
+            'como los de la fábrica en inglés' => ["D'Amore, O'Conner and Sons"],
+            'etiquetas HTML' => ['<b>Café</b> Ñandú'],
+            'acentos y símbolos' => ["Niño's — 100% mexicano"],
+            'sin caracteres especiales' => ['Taquería La Esquina'],
+        ];
+    }
+
     public function test_el_correo_lleva_el_enlace_con_el_token_y_el_rol(): void
     {
+        $this->a->update(['nombre' => 'Taquería La Esquina']);
         [$invitacion, $token] = $this->invitar('nuevo@ejemplo.com', 'propietario');
 
         Mail::assertSent(InvitacionMail::class, function (InvitacionMail $mail) use ($token): bool {
@@ -105,9 +134,24 @@ class InvitacionesTest extends TestCase
             return $mail->hasTo('nuevo@ejemplo.com')
                 && str_contains($html, route('invitaciones.mostrar', ['token' => $token]))
                 && str_contains($html, 'Propietario')
-                && str_contains($html, e($this->a->nombre));
+                && str_contains(self::textoVisible($html), 'Taquería La Esquina');
         });
         $this->assertSame('propietario', $invitacion->rol);
+    }
+
+    #[DataProvider('nombresDeRestauranteConCaracteresEspeciales')]
+    public function test_el_correo_muestra_bien_el_nombre_del_restaurante_con_caracteres_especiales(string $nombre): void
+    {
+        $this->a->update(['nombre' => $nombre]);
+        $this->invitar('nuevo@ejemplo.com', 'propietario');
+
+        Mail::assertSent(InvitacionMail::class, function (InvitacionMail $mail) use ($nombre): bool {
+            $html = $mail->render();
+
+            return $mail->envelope()->subject === 'Te invitaron a administrar '.$nombre
+                && str_contains(self::textoVisible($html), 'Te invitaron a '.$nombre)
+                && ! str_contains($html, '<b>Café</b>');
+        });
     }
 
     public function test_el_correo_no_se_encola(): void

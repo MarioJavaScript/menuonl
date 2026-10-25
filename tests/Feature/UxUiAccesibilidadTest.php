@@ -590,6 +590,8 @@ class UxUiAccesibilidadTest extends TestCase
         $this->assertSame('Inicio', __('filament-panels::pages/dashboard.title'));
 
         $restaurante = $this->crearRestaurante('tacos-el-guero');
+        // Nombre fijo con apóstrofo, comillas y ampersand: no depende de la fábrica aleatoria ni de su idioma.
+        $restaurante->update(['nombre' => "Tacos \"El Güero\" & O'Connell"]);
         $propietario = $this->crearUsuario('propietario', $restaurante);
         $this->entrarAlPanel($propietario, $restaurante);
 
