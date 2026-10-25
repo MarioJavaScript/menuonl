@@ -2,11 +2,14 @@
 
 namespace App\Filament\Resources\Restaurantes\Tables;
 
+use App\Enums\PlanRestaurante;
+use App\Filament\Resources\Restaurantes\Actions\CambiarPlanAction;
 use App\Filament\Resources\Restaurantes\RestauranteResource;
 use App\Models\Restaurante;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class RestaurantesTable
@@ -17,6 +20,7 @@ class RestaurantesTable
             ->columns([
                 TextColumn::make('nombre')->label('Nombre')->searchable()->sortable(),
                 TextColumn::make('slug')->label('Enlace')->searchable(),
+                TextColumn::make('plan')->label('Plan')->badge()->sortable(),
                 TextColumn::make('estado')
                     ->label('Estado')
                     ->badge()
@@ -24,6 +28,9 @@ class RestaurantesTable
                 TextColumn::make('created_at')->label('Alta')->dateTime('d/m/Y')->sortable(),
             ])
             ->defaultSort('nombre')
+            ->filters([
+                SelectFilter::make('plan')->label('Plan')->options(PlanRestaurante::class),
+            ])
             ->recordActions([
                 Action::make('verMenu')
                     ->label('Ver menú')
@@ -32,6 +39,7 @@ class RestaurantesTable
                     ->url(fn (Restaurante $record): string => route('menu.publico', ['slug' => $record->slug]))
                     ->openUrlInNewTab(),
                 EditAction::make(),
+                CambiarPlanAction::make(),
                 Action::make('suspender')
                     ->label('Suspender')
                     ->color('danger')

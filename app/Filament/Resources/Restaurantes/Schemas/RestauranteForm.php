@@ -2,12 +2,14 @@
 
 namespace App\Filament\Resources\Restaurantes\Schemas;
 
+use App\Enums\PlanRestaurante;
 use App\Filament\Components\ImagenRestauranteUpload;
 use App\Rules\SlugNoReservado;
 use App\Services\Catalogos;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
+use Illuminate\Validation\Rule;
 
 class RestauranteForm
 {
@@ -27,6 +29,15 @@ class RestauranteForm
                 Select::make('moneda')->label('Moneda')->options(Catalogos::monedas())->default('MXN')->required(),
                 Select::make('idioma_default')->label('Idioma principal')->options(Catalogos::idiomas())->default('es')->required(),
                 Select::make('zona_horaria')->label('Zona horaria')->options(Catalogos::zonasHorarias())->searchable()->default('America/Mexico_City')->required(),
+                Select::make('plan')
+                    ->label(__('panel.planes.cambiar.campo'))
+                    ->options(PlanRestaurante::class)
+                    ->selectablePlaceholder(false)
+                    ->default(PlanRestaurante::Completo->value)
+                    ->required()
+                    ->rule(Rule::enum(PlanRestaurante::class))
+                    ->helperText(__('panel.planes.cambiar.ayuda_crear'))
+                    ->visibleOn('create'),
                 Select::make('estado')
                     ->label('Estado')
                     ->options(['activo' => 'Activo', 'suspendido' => 'Suspendido'])

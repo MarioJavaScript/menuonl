@@ -35,6 +35,14 @@ class RestaurantePolicy extends MatrizPolicy
     }
 
     /**
+     * Only the superadmin sees or changes a restaurant's plan: the rule is closed here, not just hidden in the form.
+     */
+    public function cambiarPlan(User $user, Restaurante $restaurante): bool
+    {
+        return $user->isSuperadmin();
+    }
+
+    /**
      * Only the superadmin registers new restaurants.
      */
     public function create(User $user): bool

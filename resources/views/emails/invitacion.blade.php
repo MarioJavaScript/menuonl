@@ -1,7 +1,7 @@
 <x-mail::message>
-# Te invitaron a {{ $restaurante }}
+# Te invitaron a {{ $nombreRestaurante }}
 
-Recibiste una invitación para administrar el menú digital de **{{ $restaurante }}** con el rol de **{{ $rol }}**.
+Recibiste una invitación para administrar el menú digital de **{{ $nombreRestaurante }}** con el rol de **{{ $rol }}**.
 
 <x-mail::button :url="$url">
 Aceptar invitación

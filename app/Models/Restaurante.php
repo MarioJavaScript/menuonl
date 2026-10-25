@@ -9,12 +9,15 @@ use App\Traits\Auditable;
 use App\Traits\ProtegeImagenesDelRestaurante;
 use Carbon\Carbon;
 use Filament\Models\Contracts\HasName;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 class Restaurante extends Model implements HasName
 {
@@ -105,6 +108,41 @@ class Restaurante extends Model implements HasName
             get: fn (?string $valor): PlanRestaurante => PlanRestaurante::desde($valor),
             set: fn (PlanRestaurante|string $valor): string => ($valor instanceof PlanRestaurante ? $valor : PlanRestaurante::from($valor))->value,
         );
+    }
+
+    /**
+     * Cambia el plan y lo deja en el historial (quién, cuándo, plan anterior y nuevo). Es la única vía de escritura
+     * del plan: la política `cambiarPlan` (solo superadmin) se comprueba aquí, no solo en el formulario.
+     * El guardado va sin eventos para que el historial lleve al usuario que se pasa, no al de la sesión, y sin duplicados.
+     *
+     * @throws AuthorizationException
+     */
+    public function cambiarPlan(PlanRestaurante $nuevo, User $quien): bool
+    {
+        Gate::forUser($quien)->authorize('cambiarPlan', $this);
+
+        $anterior = $this->plan;
+
+        if ($anterior === $nuevo) {
+            return false;
+        }
+
+        DB::transaction(function () use ($nuevo, $anterior, $quien): void {
+            self::withoutEvents(fn () => $this->forceFill(['plan' => $nuevo])->save());
+
+            HistorialCambio::withoutGlobalScopes()->create([
+                'restaurante_id' => $this->getKey(),
+                'usuario_id' => $quien->getKey(),
+                'entidad' => $this->getAuditEntityName(),
+                'entidad_id' => (int) $this->getKey(),
+                'accion' => 'actualizar',
+                'cambios' => ['plan' => ['antes' => $anterior->value, 'despues' => $nuevo->value]],
+            ]);
+        });
+
+        $this->triggerMenuCachePurge();
+
+        return true;
     }
 
     public function incluye(Capacidad $capacidad): bool

@@ -105,7 +105,7 @@ class InvitacionesTest extends TestCase
             return $mail->hasTo('nuevo@ejemplo.com')
                 && str_contains($html, route('invitaciones.mostrar', ['token' => $token]))
                 && str_contains($html, 'Propietario')
-                && str_contains($html, $this->a->nombre);
+                && str_contains($html, e($this->a->nombre));
         });
         $this->assertSame('propietario', $invitacion->rol);
     }
