@@ -45,6 +45,7 @@
     --mb-tinta-3: #587390;
     --mb-accion: #1b62b5;
     --mb-accion-hover: #154e94;
+    --mb-accion-activo: #154e94;
     --mb-sobre-accion: #eaf6ff;
     --mb-foco: #1b62b5;
     --mb-linea: #d5e4f2;
@@ -57,6 +58,7 @@
     /* Medidas */
     --mb-objetivo: 2.75rem;
     --mb-foco-grosor: 3px;
+    --mb-barra-inferior: calc(3.5rem + env(safe-area-inset-bottom));
     --mb-r-md: 0.75rem;
     --mb-r-lg: 1.25rem;
 
@@ -87,6 +89,7 @@
     --mb-tinta-3: #94b2d0;
     --mb-accion: #7cc4f8;
     --mb-accion-hover: #9dd2fa;
+    --mb-accion-activo: #7cc4f8;
     --mb-sobre-accion: #0b1f36;
     --mb-foco: #a3d6fb;
     --mb-linea: #23476f;
@@ -177,6 +180,37 @@ html:root {
         box-shadow: var(--mb-sombra-3);
     }
 
+    /* ---- Menú lateral y barra superior (PR 2): solo CSS sobre las clases fi-* de Filament ---- */
+    .fi-sidebar-item-btn {
+        min-height: var(--mb-objetivo);
+        border-radius: var(--mb-r-md);
+    }
+
+    .fi-sidebar-item-btn > .fi-icon {
+        color: var(--mb-tinta-2);
+    }
+
+    .fi-sidebar-group-label {
+        color: var(--mb-tinta-2);
+    }
+
+    .fi-sidebar-item.fi-active > .fi-sidebar-item-btn {
+        background-color: var(--mb-superficie-2);
+        box-shadow: inset 3px 0 0 var(--mb-accion);
+    }
+
+    .fi-sidebar-item.fi-active > .fi-sidebar-item-btn > .fi-icon,
+    .fi-sidebar-item.fi-active > .fi-sidebar-item-btn > .fi-sidebar-item-label {
+        color: var(--mb-accion-activo);
+        font-weight: 700;
+    }
+
+    .fi-topbar {
+        background-color: color-mix(in srgb, var(--mb-superficie) 92%, transparent);
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
+    }
+
     /* ---- Barra inferior del panel en móvil (se oculta desde lg, donde aparece el menú lateral) ---- */
     .mo-barra-inferior {
         position: fixed;
@@ -186,14 +220,15 @@ html:root {
         display: grid;
         grid-template-columns: repeat(5, minmax(0, 1fr));
         padding-bottom: env(safe-area-inset-bottom);
-        border-top: 1px solid var(--mo-borde);
-        background-color: color-mix(in srgb, var(--mo-superficie) 92%, transparent);
+        border-top: 1px solid var(--mb-linea);
+        background-color: color-mix(in srgb, var(--mb-superficie) 92%, transparent);
         -webkit-backdrop-filter: blur(16px);
         backdrop-filter: blur(16px);
     }
 
     .mo-barra-inferior a,
     .mo-barra-inferior button {
+        position: relative;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -203,9 +238,9 @@ html:root {
         padding: 0.25rem;
         border: 0;
         background: transparent;
-        color: var(--mo-texto-suave);
+        color: var(--mb-tinta-2);
         font-family: inherit;
-        font-size: 0.6875rem;
+        font-size: 0.75rem;
         font-weight: 600;
         text-decoration: none;
         cursor: pointer;
@@ -217,11 +252,17 @@ html:root {
     }
 
     .mo-barra-inferior [aria-current='page'] {
-        color: var(--color-primary-600);
+        color: var(--mb-accion-activo);
     }
 
-    .dark .mo-barra-inferior [aria-current='page'] {
-        color: var(--color-primary-400);
+    .mo-barra-inferior [aria-current='page']::before {
+        content: '';
+        position: absolute;
+        top: 0.125rem;
+        width: 2.25rem;
+        height: 0.25rem;
+        border-radius: 999px;
+        background-color: var(--mb-accion);
     }
 
     @media (min-width: 64rem) {
@@ -230,10 +271,36 @@ html:root {
         }
     }
 
+    /* El contenido no queda debajo de la barra: relleno al final y margen de desplazamiento para el foco */
     @media (max-width: 63.99rem) {
         .fi-body:has(.mo-barra-inferior) .fi-main {
-            padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+            padding-bottom: calc(var(--mb-barra-inferior) + 1rem);
         }
+
+        html:has(.mo-barra-inferior) {
+            scroll-padding-bottom: calc(var(--mb-barra-inferior) + 1rem);
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .fi-sidebar,
+        .fi-sidebar-item-btn,
+        .fi-sidebar-close-overlay,
+        .mo-barra-inferior,
+        .mo-barra-inferior * {
+            transition: none !important;
+            animation: none !important;
+        }
+    }
+}
+
+/*
+ * Acciones de formulario pegajosas (Filament las fija a 1rem del borde inferior): en el celular se suben sobre la barra
+ * inferior para que no las tape. Sin capa, porque la utilidad de Filament vive en @layer utilities.
+ */
+@media (max-width: 63.99rem) {
+    .fi-body:has(.mo-barra-inferior) .fi-sc-actions.fi-sticky .fi-ac {
+        bottom: calc(var(--mb-barra-inferior) + 0.5rem);
     }
 }
 

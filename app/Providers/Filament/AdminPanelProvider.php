@@ -9,8 +9,8 @@ use App\Filament\Widgets\ResumenRestauranteWidget;
 use App\Http\Middleware\AutenticaPanelAdmin;
 use App\Http\Middleware\ExigeDosFactores;
 use App\Models\Restaurante;
+use App\Services\BarraInferiorDelPanel;
 use App\Services\PaletaDelPanel;
-use App\Services\PermisosPanel;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Enums\ThemeMode;
 use Filament\Facades\Filament;
@@ -48,24 +48,11 @@ class AdminPanelProvider extends PanelProvider
             ->multiFactorAuthentication([AppAuthentication::make()->recoverable()])
             ->tenant(Restaurante::class, slugAttribute: 'slug')
             ->tenantProfile(EditRestauranteProfile::class)
-            ->renderHook(
-                PanelsRenderHook::USER_MENU_BEFORE,
-                function (): HtmlString|string {
-                    $tenant = Filament::getTenant();
-
-                    if (! $tenant || ! $tenant->slug) {
-                        return '';
-                    }
-
-                    return new HtmlString(view('filament.hooks.ver-menu-publico', [
-                        'url' => route('menu.publico', ['slug' => $tenant->slug]),
-                        'sitioUrl' => $tenant->tieneSitio() ? route('sitio.publico', ['slug' => $tenant->slug]) : null,
-                    ])->render());
-                }
-            )
+            ->renderHook(PanelsRenderHook::USER_MENU_BEFORE, fn (): HtmlString|string => self::enlacesPublicos(enMenuLateral: false))
+            ->renderHook(PanelsRenderHook::SIDEBAR_FOOTER, fn (): HtmlString|string => self::enlacesPublicos(enMenuLateral: true))
             ->renderHook(
                 PanelsRenderHook::BODY_END,
-                fn (): string => Filament::getTenant() ? view('filament.hooks.barra-inferior')->render() : '',
+                fn (): string => Filament::getTenant() ? view('filament.hooks.barra-inferior', ['accesos' => app(BarraInferiorDelPanel::class)->accesos()])->render() : '',
             )
             ->brandName(fn (): string => (string) config('app.name'))
             ->brandLogo(fn () => view('filament.logo'))
@@ -94,7 +81,7 @@ class AdminPanelProvider extends PanelProvider
                     ->icon(Heroicon::OutlinedBolt)
                     ->sort(20)
                     ->url(fn (): string => route('panel'))
-                    ->visible(fn (): bool => self::puedeUsarElPanelDeServicio()),
+                    ->visible(fn (): bool => BarraInferiorDelPanel::puedeUsarElPanelDeServicio()),
                 NavigationItem::make(fn (): string => __('panel.datos.nav'))
                     ->group(fn (): string => __('panel.grupos.informacion'))
                     ->icon(Heroicon::OutlinedBuildingStorefront)
@@ -134,16 +121,21 @@ class AdminPanelProvider extends PanelProvider
     }
 
     /**
-     * "Panel de servicio" solo se ofrece a quien tiene algún módulo en el restaurante activo (el plan es un techo).
+     * "Ver mi sitio" y "Ver mi menú": junto al menú de usuario en pantallas anchas y, en el celular, al pie del menú lateral.
      */
-    private static function puedeUsarElPanelDeServicio(): bool
+    private static function enlacesPublicos(bool $enMenuLateral): HtmlString|string
     {
         $tenant = Filament::getTenant();
-        $usuario = auth()->user();
 
-        return $tenant instanceof Restaurante
-            && $usuario !== null
-            && PermisosPanel::modulosDe($usuario, $tenant) !== [];
+        if (! $tenant || ! $tenant->slug) {
+            return '';
+        }
+
+        return new HtmlString(view('filament.hooks.ver-menu-publico', [
+            'url' => route('menu.publico', ['slug' => $tenant->slug]),
+            'sitioUrl' => $tenant->tieneSitio() ? route('sitio.publico', ['slug' => $tenant->slug]) : null,
+            'enMenuLateral' => $enMenuLateral,
+        ])->render());
     }
 
     /**

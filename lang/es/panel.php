@@ -19,6 +19,20 @@ return [
         'qr' => 'QR y mesas',
     ],
 
+    'barra' => [
+        'nombre' => 'Principal',
+        'inicio' => 'Inicio',
+        'platillos' => 'Platillos',
+        'pedidos' => 'Pedidos',
+        'apariencia' => 'Apariencia',
+        'categorias' => 'Categorías',
+        'horario' => 'Horario',
+        'contactos' => 'Contactos',
+        'hoy' => 'Hoy',
+        'mas' => 'Más',
+        'mas_opciones' => 'Más opciones del menú',
+    ],
+
     'enlaces' => [
         'ver_sitio' => 'Ver mi sitio',
         'ver_menu' => 'Ver mi menú',

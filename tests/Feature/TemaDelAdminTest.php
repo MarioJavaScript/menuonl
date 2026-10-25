@@ -152,6 +152,16 @@ class TemaDelAdminTest extends TestCase
             'oscuro: foco sobre lienzo' => ['oscuro', 'mb-foco', 'mb-lienzo', 3.0],
             'oscuro: borde de campo sobre superficie' => ['oscuro', 'mb-borde-control', 'mb-superficie', 3.0],
             'oscuro: borde de campo sobre lienzo' => ['oscuro', 'mb-borde-control', 'mb-lienzo', 3.0],
+            'claro: menu activo (texto) sobre su fondo' => ['claro', 'mb-accion-activo', 'mb-superficie-2', 4.5],
+            'claro: barra inferior activa sobre superficie' => ['claro', 'mb-accion-activo', 'mb-superficie', 4.5],
+            'claro: indicador del menu activo sobre su fondo' => ['claro', 'mb-accion', 'mb-superficie-2', 3.0],
+            'claro: texto del menu sobre su fondo activo' => ['claro', 'mb-tinta-2', 'mb-superficie-2', 4.5],
+            'claro: grupo del menu sobre lienzo' => ['claro', 'mb-tinta-2', 'mb-lienzo', 4.5],
+            'oscuro: menu activo (texto) sobre su fondo' => ['oscuro', 'mb-accion-activo', 'mb-superficie-2', 4.5],
+            'oscuro: barra inferior activa sobre superficie' => ['oscuro', 'mb-accion-activo', 'mb-superficie', 4.5],
+            'oscuro: indicador del menu activo sobre su fondo' => ['oscuro', 'mb-accion', 'mb-superficie-2', 3.0],
+            'oscuro: texto del menu sobre su fondo activo' => ['oscuro', 'mb-tinta-2', 'mb-superficie-2', 4.5],
+            'oscuro: grupo del menu sobre lienzo' => ['oscuro', 'mb-tinta-2', 'mb-lienzo', 4.5],
         ];
     }
 
@@ -319,5 +329,70 @@ class TemaDelAdminTest extends TestCase
         }
 
         $this->assertDoesNotMatchRegularExpression('#@import\s+(url\()?["\']?https?:#', $css);
+    }
+
+    private function barraInferior(string $css): string
+    {
+        $inicio = strpos($css, '/* ---- Barra inferior del panel en móvil');
+        $this->assertNotFalse($inicio, 'No existe el bloque de la barra inferior.');
+
+        return substr($css, $inicio, strpos($css, '/*
+ * Acciones de formulario pegajosas') - $inicio);
+    }
+
+    public function test_el_menu_lateral_y_la_barra_inferior_usan_los_tokens_mb_y_conservan_la_clase(): void
+    {
+        $css = $this->tema();
+        $barra = $this->barraInferior($css);
+
+        $this->assertStringContainsString('.mo-barra-inferior {', $barra);
+        $this->assertStringNotContainsString('var(--mo-', $barra, 'La barra inferior ya no usa los tokens --mo-*.');
+        $this->assertStringNotContainsString('var(--color-primary', $barra);
+        $this->assertStringContainsString('min-height: 3.5rem;', $barra);
+        $this->assertStringContainsString('padding-bottom: env(safe-area-inset-bottom);', $barra);
+        $this->assertStringContainsString('.fi-sidebar-item.fi-active > .fi-sidebar-item-btn {', $css);
+        $this->assertStringContainsString('min-height: var(--mb-objetivo);', $css);
+    }
+
+    public function test_la_barra_no_tapa_el_contenido_ni_las_acciones_pegajosas(): void
+    {
+        $css = $this->tema();
+
+        $this->assertSame('calc(3.5rem + env(safe-area-inset-bottom))', $this->bloque($css, ':root')['mb-barra-inferior']);
+        $this->assertStringContainsString('html:has(.mo-barra-inferior) {
+            scroll-padding-bottom: calc(var(--mb-barra-inferior) + 1rem);', $css);
+        $this->assertStringContainsString('            padding-bottom: calc(var(--mb-barra-inferior) + 1rem);', $css);
+        $this->assertStringContainsString('.fi-body:has(.mo-barra-inferior) .fi-sc-actions.fi-sticky .fi-ac {
+        bottom: calc(var(--mb-barra-inferior) + 0.5rem);', $css);
+
+        // Las acciones pegajosas van fuera de @layer: la utilidad de Filament vive en @layer utilities y le ganaría.
+        $this->assertGreaterThan(strpos($css, '/*
+ * Acciones de formulario pegajosas'), strpos($css, '.fi-sc-actions.fi-sticky'));
+        $this->assertMatchesRegularExpression('/@media \(max-width: 63\.99rem\) \{\s*\.fi-body:has\(\.mo-barra-inferior\) \.fi-sc-actions\.fi-sticky/', $css);
+    }
+
+    public function test_el_movimiento_se_apaga_con_prefers_reduced_motion(): void
+    {
+        $barra = $this->barraInferior($this->tema());
+
+        $this->assertStringContainsString('@media (prefers-reduced-motion: reduce) {', $barra);
+        $this->assertMatchesRegularExpression('/prefers-reduced-motion: reduce\) \{[^}]*\.fi-sidebar,[^}]*\.mo-barra-inferior \*[^}]*transition: none !important;[^}]*animation: none !important;/s', $barra);
+    }
+
+    public function test_el_menu_y_la_barra_no_agregan_otro_contorno_ni_anillo_de_foco(): void
+    {
+        $css = $this->tema();
+        $barra = $this->barraInferior($css);
+
+        $this->assertDoesNotMatchRegularExpression('/^\s*outline/m', $barra);
+        $this->assertStringNotContainsString('--tw-ring', $barra);
+        $this->assertStringNotContainsString(':focus', $barra);
+        $this->assertSame(1, preg_match_all('/^\s*outline:/m', $css));
+    }
+
+    public function test_el_viewport_de_filament_no_se_toca(): void
+    {
+        $this->assertStringNotContainsString('viewport-fit', (string) file_get_contents(app_path('Providers/Filament/AdminPanelProvider.php')));
+        $this->assertStringNotContainsString('viewport-fit', $this->tema());
     }
 }

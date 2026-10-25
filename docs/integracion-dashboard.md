@@ -158,7 +158,7 @@ Cada PR se prueba con la suite correspondiente y, tras los PR 1–2, con revisi�
 |---|---|---|---|---|
 | 0 | **Marca y modo claro (hecho)** | Nombre visible en `config('app.name')` (Menubly) en panel, pestañas, pie de menú y sitios, invitaciones, correos, QR imprimible, portada; sin preferencia guardada todo sale en claro; Automático/Claro/Oscuro se conservan | Ver sección 10 | Producción con `APP_NAME=MENUONL` viejo; páginas que dependían de `prefers-color-scheme` |
 | 1 | **Tokens y tema (hecho, sección 11)** | Tokens `--mb-*` en el tema del admin (sin tocar `--mo-*`), fuentes por Vite, color primario, foco, 44 px. Sin mover pantallas | Login, Inicio, una tabla, un formulario, subida de foto; claro/oscuro; 390 px | Selectores `fi-*` que no existen; contraste del botón; modo oscuro compartido con el menú público; fuentes bloqueadas por CSP |
-| 2 | Layout | Barra lateral y barra inferior (el logotipo sigue siendo la M hasta que llegue el arte) | Navegación en celular; enlaces "Ver mi sitio/menú" | `UxUiAccesibilidadTest` (barra inferior, "Inicio"); `PanelNavegacionDuenoTest` |
+| 2 | **Layout (hecho, sección 12)** | Barra lateral y barra inferior (el logotipo sigue siendo la M hasta que llegue el arte) | Navegación en celular; enlaces "Ver mi sitio/menú" | `UxUiAccesibilidadTest` (barra inferior, "Inicio"); `PanelNavegacionDuenoTest` |
 | 3 | Componentes `x-mb.*` | Glifo de plan, aviso, vacío, hoja, banner. Se prueban en `diseno/componentes` | La página de componentes | `PaginasDeDisenoTest` |
 | 4 | Banner de superadmin | `renderHook` + "Volver a la plataforma" | Entrar a un restaurante como superadmin y como propietario (no debe verse) | Barra pegajosa y su altura sobre la barra superior; toasts encima del banner |
 | 5 | Inicio del restaurante | Rediseño de `Inicio` y widget; checklist como comanda; Slashi de chef solo con el arte oficial disponible | Cada rol y cada plan; restaurante vacío | `PanelInicioTest` completo (textos y jerga); filtro por rol |
@@ -215,4 +215,47 @@ A mano, en un navegador real (con el sistema operativo en modo oscuro):
 - **Íconos `gray-400` en modo claro:** `#8AA6C1` sobre blanco da **2.53:1**, por debajo del 3:1 que pide WCAG 1.4.11 para íconos que transmiten información. Filament ya los pintaba así (su gris por defecto daba un valor similar). Decidir en el PR 2 o 6 si se oscurecen a `gray-500` o se acompañan de texto.
 - **Texto de ayuda en claro:** `#587390` da **4.64:1** sobre el lienzo `#F3F9FF` (y 4.92:1 sobre blanco). Cumple 4.5:1 pero con **poco margen**; cualquier tono más claro o un fondo más oscuro lo rompe. `TemaDelAdminTest` lo vigila.
 - **Hover del botón primario en claro** pasó del tono 500 al 700 por pedido del diseño; el tono 500 se conserva (`#1F6CBF`) para anillos, interruptores y otros usos de Filament.
-- **Barra inferior móvil:** sigue con `--mo-*` (grises neutros) hasta el PR 2, así que su tono difiere un poco del resto del panel.
+- **Barra inferior móvil:** pasó a los tokens `--mb-*` en el PR 2 (sección 12).
+
+## 12. PR 2 "Layout": qué se hizo
+
+- **Menú lateral y barra superior (solo CSS):** en `resources/css/filament/admin/theme.css`, sobre las clases `fi-*` verificadas en `vendor/filament/filament` (`fi-sidebar-item-btn`, `fi-sidebar-item.fi-active`, `fi-sidebar-group-label`, `fi-topbar`). Ítems de 44 px, ítem activo con fondo `--mb-superficie-2` e indicador de 3 px a la izquierda (sombra interna, no contorno), íconos y etiquetas de grupo en `--mb-tinta-2` (los íconos `gray-400` del menú ya no se usan). Filament sigue dando el enlace "Saltar al contenido", `aria-current` en el ítem activo, el cajón del celular con su botón (`aria-controls`/`aria-expanded`) y Escape. El menú no es colapsable en escritorio (el prototipo tampoco lo es).
+- **Barra inferior (`mo-barra-inferior`, clase conservada):** `App\Services\BarraInferiorDelPanel` recorre una lista por prioridad (Inicio, Platillos, Pedidos y reservas, Apariencia, Categorías, Horario, Contactos y "Hoy") y se queda con los primeros 4 que la persona puede abrir, validando cada uno con el `canAccess`/`canViewAny` de su pantalla. "Hoy" (`/panel`) solo entra para quien no ve la página de Pedidos y reservas. "Más" abre el menú lateral de Filament. La vista `filament/hooks/barra-inferior.blade.php` ya no compara planes. Nombre de la navegación: "Principal" (antes "Accesos rápidos", que repetía el del widget de Inicio). Cuando la etiqueta visible es corta ("Pedidos", "Hoy"), el nombre completo va en `aria-label`. Textos en `lang/es/panel.php`, sección `barra`.
+- **Qué lleva la barra:** propietario y superadmin con plan Completo: Inicio, Platillos, Pedidos, Apariencia. Propietario con Sitio y menú: Inicio, Pedidos, Horario, Contactos. Editor: Inicio, Platillos, Categorías, Horario. Gerente: Inicio, Platillos, Hoy. Recepción y cocina: Inicio, Hoy. La barra solo ofrece destinos que el menú lateral también ofrece a esa persona.
+- **Acciones pegajosas de formulario** (`EditaAjustesDelRestaurante`, `->sticky()`): en el celular suben a `bottom: calc(var(--mb-barra-inferior) + 0.5rem)`, sin capa porque la utilidad de Filament vive en `@layer utilities`. El contenido recibe relleno inferior y `scroll-padding-bottom` con el mismo token (`--mb-barra-inferior` = 3.5 rem más el área segura).
+- **"Ver mi sitio" y "Ver mi menú":** en el celular la barra superior solo lleva "Ver mi menú" y los dos botones aparecen también al pie del menú lateral (hook `SIDEBAR_FOOTER`, solo bajo `lg`). En escritorio no cambió nada. Sin textos nuevos.
+- **Foco y movimiento:** sigue habiendo una sola regla de contorno (la del PR 1); el menú y la barra no agregan contornos ni anillos. `prefers-reduced-motion: reduce` apaga las transiciones del cajón, del menú y de la barra.
+- **CSP, meta viewport, JavaScript:** sin cambios. Cero JavaScript nuevo; "Más" usa el `$store.sidebar` de Filament.
+- **No se tocó:** agrupación y textos de la navegación, ítems apagados por plan (decisión: fuera de este PR), punto rojo de pendientes (otro PR), banner de superadmin (PR 4), el menú público ni `/panel`.
+
+Contrastes (calculados desde los tokens, vigilados en `TemaDelAdminTest`):
+
+| Par | Claro | Oscuro |
+|---|---|---|
+| Ítem activo (texto) sobre su fondo `--mb-superficie-2` | 7.22:1 | 6.25:1 |
+| Barra inferior, acceso activo sobre la superficie | 8.24:1 | 7.11:1 |
+| Indicador del ítem activo (componente, mínimo 3:1) | 5.31:1 | 6.25:1 |
+| Texto del menú (`--mb-tinta-2`) sobre el fondo activo | 5.70:1 | 6.55:1 |
+| Etiqueta de grupo sobre el lienzo | 6.14:1 | 9.21:1 |
+
+### Pendientes anotados en el PR 2
+
+- **`viewport-fit=cover` no se agrega** (decisión: no tocar el `<meta viewport>` de Filament). Sin él, `env(safe-area-inset-bottom)` suele valer 0 en iOS; en Safari normal el navegador ya deja libre la zona inferior, pero en una app instalada en la pantalla de inicio la barra podría quedar pegada al indicador de inicio. No se pudo medir en un dispositivo.
+- **Contraste del ítem activo en oscuro:** la propuesta de la Fase 1 (fondo al 16 % de acción) daba 5.03:1, con poco margen. Se sustituyó por `--mb-superficie-2`, que da 6.25:1. Sigue siendo el valor más bajo del menú en oscuro: cualquier cambio de `--mb-superficie-2` o de `--mb-accion` en oscuro debe revisarlo (la prueba exige 4.5:1).
+- **Íconos `gray-400` fuera del menú** (tablas, formularios): siguen en 2.53:1 sobre blanco en claro (PR 1). El menú lateral ya no los usa.
+- Dos navegaciones en el celular (hamburguesa de la barra superior y "Más" de la barra inferior abren el mismo menú). Se mantienen las dos.
+- La regresión visual no la detecta ninguna prueba automática.
+
+### Qué probar a mano (390 px y escritorio, claro y oscuro)
+
+1. Cada rol: propietario, superadmin, editor, gerente, recepción y cocina, con plan Completo, y propietario con Sitio y menú. Comparar la barra con la tabla de arriba. Con Solo menú sigue la pantalla "tu plan no incluye el panel".
+2. Que "Plataforma" (Restaurantes, Cuentas) no aparezca al propietario ni en el menú ni en la barra.
+3. "Más": abre el menú lateral, el foco queda dentro, Escape lo cierra y el foco vuelve al botón. El botón anuncia expandido/contraído.
+4. Teclado: Tab recorre "Saltar al contenido", barra superior, menú lateral, contenido y, al final, la barra inferior. El foco nunca queda tapado por la barra y se ve un solo contorno de 3 px.
+5. Pantallas con botones fijos abajo (Apariencia, Datos, Pedidos y reservas): el botón de guardar se ve por encima de la barra, con y sin desplazamiento.
+6. Final de una lista larga (Platillos): el último elemento no queda debajo de la barra.
+7. Barra superior en 390 px: solo "Ver mi menú"; abrir el menú lateral y confirmar "Ver mi sitio" y "Ver mi menú" al pie (Completo y Sitio y menú; con Solo menú no hay sitio).
+8. Ítem activo: en la barra inferior y en el menú lateral, la pantalla abierta es la marcada, y solo una.
+9. Preferencia de reducir movimiento activada en el sistema: el cajón y los cambios de color no se animan.
+10. Lector de pantalla: la barra se anuncia como "Principal"; "Pedidos" y "Hoy" se leen con su nombre completo; el acceso activo se anuncia como página actual.
+11. En un iPhone con muesca o barra de inicio: revisar el borde inferior (ver pendiente de `viewport-fit`).
