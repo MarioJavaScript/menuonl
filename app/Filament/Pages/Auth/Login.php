@@ -2,8 +2,10 @@
 
 namespace App\Filament\Pages\Auth;
 
+use App\Models\User;
 use Filament\Auth\Http\Responses\Contracts\LoginResponse;
 use Filament\Auth\Pages\Login as BaseLogin;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 
@@ -20,6 +22,16 @@ class Login extends BaseLogin
      * Registered through ->login(), so panel page discovery must skip it.
      */
     protected static bool $isDiscovered = false;
+
+    /**
+     * Quien solo pertenece a restaurantes sin panel por su plan sí inicia sesión: así llega a la pantalla que le
+     * explica su plan y le ofrece contacto, en lugar de un error de credenciales que no es verdad.
+     */
+    protected function isUserAllowedToAccessPanel(Authenticatable $user): bool
+    {
+        return parent::isUserAllowedToAccessPanel($user)
+            || ($user instanceof User && $user->debeVerElAvisoDePlanSinPanel());
+    }
 
     public function authenticate(): ?LoginResponse
     {

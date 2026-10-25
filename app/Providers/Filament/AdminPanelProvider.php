@@ -6,12 +6,12 @@ use App\Filament\Pages\Auth\Login;
 use App\Filament\Pages\Inicio;
 use App\Filament\Pages\Tenancy\EditRestauranteProfile;
 use App\Filament\Widgets\ResumenRestauranteWidget;
+use App\Http\Middleware\AutenticaPanelAdmin;
 use App\Http\Middleware\ExigeDosFactores;
 use App\Models\Restaurante;
 use App\Services\PermisosPanel;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Facades\Filament;
-use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -118,7 +118,7 @@ class AdminPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
             ])
             ->authMiddleware([
-                Authenticate::class,
+                AutenticaPanelAdmin::class,
             ])
             // Persistent so it also runs on Livewire update requests (see ExigeDosFactores).
             ->authMiddleware([

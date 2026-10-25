@@ -1,7 +1,10 @@
 <?php
 
 use App\Http\Controllers\InvitacionAceptarController;
+use App\Http\Controllers\PlanSinPanelController;
 use App\Http\Controllers\PortadaController;
+use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', PortadaController::class)->name('portada');
@@ -40,7 +43,15 @@ Route::middleware('throttle:menu-publico')->group(function (): void {
 
 // Service panel (reservations, orders, menu): Blade shell + Vite assets that talk to /api/v1/panel with the login session.
 Route::middleware('auth')
-    ->get('/panel', fn () => response()->view('panel.index')->header('Cache-Control', 'no-store'))
+    ->get('/panel', function (Request $request) {
+        $usuario = $request->user();
+
+        if ($usuario instanceof User && $usuario->debeVerElAvisoDePlanSinPanel()) {
+            return app(PlanSinPanelController::class)->respuesta($usuario);
+        }
+
+        return response()->view('panel.index')->header('Cache-Control', 'no-store');
+    })
     ->name('panel');
 
 Route::middleware('auth')
