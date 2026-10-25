@@ -267,12 +267,17 @@
                     <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                         @foreach ($contactos as $contacto)
                             @php
+                                $valorContacto = trim((string) $contacto->valor);
+                                $esHttp = (bool) preg_match('/\Ahttps?:\/\//i', $valorContacto);
                                 $href = match ($contacto->tipo) {
-                                    'telefono' => str_starts_with($contacto->valor, 'tel:') ? $contacto->valor : 'tel:' . preg_replace('/[^0-9+]/', '', $contacto->valor),
-                                    'whatsapp' => 'https://wa.me/' . preg_replace('/[^0-9]/', '', $contacto->valor),
-                                    'email' => str_starts_with($contacto->valor, 'mailto:') ? $contacto->valor : 'mailto:' . $contacto->valor,
-                                    'direccion' => str_starts_with($contacto->valor, 'http') ? $contacto->valor : 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($contacto->valor),
-                                    default => (str_starts_with($contacto->valor, 'http://') || str_starts_with($contacto->valor, 'https://')) ? $contacto->valor : 'https://' . $contacto->valor,
+                                    'telefono' => 'tel:' . preg_replace('/[^0-9+]/', '', $valorContacto),
+                                    'whatsapp' => 'https://wa.me/' . preg_replace('/[^0-9]/', '', $valorContacto),
+                                    'email' => str_starts_with(strtolower($valorContacto), 'mailto:') ? $valorContacto : 'mailto:' . $valorContacto,
+                                    'direccion' => $esHttp ? $valorContacto : 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($valorContacto),
+                                    'instagram' => $esHttp ? $valorContacto : 'https://instagram.com/' . ltrim($valorContacto, '@/'),
+                                    'facebook' => $esHttp ? $valorContacto : 'https://facebook.com/' . ltrim($valorContacto, '@/'),
+                                    'tiktok' => $esHttp ? $valorContacto : 'https://tiktok.com/@' . ltrim($valorContacto, '@/'),
+                                    default => $esHttp ? $valorContacto : 'https://' . ltrim($valorContacto, '/'),
                                 };
                             @endphp
                             <a

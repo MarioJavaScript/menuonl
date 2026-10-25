@@ -143,7 +143,7 @@ class AdminPanelProvider extends PanelProvider
 
         return $tenant instanceof Restaurante
             && $usuario !== null
-            && PermisosPanel::modulosDe($usuario, (int) $tenant->getKey()) !== [];
+            && PermisosPanel::modulosDe($usuario, $tenant) !== [];
     }
 
     /**

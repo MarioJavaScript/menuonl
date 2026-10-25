@@ -48,7 +48,7 @@ trait EditaAjustesDelRestaurante
      * Columnas que la persona puede guardar desde esta página; null significa todas las que declara el formulario.
      * Es la defensa real: aunque llegue otro campo en la petición, aquí se descarta.
      *
-     * \return list<string>|null
+     * @return list<string>|null
      */
     protected function camposEditables(Restaurante $restaurante): ?array
     {

@@ -21,11 +21,11 @@ class ResumenController extends Controller
         $usuario = $request->user();
         $restaurantes = $usuario->isSuperadmin() ? Restaurante::query()->limit(50) : $usuario->restaurantes()->wherePivot('activo', true);
 
-        return response()->json(['data' => $restaurantes->where('estado', 'activo')->orderBy('nombre')->get(['restaurantes.id', 'nombre', 'slug'])
+        return response()->json(['data' => $restaurantes->where('estado', 'activo')->orderBy('nombre')->get(['restaurantes.id', 'nombre', 'slug', 'plan'])
             ->map(fn (Restaurante $r): array => [
                 'slug' => $r->slug,
                 'nombre' => $r->nombre,
-                'modulos' => PermisosPanel::modulosDe($usuario, $r->id),
+                'modulos' => PermisosPanel::modulosDe($usuario, $r),
             ])->filter(fn (array $r): bool => $r['modulos'] !== [])->values()]);
     }
 

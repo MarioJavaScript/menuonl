@@ -42,7 +42,12 @@ class ProgresoDeConfiguracion
      */
     public function para(Restaurante $restaurante, User $usuario): array
     {
-        $pasos = $this->pasos($restaurante, $usuario);
+        $tieneHorario = null;
+        $consultarHorario = function () use ($restaurante, &$tieneHorario): bool {
+            return $tieneHorario ??= $this->tieneHorario($restaurante);
+        };
+
+        $pasos = $this->pasos($restaurante, $usuario, $consultarHorario);
         $hechos = count(array_filter($pasos, fn (array $paso): bool => $paso['hecho']));
         $total = count($pasos);
 
@@ -51,7 +56,7 @@ class ProgresoDeConfiguracion
             'hechos' => $hechos,
             'total' => $total,
             'porcentaje' => $total > 0 ? (int) round($hechos / $total * 100) : null,
-            'avisos' => $this->avisos($restaurante, $usuario),
+            'avisos' => $this->avisos($restaurante, $usuario, $consultarHorario),
             'atencion' => $this->atencion($restaurante, $usuario),
             'dia' => $this->resumenDelDia($restaurante, $usuario),
             'codigo_qr_url' => $this->urlDeDescargaDelQr($usuario),
@@ -59,31 +64,32 @@ class ProgresoDeConfiguracion
     }
 
     /**
+     * @param  \Closure(): bool  $tieneHorario
      * @return list<array{clave: string, hecho: bool, importante: bool, url: string}>
      */
-    private function pasos(Restaurante $restaurante, User $usuario): array
+    private function pasos(Restaurante $restaurante, User $usuario, \Closure $tieneHorario): array
     {
         $puedeEditar = $usuario->can('update', $restaurante);
         $puedeEditarDatos = $puedeEditar && $restaurante->permiteA($usuario, Capacidad::EditarDatos);
         $puedeEditarDiseno = $puedeEditar && $restaurante->permiteA($usuario, Capacidad::EditarDiseno);
         $puedeEditarTelefonos = $puedeEditar && $restaurante->permiteA($usuario, Capacidad::EditarTelefonos);
         $candidatos = [
-            ['categoria', $usuario->can('viewAny', Categoria::class), $restaurante->categorias()->exists(), true, fn (): string => CategoriaResource::getUrl('create')],
-            ['platillo', $usuario->can('viewAny', Producto::class), $restaurante->productos()->exists(), true, fn (): string => ProductoResource::getUrl('create')],
-            ['horario', $usuario->can('viewAny', Horario::class), $this->tieneHorario($restaurante), false, fn (): string => HorarioResource::getUrl('index')],
-            ['contacto', $usuario->can('viewAny', Contacto::class), $restaurante->contactos()->where('visible', true)->exists(), false, fn (): string => ContactoResource::getUrl('index')],
-            ['descripcion', $puedeEditarDatos, filled(trim((string) $restaurante->descripcion)), false, fn (): string => EditRestauranteProfile::getUrl()],
-            ['mapa', $puedeEditarDatos, $restaurante->latitud !== null && $restaurante->longitud !== null, false, fn (): string => EditRestauranteProfile::getUrl()],
-            ['logotipo', $puedeEditarDiseno, filled($restaurante->logo), false, fn (): string => Apariencia::getUrl()],
-            ['portada', $puedeEditarDiseno, filled($restaurante->portada), false, fn (): string => Apariencia::getUrl()],
-            ['whatsapp', $puedeEditarTelefonos && $restaurante->pedidos_activos, filled($restaurante->whatsapp_pedidos), true, fn (): string => PedidosYReservas::getUrl()],
+            ['categoria', $usuario->can('viewAny', Categoria::class), fn (): bool => $restaurante->categorias()->exists(), true, fn (): string => CategoriaResource::getUrl('create')],
+            ['platillo', $usuario->can('viewAny', Producto::class), fn (): bool => $restaurante->productos()->exists(), true, fn (): string => ProductoResource::getUrl('create')],
+            ['horario', $usuario->can('viewAny', Horario::class), $tieneHorario, false, fn (): string => HorarioResource::getUrl('index')],
+            ['contacto', $usuario->can('viewAny', Contacto::class), fn (): bool => $restaurante->contactos()->where('visible', true)->exists(), false, fn (): string => ContactoResource::getUrl('index')],
+            ['descripcion', $puedeEditarDatos, fn (): bool => filled(trim((string) $restaurante->descripcion)), false, fn (): string => EditRestauranteProfile::getUrl()],
+            ['mapa', $puedeEditarDatos, fn (): bool => $restaurante->latitud !== null && $restaurante->longitud !== null, false, fn (): string => EditRestauranteProfile::getUrl()],
+            ['logotipo', $puedeEditarDiseno, fn (): bool => filled($restaurante->logo), false, fn (): string => Apariencia::getUrl()],
+            ['portada', $puedeEditarDiseno, fn (): bool => filled($restaurante->portada), false, fn (): string => Apariencia::getUrl()],
+            ['whatsapp', $puedeEditarTelefonos && $restaurante->pedidos_activos, fn (): bool => filled($restaurante->whatsapp_pedidos), true, fn (): string => PedidosYReservas::getUrl()],
         ];
 
         $pasos = [];
 
         foreach ($candidatos as [$clave, $visible, $hecho, $importante, $url]) {
             if ($visible) {
-                $pasos[] = ['clave' => $clave, 'hecho' => (bool) $hecho, 'importante' => $importante, 'url' => $url()];
+                $pasos[] = ['clave' => $clave, 'hecho' => (bool) $hecho(), 'importante' => $importante, 'url' => $url()];
             }
         }
 
@@ -93,11 +99,12 @@ class ProgresoDeConfiguracion
     /**
      * Avisos que no cuentan para el porcentaje: reservas abiertas al público (si el plan las incluye) sin un horario que las respalde.
      *
+     * @param  \Closure(): bool  $tieneHorario
      * @return list<array{clave: string, url: string}>
      */
-    private function avisos(Restaurante $restaurante, User $usuario): array
+    private function avisos(Restaurante $restaurante, User $usuario, \Closure $tieneHorario): array
     {
-        if ($restaurante->reservasDisponibles() && ! $this->tieneHorario($restaurante) && $usuario->can('viewAny', Horario::class)) {
+        if ($restaurante->reservasDisponibles() && $usuario->can('viewAny', Horario::class) && ! $tieneHorario()) {
             return [['clave' => 'reservas_sin_horario', 'url' => HorarioResource::getUrl('index')]];
         }
 

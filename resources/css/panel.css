@@ -102,8 +102,14 @@ label.f{display:block;font-size:.8125rem;font-weight:600;color:var(--muted);marg
 .tk .its{margin:4px 0 10px;color:var(--muted);font-size:.9375rem}
 .tk .btn{width:100%}
 .empty{padding:20px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:var(--r)}
+.fechas{align-items:stretch}
+.fecha-sel{flex:1.4;display:flex}
+.fecha-sel input{width:100%;min-height:var(--tap);border:1px solid var(--line);background:var(--surface);border-radius:var(--r);font:600 .8125rem var(--font);color:var(--ink);padding:2px 8px}
+.fecha-sel[data-activo=true] input{background:var(--ink);color:#fff;border-color:var(--ink);color-scheme:dark}
+.dia{font-size:.9375rem;margin:16px 0 4px;color:var(--muted)}
+.dia:first-child{margin-top:0}
 @media(min-width:900px){
-  .tabs{display:none}
+  .tabs:not(.fechas){display:none}
   .board{grid-template-columns:repeat(4,1fr)}
   .col,.col.on{display:block}
   .col h2{display:flex;justify-content:space-between;font-size:.9375rem;padding-bottom:8px;border-bottom:2px solid var(--ink)}

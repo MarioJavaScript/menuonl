@@ -30,7 +30,7 @@ class ProductosTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn (Builder $query): Builder => $query->with(['traducciones', 'restaurante', 'categoria.traducciones']))
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->with(['traducciones', 'restaurante', 'categoria.restaurante', 'categoria.traducciones']))
             ->columns([
                 ImageColumn::make('imagen')
                     ->label('Foto')
@@ -90,7 +90,7 @@ class ProductosTable
                     ->label('Categoría')
                     ->placeholder('Todas')
                     ->options(fn (): array => Categoria::query()
-                        ->with('traducciones')
+                        ->with(['restaurante', 'traducciones'])
                         ->orderBy('orden')
                         ->get()
                         ->mapWithKeys(fn (Categoria $c): array => [$c->id => $c->traduccion()?->nombre ?? 'Sin nombre'])

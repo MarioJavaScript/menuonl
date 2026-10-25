@@ -67,9 +67,10 @@ class PermisosPanel
     /**
      * @return list<string>
      */
-    public static function modulosDe(User $usuario, int $restauranteId): array
+    public static function modulosDe(User $usuario, Restaurante|int $restaurante): array
     {
-        $plan = self::planDe($restauranteId);
+        $restauranteId = $restaurante instanceof Restaurante ? (int) $restaurante->getKey() : $restaurante;
+        $plan = $restaurante instanceof Restaurante ? $restaurante->plan : self::planDe($restauranteId);
 
         if ($usuario->isSuperadmin()) {
             // Edits above the ceiling, but a plan without reservations has no reservations section for anyone.
@@ -81,8 +82,8 @@ class PermisosPanel
         return array_values(array_intersect($delRol, self::modulosDelPlan($plan)));
     }
 
-    public static function permite(User $usuario, int $restauranteId, string $modulo): bool
+    public static function permite(User $usuario, Restaurante|int $restaurante, string $modulo): bool
     {
-        return in_array($modulo, self::modulosDe($usuario, $restauranteId), true);
+        return in_array($modulo, self::modulosDe($usuario, $restaurante), true);
     }
 }

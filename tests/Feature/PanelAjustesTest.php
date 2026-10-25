@@ -99,6 +99,9 @@ class PanelAjustesTest extends TestCase
         $this->actingAs($usuario)->patchJson($url, ['plantilla' => 'z'])->assertJsonValidationErrors('plantilla');
         $this->actingAs($usuario)->patchJson($url, ['reservas_cupo' => 0])->assertJsonValidationErrors('reservas_cupo');
         $this->actingAs($usuario)->patchJson($url, ['reservas_franja_min' => 45])->assertJsonValidationErrors('reservas_franja_min');
+        $this->actingAs($usuario)->patchJson($url, ['instagram' => 'javascript:alert(1)'])->assertJsonValidationErrors('instagram');
+        $this->actingAs($usuario)->patchJson($url, ['facebook' => 'data:text/html,hola'])->assertJsonValidationErrors('facebook');
+        $this->actingAs($usuario)->patchJson($url, ['direccion' => "Calle 1\nCalle 2"])->assertJsonValidationErrors('direccion');
     }
 
     public function test_changes_template_and_reservation_capacity(): void

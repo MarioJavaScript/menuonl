@@ -41,7 +41,7 @@ class ContactoResource extends Resource
     /**
      * Tipos de contacto que la persona puede ver y cambiar según el plan del restaurante; null significa todos.
      *
-     * \return list<string>|null
+     * @return list<string>|null
      */
     public static function tiposPermitidos(): ?array
     {

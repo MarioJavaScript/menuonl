@@ -105,6 +105,9 @@ class PanelRecomendadosTest extends TestCase
         $nuevo->etiquetas()->detach();
         $this->assertSame($conFoto->id, $servicio->para($restaurante->fresh())['principal']?->id);
 
+        $restaurante->update(['sitio_plantilla' => 'h']);
+        $this->assertSame($conFoto->id, $servicio->para($restaurante->fresh())['principal']?->id);
+
         Livewire::test(Recomendados::class)->assertSee('Platillo principal')->assertSee('Con foto');
     }
 

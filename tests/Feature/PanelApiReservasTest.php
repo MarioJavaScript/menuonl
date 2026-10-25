@@ -95,6 +95,33 @@ class PanelApiReservasTest extends TestCase
 
         $this->actingAs($usuario)->getJson($this->url($restaurante).'?fecha='.$manana)->assertJsonCount(1, 'data');
         $this->actingAs($usuario)->getJson($this->url($restaurante).'?fecha=nope')->assertUnprocessable();
+        $this->actingAs($usuario)->getJson($this->url($restaurante).'?proximas=nope')->assertUnprocessable();
+    }
+
+    public function test_lists_upcoming_reservations_ordered_by_date_and_time_and_returns_today(): void
+    {
+        $restaurante = Restaurante::factory()->create();
+        $hoy = now($restaurante->zona_horaria ?: config('app.timezone'))->toDateString();
+        $ayer = now($restaurante->zona_horaria ?: config('app.timezone'))->subDay()->toDateString();
+        $manana = now($restaurante->zona_horaria ?: config('app.timezone'))->addDay()->toDateString();
+        $pasadoManana = now($restaurante->zona_horaria ?: config('app.timezone'))->addDays(2)->toDateString();
+
+        Reserva::factory()->create(['restaurante_id' => $restaurante->id, 'nombre' => 'Ayer', 'fecha' => $ayer, 'hora' => '12:00:00']);
+        Reserva::factory()->create(['restaurante_id' => $restaurante->id, 'nombre' => 'Pasado', 'fecha' => $pasadoManana, 'hora' => '13:00:00']);
+        Reserva::factory()->create(['restaurante_id' => $restaurante->id, 'nombre' => 'Manana tarde', 'fecha' => $manana, 'hora' => '21:00:00']);
+        Reserva::factory()->create(['restaurante_id' => $restaurante->id, 'nombre' => 'Hoy', 'fecha' => $hoy, 'hora' => '19:00:00']);
+        Reserva::factory()->create(['restaurante_id' => $restaurante->id, 'nombre' => 'Manana temprano', 'fecha' => $manana, 'hora' => '14:00:00']);
+
+        $respuesta = $this->actingAs($this->miembro($restaurante))->getJson($this->url($restaurante).'?proximas=1');
+
+        $respuesta->assertOk()
+            ->assertJsonPath('hoy', $hoy)
+            ->assertJsonCount(4, 'data');
+
+        $this->assertSame(
+            ['Hoy', 'Manana temprano', 'Manana tarde', 'Pasado'],
+            array_column($respuesta->json('data'), 'nombre')
+        );
     }
 
     public function test_creates_reservation_confirmed_by_default_in_active_restaurant(): void

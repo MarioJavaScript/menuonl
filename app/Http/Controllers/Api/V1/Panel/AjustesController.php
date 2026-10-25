@@ -9,6 +9,7 @@ use App\Models\Horario;
 use App\Models\Restaurante;
 use App\Services\Catalogos;
 use App\Services\WebpImageService;
+use Closure;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -34,15 +35,41 @@ class AjustesController extends Controller
 
     public function update(Request $request, Restaurante $restaurante): JsonResponse
     {
+        $contactoSeguro = function (string $attribute, mixed $value, Closure $fail): void {
+            if (! is_string($value)) {
+                return;
+            }
+
+            $limpio = trim($value);
+
+            if ($limpio === '') {
+                return;
+            }
+
+            if (preg_match('/[\x00-\x1F\x7F]/', $limpio)) {
+                $fail("El campo {$attribute} contiene caracteres no válidos.");
+
+                return;
+            }
+
+            if (preg_match('/\A([A-Za-z][A-Za-z0-9+.\-]*):/', $limpio, $coincidencias)) {
+                $esquema = strtolower($coincidencias[1]);
+
+                if (! in_array($esquema, ['http', 'https', 'tel', 'mailto'], true)) {
+                    $fail("El campo {$attribute} tiene un protocolo no permitido.");
+                }
+            }
+        };
+
         $datos = $request->validate([
             'nombre' => ['sometimes', 'required', 'string', 'max:150'],
             'eslogan' => ['sometimes', 'nullable', 'string', 'max:120'],
             'descripcion' => ['sometimes', 'nullable', 'string', 'max:500'],
             'whatsapp' => ['sometimes', 'nullable', 'string', 'max:20', 'regex:/\A\+?[0-9 ()-]{8,20}\z/'],
-            'telefono' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'direccion' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'instagram' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'facebook' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'telefono' => ['sometimes', 'nullable', 'string', 'max:255', $contactoSeguro],
+            'direccion' => ['sometimes', 'nullable', 'string', 'max:255', $contactoSeguro],
+            'instagram' => ['sometimes', 'nullable', 'string', 'max:255', $contactoSeguro],
+            'facebook' => ['sometimes', 'nullable', 'string', 'max:255', $contactoSeguro],
             'latitud' => ['nullable', 'numeric', 'between:-90,90', 'required_with:longitud'],
             'longitud' => ['nullable', 'numeric', 'between:-180,180', 'required_with:latitud'],
             'plantilla' => ['sometimes', 'required', Rule::in(array_keys(Catalogos::plantillasSitio()))],

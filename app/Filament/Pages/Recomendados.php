@@ -79,7 +79,7 @@ class Recomendados extends Page implements HasTable
     public function table(Table $table): Table
     {
         return $table
-            ->query(fn (): Builder => Producto::query()->with(['traducciones', 'categoria.traducciones']))
+            ->query(fn (): Builder => Producto::query()->with(['restaurante', 'traducciones', 'categoria.restaurante', 'categoria.traducciones']))
             ->columns([
                 ImageColumn::make('imagen')
                     ->label(__('panel.recomendados.foto'))
@@ -127,7 +127,7 @@ class Recomendados extends Page implements HasTable
                     ->label(__('panel.recomendados.categoria'))
                     ->placeholder(__('panel.recomendados.todas'))
                     ->options(fn (): array => Categoria::query()
-                        ->with('traducciones')
+                        ->with(['restaurante', 'traducciones'])
                         ->orderBy('orden')
                         ->get()
                         ->mapWithKeys(fn (Categoria $c): array => [$c->id => $c->traduccion()?->nombre ?? __('panel.recomendados.sin_nombre')])

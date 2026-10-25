@@ -17,7 +17,7 @@ class RecomendadosDelSitio
      *
      * @var list<string>
      */
-    private const array PLANTILLAS_CON_PRINCIPAL = ['e', 'f', 'g'];
+    private const array PLANTILLAS_CON_PRINCIPAL = ['e', 'f', 'g', 'h'];
 
     /**
      * @return array{marcados: int, maximo: int, en_sitio: Collection<int, Producto>, principal: ?Producto, plantilla_con_principal: bool, sin_marcar_usa_los_primeros: bool}
@@ -32,7 +32,7 @@ class RecomendadosDelSitio
             ->whereHas('categoria', fn ($q) => $q->where('visible', true))
             ->when(! $sinMarcar, fn ($q) => $q->destacado())
             ->when(! $restaurante->mostrar_agotados, fn ($q) => $q->disponible())
-            ->with(['traducciones', 'etiquetas'])
+            ->with(['restaurante', 'traducciones', 'etiquetas'])
             ->orderBy('orden')
             ->orderBy('id')
             ->limit(SitioPublicoDatos::MAX_DESTACADOS)
@@ -51,7 +51,7 @@ class RecomendadosDelSitio
     }
 
     /**
-     * La portada de las plantillas e, f y g toma el platillo con la etiqueta "Nuevo"; si no hay, el primero con foto
+     * La portada de las plantillas e, f, g y h toma el platillo con la etiqueta "Nuevo"; si no hay, el primero con foto
      * y, si tampoco, el primero. Los agotados no se destacan.
      *
      * @param  Collection<int, Producto>  $enSitio

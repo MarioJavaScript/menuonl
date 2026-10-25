@@ -51,11 +51,22 @@ class PedidosYReservas extends Page
     }
 
     /**
-     * \return list<string>|null
+     * @return list<string>|null
      */
     protected function camposEditables(Restaurante $restaurante): ?array
     {
         return $this->soloElNumero() ? ['whatsapp_pedidos'] : null;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function datosIniciales(Restaurante $restaurante): array
+    {
+        $datos = $restaurante->attributesToArray();
+        $datos['whatsapp_pedidos'] = $restaurante->whatsappPedidosDigitos() ?? $restaurante->whatsapp_pedidos;
+
+        return $datos;
     }
 
     public static function getNavigationGroup(): string|UnitEnum|null

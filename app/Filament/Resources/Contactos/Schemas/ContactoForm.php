@@ -14,7 +14,7 @@ use Filament\Schemas\Schema;
 class ContactoForm
 {
     /**
-     * \return array<string, string>
+     * @return array<string, string>
      */
     private static function tiposDisponibles(): array
     {
