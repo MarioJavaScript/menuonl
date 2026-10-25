@@ -21,8 +21,8 @@ Prioridad: **P0** bloquea publicar con clientes reales, **P1** antes del primer 
 | H1 | **RESUELTO.** `/{slug}`, `/{slug}/menu`, `/q/{codigo}`, `/m/{slug}` y `/s/{slug}` ya no pasan por `EncryptCookies`, `AddQueuedCookiesToResponse`, `StartSession`, `ShareErrorsFromSession` ni `PreventRequestForgery` (`routes/web.php`, variable `$middlewareDeSesion`): sin `Set-Cookie`, sin fila en `sessions`, sin token CSRF. Conservan el límite `throttle:menu-publico` y sus `Cache-Control`. Pruebas: `tests/Feature/PaginasPublicasSinSesionTest.php`. Quedan igual con sesión: `/admin`, `/panel`, `/api/v1/panel/*`, `/invitaciones/*` y `/` (portada). Descripción original: **Las páginas públicas mandaban cookies de sesión junto con `Cache-Control: public`.** Medido en local contra `/{slug}/menu` y `/{slug}`: ambas responden con `Set-Cookie: laravel-session` y `XSRF-TOKEN` y `Cache-Control: max-age=30, public`. `/q/{codigo}` también abre sesión (medido con un código inexistente, que da 404; falta medir uno válido). Cloudflare no guarda en caché respuestas con `Set-Cookie` por defecto, así que **hoy el menú no se serviría desde el borde** (RNF-02 y RNF-09 no se cumplirían). Peor: si alguien activa "Cache Everything" para forzarlo, una cookie de sesión de un visitante podría servirse a otros. Además, con `SESSION_DRIVER=database`, cada visita anónima (y cada bot) escribe una fila en `sessions`. | P0 |
 | H2 | **RESUELTO.** `DemoRestauranteSeeder` ahora se niega a correr fuera de `local` y `testing` (lanza un error claro y termina con código distinto de cero; prueba en `tests/Feature/GuardaSeederDemoTest.php`). Descripción original: `DemoRestauranteSeeder` crea `superadmin@menuonl.test` con contraseña `password` y no tiene ninguna guarda de entorno.** La guarda (`local`/`testing`) está solo en `DatabaseSeeder`. Un `php artisan db:seed --class=DemoRestauranteSeeder` en producción crea un superadmin con contraseña pública. | P0 |
 | H3 | **RESUELTO.** Existe `php artisan menuonl:crear-superadmin` (ver punto 7; pruebas en `tests/Feature/CrearSuperadminTest.php`). Descripción original: **No había forma segura de crear el primer superadmin.** No existe comando; hoy habría que usar `tinker` con `forceFill(['es_superadmin' => true])` (el campo no es asignable en masa). Sin superadmin no se puede crear ningún restaurante ni invitar a nadie. | P0 |
-| H4 | **Los trabajos en cola necesitan un proceso `queue:work`** y el repositorio no trae su configuración. `PurgarCacheRestauranteJob` (`app/Jobs/PurgarCacheRestauranteJob.php`) implementa `ShouldQueue` y `QUEUE_CONNECTION=database`: sin worker, la purga de Cloudflare al cambiar un menú o un plan **nunca se ejecuta**. | P0 |
-| H5 | **Correo:** `MAIL_MAILER=log` por defecto (`.env.example`, `config/mail.php`). Las invitaciones (`app/Services/InvitacionService.php`) se mandan **sincrónicas** a propósito (el token no debe pasar por la tabla `jobs`). Con el mailer `log` el propietario nunca recibe su invitación; con un SMTP caído, crear un restaurante falla *después* de haberlo guardado. | P0 |
+| H4 | **RESUELTO.** Hay configuración lista en `deploy/` (Supervisor, systemd y un `desplegar.sh` con `queue:restart`), documentada en `deploy/README.md` (cómo comprobar que el worker vive y qué hacer con trabajos fallidos), y el comando `menuonl:verificar-produccion` lo comprueba con un trabajo de prueba. Las tablas `jobs` y `failed_jobs` ya tienen migración. Descripción original: **Los trabajos en cola necesitan un proceso `queue:work`** y el repositorio no trae su configuración. `PurgarCacheRestauranteJob` (`app/Jobs/PurgarCacheRestauranteJob.php`) implementa `ShouldQueue` y `QUEUE_CONNECTION=database`: sin worker, la purga de Cloudflare al cambiar un menú o un plan **nunca se ejecuta**. | P0 |
+| H5 | **RESUELTO (invitaciones).** El correo de la invitación sale por la cola (`EnviarInvitacionJob`, cifrado porque lleva el enlace): un fallo de SMTP ya no rompe el alta, la invitación queda guardada y marcada, el superadmin ve "Correo no enviado" en Restaurantes y puede reenviarla (enlace nuevo, misma fila, sin duplicados). `menuonl:verificar-produccion` falla si `MAIL_MAILER` es `log` o `array`. Falta probar un envío real con el SMTP definitivo. Descripción original: **Correo:** `MAIL_MAILER=log` por defecto (`.env.example`, `config/mail.php`). Las invitaciones (`app/Services/InvitacionService.php`) se mandan **sincrónicas** a propósito (el token no debe pasar por la tabla `jobs`). Con el mailer `log` el propietario nunca recibe su invitación; con un SMTP caído, crear un restaurante falla *después* de haberlo guardado. | P0 |
 | H6 | **La política de contenido (CSP) no protege de XSS en la práctica y solo existe en las páginas públicas.** Es `default-src 'self' 'unsafe-inline'`, que permite scripts en línea. `/admin/login` no manda CSP, `X-Frame-Options` ni `X-Content-Type-Options` (medido), y en el código solo tres controladores públicos (sitio, menú y `/q`) añaden esas cabeceras, así que `/panel` e `/invitaciones/*` tampoco las tendrían (deducido, no medido). Nadie manda HSTS. | P1 |
 | H7 | **El respaldo usa las credenciales de base de datos de la aplicación**, que según [02-seguridad.md](02-seguridad.md) §1 deberían ser solo `SELECT/INSERT/UPDATE/DELETE`. `mysqldump --single-transaction --routines --triggers` necesita más permisos, y las migraciones necesitan DDL. Hay que decidir usuarios de base de datos separados. | P1 |
 | H8 | **No hay comando de restauración.** Existe `menuonl:backup-verify` (descifra y revisa), pero restaurar es un procedimiento manual que nunca se ha ensayado. | P1 |
@@ -80,8 +80,8 @@ Se parte de `.env.example`. La columna "Producción" es el valor esperado; las m
 | `SESSION_SECURE_COOKIE` / `SESSION_SAME_SITE` | `true` / `lax` | Ya vienen así en el ejemplo. `http_only` es `true` por defecto (`config/session.php`). |
 | `SESSION_LIFETIME` | 120 (min) o menos para el panel | |
 | `CACHE_STORE` | `redis` (o `database`) | Es el nivel L1 del menú (`MenuCacheService`, TTL 24 h). Con `database` funciona, solo es más lento. |
-| `QUEUE_CONNECTION` | `database` o `redis` | Necesita `queue:work` activo (H4). **NO** `sync` en producción si se quiere que la purga no retrase la respuesta; sí es válido como parche temporal. |
-| `MAIL_MAILER` y datos SMTP | proveedor real (SMTP/SES/Postmark) | **NO** `log` (H5). `MAIL_FROM_ADDRESS` y `MAIL_FROM_NAME` reales, **NO** `hello@example.com`. Probar un envío real de invitación antes del primer cliente. |
+| `QUEUE_CONNECTION` | `database` o `redis` | Necesita el worker de `deploy/` activo (H4 resuelto; `menuonl:verificar-produccion` lo comprueba). **NO** `sync` en producción si se quiere que la purga no retrase la respuesta; sí es válido como parche temporal. |
+| `MAIL_MAILER` y datos SMTP | proveedor real (SMTP/SES/Postmark) | **NO** `log` ni `array` (H5; `menuonl:verificar-produccion` falla con ellos). `MAIL_FROM_ADDRESS` y `MAIL_FROM_NAME` reales, **NO** `hello@example.com`. Probar un envío real de invitación antes del primer cliente. |
 | `FILESYSTEM_DISK` | `local` | Las imágenes usan el disco `public` (`storage/app/public/restaurantes/...`). |
 | `REQUIRE_2FA` | `true` (o no definirla) | Está **encendida por defecto** salvo que se ponga explícitamente `false/0/off/no` (`config/menuonl.php`). **NO** apagarla en producción. |
 | `HASH_DRIVER` | `argon2id` | |
@@ -123,7 +123,7 @@ Orden recomendado para un despliegue (la primera vez y las siguientes). Idealmen
 10. [ ] `php artisan storage:link` (crea `public/storage` → `storage/app/public`; es un enlace simbólico local, no se versiona). Comprobar que `https://dominio/storage/restaurantes/...` sirve una imagen subida.
 11. [ ] Permisos: el usuario de PHP-FPM escribe en `storage/` (incluyendo `storage/app/private/livewire-tmp`, donde Livewire guarda subidas temporales) y `bootstrap/cache/`. El código y `vendor/` no deben ser escribibles por PHP.
 12. [ ] Cachés de producción: `php artisan optimize` (config, rutas, vistas, eventos) y `php artisan filament:optimize` (componentes e íconos de Filament). **Verificado:** `php artisan route:cache` funciona con las rutas actuales (la ruta `/panel` usa un closure y se serializa sin problema); se limpió después.
-13. [ ] Procesos: Supervisor con `php artisan queue:work --tries=3 --max-time=3600` y cron `* * * * * cd /ruta && php artisan schedule:run >> /dev/null 2>&1` (H4; sin el cron no corre el respaldo).
+13. [ ] Procesos: worker de colas con Supervisor o systemd (`deploy/supervisor/menuonl-worker.conf` o `deploy/systemd/menuonl-worker@.service`, ver `deploy/README.md`) y cron `* * * * * cd /ruta && php artisan schedule:run >> /dev/null 2>&1` (sin el cron no corre el respaldo).
 14. [ ] Crear el primer superadmin y los primeros restaurantes (punto 7).
 15. [ ] Prueba de humo (punto "Verificación final" más abajo).
 
@@ -133,7 +133,7 @@ Orden recomendado para un despliegue (la primera vez y las siguientes). Idealmen
 2. [ ] Traer código, `composer install --no-dev --optimize-autoloader`, `npm ci && npm run build`.
 3. [ ] `php artisan migrate --force`.
 4. [ ] `php artisan optimize:clear` seguido de `php artisan optimize` y `php artisan filament:optimize`.
-5. [ ] `php artisan queue:restart` (para que los workers carguen el código nuevo).
+5. [ ] `php artisan queue:restart` (para que los workers carguen el código nuevo; `deploy/desplegar.sh` lo incluye).
 6. [ ] `php artisan up`.
 7. [ ] Recargar PHP-FPM si OPcache está con `validate_timestamps=0`.
 8. [ ] Humo: `/up` responde 200, `/admin/login` carga con estilos, un menú público abre, y el log no muestra errores nuevos.
@@ -142,10 +142,29 @@ Orden recomendado para un despliegue (la primera vez y las siguientes). Idealmen
 
 - [ ] `php artisan about` muestra `Environment: production`, `Debug Mode: OFF`, `Cache: config/routes/views cached`.
 - [ ] `php artisan schedule:list` lista `menuonl:backup` a las 03:00 y el cron del servidor está activo.
-- [ ] `php artisan queue:work --once` procesa un trabajo de prueba; `php artisan queue:failed` está vacío.
+- [ ] `php artisan menuonl:verificar-produccion` termina en cero (ver abajo); `php artisan queue:failed` está vacío.
 - [ ] Una invitación real llega por correo y su enlace abre con `https`.
 - [ ] Subir una foto de 9 MB desde el celular funciona; una de 13 MB muestra el mensaje amable.
 - [ ] `$request->ip()` es la IP real del visitante (no la del proxy), ver punto 5.
+
+#### `php artisan menuonl:verificar-produccion`
+
+Revisa la configuración de producción y dice con claridad qué está mal. Termina con código distinto de cero si algo grave falla (úsalo al final de cada despliegue). **Nunca imprime valores secretos**: solo nombres de entorno, de mailer y de conexión, y si cada ajuste cumple.
+
+| Revisa | Falla si |
+|---|---|
+| `APP_ENV` | no es `production` |
+| `APP_DEBUG` | no es `false` |
+| `APP_URL` | no empieza con `https://` |
+| `MAIL_MAILER` | es `log` o `array` |
+| `QUEUE_CONNECTION` | es `sync` o `null` |
+| `SOPORTE_WHATSAPP` | falta o no tiene dígitos |
+| `APP_LOCALE` | no es `es` |
+| Worker de colas | encola un trabajo de prueba (`LatidoColasJob`) y ningún worker lo procesa en `--espera` segundos (15 por defecto); también falla si `CACHE_STORE` es `array` o `null`, porque entonces no se puede comprobar |
+
+Opciones: `--espera=30` (segundos de espera al worker) y `--sin-worker` (omite esa comprobación; no recomendado). Además avisa (`[AVISO]`, sin afectar el código de salida) si hay trabajos en `failed_jobs`. Pruebas: `tests/Feature/VerificarProduccionTest.php`.
+
+El comando lee la configuración **tal como la ve la aplicación**: si usas `config:cache`, corre `php artisan optimize` antes de verificar.
 
 | Ya está | Falta | Riesgo si no se hace |
 |---|---|---|
@@ -282,7 +301,7 @@ Medido en local con el kernel HTTP de Laravel:
    - **Historial:** no se escribe ahí. Las filas de `historial_cambios` pertenecen a un restaurante (`restaurante_id` obligatorio) y un superadmin no tiene ninguno. Queda una línea en el registro de la aplicación (`storage/logs`): `menuonl:crear-superadmin - Superadmin creado.` con el id y el correo, sin contraseña.
    - Entrar a `/admin/login`: el sistema exige configurar la app de autenticación (2FA) antes de cualquier otra pantalla; guardar los códigos de recuperación.
 3. **Segundo superadmin** (respaldo) con el mismo comando y `--confirmo-otro-superadmin`.
-4. **Primer restaurante real:** Plataforma → Restaurantes → Crear: nombre, dirección corta (no reservada: `Catalogos::slugsReservados()`), moneda, idioma, zona horaria, **plan** (por defecto Completo), estado y correo del propietario. La aplicación crea el restaurante, siembra su idioma y envía una **invitación por correo** (`CreateRestaurante::afterCreate()`, `InvitacionService`), válida 7 días, de un solo uso. Requiere correo real configurado (H5).
+4. **Primer restaurante real:** Plataforma → Restaurantes → Crear: nombre, dirección corta (no reservada: `Catalogos::slugsReservados()`), moneda, idioma, zona horaria, **plan** (por defecto Completo), estado y correo del propietario. La aplicación crea el restaurante, siembra su idioma y encola una **invitación por correo** (`CreateRestaurante::afterCreate()`, `InvitacionService`), válida 7 días, de un solo uso. Requiere correo real configurado (H5). Si el correo falla, el restaurante queda creado, la invitación queda guardada y marcada, y en Restaurantes aparece "Correo no enviado" con la acción "Reenviar invitación" (genera un enlace nuevo; el anterior deja de funcionar).
 5. **El propietario** abre el enlace, define su contraseña, configura 2FA en su primer ingreso, y empieza a cargar su menú.
 6. **QR:** generarlos solo con `APP_URL` definitivo (los QR impresos codifican la URL de `APP_URL`).
 7. **Cambios de plan:** solo el superadmin, con ventana de confirmación y registro en el historial (`Restaurante::cambiarPlan()`).
@@ -332,8 +351,8 @@ Cada PR es independiente y revisable por separado. Ninguno cambia la lógica de 
 | 1 | ~~**Páginas públicas sin sesión ni cookies**~~ **Hecho** (las rutas web públicas excluyen los middleware de sesión; el menú, el sitio y los QR no necesitan sesión; la API pública de reservas ya estaba en el grupo `api`). Planteamiento original: que `/{slug}`, `/{slug}/menu`, `/q/{codigo}` y `/api/v1/menu/*` no usen el grupo `web` completo (sin `StartSession`, `EncryptCookies`, `PreventRequestForgery`); prueba que la respuesta no trae `Set-Cookie`. Verificar que el formulario de reservas y el carrito (`localStorage`) no dependen de la sesión. | H1, RNF-02, RNF-09 | P0 |
 | 2 | ~~**Guarda de entorno en `DemoRestauranteSeeder`**~~ **Hecho:** solo corre en `local` y `testing`, con prueba. | H2 | P0 |
 | 3 | ~~**Comando `menuonl:crear-superadmin`**~~ **Hecho** (interactivo, contraseña oculta y confirmada, mínimo 12 caracteres, `--confirmo-otro-superadmin`; sin Historial por no tener restaurante). Planteamiento original: pide nombre, correo y contraseña sin eco (o genera una), valida longitud, asigna `es_superadmin` con `forceFill`, nunca imprime la contraseña, y se niega si ya existe el correo; prueba. | H3 | P0 |
-| 4 | **Documentación de procesos (sin código de app):** `docs/` con ejemplo de Nginx (límites, `storage`, cabeceras), `php.ini`, Supervisor para `queue:work` y cron de `schedule:run`; y `.env.production.example` con los valores del punto 2. | H4, punto 1 y 2 | P0 |
-| 5 | **Correo de producción:** comando o prueba `menuonl:probar-correo {destino}` para validar SMTP antes del primer cliente; y que un fallo de envío de invitación no deje el restaurante a medias (reportar el error y permitir "Reenviar invitación"). | H5 | P0 |
+| 4 | ~~**Documentación de procesos**~~ **Hecho en parte:** `deploy/` trae Supervisor, systemd, `desplegar.sh` y `deploy/README.md` (worker, `queue:restart`, comprobación y trabajos fallidos). **Falta:** ejemplo de Nginx (límites, `storage`, cabeceras), `php.ini` y `.env.production.example`. | H4, punto 1 y 2 | P0 |
+| 5 | ~~**Correo de producción**~~ **Hecho en parte:** el envío va por la cola, un fallo no deja el restaurante a medias, se reenvía desde Restaurantes, y `menuonl:verificar-produccion` rechaza `log`/`array`. **Falta:** `menuonl:probar-correo {destino}` para validar el SMTP definitivo con un envío real. | H5 | P0 |
 | 6 | **Quitar el número real de `.env.example`:** dejar `SOPORTE_WHATSAPP=` vacía y revisar que ningún dato personal esté en el repositorio. | H9 | P1 |
 | 7 | **Cabeceras de seguridad globales:** middleware con `X-Content-Type-Options`, `X-Frame-Options`/`frame-ancestors`, `Referrer-Policy` y `Permissions-Policy` para `/admin`, `/panel`, `/invitaciones` y la API; pruebas por ruta. HSTS se configura en Cloudflare. | H6 | P1 |
 | 8 | **Mensaje amable para fallos del archivo temporal de subida:** distinguir `UPLOAD_ERR_*` en `ImagenController::archivo()` y en `ImagenRestauranteUpload`, con texto propio y `Log::error`; pruebas con un archivo inválido simulado. | punto 6.5 | P1 |

@@ -40,6 +40,8 @@ class Invitacion extends Model
         return [
             'expira_en' => 'datetime',
             'aceptada_en' => 'datetime',
+            'enviada_en' => 'datetime',
+            'envio_fallido_en' => 'datetime',
         ];
     }
 
@@ -65,6 +67,30 @@ class Invitacion extends Model
     public function isAccepted(): bool
     {
         return $this->aceptada_en !== null;
+    }
+
+    /**
+     * Whether the last attempt to email the invitation failed and it is waiting to be resent.
+     */
+    public function envioFallido(): bool
+    {
+        return $this->enviada_en === null && $this->envio_fallido_en !== null;
+    }
+
+    /**
+     * Whether the email is still waiting in the queue (not sent, not failed).
+     */
+    public function envioEnCola(): bool
+    {
+        return $this->enviada_en === null && $this->envio_fallido_en === null;
+    }
+
+    /**
+     * Invitations whose email could not be sent and have not been accepted.
+     */
+    public function scopeConEnvioFallido(Builder $query): Builder
+    {
+        return $query->whereNull('aceptada_en')->whereNull('enviada_en')->whereNotNull('envio_fallido_en');
     }
 
     /**
