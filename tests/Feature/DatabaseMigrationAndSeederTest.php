@@ -34,6 +34,7 @@ class DatabaseMigrationAndSeederTest extends TestCase
             'etiquetas',
             'producto_etiqueta',
             'codigos_qr',
+            'escaneos_diarios',
             'historial_cambios',
         ];
 
