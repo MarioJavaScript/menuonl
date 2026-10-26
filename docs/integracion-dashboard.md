@@ -159,7 +159,7 @@ Cada PR se prueba con la suite correspondiente y, tras los PR 1–2, con revisi�
 | 0 | **Marca y modo claro (hecho)** | Nombre visible en `config('app.name')` (Menubly) en panel, pestañas, pie de menú y sitios, invitaciones, correos, QR imprimible, portada; sin preferencia guardada todo sale en claro; Automático/Claro/Oscuro se conservan | Ver sección 10 | Producción con `APP_NAME=MENUONL` viejo; páginas que dependían de `prefers-color-scheme` |
 | 1 | **Tokens y tema (hecho, sección 11)** | Tokens `--mb-*` en el tema del admin (sin tocar `--mo-*`), fuentes por Vite, color primario, foco, 44 px. Sin mover pantallas | Login, Inicio, una tabla, un formulario, subida de foto; claro/oscuro; 390 px | Selectores `fi-*` que no existen; contraste del botón; modo oscuro compartido con el menú público; fuentes bloqueadas por CSP |
 | 2 | **Layout (hecho, sección 12)** | Barra lateral y barra inferior (el logotipo sigue siendo la M hasta que llegue el arte) | Navegación en celular; enlaces "Ver mi sitio/menú" | `UxUiAccesibilidadTest` (barra inferior, "Inicio"); `PanelNavegacionDuenoTest` |
-| 3 | Componentes `x-mb.*` | Glifo de plan, aviso, vacío, hoja, banner. Se prueban en `diseno/componentes` | La página de componentes | `PaginasDeDisenoTest` |
+| 3 | **Componentes `x-mb.*` (hecho, sección 14)** | Glifo de plan, aviso, vacío, hoja, banner. Se muestran en la página Componentes del panel (solo local); `/diseno` no se toca | La página de componentes | `PaginasDeDisenoTest` |
 | 4 | Banner de superadmin | `renderHook` + "Volver a la plataforma" | Entrar a un restaurante como superadmin y como propietario (no debe verse) | Barra pegajosa y su altura sobre la barra superior; toasts encima del banner |
 | 5 | Inicio del restaurante | Rediseño de `Inicio` y widget; checklist como comanda; Slashi de chef solo con el arte oficial disponible | Cada rol y cada plan; restaurante vacío | `PanelInicioTest` completo (textos y jerga); filtro por rol |
 | 6 | Resto del panel del restaurante (en tandas) | Platillos/categorías, apariencia, datos/horario/contactos, QR; una tanda por grupo | Editar y guardar cada formulario; deshacer; agotado | Pruebas de tablas y formularios de `UxUiAccesibilidadTest`; carga de imágenes |
@@ -296,3 +296,44 @@ Las métricas no guardan IP ni cookies: solo cuántas veces se abrió el código
 - MariaDB real (solo SQLite; la sentencia de `ON DUPLICATE KEY UPDATE` se comprobó en la gramática del framework, no contra el motor).
 - Que PHP-FPM libera al cliente antes de contar y que Cloudflare no cachea `/q/*`: pendientes anotados en `docs/despliegue.md`, sección 5.
 - Revisión manual con tinker: `App\Models\EscaneoDiario::withoutGlobalScopes()->latest('id')->limit(5)->get()` tras abrir un `/q/CODIGO` en el navegador.
+
+## 14. PR 3 "Componentes x-mb.*": qué se hizo
+
+Cinco componentes Blade en `resources/views/components/mb/`, para las pantallas nuevas del panel (Inicio, Resumen, Métricas). No reemplazan los de Filament en formularios y tablas, y no se movió ninguna pantalla existente.
+
+| Componente | Props y ranuras | ARIA |
+|---|---|---|
+| `x-mb.glifo-plan` | `plan` (enum o texto; uno desconocido es el más restrictivo), `sin-texto` | Tres barras `aria-hidden` y siempre el nombre; con `sin-texto`, "Plan X" solo para el lector de pantalla |
+| `x-mb.aviso` | `tono` (`info`, `exito`, `atencion`, `error`, `neutro`), `titulo`, `icono`, `anuncia`; ranura `accion` | `role="alert"` solo en `error`, `role="status"` en el resto; `:anuncia="false"` quita el rol (aviso estático) |
+| `x-mb.vacio` | `titulo`, `texto`, `icono`, `nivel` (h2 a h4); ranuras `arte` y `accion` | Ícono decorativo; la ranura `arte` lo reemplaza (sin Slashi todavía) |
+| `x-mb.hoja` | `titulo`, `descripcion`, `nivel`, `sin-relleno`; ranura `acciones` | Con título es una región nombrada por su encabezado |
+| `x-mb.banner` | `etiqueta` (obligatoria), `tono` (`contexto` o `atencion`), `icono`; ranura `accion` | `role="region"` con `aria-label`; no se fija a la pantalla (eso es el PR 4) |
+
+- **Nivel del plan:** `PlanRestaurante::nivel()` (1 a 3) sale de `incluye()`: sube un nivel por cada plan con estrictamente menos capacidades. No hay una segunda tabla. Las barras vacías usan `--mb-borde-control` sin opacidad (3.5:1 en claro, 4.19:1 en oscuro).
+- **Tokens nuevos** (claro y oscuro, en `theme.css`): `--mb-exito|aviso|peligro|info` con `-bg` y `-borde`, y `--mb-ctx-*` del banner. `TemaDelAdminTest` lee el CSS declarado y prueba cada par (texto de estado, tinta y tinta secundaria sobre su fondo, glifo, botón y foco del banner). Los bordes de los avisos son decorativos y no se exigen.
+- **Muestra:** sección "Componentes de Menubly" en la página Componentes del panel (`componentes-mb.blade.php`), solo en el entorno local. `/diseno` (el menú público) no cambió. Los textos están en `lang/es/panel.php`, clave `componentes_mb`.
+- **Sin JavaScript:** ningún componente lleva `<script>` ni atributos `on*`; hay una prueba. No cambió la CSP.
+- **Al escribir los usos:** una etiqueta `</x-slot:nombre>` seguida de texto sin espacio ni salto de línea rompe la compilación de Blade (`@endslotTexto`); deja siempre un salto de línea después.
+
+### Pendiente: panel deslizable (no construido)
+
+Ninguna pantalla lo usa todavía y el PR 2 decidió que "Más" abre el cajón de Filament. Diseño propuesto para cuando una pantalla lo necesite (`x-mb.panel-deslizable`):
+
+- `<dialog>` nativo con `showModal()`: foco atrapado, Escape que cierra, modal implícito y capa superior (sin peleas de `z-index` con la barra inferior ni los avisos de Filament).
+- Alpine estándar del admin (`x-data`, `@click`) para abrir y cerrar; clic en el fondo cierra; foco inicial en el título (`tabindex="-1"`); guardar el disparador al abrir y devolverle el foco en el evento `close`, en vez de confiar solo en el navegador.
+- Dentro de una página Livewire, `wire:ignore.self` para que un re-pintado no cierre un panel abierto.
+- Animación solo con `prefers-reduced-motion: no-preference`; sin desplazamiento del fondo; tamaño inferior en celular, lateral en escritorio.
+- Para confirmaciones y formularios con acciones del servidor se sigue usando el modal de Filament.
+
+### Qué probar a mano (claro y oscuro, 390 px y escritorio)
+
+1. En local, abrir la página Componentes del panel y bajar a "Componentes de Menubly".
+2. Glifo: los tres planes con y sin texto; las barras vacías se distinguen de las llenas. Con lector de pantalla se oye "Plan X".
+3. Avisos: los cinco tonos y el estático; solo el de error se anuncia al aparecer; el enlace se alcanza con Tab y el foco se ve.
+4. Estado vacío y hoja: el encabezado respeta el nivel; la hoja se lee como región con el título.
+5. Banner: contraste y foco (anillo blanco) en contexto; el de atención sin anillo blanco; el texto largo en 390 px no desborda.
+
+### Qué no se pudo verificar
+
+- Nada visual ni de teclado: no hay navegador en el equipo de desarrollo.
+- La página Componentes completa no se renderizó en pruebas (su tabla de ejemplo necesita la extensión `intl`, ausente aquí); se probaron las vistas de los componentes y de la muestra por separado.

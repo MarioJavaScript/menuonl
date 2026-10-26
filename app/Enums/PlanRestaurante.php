@@ -54,6 +54,22 @@ enum PlanRestaurante: string implements HasColor, HasLabel
     }
 
     /**
+     * Nivel del plan de 1 (el que menos incluye) a 3 (el que más), para el glifo de tres barras. Sale de la misma tabla
+     * de incluye(): un plan sube un nivel por cada plan que incluye estrictamente menos capacidades que él.
+     */
+    public function nivel(): int
+    {
+        $propias = $this->cantidadDeCapacidades();
+
+        return 1 + count(array_filter(self::cases(), fn (self $plan): bool => $plan->cantidadDeCapacidades() < $propias));
+    }
+
+    private function cantidadDeCapacidades(): int
+    {
+        return count(array_filter(Capacidad::cases(), fn (Capacidad $capacidad): bool => $this->incluye($capacidad)));
+    }
+
+    /**
      * Lo que gana y pierde un restaurante al pasar de este plan a otro, en lenguaje claro para el superadmin.
      * Sale de la misma tabla de incluye(), así que no puede contradecirla. Las capacidades sin texto (hoy, métricas,
      * que aún no tiene pantalla) no se mencionan.

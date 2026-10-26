@@ -20,6 +20,7 @@ use Filament\Schemas\Components\Form;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -181,6 +182,12 @@ class Componentes extends Page implements HasTable
                                 ->color('gray')
                                 ->action(fn () => Notification::make()->danger()->title('No pudimos guardar el precio')->body('Escribe un precio válido, por ejemplo 85.50.')->send()),
                         ]),
+                    ]),
+
+                Section::make(__('panel.componentes_mb.titulo'))
+                    ->description(__('panel.componentes_mb.descripcion'))
+                    ->schema([
+                        View::make('filament.pages.componentes-mb'),
                     ]),
 
                 Section::make('Tabla')
