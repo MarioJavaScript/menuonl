@@ -81,6 +81,7 @@
     --mb-objetivo: 2.75rem;
     --mb-foco-grosor: 3px;
     --mb-barra-inferior: calc(3.5rem + env(safe-area-inset-bottom));
+    --mb-banner-alto: 3.25rem;
     --mb-r-md: 0.75rem;
     --mb-r-lg: 1.25rem;
 
@@ -665,4 +666,110 @@ html:root {
     .fi-body .mb-banner:not(.mb-banner--atencion) :is(a, button, [tabindex]):focus-visible {
         outline-color: var(--mb-ctx-foco);
     }
+
+    /* Banner de superadmin (PR 4): fijo arriba, de una sola línea y de altura exacta para poder compensar el resto */
+    .mb-banner--fijo {
+        position: sticky;
+        top: 0;
+        z-index: 40;
+        box-sizing: border-box;
+        height: var(--mb-banner-alto);
+        min-height: 0;
+        padding-block: 0;
+        overflow: hidden;
+    }
+
+    .mb-banner--fijo .mb-banner__texto {
+        overflow: hidden;
+    }
+
+    .mb-banner__contenido {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-width: 0;
+        white-space: nowrap;
+    }
+
+    .mb-banner__nombre {
+        flex: 0 1 auto;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-weight: 700;
+    }
+
+    .mb-banner__prefijo,
+    .mb-banner__plan,
+    .mb-banner__accion a {
+        flex: none;
+    }
+
+    .mb-banner__corto {
+        display: none;
+    }
+
+    @media (max-width: 40rem) {
+        .mb-banner--fijo {
+            gap: 0.5rem;
+            padding-inline: 0.75rem;
+        }
+
+        .mb-banner__texto {
+            font-size: 0.8125rem;
+        }
+
+        .mb-banner__largo {
+            display: none;
+        }
+
+        .mb-banner__corto {
+            display: inline;
+        }
+
+        /* En pantalla angosta el nombre del plan solo queda para el lector de pantalla */
+        .mb-banner__plan > span:not(.mb-plan__glifo) {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            margin: -1px;
+            overflow: hidden;
+            clip-path: inset(50%);
+        }
+    }
+}
+
+/*
+ * Compensación del banner de superadmin. Todo cuelga de :has(.mb-banner--fijo): si el banner no se renderiza (cualquier
+ * otro rol) ninguna de estas reglas aplica y la pantalla queda exactamente igual. Sin capa, para ganarle a las utilidades
+ * de Filament (top y height de la barra superior y del menú lateral).
+ */
+.fi-body:has(.mb-banner--fijo) {
+    --mb-banner-activo: var(--mb-banner-alto);
+}
+
+.fi-body:has(.mb-banner--fijo) .fi-topbar-ctn {
+    top: var(--mb-banner-activo);
+}
+
+/* Menú lateral: en celular es un cajón de alto completo; desde lg cuelga bajo la barra superior */
+.fi-body:has(.mb-banner--fijo) .fi-sidebar {
+    top: var(--mb-banner-activo);
+    height: calc(100dvh - var(--mb-banner-activo));
+}
+
+@media (min-width: 64rem) {
+    .fi-body:has(.mb-banner--fijo).fi-body-has-topbar .fi-sidebar {
+        top: calc(var(--topbar-height, 4rem) + var(--mb-banner-activo));
+        height: calc(100dvh - var(--topbar-height, 4rem) - var(--mb-banner-activo));
+    }
+}
+
+/* Los avisos de Filament (z 50) pasan por encima del banner: se bajan para no tapar "Volver a la plataforma" */
+.fi-body:has(.mb-banner--fijo) .fi-no {
+    inset-block-start: calc(1rem + var(--mb-banner-activo));
+}
+
+html:has(.mb-banner--fijo) {
+    scroll-padding-top: calc(var(--topbar-height, 4rem) + var(--mb-banner-alto) + 1rem);
 }
