@@ -33,6 +33,14 @@ return [
         'mas_opciones' => 'Más opciones del menú',
     ],
 
+    'banner_superadmin' => [
+        'etiqueta' => 'Vista de superadmin del restaurante :nombre',
+        'prefijo' => 'Estás viendo como superadmin:',
+        'prefijo_corto' => 'Superadmin:',
+        'volver' => 'Volver a la plataforma',
+        'volver_corto' => 'Volver',
+    ],
+
     'componentes_mb' => [
         'titulo' => 'Componentes de Menubly',
         'descripcion' => 'Piezas reutilizables para las pantallas nuevas del panel. Cambia entre claro y oscuro en tu menú de usuario.',

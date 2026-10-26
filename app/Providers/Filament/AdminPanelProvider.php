@@ -9,6 +9,7 @@ use App\Filament\Widgets\ResumenRestauranteWidget;
 use App\Http\Middleware\AutenticaPanelAdmin;
 use App\Http\Middleware\ExigeDosFactores;
 use App\Models\Restaurante;
+use App\Services\BannerDeSuperadmin;
 use App\Services\BarraInferiorDelPanel;
 use App\Services\PaletaDelPanel;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
@@ -48,6 +49,8 @@ class AdminPanelProvider extends PanelProvider
             ->multiFactorAuthentication([AppAuthentication::make()->recoverable()])
             ->tenant(Restaurante::class, slugAttribute: 'slug')
             ->tenantProfile(EditRestauranteProfile::class)
+            // Justo después de "Saltar al contenido": el banner es lo primero que alcanza el teclado (BODY_START quedaría antes del enlace).
+            ->renderHook(PanelsRenderHook::TOPBAR_BEFORE, fn (): string => app(BannerDeSuperadmin::class)->render())
             ->renderHook(PanelsRenderHook::USER_MENU_BEFORE, fn (): HtmlString|string => self::enlacesPublicos(enMenuLateral: false))
             ->renderHook(PanelsRenderHook::SIDEBAR_FOOTER, fn (): HtmlString|string => self::enlacesPublicos(enMenuLateral: true))
             ->renderHook(

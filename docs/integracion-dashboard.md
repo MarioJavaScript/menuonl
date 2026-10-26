@@ -55,7 +55,7 @@ Leyenda: **Existe** = hay equivalente real; **Cambia** = existe, el diseño nuev
 | Métricas del restaurante | Nada | **Nuevo** + **Sin backend** | Solo plan Completo y superadmin (`Capacidad::Metricas` ya existe) |
 | Equipo e invitaciones | `UserResource` / `InvitacionResource` | **Cambia** | El prototipo solo modela propietario; el real tiene 5 roles (propietario, gerente, editor, recepción, cocina) |
 | Historial de cambios | `HistorialCambioResource` | **Cambia** | Marca "por superadmin": por revisar si el historial ya guarda al actor |
-| Banner "Estás viendo como superadmin" | Nada | **Nuevo** | Hoy el superadmin entra al panel de un restaurante sin banner. Se hace con un `renderHook` (BODY_START) |
+| Banner "Estás viendo como superadmin" | Nada | **Nuevo** | Hoy el superadmin entra al panel de un restaurante sin banner. Se hace con un `renderHook` (`TOPBAR_BEFORE`, no BODY_START: ver sección 15) |
 | Barra inferior en celular (Inicio, Mi menú, Pedidos, Apariencia, Más) | `filament/hooks/barra-inferior.blade.php` (`mo-barra-inferior`) | **Cambia** | Existe; hoy: Inicio, Platillos, Categorías, Horario, Más (la prueba lo fija) |
 
 ### 2.3 Sistema
@@ -160,7 +160,7 @@ Cada PR se prueba con la suite correspondiente y, tras los PR 1–2, con revisi�
 | 1 | **Tokens y tema (hecho, sección 11)** | Tokens `--mb-*` en el tema del admin (sin tocar `--mo-*`), fuentes por Vite, color primario, foco, 44 px. Sin mover pantallas | Login, Inicio, una tabla, un formulario, subida de foto; claro/oscuro; 390 px | Selectores `fi-*` que no existen; contraste del botón; modo oscuro compartido con el menú público; fuentes bloqueadas por CSP |
 | 2 | **Layout (hecho, sección 12)** | Barra lateral y barra inferior (el logotipo sigue siendo la M hasta que llegue el arte) | Navegación en celular; enlaces "Ver mi sitio/menú" | `UxUiAccesibilidadTest` (barra inferior, "Inicio"); `PanelNavegacionDuenoTest` |
 | 3 | **Componentes `x-mb.*` (hecho, sección 14)** | Glifo de plan, aviso, vacío, hoja, banner. Se muestran en la página Componentes del panel (solo local); `/diseno` no se toca | La página de componentes | `PaginasDeDisenoTest` |
-| 4 | Banner de superadmin | `renderHook` + "Volver a la plataforma" | Entrar a un restaurante como superadmin y como propietario (no debe verse) | Barra pegajosa y su altura sobre la barra superior; toasts encima del banner |
+| 4 | **Banner de superadmin (hecho, sección 15)** | `renderHook` + "Volver a la plataforma" | Entrar a un restaurante como superadmin y como propietario (no debe verse) | Barra pegajosa y su altura sobre la barra superior; toasts encima del banner |
 | 5 | Inicio del restaurante | Rediseño de `Inicio` y widget; checklist como comanda; Slashi de chef solo con el arte oficial disponible | Cada rol y cada plan; restaurante vacío | `PanelInicioTest` completo (textos y jerga); filtro por rol |
 | 6 | Resto del panel del restaurante (en tandas) | Platillos/categorías, apariencia, datos/horario/contactos, QR; una tanda por grupo | Editar y guardar cada formulario; deshacer; agotado | Pruebas de tablas y formularios de `UxUiAccesibilidadTest`; carga de imágenes |
 | 7 | Plataforma: restaurantes y ficha de plan | Lista, ficha, selector con "qué cambia" y "Deshacer" | Cambiar plan en ambos sentidos; reservas pendientes; suspender | `PlataformaPlanTest`, `PlanRestauranteMigracionTest` |
@@ -337,3 +337,55 @@ Ninguna pantalla lo usa todavía y el PR 2 decidió que "Más" abre el cajón de
 
 - Nada visual ni de teclado: no hay navegador en el equipo de desarrollo.
 - La página Componentes completa no se renderizó en pruebas (su tabla de ejemplo necesita la extensión `intl`, ausente aquí); se probaron las vistas de los componentes y de la muestra por separado.
+
+## 15. PR 4 "Banner de superadmin": qué se hizo
+
+Un superadmin que entra a un restaurante ve arriba una franja fija: "Estás viendo como superadmin: *Nombre* (plan) [Volver a la plataforma]". Usa `x-mb.banner` (tono contexto) del PR 3.
+
+### Quién lo ve (y quién no)
+
+`App\Services\BannerDeSuperadmin::debeMostrarse()`: superadmin **y** dentro de un restaurante **y** sin ser miembro activo de ese restaurante **y** fuera de las pantallas de plataforma. Para cualquier otra persona el hook devuelve `''`: la vista ni se renderiza, no se esconde con CSS. Se probó con propietario, editor, gerente, recepción y cocina, y con los tres planes (Solo menú incluido: el superadmin entra igual).
+
+- **Pantallas de plataforma:** Filament cuelga todo de `/admin/{slug}/…`, incluida la lista de Restaurantes, así que "fuera de un restaurante" no existe como ruta. Se decide por el **grupo de navegación** `Plataforma` del recurso o de la página actual (`BannerDeSuperadmin::GRUPO_PLATAFORMA`), no por una lista de rutas. Una pantalla nueva en ese grupo (historial global, respaldos, ajustes) lo oculta sin tocar este código. `UserResource` cambia de grupo según la persona ("Plataforma" para el superadmin) y se cubre igual. La prueba `test_toda_pantalla_del_grupo_plataforma_oculta_el_banner` recorre los recursos y páginas registrados del grupo y abre su lista: falla si alguno muestra el banner.
+- **Superadmin que además es miembro del restaurante:** no ve el banner (está ahí como miembro, no "viendo como superadmin").
+- **Enlace:** `RestauranteResource::getUrl('index')`. Ocultar el botón no es seguridad: la lista la protege `RestaurantePolicy::viewAny` (solo superadmin; los demás roles reciben 403, probado). No hay sesión de "restaurante activo" que limpiar: el restaurante sale de la URL.
+
+### Decisión: no hay impersonación
+
+No existe ningún "entrar como" (ni paquete ni código). El superadmin entra a un restaurante navegando a su `slug` con permiso de superadmin; sigue siendo él mismo y el historial lo registra como él. **Si alguien añade una impersonación, debe revisar este banner primero:** hará falta distinguir "soy el superadmin" de "actúo como otra persona", un botón para salir de esa sesión y una decisión sobre quién ve el banner mientras dura. Hasta entonces, no la añadas.
+
+### Dónde se engancha y por qué
+
+`PanelsRenderHook::TOPBAR_BEFORE`. El prototipo (y la sección 2.2 de este doc, ya corregida) decía `BODY_START`, pero ese hook cae **antes** del enlace "Saltar al contenido". Con `TOPBAR_BEFORE` el orden de foco es: "Saltar al contenido", banner (enlace "Volver a la plataforma"), barra superior, menú, contenido. Una prueba comprueba ese orden en el HTML.
+
+### Layout
+
+- **Token:** `--mb-banner-alto: 3.25rem` (52 px, fijo). El banner es de una sola línea con altura exacta, para poder compensar el resto sin medir nada con JavaScript: `position: sticky; top: 0; z-index: 40` (por encima de la barra superior y el menú, z 30; por debajo de modales y avisos, z 50).
+- **Compensaciones** (barra superior, menú lateral, cajón del menú en celular, `scroll-padding-top` y los avisos de Filament): todas cuelgan de `.fi-body:has(.mb-banner--fijo)` y usan `--mb-banner-activo`, que solo existe cuando el banner está renderizado. Para los demás roles no se aplica ninguna regla: ni un píxel de cambio. Una prueba lee el CSS y falla si una regla de compensación pierde esa condición.
+- **Avisos (toasts):** su `top` baja la altura del banner mientras el banner está activo, para no tapar "Volver a la plataforma".
+- **Barra inferior móvil y acciones pegajosas de formularios:** no cambian; están ancladas abajo.
+- **390 px:** el nombre del restaurante se corta con puntos suspensivos; el prefijo pasa a "Superadmin:", el botón a "Volver" (el nombre accesible sigue siendo "Volver a la plataforma") y el nombre del plan queda solo para el lector de pantalla. El nombre **completo** va en el `aria-label` de la región y en `title`.
+
+### Accesibilidad
+
+`role="region"` con `aria-label` ("Vista de superadmin del restaurante :nombre"), foco visible de 3 px (anillo blanco), contrastes de la sección 14 (texto 11.34 claro / 8.19 oscuro; botón 6.59; foco 12.46 / 8.99; ya probados en `TemaDelAdminTest`). El banner no se anima, así que `prefers-reduced-motion` no tiene nada que apagar.
+
+### Pruebas
+
+`BannerDeSuperadminTest` (21): visible en los tres planes, ausente en el HTML de los cinco roles, superadmin miembro, sin restaurante, nombre largo o con marcas escapado, sin scripts ni `on*`, textos sin emojis ni "carta", todas las pantallas del grupo Plataforma, orden de foco, `Cache-Control` privado (no cacheable), misma CSP con y sin banner, destino protegido por política y CSS condicionado.
+
+### Qué probar a mano (390 px y escritorio, claro y oscuro)
+
+1. Superadmin en un restaurante Completo, Sitio y menú y Solo menú: el banner aparece con el glifo del plan.
+2. Propietario: no hay banner ni hueco arriba. Compara la altura de la barra superior con la de antes del PR.
+3. Superadmin en Restaurantes y Cuentas (Plataforma): no hay banner.
+4. Desplazar la página: el banner y la barra superior se quedan fijos y no se montan uno sobre otra.
+5. 390 px: nombre largo cortado con puntos suspensivos, "Volver" siempre visible; abrir el menú ("Más"): el cajón empieza bajo el banner.
+6. Escritorio: el menú lateral empieza bajo la barra superior y no queda cortado abajo.
+7. Provocar un aviso de Filament (guardar un formulario): no tapa el botón del banner.
+8. Teclado: primer Tab = "Saltar al contenido", segundo = "Volver a la plataforma"; el anillo blanco se ve.
+
+### Qué no se pudo verificar
+
+- Nada visual ni de teclado: no hay navegador en el equipo de desarrollo. Las compensaciones del menú lateral y del cajón dependen de reglas de Filament (`--topbar-height` de 4rem, `.fi-sidebar`, `.fi-no`) leídas del CSS del paquete, no vistas en pantalla.
+- Un lector de pantalla real.
