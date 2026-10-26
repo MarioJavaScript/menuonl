@@ -147,12 +147,12 @@ Todo el prototipo es ficticio (`data/*.json`, generado por `scripts/generar-dato
 - **Slashi para error, éxito y sin conexión:** el prototipo deja espacios reservados (960 × 490 px de arte; el documento de diseño habla de 240 × 122 px, **inconsistencia entre sus dos documentos: confirmar tamaño**). Solo existe el SVG oficial de Slashi con gorro de chef. Falta el arte de esas tres poses y, si se quiere, de 404/500.
 - **Marca:** el paquete es Menubly. Si se queda Menuonl, faltan logotipo, símbolo y favicon; hoy el panel usa `filament/logo.blade.php` y `public/favicon.svg`.
 - **Íconos:** hay que elegir el Heroicon equivalente de cada ícono Lucide del prototipo; el glifo de plan (tres barras) y Slashi son propios.
-- **Pantallas no diseñadas (por revisar):** la gestión de reservas en Filament si se mueve de `/panel`, roles distintos del propietario, plantillas A–H de la selección (solo "Plantilla" a nivel general), estados de carga y error de red en cada pantalla, impresión de QR, emails de invitación (`emails/invitacion.blade.php`).
+- **Pantallas no diseñadas (por revisar):** la página de Reservas en Filament (sección 17), roles distintos del propietario, plantillas A–H de la selección (solo "Plantilla" a nivel general), estados de carga y error de red en cada pantalla, impresión de QR, emails de invitación (`emails/invitacion.blade.php`).
 - **Tabla/lista en celular:** el diseño usa tarjetas; Filament las soporta con columnas responsivas pero requiere trabajo por tabla.
 
 ## 8. Orden de entrega en PR pequeños
 
-Cada PR se prueba con la suite correspondiente y, tras los PR 1–2, con revisión manual. Todo PR: `vendor/bin/pint --dirty`, `npm run build`, prueba manual en modo claro/oscuro y a 390 px. Cambios respecto a la primera versión: se añade el **PR 0** (hecho), el PR 2 pasa a ser solo el layout (la marca ya está), `/panel` se queda y recibe solo los tokens, las métricas se reducen a lo medible y Respaldos/Ajustes son de solo lectura.
+Cada PR se prueba con la suite correspondiente y, tras los PR 1–2, con revisión manual. Todo PR: `vendor/bin/pint --dirty`, `npm run build`, prueba manual en modo claro/oscuro y a 390 px. Cambios respecto a la primera versión: se añade el **PR 0** (hecho), el PR 2 pasa a ser solo el layout (la marca ya está), `/panel` deja de ser una pantalla aparte (ver sección 17: queda solo como puerta de redirección), las métricas se reducen a lo medible y Respaldos/Ajustes son de solo lectura.
 
 | # | PR | Contenido | Probar a mano | Qué puede romperse |
 |---|---|---|---|---|
@@ -161,21 +161,24 @@ Cada PR se prueba con la suite correspondiente y, tras los PR 1–2, con revisi�
 | 2 | **Layout (hecho, sección 12)** | Barra lateral y barra inferior (el logotipo sigue siendo la M hasta que llegue el arte) | Navegación en celular; enlaces "Ver mi sitio/menú" | `UxUiAccesibilidadTest` (barra inferior, "Inicio"); `PanelNavegacionDuenoTest` |
 | 3 | **Componentes `x-mb.*` (hecho, sección 14)** | Glifo de plan, aviso, vacío, hoja, banner. Se muestran en la página Componentes del panel (solo local); `/diseno` no se toca | La página de componentes | `PaginasDeDisenoTest` |
 | 4 | **Banner de superadmin (hecho, sección 15)** | `renderHook` + "Volver a la plataforma" | Entrar a un restaurante como superadmin y como propietario (no debe verse) | Barra pegajosa y su altura sobre la barra superior; toasts encima del banner |
-| 5 | Inicio del restaurante | Rediseño de `Inicio` y widget; checklist como comanda; Slashi de chef solo con el arte oficial disponible | Cada rol y cada plan; restaurante vacío | `PanelInicioTest` completo (textos y jerga); filtro por rol |
-| 6 | Resto del panel del restaurante (en tandas) | Platillos/categorías, apariencia, datos/horario/contactos, QR; una tanda por grupo | Editar y guardar cada formulario; deshacer; agotado | Pruebas de tablas y formularios de `UxUiAccesibilidadTest`; carga de imágenes |
+| 5 | Inicio del restaurante (**cambia, sección 17**) | Rediseño de `Inicio` y widget; checklist como comanda; Slashi de chef solo con el arte oficial disponible. **Se suma** la operación del día que hoy da `/panel → Inicio` (reservas por confirmar y próximas, comensales esperados) con enlaces a la página nueva de Reservas; el resumen de pedidos queda pendiente hasta decidir Pedidos | Cada rol visible (propietario y superadmin) y cada plan; restaurante vacío | `PanelInicioTest` completo (textos y jerga); filtro por rol; el enlace de reservas de `ProgresoDeConfiguracion` |
+| 6 | Resto del panel del restaurante (en tandas; **cambia, sección 17**) | Platillos/categorías, apariencia, datos/horario/contactos, QR; una tanda por grupo. **Se suman** la página de Reservas (PR 2 de la sección 17), el renombre de la página de configuración a "Ajustes de reservas y pedidos" y, al final, la auditoría campo por campo de Menú, Ajustes y Equipo de `/panel` contra Filament | Editar y guardar cada formulario; deshacer; agotado; atender una reserva del sitio | Pruebas de tablas y formularios de `UxUiAccesibilidadTest`; carga de imágenes; `PanelApiReservasTest` y `PanelPedidosYReservasTest` |
 | 7 | Plataforma: restaurantes y ficha de plan | Lista, ficha, selector con "qué cambia" y "Deshacer" | Cambiar plan en ambos sentidos; reservas pendientes; suspender | `PlataformaPlanTest`, `PlanRestauranteMigracionTest` |
 | 8 | Usuarios e invitaciones, historial global | Pantallas de plataforma | Invitar, reenviar, revocar; filtros | `InvitacionesTest`, `EnvioInvitacionEnColaTest`, historial |
 | 9 | Respaldos y ajustes, **solo lectura** | Lista de respaldos (fecha, tipo, tamaño, estado) y valores de ajustes de plataforma; sin descargar, restaurar ni editar | Con respaldos reales en un entorno de prueba; sin respaldos | Lectura del almacenamiento; que no se filtre la contraseña de respaldos ni otros secretos de configuración |
 | 10 | **Métricas: backend (hecho, sección 13)** | Contador de escaneos QR/NFC **por mesa** en `/q/*`, tabla agregada por (código, día) sin IP ni cookies. Las reservas se cuentan desde `reservas` | Escanear un QR y ver el contador; carga concurrente | `QrRedirectYDescargaTest`, `QrScanBurstConcurrencyTest`, `QrNfcVolumenYN1Test`; rendimiento de la redirección |
 | 11 | Métricas: pantallas y resumen de plataforma | Resumen, métricas global/por restaurante con escaneos y reservas; **sin visitas** | Plan Completo vs otros; restaurante sin datos | Recorte por plan (`Capacidad::Metricas`); texto de privacidad cierto |
-| 12 | `/panel` y pantallas de sistema | `/panel` se queda (reservas) y solo recibe tokens de color; 404/500, "sin panel", login | Flujo de invitación completo; plan "Solo menú"; atender una reserva | `PlanSinPanelTest`, `PlanSinPanelDosFactoresTest`, `PanelApi*Test`, CSP de `/panel` |
+| 12 | `/panel` y pantallas de sistema (**cambia de sentido, sección 17**) | `/panel` ya no se queda: pasa a ser una puerta (302 a la página nueva dentro de `/admin`, o "sin panel" para Solo menú) y se retiran `panel.js`, `panel.css`, `panel/index.blade.php` y `/api/v1/panel`. Además 404/500, "sin panel", login. **Bloqueado** hasta decidir qué pasa con Pedidos | Flujo de invitación completo; plan "Solo menú"; marcador viejo de `/panel`; atender una reserva | `PlanSinPanelTest`, `PlanSinPanelDosFactoresTest`, `PanelApi*Test` (se migran antes de borrarlos), CSP de `/panel` e `/invitaciones` |
+| L | **Logo oficial de Menubly (hecho, sección 16)** | `public/brand/`, `x-mb.logo`, `x-mb.favicons`, favicons con `?v=` | Sección 16 | `MarcaYModoClaroTest`, `LogoMenublyTest` |
+
+**Hechos:** PR 0, 1, 2, 3, 4 y 10, y el del logo (L). Quedan 5 a 9, 11 y 12, con los cambios de la sección 17 en 5, 6 y 12.
 
 El PR 10 se adelantó (no depende del diseño) para ir acumulando datos mientras se hace lo visual.
 
 ## 9. Decisiones aprobadas
 
 1. **Nombre:** la plataforma se llama **Menubly**; "menuonl" era un nombre genérico provisional. El nombre visible sale de un único valor (`config('app.name')`). Se conservan los identificadores internos: nombre del repositorio, espacios de nombres, `config/menuonl.php`, comandos `menuonl:*`, claves de `localStorage` y cookies (`menuonl_cart_*`), claves de caché, nombres de base de datos, variables de entorno existentes y el dominio configurado (`CLOUDFLARE_DOMAIN`, que decide otra persona). El logotipo actual (la M) se queda por ahora.
-2. **Reservas:** se quedan en `/panel` por ahora. `/panel` solo recibe los tokens de color; mover las reservas a Filament queda fuera de este plan.
+2. **Reservas (revisada; sustituye a la decisión original "se quedan en `/panel`"):** las reservas pasan a una página de Filament dentro de `/admin`, y `/panel` deja de ser una segunda ventana: queda solo como puerta de redirección (302 a la página nueva, o la pantalla "sin panel" para Solo menú). **Motivo:** la persona dueña del producto quiere una sola ventana con el mismo diseño, navegación, banner y modo oscuro; mantener `/panel` obligaba a conservar un segundo código (JavaScript propio, una API paralela y una CSP aparte) para las mismas reglas de negocio. El plan está en la sección 17.
 3. **Integración:** mezcla de tema de Filament y páginas propias (opción C): tema y marca primero; páginas Blade propias dentro de Filament para Resumen, Métricas, Inicio, selector de plan y banner; no se reemplazan tablas ni formularios de Filament.
 4. **Métricas:** solo las que se pueden medir con honestidad: **escaneos de QR y NFC por mesa** y **reservas**. Sin visitas al sitio ni al menú mientras Cloudflare las cachee.
 5. **Íconos:** Heroicons.
@@ -447,3 +450,97 @@ Nuevas (`LogoMenublyTest`, 8): archivos existentes y copias de la raíz idéntic
 
 - Nada visual: no hay navegador en este entorno; el aspecto del logo, el cambio de variante y las pestañas no se vieron en pantalla (las pruebas comprueban el HTML y el CSS, no el pintado).
 - No se abrieron el `.ico` ni el PNG uno a uno más allá de comprobar tamaño y tipo.
+
+## 17. Unificar `/panel` dentro de `/admin`: plan (solo análisis, sin código)
+
+Estado: **análisis aprobado; no hay código ni pruebas escritas.** Revierte la decisión original 2 de la sección 9 ("las reservas se quedan en `/panel`"), que ahora está reescrita allí. La dueña o el dueño del producto quiere eliminar la segunda ventana "Pedidos y reservas de hoy" y que todo viva dentro de `/admin`, con el mismo diseño, navegación y banner. Ya están hechos los PR 0 a 4, el 10 y el del logo (sección 16).
+
+### 17.1 Hallazgo que fija el alcance
+
+`/panel` no es solo "Pedidos y reservas de hoy". Es una aplicación de una sola página (`resources/js/panel.js`, 298 líneas, sin framework; `resources/css/panel.css`; `panel/index.blade.php`) con seis funciones, servida por la API `/api/v1/panel` (siete controladores, 807 líneas). La página de Filament que hoy se llama "Pedidos y reservas" (`PedidosYReservas`) es otra cosa: solo guarda configuración.
+
+| Función de `/panel` | Qué hace | Equivalente en Filament hoy | Destino |
+|---|---|---|---|
+| Inicio | Ventas del día, comensales esperados, por confirmar, pedidos activos y tarde, próximas reservas, platillos agotados | `Inicio` y su widget (sin reservas ni pedidos en vivo) | PR 3 |
+| Reservas | Próximas, Hoy y por fecha; confirmar, "Llegó", cancelar, restaurar, mover de hora, crear, agrupar por día | Ninguno (no hay recurso de Reserva) | PR 2 |
+| Pedidos | Tablero Nuevo, En cocina, Listo y Entregado; avanzar con un toque; crear pedido a mano; marca "tarde" a los 15 min | Ninguno | **Pendiente** (17.5) |
+| Menú | Editar nombre y precio al salir del campo, disponible, ocultar, duplicar, eliminar, subir y quitar foto (con reducción en el navegador) | `ProductoResource` y `CategoriaResource` (formulario, no edición rápida) | Auditoría (PR 6) |
+| Ajustes | Plantilla del sitio, portada y galería, datos, horarios, reservas del sitio (cupo y franja) | `Apariencia`, `FotosDelRestaurante`, `EditRestauranteProfile`, `HorarioResource`, `PedidosYReservas` | Auditoría (PR 6) |
+| Equipo | Cambiar rol, activar o desactivar, invitar y revocar | `UserResource` e `InvitacionResource` (no auditado a fondo) | Auditoría (PR 6) |
+
+Datos que importan para el plan:
+- El único "tiempo real" es un sondeo de 30 s sobre reservas, pedidos y resumen. Se salta si la pestaña está oculta, si hay un campo con foco o si hay un diálogo abierto.
+- Los pedidos solo se crean a mano desde `/panel`. Ningún flujo público los guarda: los pedidos del sitio salen por WhatsApp. Las reservas sí llegan del sitio público (`ReservasPublicas`) y también se crean a mano.
+- Módulos por rol y por plan salen de `PermisosPanel` (rol ∩ plan): Completo = todos; Sitio y menú = solo reservas; Solo menú = ninguno. Se aplican con `ModuloPanel` y las políticas.
+- La pantalla "tu plan no incluye el panel" la sirve la ruta `/panel` (403, `no-store`) para quien solo pertenece a restaurantes de Solo menú. Como `canAccessPanel` les niega Filament, esa pantalla solo existe porque `/panel` existe.
+
+### 17.2 Decisiones aprobadas
+
+1. **Menú, Ajustes y Equipo se retiran al final**, después de una auditoría campo por campo contra Filament.
+2. **Recepción y cocina siguen ocultos.** Solo propietario y superadmin son visibles. La invitación (en Filament y en `/panel`) ofrece solo "propietario" por ahora; los demás roles (gerente, editor, recepción, cocina) **quedan en el código**: `PermisosPanel::MODULOS_POR_ROL`, `PermisosPanel::rolesAsignables`, las políticas, `User::esSoloOperativo()` y `LoginRespuesta`. No hay PR de "roles operativos". Hoy el código ya los ofrece (`rolesAsignables` devuelve los cinco y la pantalla Equipo de `/panel` los muestra), así que ocultarlos es un cambio de comportamiento, con sus pruebas (`PanelEquipoTest`, `InvitacionesTest`, `PanelRolesOperativosTest`).
+3. **Pedidos manuales: no se migran todavía.** La decisión (migrar o retirar) queda pendiente; ver 17.5.
+4. **`/panel` queda como puerta de redirección:** 302 a la página nueva dentro de `/admin/{slug}`, o la pantalla "sin panel" para quien solo tiene restaurantes en Solo menú. Se conserva `route('panel')` para marcadores y enlaces viejos.
+5. **La página de configuración "Pedidos y reservas" se renombra a "Ajustes de reservas y pedidos"**, en el PR de navegación (PR 3), con sus pruebas, para que no se confunda con las páginas operativas.
+
+### 17.3 Arquitectura elegida
+
+Opción A (páginas de Filament/Livewire que reutilizan servicios) ejecutada por etapas (opción D), con `/panel` vivo hasta el final.
+- **Servicios compartidos:** la lógica de reservas (y de pedidos, si se migran) sale de los controladores a servicios que usan a la vez la API y las páginas. Mientras `/panel` exista, la API no cambia de comportamiento.
+- **Permisos:** cada página nueva decide quién la ve con `PermisosPanel::permite()` (mismo techo de plan y de rol) y la política del modelo; no se duplica la regla.
+- **CSP:** sin cambios. `/admin` ya lleva `script-src 'self' 'nonce-…' 'unsafe-eval'`, así que las páginas nuevas no necesitan ninguna excepción.
+  - Se pierde la CSP estricta de `/panel` (sin `eval`) para estas funciones. El riesgo marginal es bajo: la misma sesión ya tiene el mismo poder en `/admin`.
+  - Se gana: Blade escapa por defecto (hoy `panel.js` escribe `innerHTML` con un `esc()` manual), una sola capa de autorización y ya no se lee la cookie `XSRF-TOKEN` desde JavaScript.
+  - La política `panel()` **no se borra**: la sigue usando `/invitaciones/*`.
+  - Quitar `unsafe-eval` del admin sigue siendo el pendiente de `docs/despliegue.md` (6.1); esta migración no lo agrava ni lo resuelve.
+- **Operación en vivo:** `wire:poll` solo en las páginas de reservas (y pedidos, si se migran), con la pestaña visible y sin pisar un campo o modal abierto (hoy esa lógica está a mano). Cada ciclo es una petición Livewire (más pesada que un JSON). Las peticiones de Livewire no pasan por `throttle:panel-api`; hay que decidir si necesitan un límite propio.
+
+### 17.4 PR en orden
+
+| # | PR | Contenido | Pruebas | Riesgos |
+|---|---|---|---|---|
+| 1 | **Base de servicios** | Extraer de `ReservaController` (y `ResumenController`) servicios de reservas sin cambiar comportamiento. Ocultar roles distintos de propietario en la invitación (Filament y API) según la decisión 2 | `PanelApiReservasTest` y `PanelApiMenuYResumenTest` pasan intactas; `PanelEquipoTest`, `InvitacionesTest` y `PanelRolesOperativosTest` se ajustan a "solo propietario visible" | Que la extracción cambie una regla (estados, zona horaria, tope de 200 próximas); que ocultar roles rompa invitaciones ya enviadas con otro rol |
+| 2 | **Reservas en Filament** | Página con Próximas, Hoy y Fecha, todas las acciones de `/panel` y `wire:poll`. Con el mismo tope de plan (Sitio y menú la ve; Solo menú no). `/panel` sigue vivo | Pruebas Livewire de la página por rol y plan; reglas de `PanelApiReservasTest` y `PanelPlanAccesoTest` repetidas sobre la página (aislamiento entre restaurantes, 403 por rol) | Peso del sondeo en tablet y celular; no pisar un campo en edición; sesión caducada a mitad de turno |
+| 3 | **Navegación, Inicio, barra inferior y renombre** | Ítem y acceso "hoy" de `BarraInferiorDelPanel` y "Panel de servicio" apuntan a la página nueva; enlace de reservas de `ProgresoDeConfiguracion`; Inicio con la operación del día (sin pedidos). Renombre a "Ajustes de reservas y pedidos" (`lang/es/panel.php`, claves `panel.pedidos.*`) | `BarraInferiorDelPanelTest`, `PanelInicioTest`, `PanelPedidosYReservasTest`, `PanelTextosDelDuenoTest`, `UxUiAccesibilidadTest` | Textos que otras pruebas buscan literalmente; el grupo de navegación `panel.grupos.pedidos` |
+| 4 | **Plataforma** (PR 7, 8 y 9 de la sección 8) | Sin cambios respecto a la sección 8 | Las de la sección 8 | Las de la sección 8 |
+| 5 | **Métricas: pantallas** (PR 11 de la sección 8) | Sin cambios; las reservas se cuentan desde `reservas` | Las de la sección 8 | Las de la sección 8 |
+| 6 | **Auditoría de Menú, Ajustes y Equipo y retiro de `/panel` y `/api/v1/panel`** | Primero la auditoría campo por campo contra Filament (edición rápida de precio y disponibilidad, ocultar y duplicar, foto con reducción en el navegador, plantilla, portada y galería, datos, horarios, reservas del sitio, equipo con solo propietario visible). Cubrir las brechas. Luego: `/panel` pasa a puerta (302 o "sin panel"), se borran `panel.js`, `panel.css`, `panel/index.blade.php` y los controladores y rutas de `/api/v1/panel` | Migrar antes de borrar: `PanelApiReservasTest` (13), `PanelPlanAccesoTest` (13), `PanelAjustesTest` (9), `PanelImagenesTest` (9), `PanelRolesOperativosTest` (7), `PanelEquipoTest` (7), `PanelApiMenuYResumenTest` (7) y `PanelApiPedidosTest` (6, según 17.5). Ajustar `PlanSinPanelTest` (18) y `PlanSinPanelDosFactoresTest` (6), `CabecerasDeSeguridadTest` (la prueba de la CSP de `/panel`), `ErroresDeSubidaDeImagenTest` e `ImagenesSeguridadTest` | **Bloqueado hasta decidir Pedidos (17.5).** Perder cobertura de aislamiento entre restaurantes si se borran las pruebas de la API antes de migrarlas; que Solo menú pierda su pantalla "sin panel"; marcadores viejos de `/panel` |
+| 7 | **Pedidos** | **Pendiente** de decisión | Ver 17.5 | Ver 17.5 |
+
+Los PR 4 y 5 de esta tabla son los PR 7 a 9 y 11 de la sección 8: se mantienen en ese orden relativo, después del 3 y antes del retiro.
+
+### 17.5 Pedidos: pendiente, y qué haría falta en cada caso
+
+`/panel` no puede apagarse del todo mientras Pedidos exista solo ahí. Por eso el retiro (PR 6) está bloqueado hasta decidir.
+
+**Si se migran:**
+- Una página de Filament con el tablero de cuatro estados (en celular, una pestaña por estado, objetivo táctil de 44 px) y el alta de un pedido a mano.
+- Extraer a un servicio la regla de `PedidoController` (estado siguiente con `Pedido::siguienteEstado()`, `entregado_at`, los entregados del día en la zona horaria del restaurante).
+- Sondeo propio (probablemente más corto que el de reservas), visible y sin pisar un campo en edición.
+- Quién la ve: hoy el módulo es de propietario, gerente, editor y cocina, y solo en el plan Completo (D7 de `docs/planes.md`). Con los roles ocultos, la ven propietario y superadmin.
+- Pruebas: `PanelApiPedidosTest` (6) pasa a pruebas de la página; `PanelPlanAccesoTest` cubre D7.
+
+**Si se retiran:**
+- Quitar el módulo `pedidos` de `PermisosPanel::MODULOS`, las rutas y el controlador de pedidos de la API, y los campos de pedidos del resumen (`pedidos_activos`, `ventas_hoy`) y de Inicio.
+- Decidir qué pasa con el modelo y los datos: `Pedido`, `PedidoPolicy`, su factory y migración, y las filas existentes (conservarlas o borrarlas con una migración). Es una decisión de datos, no solo de pantalla.
+- Actualizar D7 de `docs/planes.md`, las pruebas que citan pedidos y los textos de Inicio.
+- Nota: "Pedidos por WhatsApp" (envío desde el menú público) **no se toca**; es otra función.
+
+### 17.6 Redirecciones y enlaces
+
+- `/panel` conserva su nombre de ruta. Para quien tiene al menos un restaurante con panel responde 302 a la página nueva del restaurante activo; para quien solo tiene Solo menú, muestra "sin panel".
+- Cuatro puntos del código apuntan hoy a `route('panel')`: `LoginRespuesta`, el ítem "Panel de servicio" (`AdminPanelProvider`), el acceso `hoy` de `BarraInferiorDelPanel` y el enlace de reservas de `ProgresoDeConfiguracion`. No hay enlaces a `/panel` en las plantillas de correo. Pasan a la página nueva en el PR 3.
+- `LoginRespuesta` y `User::esSoloOperativo()` se **conservan** (decisión 2); mientras los roles operativos estén ocultos no habrá cuentas que los usen.
+- Las reglas de Cloudflare para `/panel*` (`docs/despliegue.md`) siguen valiendo mientras exista la puerta.
+
+### 17.7 Pruebas manuales (en cada PR que toque pantalla)
+
+Propietario y superadmin, en cada plan (Solo menú debe ver "sin panel"). Reserva que llega del sitio público y se confirma, se mueve de hora y se cancela. Dos pestañas abiertas con el sondeo, sin que se pise un campo en edición. Sesión caducada a mitad de turno. Marcador viejo de `/panel`. 390 px y escritorio, en claro y oscuro. Con el banner de superadmin dentro de un restaurante.
+
+### 17.8 Qué no se pudo verificar
+
+- **Nada visual ni de teclado:** no hay navegador en el equipo de desarrollo; el análisis salió de leer el código.
+- **Livewire 4.4 y Filament 5.10:** no se consultó la documentación de `wire:poll` (opciones de visibilidad) ni de páginas con tenant; se hará con `search-docs` al empezar el PR 2.
+- **Equivalencia de Menú, Ajustes y Equipo:** solo se compararon nombres y endpoints, no campo por campo; esa es la auditoría del PR 6.
+- **Límite `panel-api`:** no se abrió; no se sabe si habría que replicarlo para Livewire.
+- **Rendimiento del sondeo en una tablet real:** sin medir.
+- **Invitaciones en Filament:** no se comprobó si `InvitacionResource` ofrece todos los roles o solo algunos; el PR 1 debe empezar por ahí.

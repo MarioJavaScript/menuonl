@@ -56,6 +56,8 @@ Leyenda: ✔ puede · ✖ no puede · ◐ parcial (se explica) · ⚠ depende de
 
 ### 1.2 Panel de servicio `/panel` (API `/api/v1/panel/{slug}/...`)
 
+> **Transitorio.** `/panel` y su API describen el estado actual, no el definitivo: `docs/integracion-dashboard.md`, sección 17, los pasa a páginas de Filament y deja `/panel` solo como puerta de redirección. Las reglas de plan y rol de este documento (`PermisosPanel`, D2, D7, D10) siguen valiendo y se aplican igual en las páginas nuevas.
+
 El acceso a cada módulo vive en `PermisosPanel::modulosDe()` y se aplica con `ModuloPanel`. Es el lugar natural para el techo del plan.
 
 | Módulo | Qué hace | Completo | Sitio y menú | Solo menú | Nota |
