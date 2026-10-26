@@ -31,6 +31,18 @@ class BannerDeSuperadminTest extends TestCase
         $this->setUpEscenarioDePanel();
     }
 
+    /**
+     * Largo máximo de restaurantes.nombre, leído de la migración: SQLite no guarda el largo de un varchar y MariaDB estricto sí lo exige.
+     */
+    private static function limiteDelNombre(): int
+    {
+        $migracion = (string) file_get_contents(database_path('migrations/2026_10_15_000001_create_restaurantes_and_user_roles_tables.php'));
+
+        preg_match("/Schema::create\('restaurantes'.*?string\('nombre', (\d+)\)/s", $migracion, $coincidencia);
+
+        return (int) ($coincidencia[1] ?? 0);
+    }
+
     private function banner(): string
     {
         return (string) FilamentView::renderHook(PanelsRenderHook::TOPBAR_BEFORE);
@@ -119,7 +131,9 @@ class BannerDeSuperadminTest extends TestCase
 
     public function test_el_nombre_largo_o_con_marcas_va_completo_y_escapado(): void
     {
-        $nombre = 'Restaurante "El gran <b>sabor</b>" '.str_repeat('de la esquina ', 12);
+        $nombre = mb_substr('Restaurante "El gran <b>sabor</b>" '.str_repeat('de la esquina ', 12), 0, self::limiteDelNombre());
+        $this->assertGreaterThan(100, self::limiteDelNombre(), 'No se pudo leer el largo de la columna en la migración.');
+        $this->assertSame(self::limiteDelNombre(), mb_strlen($nombre), 'El nombre usa el máximo que admite la columna.');
         $restaurante = Restaurante::factory()->create(['slug' => 'a', 'nombre' => $nombre]);
         $this->entrarAlPanel($this->crearUsuario('superadmin'), $restaurante);
 
