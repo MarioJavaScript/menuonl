@@ -296,6 +296,8 @@ Políticas por grupo (`app/Services/PoliticaDeContenido.php`):
 | `/panel`, `/invitaciones/*` | `'self'` | Vite propio, sin scripts en línea. `connect-src 'self'`, `object-src 'none'`, `base-uri 'self'`. |
 | `/admin` (Filament y Livewire) | `'self' 'nonce-…' 'unsafe-eval'` | Nonce nuevo por petición (`Vite::useCspNonce()`); Filament y Livewire lo ponen a sus scripts en línea. Estilos: `'unsafe-inline'` y `fonts.bunny.net` (la tipografía por defecto de Filament). |
 
+Nota: `/panel` es transitorio (`docs/integracion-dashboard.md`, sección 17). Al retirarlo, su pantalla pasa a `/admin` (CSP con nonce) y esta política se conserva solo para `/invitaciones/*`; las reglas de Cloudflare para `/panel*` siguen valiendo mientras exista la puerta de redirección.
+
 - **Por qué `'unsafe-eval'` en el admin:** Alpine (versión estándar, la que usan Filament y Livewire) evalúa las expresiones de las plantillas con `new Function`. Livewire trae una versión compatible con CSP, pero las plantillas de Filament usan expresiones que esa versión no soporta (no se probó en un navegador; es la razón conocida de que Filament no la active), así que no se activó. Mientras Filament no lo soporte, `'unsafe-eval'` es lo que falta endurecer: un XSS en `/admin` aún podría ejecutar código vía `eval`, aunque ya no por scripts en línea ni atributos `on…=`.
 - **Por qué `'unsafe-inline'` sigue en estilos:** Filament y las plantillas del sitio usan atributos `style=`. El riesgo de XSS por estilos es mucho menor que por scripts.
 - **Desarrollo:** con `npm run dev` (archivo `public/hot`) y fuera de producción, la CSP admite el servidor de Vite (y su websocket) automáticamente.
