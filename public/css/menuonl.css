@@ -1611,3 +1611,14 @@
         .tabla-tarjetas td[data-principal]::before { content: none; }
     }
 }
+
+/*
+ * Logo de Menubly (x-mb.logo): dos <img>, la de modo oscuro con `hidden`. Se ve en claro salvo que la persona haya elegido
+ * oscuro o "Automático" con el sistema en oscuro (misma regla que los tokens de arriba). Sin JavaScript.
+ */
+:root[data-apariencia="dark"] .mb-logo--claro { display: none; }
+:root[data-apariencia="dark"] .mb-logo--oscuro { display: inline; }
+@media (prefers-color-scheme: dark) {
+    :root[data-apariencia="system"] .mb-logo--claro { display: none; }
+    :root[data-apariencia="system"] .mb-logo--oscuro { display: inline; }
+}
