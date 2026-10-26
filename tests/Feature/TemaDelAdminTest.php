@@ -23,6 +23,8 @@ class TemaDelAdminTest extends TestCase
     private const array TOKENS_MB = [
         'lienzo', 'superficie', 'superficie-2', 'tinta', 'tinta-2', 'tinta-3', 'accion', 'accion-hover', 'sobre-accion',
         'foco', 'linea', 'borde-control', 'fuente-titulo', 'fuente-texto', 'sombra-1', 'sombra-2', 'sombra-3',
+        'exito', 'exito-bg', 'exito-borde', 'aviso', 'aviso-bg', 'aviso-borde', 'peligro', 'peligro-bg', 'peligro-borde',
+        'info', 'info-bg', 'info-borde', 'ctx-bg', 'ctx-texto', 'ctx-tenue', 'ctx-boton-bg', 'ctx-boton-texto', 'ctx-foco',
     ];
 
     /**
@@ -165,8 +167,51 @@ class TemaDelAdminTest extends TestCase
         ];
     }
 
+    /**
+     * Pares de los componentes x-mb.* (PR 3). Texto de estado y tinta sobre el fondo de cada aviso, glifo de plan y banner.
+     * Los bordes de los avisos son decorativos y no se exigen.
+     *
+     * @return array<string, array{0: string, 1: string, 2: string, 3: float}>
+     */
+    public static function paresDeContrasteDeComponentes(): array
+    {
+        $pares = [];
+
+        foreach (['claro', 'oscuro'] as $modo) {
+            foreach (['exito', 'aviso', 'peligro', 'info'] as $estado) {
+                $pares["{$modo}: texto e icono de {$estado} sobre su fondo"] = [$modo, "mb-{$estado}", "mb-{$estado}-bg", 4.5];
+                $pares["{$modo}: texto principal sobre el fondo de {$estado}"] = [$modo, 'mb-tinta', "mb-{$estado}-bg", 4.5];
+                $pares["{$modo}: texto secundario sobre el fondo de {$estado}"] = [$modo, 'mb-tinta-2', "mb-{$estado}-bg", 4.5];
+            }
+
+            $pares["{$modo}: barra llena del glifo de plan sobre superficie"] = [$modo, 'mb-accion', 'mb-superficie', 3.0];
+            $pares["{$modo}: barra vacia del glifo de plan sobre superficie"] = [$modo, 'mb-borde-control', 'mb-superficie', 3.0];
+            $pares["{$modo}: texto del aviso neutro sobre su fondo"] = [$modo, 'mb-tinta-2', 'mb-superficie-2', 4.5];
+            $pares["{$modo}: texto del estado vacio sobre superficie"] = [$modo, 'mb-tinta-2', 'mb-superficie', 4.5];
+            $pares["{$modo}: texto del banner sobre su fondo"] = [$modo, 'mb-ctx-texto', 'mb-ctx-bg', 4.5];
+            $pares["{$modo}: boton del banner (texto sobre su fondo)"] = [$modo, 'mb-ctx-boton-texto', 'mb-ctx-boton-bg', 4.5];
+            $pares["{$modo}: boton del banner sobre el banner"] = [$modo, 'mb-ctx-boton-bg', 'mb-ctx-bg', 3.0];
+            $pares["{$modo}: barras vacias del glifo en el banner"] = [$modo, 'mb-ctx-tenue', 'mb-ctx-bg', 3.0];
+            $pares["{$modo}: barras llenas del glifo en el banner"] = [$modo, 'mb-ctx-boton-bg', 'mb-ctx-bg', 3.0];
+            $pares["{$modo}: foco dentro del banner"] = [$modo, 'mb-ctx-foco', 'mb-ctx-bg', 3.0];
+        }
+
+        return $pares;
+    }
+
+    #[DataProvider('paresDeContrasteDeComponentes')]
+    public function test_los_pares_de_los_componentes_cumplen_wcag_aa(string $modo, string $primero, string $segundo, float $minimo): void
+    {
+        $this->afirmarContraste($modo, $primero, $segundo, $minimo);
+    }
+
     #[DataProvider('paresDeContraste')]
     public function test_los_pares_de_color_cumplen_wcag_aa(string $modo, string $primero, string $segundo, float $minimo): void
+    {
+        $this->afirmarContraste($modo, $primero, $segundo, $minimo);
+    }
+
+    private function afirmarContraste(string $modo, string $primero, string $segundo, float $minimo): void
     {
         $tokens = $this->bloque($this->tema(), $modo === 'claro' ? ':root' : ':root.dark');
         $ratio = self::contraste($tokens[$primero], $tokens[$segundo]);
