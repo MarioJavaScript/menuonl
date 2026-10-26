@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\Api\V1\Panel\ReservaController;
 use App\Models\Reserva;
 use App\Models\Restaurante;
 use App\Models\Scopes\RestauranteScope;
@@ -122,6 +123,66 @@ class PanelApiReservasTest extends TestCase
             ['Hoy', 'Manana temprano', 'Manana tarde', 'Pasado'],
             array_column($respuesta->json('data'), 'nombre')
         );
+    }
+
+    public function test_upcoming_lists_from_today_onward_ordered_by_date_and_time_without_the_past(): void
+    {
+        $restaurante = Restaurante::factory()->create();
+        $otro = Restaurante::factory()->create();
+        $hoy = now($restaurante->zona_horaria)->toDateString();
+        $crear = fn (string $nombre, string $fecha, string $hora, ?Restaurante $de = null) => Reserva::factory()->create([
+            'restaurante_id' => ($de ?? $restaurante)->id, 'nombre' => $nombre, 'fecha' => $fecha, 'hora' => $hora,
+        ]);
+        $crear('Ayer', now()->subDay()->toDateString(), '20:00:00');
+        $crear('Pasado manana', now()->addDays(2)->toDateString(), '13:00:00');
+        $crear('Hoy tarde', $hoy, '21:00:00');
+        $crear('Manana', now()->addDay()->toDateString(), '19:00:00');
+        $crear('Hoy temprano', $hoy, '13:00:00');
+        $crear('Ajena', $hoy, '12:00:00', $otro);
+
+        $respuesta = $this->actingAs($this->miembro($restaurante))->getJson($this->url($restaurante).'?proximas=1');
+
+        $respuesta->assertOk()->assertJsonPath('hoy', $hoy);
+        $this->assertSame(
+            ['Hoy temprano', 'Hoy tarde', 'Manana', 'Pasado manana'],
+            array_column($respuesta->json('data'), 'nombre'),
+        );
+        $this->assertSame([$hoy, $hoy], [$respuesta->json('data.0.fecha'), $respuesta->json('data.1.fecha')]);
+    }
+
+    public function test_upcoming_is_capped_and_default_listing_still_returns_only_today_with_the_date_of_today(): void
+    {
+        $restaurante = Restaurante::factory()->create();
+        $hoy = now($restaurante->zona_horaria)->toDateString();
+        Reserva::factory()->count(3)->create(['restaurante_id' => $restaurante->id, 'fecha' => $hoy]);
+        Reserva::factory()->create(['restaurante_id' => $restaurante->id, 'fecha' => now()->addDay()->toDateString()]);
+        $usuario = $this->miembro($restaurante);
+
+        $this->actingAs($usuario)->getJson($this->url($restaurante))
+            ->assertOk()->assertJsonCount(3, 'data')->assertJsonPath('hoy', $hoy);
+        $this->actingAs($usuario)->getJson($this->url($restaurante).'?proximas=1')->assertJsonCount(4, 'data');
+        $this->assertSame(200, ReservaController::MAXIMO_PROXIMAS);
+    }
+
+    public function test_upcoming_uses_the_restaurant_time_zone_for_today(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-10-22 03:00:00', 'UTC'));
+        $restaurante = Restaurante::factory()->create(['zona_horaria' => 'America/Mexico_City']);
+        Reserva::factory()->create(['restaurante_id' => $restaurante->id, 'nombre' => 'Anoche', 'fecha' => '2026-10-21', 'hora' => '22:00:00']);
+        Reserva::factory()->create(['restaurante_id' => $restaurante->id, 'nombre' => 'Ayer local', 'fecha' => '2026-10-20', 'hora' => '22:00:00']);
+
+        $respuesta = $this->actingAs($this->miembro($restaurante))->getJson($this->url($restaurante).'?proximas=1');
+
+        $respuesta->assertOk()->assertJsonPath('hoy', '2026-10-21');
+        $this->assertSame(['Anoche'], array_column($respuesta->json('data'), 'nombre'));
+    }
+
+    public function test_upcoming_rejects_a_bad_flag_and_respects_roles_without_the_reservations_module(): void
+    {
+        $restaurante = Restaurante::factory()->create();
+
+        $this->actingAs($this->miembro($restaurante))->getJson($this->url($restaurante).'?proximas=quizas')->assertUnprocessable();
+        $this->actingAs($this->miembro($restaurante, 'cocina'))->getJson($this->url($restaurante).'?proximas=1')->assertForbidden();
     }
 
     public function test_creates_reservation_confirmed_by_default_in_active_restaurant(): void
