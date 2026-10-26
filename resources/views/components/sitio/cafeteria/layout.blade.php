@@ -29,7 +29,7 @@
     @if (filled($r->portada))
         <meta property="og:image" content="{{ app(\App\Services\WebpImageService::class)->url($r->portada) }}">
     @endif
-    <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+    <x-mb.favicons />
     <link rel="preload" href="/fonts/sitio/syne-var.woff2" as="font" type="font/woff2" crossorigin>
     @vite(array_values(array_filter(['resources/css/sitio/e.css', $js ? 'resources/js/sitio-cafeteria.js' : null, $pedido ? 'resources/js/sitio-cafeteria-pedido.js' : null, $reservas ? 'resources/js/sitio.js' : null])))
 </head>

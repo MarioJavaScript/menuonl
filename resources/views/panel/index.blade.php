@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="robots" content="noindex">
     <title>Panel · {{ config('app.name') }}</title>
-    <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+    <x-mb.favicons />
     @vite(['resources/css/panel.css', 'resources/js/panel.js'])
 </head>
 <body>

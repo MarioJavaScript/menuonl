@@ -28,7 +28,7 @@
         @if (filled($descripcion))
             <meta name="description" content="{{ $descripcion }}">
         @endif
-        <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+        <x-mb.favicons />
         <link rel="stylesheet" href="{{ asset('css/menuonl.css').'?v='.filemtime(public_path('css/menuonl.css')) }}">
         @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
             @vite(array_values(array_filter(['resources/css/app.css', $js, $pedidoJs])))

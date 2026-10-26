@@ -7,8 +7,7 @@
 >
     <header class="mb-6 text-center">
         <a href="{{ url('/') }}" class="inline-flex items-center gap-2 min-h-[44px] px-2.5 font-bold text-lg text-texto-fuerte rounded-lg focus-visible:ring-2 focus-visible:ring-foco focus:outline-none" aria-label="{{ config('app.name') }}">
-            <span class="w-8 h-8 rounded-xl bg-accion text-accion-texto flex items-center justify-center font-black text-sm" aria-hidden="true">M</span>
-            <span class="tracking-wide">{{ config('app.name') }}</span>
+            <x-mb.logo variante="horizontal" :alto="32" />
         </a>
     </header>
 

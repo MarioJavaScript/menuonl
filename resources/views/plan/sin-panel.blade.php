@@ -7,7 +7,7 @@
     <meta name="color-scheme" content="light">
     <script src="{{ asset('js/apariencia.js').'?v='.filemtime(public_path('js/apariencia.js')) }}"></script>
     <title>{{ __('panel.plan_sin_panel.titulo') }}</title>
-    <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+    <x-mb.favicons />
     <style>
         :root {
             --fondo: #f6f5f2;
@@ -58,6 +58,13 @@
             border: 1px solid var(--borde);
             border-radius: 12px;
         }
+        .marca { margin: 0 0 16px; }
+        :root[data-apariencia="dark"] .mb-logo--claro { display: none; }
+        :root[data-apariencia="dark"] .mb-logo--oscuro { display: inline; }
+        @media (prefers-color-scheme: dark) {
+            :root[data-apariencia="system"] .mb-logo--claro { display: none; }
+            :root[data-apariencia="system"] .mb-logo--oscuro { display: inline; }
+        }
         h1 { margin: 0 0 12px; font-size: 1.5rem; line-height: 1.25; }
         p { margin: 0 0 16px; }
         .restaurantes { margin: 0 0 16px; padding-left: 20px; font-weight: 600; }
@@ -91,6 +98,8 @@
 </head>
 <body>
 <main>
+    <div class="marca"><x-mb.logo variante="horizontal" :alto="32" /></div>
+
     <h1>{{ __('panel.plan_sin_panel.titulo') }}</h1>
 
     @if (count($restaurantes) === 1)

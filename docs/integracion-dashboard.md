@@ -389,3 +389,61 @@ No existe ningún "entrar como" (ni paquete ni código). El superadmin entra a u
 
 - Nada visual ni de teclado: no hay navegador en el equipo de desarrollo. Las compensaciones del menú lateral y del cajón dependen de reglas de Filament (`--topbar-height` de 4rem, `.fi-sidebar`, `.fi-no`) leídas del CSS del paquete, no vistas en pantalla.
 - Un lector de pantalla real.
+
+## 16. PR "Logo oficial de Menubly": qué se hizo
+
+Se reemplazó la "M" de relleno por el logo oficial (paquete `menubly-logos`, solo lectura, fuera del repositorio) sin rediseñar pantallas. No se tocó la lógica de planes, métricas ni permisos, ni la CSP, ni ningún identificador interno (`menuonl:*`, `config/menuonl.php`, `menuonl_cart_*`).
+
+### Archivos (solo los que se usan; no se copiaron carpetas)
+
+`public/brand/`: `menubly-horizontal-color.svg` y `-negativo.svg` (4.7 KB), `menubly-wordmark-color.svg` y `-negativo.svg` (2.4 KB), `menubly-simbolo-color.svg` (2.0 KB), `favicon.svg` (1.6 KB), `favicon.ico` (3.7 KB, 16 y 32 px) y `apple-touch-icon.png` (4 KB, 180 px). Además `public/favicon.svg` y `public/favicon.ico` (copias idénticas, en la raíz porque los navegadores piden `/favicon.ico` solos; una prueba comprueba que coinciden con los de `brand/`). No se copiaron las variantes `-navy` ni `-blanco` (estas usan `<mask>`), el vertical, el símbolo pequeño, los PNG por tamaño, 05-iconos-app, 07-redes ni 08-slashi-chef (la mascota va en el PR de Inicio).
+
+### Seguridad de los SVG
+
+Se revisaron todos: sin `<script`, atributos `on*`, `foreignObject`, `href`/`xlink:href`, `@import`, `url(`, `<image`, `data:`, `<style` ni `<use`. Son solo `rect`, `circle`, `g` y `path` con `fill` fijo. No se optimizaron (ya pesan entre 1.6 y 5 KB; no valía el riesgo de alterar el dibujo). Se cargan siempre con `<img>`, nunca en línea. La prueba `test_ningun_svg_tiene_codigo_activo_ni_referencias_externas` lo vigila para todo `public/brand/*.svg` y `public/favicon.svg`, así que un SVG nuevo con `-blanco` (que lleva `url(#...)`) la haría fallar a propósito.
+
+### Componentes
+
+- `x-mb.logo` (`variante`: horizontal, wordmark o simbolo; `alto` en px; `decorativo`). Calcula el ancho con la proporción del SVG y escribe **siempre** `width` y `height` (los del SVG, de 2440 px, nunca se usan). `alt` es `config('app.name')`, nunca el literal; con `decorativo` queda vacío. Cada archivo lleva `?v=` con la fecha del archivo.
+- `x-mb.favicons`: `favicon.svg`, `favicon.ico` y `apple-touch-icon`, los tres con `?v=filemtime`. Lo usan `x-layout.publico`, los cinco layouts de sitios y plantillas, `panel/index` y `plan/sin-panel`. En Filament, `->favicon()` lleva el mismo `?v=` y un hook `HEAD_END` añade el `.ico` y el de Apple.
+
+### Claro y oscuro (sin JavaScript, sin scripts en línea)
+
+Dos `<img>`: la de modo claro (por defecto) y la de modo oscuro, esta con `hidden` y `loading="lazy"` (no se descarga si no se ve). El símbolo es el mismo en los dos modos, así que lleva una sola. Las reglas viven en un solo sitio por superficie:
+
+- Público (`public/css/menuonl.css`): `data-apariencia="dark"`, y `data-apariencia="system"` dentro de `@media (prefers-color-scheme: dark)`. Sin preferencia guardada se ve el logo claro.
+- `/admin` (`resources/css/filament/admin/theme.css`): clase `.dark`.
+- `plan/sin-panel`: su propio `<style>` (ya era autónomo, no carga `menuonl.css`).
+
+### Dónde aparece
+
+Portada y invitaciones (horizontal, 32 px, reemplaza la "M" y el nombre en texto; el enlace conserva su `aria-label`), login, barra lateral y barra superior de Filament (`filament/logo.blade.php`, horizontal 32 px), pantalla "sin panel" (horizontal 32 px) y pie del menú público ("Hecho con" más el wordmark de 16 px; el `alt` aporta el nombre). Favicon de Menubly en todas las pestañas, también en sitios y plantillas de restaurantes (como antes).
+
+### Lo que quedó fuera y por qué
+
+- **Pies de sitios** ("Sitio creado con...") y pantalla "Menú no disponible": no se pidieron en este PR; siguen con texto.
+- **QR imprimible:** ahí va el logo del restaurante, no el de la plataforma.
+- **Correos de invitación:** un correo no puede cargar de forma segura un logo del servidor local (se bloquea o se pierde); se resuelve aparte, con imagen alojada o incrustada, y una decisión sobre privacidad.
+- **`og:image`, `theme-color` y PWA** (manifiesto, `icon-192/512`, maskable): no hay manifiesto hoy y el azul bebé choca en modo oscuro; no se justifican todavía. El `head-snippet.html` del paquete además usa un dominio de ejemplo.
+
+### Caché
+
+Los iconos y logos se piden con `?v=` y estáticos desde `public/` (sin sesión ni cookies). La ruta `/favicon.ico` de la raíz sin `?v=` solo se renueva con purga: ver el paso 9 de "Cada despliegue siguiente" en `docs/despliegue.md` (purgar `/brand/*` y `/favicon*` en Cloudflare tras desplegar). El peso total del logo en el menú público móvil es de 2.4 KB (wordmark).
+
+### Pruebas
+
+Nuevas (`LogoMenublyTest`, 8): archivos existentes y copias de la raíz idénticas, SVG sin código activo ni referencias externas, `width`/`height` y `alt` del componente, reglas de claro/oscuro en cada hoja, logo en login, portada, invitaciones, pie del menú y "sin panel", favicons con `?v=` en las pestañas y los layouts de sitios, ninguna imagen ni icono de otro origen. Se actualizó `MarcaYModoClaroTest` (el pie del menú ahora comprueba el `alt`).
+
+### Qué probar a mano (390 px y escritorio, claro y oscuro)
+
+1. Login, barra lateral y barra superior de `/admin`: logo nítido, sin salto de diseño; cambiar a oscuro cambia a la variante negativa.
+2. Portada e invitación: logo en lugar de la "M"; enlace a la portada con foco visible.
+3. Menú público: el wordmark del pie junto a "Hecho con", en claro, oscuro y "Automático" con el sistema en oscuro.
+4. Pantalla "sin panel" (cuenta con plan sin panel).
+5. Pestaña del navegador: favicon nuevo (puede tardar por la caché; probar en ventana privada y `/favicon.ico` directo). Agregar a la pantalla de inicio en iOS (apple-touch-icon).
+6. Pestañas de un sitio de restaurante: favicon de Menubly.
+
+### Qué no se pudo verificar
+
+- Nada visual: no hay navegador en este entorno; el aspecto del logo, el cambio de variante y las pestañas no se vieron en pantalla (las pruebas comprueban el HTML y el CSS, no el pintado).
+- No se abrieron el `.ico` ni el PNG uno a uno más allá de comprobar tamaño y tipo.

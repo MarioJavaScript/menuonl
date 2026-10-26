@@ -57,10 +57,11 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::BODY_END,
                 fn (): string => Filament::getTenant() ? view('filament.hooks.barra-inferior', ['accesos' => app(BarraInferiorDelPanel::class)->accesos()])->render() : '',
             )
+            ->renderHook(PanelsRenderHook::HEAD_END, fn (): string => view('components.mb.favicons', ['svg' => false])->render())
             ->brandName(fn (): string => (string) config('app.name'))
             ->brandLogo(fn () => view('filament.logo'))
             ->brandLogoHeight('2rem')
-            ->favicon(asset('favicon.svg'))
+            ->favicon(asset('favicon.svg').'?v='.filemtime(public_path('favicon.svg')))
             ->font('Figtree Variable', provider: LocalFontProvider::class)
             ->defaultThemeMode(ThemeMode::Light)
             ->colors(PaletaDelPanel::colores())
