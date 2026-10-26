@@ -773,3 +773,7 @@ html:root {
 html:has(.mb-banner--fijo) {
     scroll-padding-top: calc(var(--topbar-height, 4rem) + var(--mb-banner-alto) + 1rem);
 }
+
+/* Logo de Menubly (x-mb.logo): dos <img>, la de modo oscuro con `hidden`; Filament pone .dark en <html>. */
+:root.dark .mb-logo--claro { display: none; }
+:root.dark .mb-logo--oscuro { display: inline; }

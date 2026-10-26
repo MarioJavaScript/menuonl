@@ -16,7 +16,7 @@
     @if (filled($r->portada))
         <meta property="og:image" content="{{ app(\App\Services\WebpImageService::class)->url($r->portada) }}">
     @endif
-    <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+    <x-mb.favicons />
     <link rel="preload" href="/fonts/sitio/cormorant-garamond-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/fonts/sitio/inter-latin-variable.woff2" as="font" type="font/woff2" crossorigin>
     @vite(['resources/css/sitio/'.$plantilla.'.css', 'resources/js/sitio.js'])

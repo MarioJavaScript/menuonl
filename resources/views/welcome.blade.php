@@ -9,8 +9,7 @@
         <header class="sticky top-0 z-40 w-full backdrop-blur-md bg-fondo/90 border-b border-borde transition-colors">
             <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
                 <a href="{{ url('/') }}" class="inline-flex items-center gap-2.5 min-h-[44px] font-bold tracking-tight text-lg text-texto-fuerte focus:outline-none focus-visible:ring-2 focus-visible:ring-foco rounded-lg px-2 py-1" aria-label="{{ config('app.name') }} - Inicio">
-                    <span class="w-8 h-8 rounded-xl bg-accion text-accion-texto flex items-center justify-center font-black text-sm shadow-sm">M</span>
-                    <span class="text-base tracking-wide font-extrabold">{{ config('app.name') }}</span>
+                    <x-mb.logo variante="horizontal" :alto="32" />
                 </a>
 
                 <nav class="flex items-center gap-2 sm:gap-3" aria-label="Navegación principal">

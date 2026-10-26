@@ -60,7 +60,8 @@ class MarcaYModoClaroTest extends TestCase
 
         $this->get(route('menu.publico', ['slug' => $restaurante->slug]))
             ->assertOk()
-            ->assertSee('Hecho con '.self::MARCA)
+            ->assertSee('Hecho con')
+            ->assertSee('alt="'.self::MARCA.'"', false)
             ->assertDontSee('MENUONL');
     }
 

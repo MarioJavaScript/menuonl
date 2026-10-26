@@ -137,6 +137,7 @@ Orden recomendado para un despliegue (la primera vez y las siguientes). Idealmen
 6. [ ] `php artisan up`.
 7. [ ] Recargar PHP-FPM si OPcache está con `validate_timestamps=0`.
 8. [ ] Humo: `/up` responde 200, `/admin/login` carga con estilos, un menú público abre, y el log no muestra errores nuevos.
+9. [ ] Si el despliegue cambió el logo o los favicons (`public/brand/*`, `public/favicon.*`): purgar en Cloudflare la caché de `/brand/*` y `/favicon*` (Caching, Purge by URL o por prefijo). Las páginas piden los iconos con `?v=` (fecha del archivo) para romper la caché del navegador, pero la ruta de la raíz (`/favicon.ico`, que algunos navegadores piden solos, sin `?v=`) solo se actualiza si se purga.
 
 ### Verificación final antes de abrir a clientes
 

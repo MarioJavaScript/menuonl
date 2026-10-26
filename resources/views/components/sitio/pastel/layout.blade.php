@@ -30,7 +30,7 @@
     @if (filled($r->portada))
         <meta property="og:image" content="{{ app(\App\Services\WebpImageService::class)->url($r->portada) }}">
     @endif
-    <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+    <x-mb.favicons />
     <link rel="preload" href="/fonts/sitio/dm-serif-display-latin-400.woff2" as="font" type="font/woff2" crossorigin>
     @vite(array_values(array_filter(['resources/css/sitio/g.css', $js ? 'resources/js/sitio-pastel.js' : null, $pedido ? 'resources/js/sitio-pastel-pedido.js' : null, $reservas ? 'resources/js/sitio.js' : null])))
 </head>
