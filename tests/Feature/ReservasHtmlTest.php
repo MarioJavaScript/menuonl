@@ -83,15 +83,120 @@ class ReservasHtmlTest extends TestCase
         return $botones;
     }
 
-    public function test_el_html_no_trae_directivas_ni_codigo_que_el_analizador_de_wire_click_no_soporte(): void
+    private function documento(string $html): \DOMDocument
+    {
+        $documento = new \DOMDocument;
+        libxml_use_internal_errors(true);
+        $documento->loadHTML('<?xml encoding="utf-8"?><body>'.$html.'</body>');
+        libxml_clear_errors();
+
+        return $documento;
+    }
+
+    /**
+     * Valores de los atributos de eventos que escribe nuestra vista. Se ignoran wire:snapshot, wire:effects y los
+     * <script>, que traen JSON.parse(...) de Livewire y de Filament.
+     *
+     * @return list<string>
+     */
+    private function valoresDeAtributosDeEventos(string $html): array
+    {
+        $valores = [];
+        foreach ((new \DOMXPath($this->documento($html)))->query('//*[not(self::script)]/@*') as $atributo) {
+            $nombre = $atributo->nodeName;
+            if (preg_match('/^(wire:(click|submit|keydown)(\.|$)|x-on:|@click)/', $nombre) === 1) {
+                $valores[] = $atributo->nodeValue;
+            }
+        }
+
+        return $valores;
+    }
+
+    /**
+     * El HTML visible: sin <script> ni los atributos wire:snapshot y wire:effects.
+     */
+    private function htmlVisible(string $html): string
+    {
+        $documento = $this->documento($html);
+        $xpath = new \DOMXPath($documento);
+
+        foreach (iterator_to_array($xpath->query('//script')) as $script) {
+            $script->parentNode->removeChild($script);
+        }
+        foreach ($xpath->query('//*[@*[name()="wire:snapshot" or name()="wire:effects"]]') as $elemento) {
+            $elemento->removeAttribute('wire:snapshot');
+            $elemento->removeAttribute('wire:effects');
+        }
+
+        return (string) $documento->saveHTML($documento->getElementsByTagName('body')->item(0));
+    }
+
+    /**
+     * @param  list<string>  $valores
+     * @return list<string>
+     */
+    private function codigoProhibidoEn(array $valores): array
+    {
+        $encontrados = [];
+        foreach ($valores as $valor) {
+            foreach (['atob(', 'JSON.parse(', '@js(', '@json('] as $texto) {
+                if (str_contains($valor, $texto)) {
+                    $encontrados[] = $texto;
+                }
+            }
+        }
+
+        return $encontrados;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function directivasSinCompilarEn(string $htmlVisible): array
+    {
+        return array_values(array_filter(
+            ['@js(', '@json(', '@php', '@if (', '@foreach', '@class('],
+            fn (string $texto): bool => str_contains($htmlVisible, $texto),
+        ));
+    }
+
+    public function test_los_atributos_de_eventos_no_traen_codigo_que_el_analizador_de_wire_click_no_soporte(): void
     {
         $this->reserva('pendiente', self::NOMBRE_DIFICIL);
-
         $html = Livewire::test(Reservas::class)->html();
 
-        foreach (['@js(', '@json(', '@php', '@if (', '@foreach', '@class(', 'atob(', 'JSON.parse('] as $texto) {
-            $this->assertStringNotContainsString($texto, $html, "No debe aparecer en el HTML: {$texto}");
-        }
+        $valores = $this->valoresDeAtributosDeEventos($html);
+        $this->assertNotEmpty($valores);
+        $this->assertSame([], $this->codigoProhibidoEn($valores));
+    }
+
+    public function test_el_html_visible_no_trae_directivas_blade_sin_compilar(): void
+    {
+        $this->reserva('pendiente', self::NOMBRE_DIFICIL);
+        $html = Livewire::test(Reservas::class)->html();
+
+        $this->assertSame([], $this->directivasSinCompilarEn($this->htmlVisible($html)));
+    }
+
+    public function test_de_control_el_detector_falla_con_codigo_prohibido_y_no_con_los_scripts_de_livewire(): void
+    {
+        $malo = '<div wire:effects="{}"><script>window.x = JSON.parse(\'{}\')</script>'
+            .'<button wire:click="mountAction(\'cancelar\', JSON.parse(atob(\'e30=\')))">a</button>'
+            .'<button wire:click="mountAction(\'mover\', @js($argumentos))">b</button>'
+            .'<p>@php @if ($x)</p></div>';
+
+        $this->assertSame(['atob(', 'JSON.parse(', '@js('], array_values(array_unique(array_merge(...array_map(
+            fn (string $valor): array => $this->codigoProhibidoEn([$valor]),
+            $this->valoresDeAtributosDeEventos($malo),
+        )))));
+        $this->assertSame(['@js(', '@php', '@if ('], $this->directivasSinCompilarEn($this->htmlVisible($malo)));
+
+        $bueno = '<div wire:snapshot="{&quot;a&quot;:&quot;JSON.parse(&quot;}" wire:effects="JSON.parse(1)"><script>JSON.parse(\'{}\')</script>'
+            .'<button wire:click="mountAction(\'cancelar\', { reserva: 7 })">a</button></div>';
+
+        $this->assertSame([], $this->codigoProhibidoEn($this->valoresDeAtributosDeEventos($bueno)));
+        $this->assertSame([], $this->directivasSinCompilarEn($this->htmlVisible($bueno)));
+        $this->assertCount(1, $this->valoresDeAtributosDeEventos($bueno));
     }
 
     public function test_cada_wire_click_de_mount_action_trae_solo_el_id_de_la_reserva(): void
