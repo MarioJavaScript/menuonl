@@ -162,12 +162,12 @@ class PanelImagenesTest extends TestCase
         $producto = Producto::factory()->create(['restaurante_id' => $restaurante->id]);
         $foto = ['imagen' => UploadedFile::fake()->image('a.jpg', 800, 800)];
 
-        foreach (['editor', 'recepcion', 'cocina'] as $rol) {
+        foreach (['editor', 'recepcion'] as $rol) {
             $this->actingAs($this->conRol($restaurante, $rol))->post($this->url($restaurante, 'ajustes/hero'), $foto, ['Accept' => 'application/json'])->assertForbidden();
             $this->actingAs($this->conRol($restaurante, $rol))->post($this->url($restaurante, 'ajustes/galeria'), $foto, ['Accept' => 'application/json'])->assertForbidden();
         }
 
-        foreach (['recepcion', 'cocina'] as $rol) {
+        foreach (['recepcion'] as $rol) {
             $this->actingAs($this->conRol($restaurante, $rol))->post($this->url($restaurante, "productos/{$producto->id}/imagen"), $foto, ['Accept' => 'application/json'])->assertForbidden();
         }
 

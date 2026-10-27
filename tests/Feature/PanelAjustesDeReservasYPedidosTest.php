@@ -159,7 +159,7 @@ class PanelAjustesDeReservasYPedidosTest extends TestCase
      */
     public static function rolesSinAcceso(): array
     {
-        return ['editor' => ['editor'], 'gerente' => ['gerente'], 'recepcion' => ['recepcion'], 'cocina' => ['cocina']];
+        return ['editor' => ['editor'], 'gerente' => ['gerente'], 'recepcion' => ['recepcion']];
     }
 
     public function test_el_propietario_ve_reservas_y_los_ajustes_en_el_grupo_de_operacion_sin_la_segunda_ventana_de_servicio(): void

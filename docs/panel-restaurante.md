@@ -50,7 +50,7 @@ Otros: inicio de sesión propio con límite de intentos (`Pages\Auth\Login`), do
 | Inicio | propietario, gerente, editor, recepción | Resumen del día (widget "Hoy en tu restaurante", se actualiza solo cada 60 s) |
 | Reservas | propietario, gerente, editor, recepción | Crear, cambiar estado, borrar reservas |
 | Menú | propietario, gerente, editor | Ver menú, crear platillo en una categoría, editar, duplicar, borrar, subir o quitar foto del platillo |
-| Pedidos | propietario, gerente, editor, cocina | Tablero por estado, crear pedido, avanzar estado |
+| Pedidos | *(retirado: ya no existe; ver sección 21 de `integracion-dashboard.md`)* | Era un tablero por estado; no había pedidos de mesa |
 | Ajustes | propietario, gerente | Nombre, eslogan, descripción, WhatsApp, teléfono, dirección, Instagram, Facebook, latitud/longitud, **plantilla A–H**, portada, galería (máx. 12), horario por día (un turno), **reservas (activar, cupo, franja 30/60/90/120)**, equipo (invitar, revocar, cambiar rol) |
 
 ### 1.3 Mi restaurante (Filament) campo por campo
@@ -244,7 +244,7 @@ INFORMACIÓN
 PEDIDOS Y RESERVAS
    Reservas                    (la operación del día; página propia en /admin)
    Ajustes de reservas y pedidos   (pedidos por WhatsApp, activar reservas, cupo y duración)
-   Pedidos (panel anterior)    (TEMPORAL: enlace a /panel mientras no se decida Pedidos manuales)
+   (el ítem temporal "Pedidos (panel anterior)" se retiró)
 QR Y MESAS
 CUENTA
    Equipo
@@ -316,7 +316,7 @@ Color principal         [selector]  [Usar el original]
 
 **QR y mesas**: botón "Crear QR de mi menú" (uno general) y "Crear QR de mesas": pide "¿Cuántas mesas?" y los genera de una vez (Mesa 1 a Mesa N). Lista con "Descargar", "Imprimir hoja" y "Desactivar". El código corto se genera solo y queda en "Opciones avanzadas".
 
-**Cuenta → Equipo**: lista de personas con rol en palabras ("Puede cambiar todo", "Puede editar el menú", "Solo reservas", "Solo cocina") y "Invitar persona".
+**Cuenta → Equipo**: lista de personas con rol en palabras ("Puede cambiar todo", "Puede editar el menú", "Solo reservas"; el rol cocina se retiró) y "Invitar persona".
 
 ### 5.4 Campos por sección: orden, ayuda, valores por defecto y validaciones
 

@@ -23,7 +23,7 @@ class PanelPlanAccesoTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const array ROLES = ['propietario', 'gerente', 'editor', 'recepcion', 'cocina'];
+    private const array ROLES = ['propietario', 'gerente', 'editor', 'recepcion'];
 
     protected function tearDown(): void
     {
@@ -54,9 +54,8 @@ class PanelPlanAccesoTest extends TestCase
         return [
             'propietario' => ['propietario', $todos, ['reservas'], []],
             'gerente' => ['gerente', $todos, ['reservas'], []],
-            'editor' => ['editor', ['inicio', 'reservas', 'menu', 'pedidos'], ['reservas'], []],
+            'editor' => ['editor', ['inicio', 'reservas', 'menu'], ['reservas'], []],
             'recepcion' => ['recepcion', ['inicio', 'reservas'], ['reservas'], []],
-            'cocina' => ['cocina', ['pedidos'], [], []],
         ];
     }
 
@@ -94,7 +93,7 @@ class PanelPlanAccesoTest extends TestCase
 
         $this->actingAs($propietario)->getJson($base.'/reservas')->assertOk();
 
-        foreach (['/resumen', '/menu', '/pedidos', '/ajustes', '/equipo'] as $ruta) {
+        foreach (['/resumen', '/menu', '/ajustes', '/equipo'] as $ruta) {
             $this->actingAs($propietario)->getJson($base.$ruta)->assertForbidden();
         }
 

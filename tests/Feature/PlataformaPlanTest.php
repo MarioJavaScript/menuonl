@@ -84,7 +84,7 @@ class PlataformaPlanTest extends TestCase
 
         $this->assertTrue($this->crearUsuario('superadmin')->can('cambiarPlan', $restaurante));
 
-        foreach (['propietario', 'editor', 'gerente', 'recepcion', 'cocina'] as $rol) {
+        foreach (['propietario', 'editor', 'gerente', 'recepcion'] as $rol) {
             $this->assertFalse($this->crearUsuario($rol, $restaurante)->can('cambiarPlan', $restaurante), $rol);
         }
 

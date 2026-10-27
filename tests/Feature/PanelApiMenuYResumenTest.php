@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Categoria;
 use App\Models\CategoriaTraduccion;
-use App\Models\Pedido;
 use App\Models\Producto;
 use App\Models\ProductoTraduccion;
 use App\Models\Reserva;
@@ -141,10 +140,6 @@ class PanelApiMenuYResumenTest extends TestCase
     {
         $restaurante = Restaurante::factory()->create();
         $otro = Restaurante::factory()->create();
-        Pedido::factory()->enEstado('entregado')->create(['restaurante_id' => $restaurante->id, 'total' => 400]);
-        Pedido::factory()->enEstado('entregado')->create(['restaurante_id' => $restaurante->id, 'total' => 999, 'entregado_at' => now()->subDays(3)]);
-        Pedido::factory()->enEstado('entregado')->create(['restaurante_id' => $otro->id, 'total' => 5000]);
-        Pedido::factory()->create(['restaurante_id' => $restaurante->id]);
         Reserva::factory()->create(['restaurante_id' => $restaurante->id, 'personas' => 4]);
         Reserva::factory()->confirmada()->create(['restaurante_id' => $restaurante->id, 'personas' => 2]);
         Reserva::factory()->cancelada()->create(['restaurante_id' => $restaurante->id, 'personas' => 9]);
@@ -152,11 +147,13 @@ class PanelApiMenuYResumenTest extends TestCase
         $gerente = User::factory()->create();
         $restaurante->usuarios()->attach($gerente, ['rol' => 'gerente']);
 
-        $this->actingAs($gerente)->getJson($this->url($restaurante, 'resumen'))
+        $datos = $this->actingAs($gerente)->getJson($this->url($restaurante, 'resumen'))
             ->assertOk()
-            ->assertJsonPath('data.ventas_hoy', 400)
             ->assertJsonPath('data.comensales_esperados', 6)
             ->assertJsonPath('data.reservas_por_confirmar', 1)
-            ->assertJsonPath('data.pedidos_activos', 1);
+            ->json('data');
+
+        $this->assertArrayNotHasKey('ventas_hoy', $datos);
+        $this->assertArrayNotHasKey('pedidos_activos', $datos);
     }
 }

@@ -261,7 +261,6 @@ class PanelInicioTest extends TestCase
             'editor' => ['editor', ['categoria', 'platillo', 'horario', 'contacto']],
             'gerente' => ['gerente', ['platillo']],
             'recepcion' => ['recepcion', []],
-            'cocina' => ['cocina', []],
         ];
     }
 
@@ -325,10 +324,10 @@ class PanelInicioTest extends TestCase
             ->assertDontSee('Agregar ubicación');
     }
 
-    public function test_recepcion_y_cocina_no_ven_la_lista_ni_los_avisos(): void
+    public function test_recepcion_no_ve_la_lista_ni_los_avisos(): void
     {
         $escenarios = [];
-        foreach (['recepcion', 'cocina'] as $rol) {
+        foreach (['recepcion'] as $rol) {
             $restaurante = $this->crearRestaurante("local-{$rol}");
             $escenarios[] = [$this->crearUsuario($rol, $restaurante), $restaurante];
         }
@@ -391,7 +390,7 @@ class PanelInicioTest extends TestCase
     public function test_inicio_se_abre_para_cada_rol_con_acceso_al_panel(): void
     {
         $escenarios = [];
-        foreach (['propietario', 'gerente', 'editor', 'recepcion', 'cocina'] as $rol) {
+        foreach (['propietario', 'gerente', 'editor', 'recepcion'] as $rol) {
             $restaurante = $this->crearRestaurante("inicio-{$rol}");
             $escenarios[] = [$this->crearUsuario($rol, $restaurante), $restaurante];
         }

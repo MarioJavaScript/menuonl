@@ -9,7 +9,6 @@ use App\Filament\Resources\Categorias\CategoriaResource;
 use App\Filament\Resources\Contactos\ContactoResource;
 use App\Filament\Resources\Horarios\HorarioResource;
 use App\Filament\Resources\Productos\ProductoResource;
-use App\Models\Restaurante;
 use Closure;
 use Filament\Facades\Filament;
 use Filament\Support\Icons\Heroicon;
@@ -62,21 +61,7 @@ class BarraInferiorDelPanel
     }
 
     /**
-     * TEMPORAL: los pedidos manuales siguen solo en /panel. Se ofrece a quien tiene el módulo pedidos en el restaurante
-     * activo (rol ∩ plan). Se retira cuando se decida qué pasa con Pedidos (docs/integracion-dashboard.md, 17.5).
-     */
-    public static function puedeUsarPedidosDelPanelAnterior(): bool
-    {
-        $tenant = Filament::getTenant();
-        $usuario = auth()->user();
-
-        return $tenant instanceof Restaurante
-            && $usuario !== null
-            && PermisosPanel::permite($usuario, $tenant, 'pedidos');
-    }
-
-    /**
-     * En orden de prioridad. "pedidos" (TEMPORAL, lleva a /panel) solo entra para quien tiene el módulo pedidos y no ve Reservas.
+     * En orden de prioridad.
      *
      * "insignia" (opcional) es la cuenta que se pinta sobre el ícono; con ella, el nombre accesible pasa a "nombre_con_insignia".
      *
@@ -130,12 +115,6 @@ class BarraInferiorDelPanel
                 'visible' => fn (): bool => ContactoResource::canViewAny(),
                 'url' => fn (): string => ContactoResource::getUrl('index'),
                 'activa' => $ruta(ContactoResource::getRouteBaseName().'.*'),
-            ],
-            'pedidos' => [
-                'etiqueta' => 'panel.barra.pedidos', 'nombre' => 'panel.enlaces.servicio', 'icono' => Heroicon::OutlinedBolt,
-                'visible' => fn (): bool => ! Reservas::canAccess() && self::puedeUsarPedidosDelPanelAnterior(),
-                'url' => fn (): string => route('panel'),
-                'activa' => fn (): bool => false,
             ],
         ];
     }

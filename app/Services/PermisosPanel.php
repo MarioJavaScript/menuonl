@@ -15,7 +15,7 @@ use App\Models\User;
  */
 class PermisosPanel
 {
-    public const array MODULOS = ['inicio', 'reservas', 'menu', 'pedidos', 'ajustes'];
+    public const array MODULOS = ['inicio', 'reservas', 'menu', 'ajustes'];
 
     /**
      * @var array<string, list<string>>
@@ -23,9 +23,8 @@ class PermisosPanel
     private const array MODULOS_POR_ROL = [
         'propietario' => self::MODULOS,
         'gerente' => self::MODULOS,
-        'editor' => ['inicio', 'reservas', 'menu', 'pedidos'],
+        'editor' => ['inicio', 'reservas', 'menu'],
         'recepcion' => ['inicio', 'reservas'],
-        'cocina' => ['pedidos'],
     ];
 
     /**
@@ -80,8 +79,8 @@ class PermisosPanel
         $esPropietario = $usuario->isSuperadmin() || $usuario->rolEn($restauranteId) === 'propietario';
 
         return $esPropietario
-            ? ['propietario', 'gerente', 'editor', 'recepcion', 'cocina']
-            : ['gerente', 'editor', 'recepcion', 'cocina'];
+            ? ['propietario', 'gerente', 'editor', 'recepcion']
+            : ['gerente', 'editor', 'recepcion'];
     }
 
     /**

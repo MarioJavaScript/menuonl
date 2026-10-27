@@ -74,7 +74,7 @@ class PanelNavegacionDuenoTest extends TestCase
         $this->assertSame(['Platillos', 'Categorías', 'Recomendados'], $porGrupo['Mi menú']);
         $this->assertSame(['Apariencia', 'Fotos de tu restaurante'], $porGrupo['Apariencia']);
         $this->assertSame(['Datos del restaurante', 'Horario', 'Contactos'], $porGrupo['Información']);
-        $this->assertSame(['Reservas', 'Ajustes de reservas y pedidos', 'Pedidos (panel anterior)'], $porGrupo['Pedidos y reservas']);
+        $this->assertSame(['Reservas', 'Ajustes de reservas y pedidos'], $porGrupo['Pedidos y reservas']);
         $this->assertSame(['Códigos QR'], $porGrupo['QR y mesas']);
     }
 
@@ -114,7 +114,6 @@ class PanelNavegacionDuenoTest extends TestCase
             'editor' => ['editor', ['Platillos', 'Categorías', 'Recomendados', 'Horario', 'Contactos', 'Códigos QR'], ['Apariencia', 'Datos del restaurante', 'Ajustes de reservas y pedidos']],
             'gerente' => ['gerente', ['Platillos', 'Recomendados'], array_values(array_diff($dueno, ['Platillos', 'Recomendados']))],
             'recepcion' => ['recepcion', [], $dueno],
-            'cocina' => ['cocina', [], $dueno],
         ];
     }
 

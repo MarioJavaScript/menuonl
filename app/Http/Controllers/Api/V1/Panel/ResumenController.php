@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api\V1\Panel;
 
 use App\Http\Controllers\Controller;
-use App\Models\Pedido;
 use App\Models\Reserva;
 use App\Models\Restaurante;
 use App\Services\PermisosPanel;
@@ -36,8 +35,6 @@ class ResumenController extends Controller
     public function __invoke(Request $request, Restaurante $restaurante, ReservasDelDia $reservas): JsonResponse
     {
         $modulos = PermisosPanel::modulosDe($request->user(), $restaurante->id);
-        $hoy = now($restaurante->zona_horaria);
-        $inicioDelDia = $hoy->copy()->startOfDay()->setTimezone(config('app.timezone'));
         $datos = ['restaurante' => $restaurante->nombre];
 
         if (in_array('reservas', $modulos, true)) {
@@ -45,15 +42,6 @@ class ResumenController extends Controller
             $resumen = $reservas->resumenDelDia($restaurante);
             $datos['comensales_esperados'] = $resumen['comensales_esperados'];
             $datos['reservas_por_confirmar'] = $resumen['por_confirmar'];
-        }
-
-        if (in_array('pedidos', $modulos, true)) {
-            Gate::authorize('viewAny', Pedido::class);
-            $datos['pedidos_activos'] = Pedido::where('estado', '!=', 'entregado')->count();
-        }
-
-        if (in_array('ajustes', $modulos, true)) {
-            $datos['ventas_hoy'] = (float) Pedido::where('estado', 'entregado')->where('entregado_at', '>=', $inicioDelDia)->sum('total');
         }
 
         return response()->json(['data' => $datos]);

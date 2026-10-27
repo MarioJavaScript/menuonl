@@ -353,6 +353,6 @@ class EnlaceGoogleMapsSeguridadTest extends TestCase
      */
     public static function rolesSinAcceso(): array
     {
-        return ['editor' => ['editor'], 'gerente' => ['gerente'], 'recepcion' => ['recepcion'], 'cocina' => ['cocina']];
+        return ['editor' => ['editor'], 'gerente' => ['gerente'], 'recepcion' => ['recepcion']];
     }
 }

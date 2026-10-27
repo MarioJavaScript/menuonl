@@ -173,7 +173,6 @@ class PanelOperacionDelDiaTest extends TestCase
             'gerente' => ['completo', 'gerente', true],
             'editor' => ['completo', 'editor', true],
             'recepción' => ['completo', 'recepcion', true],
-            'cocina' => ['completo', 'cocina', false],
             'propietario solo menú' => ['solo_menu', 'propietario', false],
             'superadmin solo menú' => ['solo_menu', 'superadmin', false],
         ];

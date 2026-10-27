@@ -25,7 +25,6 @@ return [
         'platillos' => 'Platillos',
         'reservas' => 'Reservas',
         'reservas_por_confirmar' => 'Reservas: :n por confirmar',
-        'pedidos' => 'Pedidos',
         'apariencia' => 'Apariencia',
         'categorias' => 'Categorías',
         'horario' => 'Horario',
@@ -96,7 +95,6 @@ return [
         'ver_sitio' => 'Ver mi sitio',
         'ver_menu' => 'Ver mi menú',
         'abre_en_otra_pestana' => '(se abre en otra pestaña)',
-        'servicio' => 'Pedidos (panel anterior)',
     ],
 
     'apariencia' => [

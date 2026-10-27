@@ -35,6 +35,7 @@ class BarraInferiorDelPanelTest extends TestCase
     {
         $restaurante = match ($plan) {
             'sitio_menu' => Restaurante::factory()->sitioMenu()->create(),
+            'solo_menu' => Restaurante::factory()->soloMenu()->create(),
             default => Restaurante::factory()->create(),
         };
         $this->entrarAlPanel($this->crearUsuario($rol, $restaurante), $restaurante);
@@ -55,7 +56,6 @@ class BarraInferiorDelPanelTest extends TestCase
             'editor' => ['completo', 'editor', ['inicio', 'platillos', 'reservas', 'categorias']],
             'gerente' => ['completo', 'gerente', ['inicio', 'platillos', 'reservas']],
             'recepción' => ['completo', 'recepcion', ['inicio', 'reservas']],
-            'cocina' => ['completo', 'cocina', ['inicio', 'pedidos']],
         ];
     }
 
@@ -114,7 +114,6 @@ class BarraInferiorDelPanelTest extends TestCase
         $this->assertStringContainsString('<span>'.__('panel.barra.reservas').'</span>', $html);
         $this->assertStringNotContainsString('href="'.AjustesDeReservasYPedidos::getUrl().'"', $html, 'Los ajustes quedan en "Más", no en la barra.');
         $this->assertStringNotContainsString('href="'.route('panel').'"', $html);
-        $this->assertStringNotContainsString('aria-label="'.__('panel.enlaces.servicio').'"', $html);
         $this->assertStringNotContainsString('mo-barra-insignia', $html, 'La barra no lleva insignia en este PR.');
     }
 
@@ -128,19 +127,16 @@ class BarraInferiorDelPanelTest extends TestCase
         $this->assertSame($acceso['etiqueta'], $acceso['nombre'], 'El nombre accesible coincide con el texto visible.');
     }
 
-    public function test_cocina_solo_tiene_los_pedidos_del_panel_anterior_con_su_nombre_completo(): void
+    public function test_ningun_rol_tiene_un_acceso_al_panel_anterior_ni_a_pedidos(): void
     {
-        $this->entrar('completo', 'cocina');
+        foreach (['propietario', 'gerente', 'editor', 'recepcion', 'superadmin'] as $rol) {
+            $this->entrar('completo', $rol);
 
-        $html = (string) FilamentView::renderHook(PanelsRenderHook::BODY_END);
+            $html = (string) FilamentView::renderHook(PanelsRenderHook::BODY_END);
 
-        $this->assertStringContainsString('<span>'.__('panel.barra.pedidos').'</span>', $html);
-        $this->assertStringContainsString('aria-label="'.__('panel.enlaces.servicio').'"', $html);
-        $this->assertStringContainsString('href="'.route('panel').'"', $html);
-        $this->assertStringNotContainsString('href="'.Reservas::getUrl().'"', $html);
-        $this->assertSame(2 + 1, substr_count($html, '<span>'));
-        $this->assertStringContainsString('grid-template-columns: repeat(3, minmax(0, 1fr))', $html);
-        $this->assertStringContainsString(__('panel.barra.pedidos'), __('panel.enlaces.servicio'), 'El nombre accesible debe contener el texto visible.');
+            $this->assertStringNotContainsString('href="'.route('panel').'"', $html, $rol);
+            $this->assertStringNotContainsString('Pedidos', $html, $rol);
+        }
     }
 
     /**
@@ -213,7 +209,7 @@ class BarraInferiorDelPanelTest extends TestCase
 
     public function test_sin_acceso_a_reservas_la_barra_no_trae_insignia(): void
     {
-        $restaurante = $this->entrar('completo', 'cocina');
+        $restaurante = $this->entrar('solo_menu', 'propietario');
         Reserva::factory()->create(['restaurante_id' => $restaurante->id, 'fecha' => now($restaurante->zona_horaria)->toDateString(), 'estado' => 'pendiente']);
 
         $this->assertStringNotContainsString('mo-barra-insignia', (string) FilamentView::renderHook(PanelsRenderHook::BODY_END));
