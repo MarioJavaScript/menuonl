@@ -12,6 +12,7 @@ use Livewire\Livewire;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use Tests\Concerns\ArmaEscenarioDePanel;
+use Tests\Concerns\RevisaAtributosWire;
 use Tests\TestCase;
 
 /**
@@ -20,7 +21,7 @@ use Tests\TestCase;
  */
 class ReservasHtmlTest extends TestCase
 {
-    use ArmaEscenarioDePanel, RefreshDatabase;
+    use ArmaEscenarioDePanel, RefreshDatabase, RevisaAtributosWire;
 
     private const NOMBRE_DIFICIL = 'O\'Brien "x" <b>Ana</b> & Co';
 
@@ -83,83 +84,6 @@ class ReservasHtmlTest extends TestCase
         return $botones;
     }
 
-    private function documento(string $html): \DOMDocument
-    {
-        $documento = new \DOMDocument;
-        libxml_use_internal_errors(true);
-        $documento->loadHTML('<?xml encoding="utf-8"?><body>'.$html.'</body>');
-        libxml_clear_errors();
-
-        return $documento;
-    }
-
-    /**
-     * Valores de los atributos de eventos que escribe nuestra vista. Se ignoran wire:snapshot, wire:effects y los
-     * <script>, que traen JSON.parse(...) de Livewire y de Filament.
-     *
-     * @return list<string>
-     */
-    private function valoresDeAtributosDeEventos(string $html): array
-    {
-        $valores = [];
-        foreach ((new \DOMXPath($this->documento($html)))->query('//*[not(self::script)]/@*') as $atributo) {
-            $nombre = $atributo->nodeName;
-            if (preg_match('/^(wire:(click|submit|keydown)(\.|$)|x-on:|@click)/', $nombre) === 1) {
-                $valores[] = $atributo->nodeValue;
-            }
-        }
-
-        return $valores;
-    }
-
-    /**
-     * El HTML visible: sin <script> ni los atributos wire:snapshot y wire:effects.
-     */
-    private function htmlVisible(string $html): string
-    {
-        $documento = $this->documento($html);
-        $xpath = new \DOMXPath($documento);
-
-        foreach (iterator_to_array($xpath->query('//script')) as $script) {
-            $script->parentNode->removeChild($script);
-        }
-        foreach ($xpath->query('//*[@*[name()="wire:snapshot" or name()="wire:effects"]]') as $elemento) {
-            $elemento->removeAttribute('wire:snapshot');
-            $elemento->removeAttribute('wire:effects');
-        }
-
-        return (string) $documento->saveHTML($documento->getElementsByTagName('body')->item(0));
-    }
-
-    /**
-     * @param  list<string>  $valores
-     * @return list<string>
-     */
-    private function codigoProhibidoEn(array $valores): array
-    {
-        $encontrados = [];
-        foreach ($valores as $valor) {
-            foreach (['atob(', 'JSON.parse(', '@js(', '@json('] as $texto) {
-                if (str_contains($valor, $texto)) {
-                    $encontrados[] = $texto;
-                }
-            }
-        }
-
-        return $encontrados;
-    }
-
-    /**
-     * @return list<string>
-     */
-    private function directivasSinCompilarEn(string $htmlVisible): array
-    {
-        return array_values(array_filter(
-            ['@js(', '@json(', '@php', '@if (', '@foreach', '@class('],
-            fn (string $texto): bool => str_contains($htmlVisible, $texto),
-        ));
-    }
-
     public function test_los_atributos_de_eventos_no_traen_codigo_que_el_analizador_de_wire_click_no_soporte(): void
     {
         $this->reserva('pendiente', self::NOMBRE_DIFICIL);
@@ -197,6 +121,9 @@ class ReservasHtmlTest extends TestCase
         $this->assertSame([], $this->codigoProhibidoEn($this->valoresDeAtributosDeEventos($bueno)));
         $this->assertSame([], $this->directivasSinCompilarEn($this->htmlVisible($bueno)));
         $this->assertCount(1, $this->valoresDeAtributosDeEventos($bueno));
+
+        // wire:poll también se revisa, y wire:id y wire:name no.
+        $this->assertSame(['@json('], $this->codigoProhibidoEn($this->valoresDeAtributosDeEventos('<div wire:poll.60s.visible="@json($x)" wire:id="JSON.parse(1)" wire:name="atob("></div>')));
     }
 
     public function test_cada_wire_click_de_mount_action_trae_solo_el_id_de_la_reserva(): void

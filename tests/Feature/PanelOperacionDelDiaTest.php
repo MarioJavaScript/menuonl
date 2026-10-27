@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Concerns\ArmaEscenarioDePanel;
+use Tests\Concerns\RevisaAtributosWire;
 use Tests\TestCase;
 
 /**
@@ -26,7 +27,7 @@ use Tests\TestCase;
  */
 class PanelOperacionDelDiaTest extends TestCase
 {
-    use ArmaEscenarioDePanel, RefreshDatabase;
+    use ArmaEscenarioDePanel, RefreshDatabase, RevisaAtributosWire;
 
     protected function setUp(): void
     {
@@ -359,14 +360,8 @@ class PanelOperacionDelDiaTest extends TestCase
         $this->reserva($restaurante);
 
         $html = $this->get(Inicio::getUrl())->assertOk()->getContent();
-        preg_match_all('/wire:[a-z.0-9:-]+="[^"]*"/i', $html, $atributos);
 
-        foreach ($atributos[0] as $atributo) {
-            $this->assertStringNotContainsString('@js', $atributo);
-            $this->assertStringNotContainsString('@json', $atributo);
-            $this->assertStringNotContainsString('JSON.parse', $atributo);
-        }
-        $this->assertStringNotContainsString('@js(', $html);
-        $this->assertStringNotContainsString('@json(', $html);
+        $this->assertNotEmpty($this->valoresDeAtributosDeEventos($html), 'Debe haber al menos el wire:poll del widget.');
+        $this->assertAtributosDeEventosLimpios($html);
     }
 }
