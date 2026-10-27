@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 
 /**
@@ -34,6 +35,7 @@ class InvitacionService
      * token), so a mail failure never breaks the caller: it flags the invitation so it can be resent.
      *
      * @throws AuthorizationException when the inviter is neither superadmin nor propietario or gerente of the restaurant
+     * @throws ValidationException when the role is not one of those offered (PermisosPanel::ROLES_OFRECIDOS) to that inviter
      */
     public function invitar(Restaurante $restaurante, string $email, string $rol, ?User $invitadoPor): Invitacion
     {
@@ -43,6 +45,14 @@ class InvitacionService
             && ! in_array($invitadoPor->rolEn($restaurante), ['propietario', 'gerente'], true)
         ) {
             throw new AuthorizationException('Solo un propietario o gerente puede invitar usuarios.');
+        }
+
+        $ofrecidos = $invitadoPor === null
+            ? PermisosPanel::ROLES_OFRECIDOS
+            : PermisosPanel::rolesAsignables($invitadoPor, $restaurante->getKey());
+
+        if (! in_array($rol, $ofrecidos, true)) {
+            throw ValidationException::withMessages(['rol' => 'Ese rol no se puede asignar.']);
         }
 
         $token = Str::random(self::LONGITUD_TOKEN);

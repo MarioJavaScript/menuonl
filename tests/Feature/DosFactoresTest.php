@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Filament\Resources\Categorias\Pages\ListCategorias;
 use App\Mail\InvitacionMail;
+use App\Models\Invitacion;
 use App\Models\Restaurante;
 use App\Models\User;
 use App\Services\InvitacionService;
@@ -202,7 +203,9 @@ class DosFactoresTest extends TestCase
     {
         Mail::fake();
         $creador = $this->crearUsuario('propietario', $this->a);
-        app(InvitacionService::class)->invitar($this->a, 'ayuda@ejemplo.com', 'editor', $creador);
+        $invitacion = app(InvitacionService::class)->invitar($this->a, 'ayuda@ejemplo.com', 'propietario', $creador);
+        // Invitación anterior a que solo se ofreciera "propietario": sigue valiendo como editor.
+        Invitacion::withoutGlobalScopes()->whereKey($invitacion->getKey())->update(['rol' => 'editor']);
 
         $token = null;
         Mail::assertSent(InvitacionMail::class, function (InvitacionMail $mail) use (&$token): bool {

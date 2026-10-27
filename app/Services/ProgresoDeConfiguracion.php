@@ -28,6 +28,8 @@ use App\Models\User;
  */
 class ProgresoDeConfiguracion
 {
+    public function __construct(private ReservasDelDia $reservas) {}
+
     /**
      * @return array{
      *     pasos: list<array{clave: string, hecho: bool, importante: bool, url: string}>,
@@ -151,9 +153,8 @@ class ProgresoDeConfiguracion
             return null;
         }
 
-        $hoy = now($restaurante->zona_horaria)->toDateString();
-        $reservasHoy = Reserva::query()->whereDate('fecha', $hoy)->where('estado', '!=', 'cancelada')->count();
-        $porConfirmar = Reserva::query()->whereDate('fecha', '>=', $hoy)->where('estado', 'pendiente')->count();
+        $reservasHoy = $this->reservas->resumenDelDia($restaurante)['reservas_hoy'];
+        $porConfirmar = $this->reservas->porConfirmarDesdeHoy($restaurante);
 
         if ($reservasHoy === 0 && $porConfirmar === 0) {
             return null;

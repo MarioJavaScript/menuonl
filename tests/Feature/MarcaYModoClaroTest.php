@@ -96,7 +96,7 @@ class MarcaYModoClaroTest extends TestCase
         Mail::fake();
         $restaurante = $this->crearRestaurante('marca-correo');
         $propietario = $this->crearUsuario('propietario', $restaurante);
-        app(InvitacionService::class)->invitar($restaurante, 'invitada@ejemplo.com', 'editor', $propietario);
+        app(InvitacionService::class)->invitar($restaurante, 'invitada@ejemplo.com', 'propietario', $propietario);
 
         Mail::assertSent(InvitacionMail::class, fn (InvitacionMail $mail): bool => str_contains($mail->render(), self::MARCA));
     }
