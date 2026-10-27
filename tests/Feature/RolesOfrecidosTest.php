@@ -37,7 +37,7 @@ class RolesOfrecidosTest extends TestCase
     public function test_los_roles_asignables_y_modificables_dependen_de_quien_gestiona(): void
     {
         $restaurante = Restaurante::factory()->create();
-        $todos = ['propietario', 'gerente', 'editor', 'recepcion', 'cocina'];
+        $todos = ['propietario', 'gerente', 'editor', 'recepcion'];
 
         $propietario = $this->crearUsuario('propietario', $restaurante);
         $superadmin = $this->crearUsuario('superadmin');
@@ -51,7 +51,7 @@ class RolesOfrecidosTest extends TestCase
 
         foreach ([$gerente, $editor] as $actor) {
             $this->assertSame([], PermisosPanel::rolesAsignables($actor, $restaurante->id));
-            $this->assertSame(['gerente', 'editor', 'recepcion', 'cocina'], PermisosPanel::rolesModificables($actor, $restaurante->id));
+            $this->assertSame(['gerente', 'editor', 'recepcion'], PermisosPanel::rolesModificables($actor, $restaurante->id));
         }
     }
 
@@ -110,22 +110,21 @@ class RolesOfrecidosTest extends TestCase
     public function test_una_invitacion_anterior_con_otro_rol_se_sigue_aceptando(): void
     {
         $restaurante = Restaurante::factory()->create();
-        $invitacion = Invitacion::factory()->create(['restaurante_id' => $restaurante->id, 'rol' => 'cocina', 'email' => 'cocinero@ejemplo.com']);
+        $invitacion = Invitacion::factory()->create(['restaurante_id' => $restaurante->id, 'rol' => 'recepcion', 'email' => 'cocinero@ejemplo.com']);
         $usuario = User::factory()->create(['email' => 'cocinero@ejemplo.com']);
 
         $aceptado = app(InvitacionService::class)->aceptar($invitacion, $usuario);
 
         $this->assertNotNull($aceptado);
-        $this->assertSame('cocina', $aceptado->rolEn($restaurante));
+        $this->assertSame('recepcion', $aceptado->rolEn($restaurante));
     }
 
     public function test_los_miembros_con_otros_roles_conservan_sus_modulos(): void
     {
         $restaurante = Restaurante::factory()->create();
 
-        $this->assertSame(['inicio', 'reservas', 'menu', 'pedidos'], PermisosPanel::modulosDe($this->crearUsuario('editor', $restaurante), $restaurante));
+        $this->assertSame(['inicio', 'reservas', 'menu'], PermisosPanel::modulosDe($this->crearUsuario('editor', $restaurante), $restaurante));
         $this->assertSame(['inicio', 'reservas'], PermisosPanel::modulosDe($this->crearUsuario('recepcion', $restaurante), $restaurante));
-        $this->assertSame(['pedidos'], PermisosPanel::modulosDe($this->crearUsuario('cocina', $restaurante), $restaurante));
     }
 
     /**

@@ -134,7 +134,6 @@ class ReservasPaginaTest extends TestCase
             'gerente' => ['gerente', true],
             'editor' => ['editor', true],
             'recepcion' => ['recepcion', true],
-            'cocina' => ['cocina', false],
         ];
     }
 
@@ -438,8 +437,8 @@ class ReservasPaginaTest extends TestCase
         $argumentos = $this->argumentos($reserva);
         $pagina = Livewire::test(Reservas::class);
 
-        // La sesión abierta pierde el rol: se baja a un rol sin reservas antes de la acción.
-        $this->propietario->restaurantes()->updateExistingPivot($this->restaurante->id, ['rol' => 'cocina']);
+        // La sesión abierta pierde el acceso: se desactiva la membresía antes de la acción.
+        $this->propietario->restaurantes()->updateExistingPivot($this->restaurante->id, ['activo' => false]);
         // Cada petición real carga al usuario de nuevo; aquí se simula con una instancia recargada.
         $this->actingAs($this->propietario->fresh());
 

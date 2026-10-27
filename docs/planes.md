@@ -16,7 +16,7 @@ Nombres que se verían en pantalla (ver D1): **Completo**, **Sitio y menú**, **
 2. **El superadmin ya puede editar cualquier restaurante** (lo confirmé, ver 2.7). No hace falta construir nada para eso; solo hay que no ponerle el techo del plan.
 3. **`sitio_plantilla` no es solo del sitio.** `MenuPublicoController` usa la misma columna para elegir el diseño del **menú** (`menu.plantillas.e` a `h`, o `menu.publico` para a–d). En "Solo menú" la plantilla sigue mandando en cómo se ve el menú. Por eso **no se borra ni se ignora** al cambiar de plan.
 4. **Hoy no existe una pantalla de métricas.** No hay contador de escaneos ni de visitas. Lo más cercano es el resumen de Inicio (turnos de hoy, pendientes, reservas de hoy y por confirmar). Ver D5.
-5. **Existen más roles de los que dices exponer:** `propietario`, `gerente`, `editor`, `recepcion`, `cocina` (más el superadmin, que es una marca aparte). El plan debe recortar a todos los que no son superadmin. Ver D6.
+5. **Existen más roles de los que dices exponer:** `propietario`, `gerente`, `editor`, `recepcion` (el rol `cocina` se retiró junto con los pedidos manuales; más el superadmin, que es una marca aparte). El plan debe recortar a todos los que no son superadmin. Ver D6.
 6. **Los códigos QR no dependen del plan.** `/q/{codigo}` siempre lleva a `/{slug}/menu` (nunca al sitio). Un QR impreso sigue funcionando en los tres planes.
 7. **`ProgresoDeConfiguracion` y el widget de Inicio** muestran pendientes con enlaces a pantallas que un plan puede cerrar. Hay que filtrarlos con la misma regla central (ver 2.4).
 
@@ -65,7 +65,7 @@ El acceso a cada módulo vive en `PermisosPanel::modulosDe()` y se aplica con `M
 | Inicio | Resumen del día | ✔ | ⚠ D2 | ✖ | |
 | Reservas | Ver, crear, cambiar estado, borrar | ✔ | ⚠ D2 (recomiendo ✔) | ✖ | Sin esto el propietario no ve las reservas que le llegan |
 | Menú | Platillos y fotos de platillos | ✔ | ✖ | ✖ | Segunda puerta de `editar_menu` |
-| Pedidos (tablero) | Pedidos propios por estado | ✔ | ✖ | ✖ | Ver D7 |
+| ~~Pedidos (tablero)~~ | **Retirado** (ya no existe) | — | — | — | Ver D7 |
 | Ajustes | Nombre, plantilla, portada, galería, horario, reservas, mapa, equipo | ✔ | ✖ | ✖ | Segunda puerta de casi todo. Teléfonos y horario se editan en Filament |
 | Equipo | Invitar, revocar, cambiar rol | ✔ | ✖ | ✖ | |
 | Lista de restaurantes del usuario | `GET /api/v1/panel` | ✔ | ✔ | ✖ | Ya oculta restaurantes sin módulos |
@@ -244,7 +244,7 @@ Se espera que **no cambien** porque el plan por defecto es `completo`, pero conv
 
 - Aislamiento y políticas: `PoliticasMatrizTest`, `RoleAndPolicyAuthorizationTest`, `AislamientoPanelTest`, `AislamientoModelosTest`, `PanelTenancyTest`, `RestauranteMultiTenantIsolationTest`, `RestauranteAislamientoTest`.
 - Panel Filament: `PanelNavegacionDuenoTest`, `PanelRolesOperativosTest`, `PanelAparienciaTest`, `PanelFotosDelRestauranteTest`, `PanelAjustesDeReservasYPedidosTest`, `PanelInicioTest`, `PanelRecomendadosTest`, `PanelDatosYMapaTest`, `PanelEquipoTest`, `PanelQrMesasTest`, `FilamentAdminAdversarialTest`, `FilamentM4ChallengerTest`.
-- `/panel` (API): `PanelAjustesTest`, `PanelApiMenuYResumenTest`, `PanelApiPedidosTest`, `PanelApiReservasTest`, `PanelImagenesTest`, `PanelMenuOrdenYAgotadosTest`, `Api/`.
+- `/panel` (API): `PanelAjustesTest`, `PanelApiMenuYResumenTest`, `PanelApiReservasTest`, `PanelImagenesTest`, `PanelMenuOrdenYAgotadosTest`, `Api/`.
 - Público: `SitioPublicoTest`, `SitioBarTest`, `SitioCafeteriaTest`, `SitioPastelTest`, `SitioPizzeriaTest`, `SitioEditorialOscuroTest`, `ReservasPublicasTest`, `ReservasBarTest`, `ReservasCafeteriaTest`, `ReservasPastelTest`, `ReservasPizzeriaTest`, `DireccionesLimpiasTest`, `QrRedirectYDescargaTest`, `MenuPublicoTest`, `PerfilPlantillaSitioTest`.
 - Base de datos y siembra: `DatabaseMigrationAndSeederTest`, `DatabaseLayerAndSeedersTest`, `DemoRestauranteSeederTest`, `RespaldoMenuonlTest` y los de respaldo (si el respaldo lista columnas, hay que incluir `plan`).
 
@@ -266,7 +266,7 @@ Fábrica de `Restaurante`: dos estados nuevos, `sitioMenu()` y `soloMenu()`.
 | Sin sesión | Completo: `/{slug}` 200 con formulario de reservas. Sitio y menú: igual. Solo menú: `/{slug}` 302 al menú con `?lang=` y `?mesa=` conservados; `/{slug}/menu` 200; `/q/{codigo}` 302 al menú; `/s/{slug}` termina en el menú; `POST` de reserva y `GET` de disponibilidad no crean ni ofrecen nada; pedido por WhatsApp sigue funcionando. Restaurante suspendido sigue en 404 (no en redirección). |
 | Propietario, Completo | Todo lo que hoy puede (las pruebas actuales ya lo cubren). |
 | Propietario, Sitio y menú | Puede: horario, teléfono de llamada, WhatsApp de contacto, número de WhatsApp de pedidos. No puede (pantalla 404 y acción 403): platillos, categorías, recomendados, apariencia, fotos, datos, QR (según D4), equipo, invitaciones; crear un contacto de tipo dirección o Instagram; editar uno existente por petición directa; cambiar `sitio_plantilla`, `color_acento`, `nombre`, `pedidos_activos` o `reservas_*` enviándolos en la petición de la pantalla de pedidos (deben descartarse). Menú de navegación muestra solo lo permitido. |
-| Propietario, Sitio y menú, `/panel` | La API de cada módulo no permitido responde 403: `ajustes`, `menu`, `pedidos`, `equipo` y fotos. Un recorrido de **todas las rutas** de `/api/v1/panel/{slug}/...` que confirma que ninguna queda sin `ModuloPanel`. |
+| Propietario, Sitio y menú, `/panel` | La API de cada módulo no permitido responde 403: `ajustes`, `menu`, `equipo` y fotos. Un recorrido de **todas las rutas** de `/api/v1/panel/{slug}/...` que confirma que ninguna queda sin `ModuloPanel`. |
 | Propietario, Solo menú | No entra a `/admin` ni a `/panel`; las API responden 404 (igual que un restaurante ajeno); un propietario con un restaurante Completo y otro Solo menú ve solo el primero. |
 | Superadmin | En los tres planes puede abrir todas las pantallas del restaurante y editar sus datos; en Solo menú puede editar plantilla, menú y contactos; la sección de reservas no existe para Solo menú. En Plataforma cambia el plan; el propietario que no es superadmin no puede (política y prueba directa). |
 | Cambio de plan | Cambiar el plan guarda, deja huella en el historial de cambios y vacía la caché; no borra reservas ni equipo; subir de nuevo restaura el sitio; un formulario que mande `plan` no lo cambia (no está en `$fillable`). |
@@ -332,8 +332,8 @@ Cada una trae mi recomendación. Con tu visto bueno empiezo por el paso 1.
 | **D3** | WhatsApp de pedidos en Sitio y menú | (a) Solo cambia el número; (b) número y activar o apagar pedidos | **(a).** Es un teléfono, como pediste. Apagar o encender pedidos lo hace el superadmin |
 | **D4** | Códigos QR en Sitio y menú | (a) Solo el superadmin; (b) el propietario ve y descarga, sin crear ni editar | **(a)**, como está acordado. (b) es fácil de agregar después si lo piden |
 | **D5** | Métricas: hoy no existe ninguna pantalla ni contador | (a) No crear nada ahora; solo dejar la capacidad `metricas` definida (Completo y superadmin) y aplicarla cuando exista la pantalla; (b) incluir ahora las cifras del resumen de Inicio como "métricas" | **(a).** Construir métricas es otro proyecto. Dime si lo quieres como siguiente |
-| **D6** | Roles operativos (gerente, editor, recepción, cocina) | (a) El plan recorta a todos; en Solo menú nadie (salvo superadmin) entra; (b) el plan solo recorta al propietario | **(a).** El plan es techo para todos; sigue sin exponerse ningún rol nuevo |
-| **D7** | Tablero de Pedidos de `/panel` (pedidos registrados a mano) | (a) Solo Completo; (b) también Sitio y menú | **(a).** "Pedidos por WhatsApp" es el envío desde el menú y vale en los tres planes; el tablero es otra cosa |
+| **D6** | Roles operativos (gerente, editor, recepción; `cocina` se retiró) | (a) El plan recorta a todos; en Solo menú nadie (salvo superadmin) entra; (b) el plan solo recorta al propietario | **(a).** El plan es techo para todos; sigue sin exponerse ningún rol nuevo |
+| **D7** | Tablero de Pedidos de `/panel` (pedidos registrados a mano). **Retirado:** no hay pedidos de mesa; módulo `pedidos` y rol `cocina` eliminados | (a) Solo Completo; (b) también Sitio y menú | **(a)** (histórico). "Pedidos por WhatsApp" es el envío desde el menú y vale en los tres planes; el tablero es otra cosa |
 | **D8** | Redirección de Solo menú | (a) 302 con caché corta; (b) 301 | **(a).** Con 301 el sitio podría no volver a abrir tras subir de plan |
 | **D9** | Cómo se cambia el plan | (a) Acción "Cambiar plan" con ventana de confirmación que explica qué cambia; (b) campo en el formulario de edición | **(a).** Evita cambios por error y queda en el historial. Al crear un restaurante se elige con selector (por defecto Completo) |
 | **D10** | Propietario de Solo menú que intenta entrar | (a) Mensaje: "Tu plan no incluye el panel. Escríbenos si quieres cambiar algo" con un contacto | **(a), ajustada.** El contacto no va escrito en el código: se lee de `config('menuonl.soporte_whatsapp')`, que viene de `SOPORTE_WHATSAPP` en el `.env` (solo dígitos, con lada, formato wa.me). Si está vacía, el mensaje no muestra botón y solo dice que contacte a su proveedor. Si tiene valor, muestra un botón que abre `wa.me` con el texto "Hola, quiero cambiar algo de mi menú". Lo resuelve `App\Services\ContactoSoporte` |

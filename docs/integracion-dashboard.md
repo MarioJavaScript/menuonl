@@ -510,6 +510,8 @@ Los PR 4 y 5 de esta tabla son los PR 7 a 9 y 11 de la sección 8: se mantienen 
 
 ### 17.5 Pedidos: pendiente, y qué haría falta en cada caso
 
+> **Resuelto: se retiró (sección 21).** El texto de abajo es el análisis histórico; ya no hay Pedidos manuales ni ítem temporal.
+
 `/panel` no puede apagarse del todo mientras Pedidos exista solo ahí. Por eso el retiro (PR 6) está bloqueado hasta decidir.
 
 **Si se migran:**
@@ -676,7 +678,7 @@ Una sola superficie para la operación del día dentro de `/admin`. No se tocaro
 - **Grupo "Pedidos y reservas"** (nombre sin cambio, `panel.grupos.pedidos`): **Reservas** (orden 5, pantalla principal), **Ajustes de reservas y pedidos** (orden 10) y, solo con el módulo `pedidos`, el ítem TEMPORAL "Pedidos (panel anterior)" (orden 20).
 - **Ajustes de reservas y pedidos:** la clase `PedidosYReservas` pasó a `App\Filament\Pages\AjustesDeReservasYPedidos`, con slug `ajustes-de-reservas-y-pedidos`, nav y título "Ajustes de reservas y pedidos" y un subtítulo que remite a Reservas (`panel.pedidos.*`: se cambiaron los valores, no las claves). Permisos y descarte de campos por plan, intactos.
 - **Se retiró** "Pedidos y reservas de hoy", el ítem que abría la segunda ventana.
-- **TEMPORAL, a retirar cuando se decida Pedidos manuales (17.5):** el ítem "Pedidos (panel anterior)" (`panel.enlaces.servicio`) lleva a `route('panel')`. Se ve con `BarraInferiorDelPanel::puedeUsarPedidosDelPanelAnterior()`, es decir, con el módulo `pedidos` de `PermisosPanel` (rol ∩ plan): propietario y superadmin en Completo, y el superadmin de cualquier plan; no lo ven el propietario de Sitio y menú ni recepción. Antes el ítem se veía con cualquier módulo.
+- **(Retirado en la sección 21) Era TEMPORAL, a retirar cuando se decida Pedidos manuales (17.5):** el ítem "Pedidos (panel anterior)" (`panel.enlaces.servicio`) lleva a `route('panel')`. Se ve con `BarraInferiorDelPanel::puedeUsarPedidosDelPanelAnterior()`, es decir, con el módulo `pedidos` de `PermisosPanel` (rol ∩ plan): propietario y superadmin en Completo, y el superadmin de cualquier plan; no lo ven el propietario de Sitio y menú ni recepción. Antes el ítem se veía con cualquier módulo.
 - **Redirección:** `/admin/{slug}/pedidos-y-reservas` responde 302 a la dirección nueva. Está registrada con `authenticatedTenantRoutes()`, así que pasa por la sesión, el 2FA y el acceso al restaurante del panel; además comprueba `AjustesDeReservasYPedidos::canAccess()` antes de redirigir. Sin sesión: inicio de sesión. Sin acceso (editor, gerente, recepción, cocina): 403 sin `Location`. Restaurante ajeno: la misma respuesta que da la página nueva, sin `Location`.
 - **Barra inferior:** la clave `pedidos` (que apuntaba a los ajustes) pasó a `reservas` (`Reservas::getUrl()`, activa con `Reservas::getRouteName()`, visible con `Reservas::canAccess()`); la etiqueta es `panel.barra.reservas`. Los ajustes salen de la barra y quedan en "Más". La clave `hoy` se convirtió en `pedidos` (TEMPORAL): solo para quien tiene el módulo `pedidos` y no ve Reservas (cocina). **Sin insignia** y sin cambios de CSS. Accesos: propietario Completo y superadmin: Inicio, Platillos, Reservas, Apariencia; propietario de Sitio y menú: Inicio, Reservas, Horario, Contactos; gerente: Inicio, Platillos, Reservas; editor: Inicio, Platillos, Reservas, Categorías; recepción: Inicio, Reservas; cocina: Inicio, Pedidos.
 - **Inicio:** `ProgresoDeConfiguracion` apunta el botón "Ver reservas" del resumen del día a `Reservas::getUrl()` (antes `/panel`) y el paso de WhatsApp a la página de ajustes renombrada. El widget muestra lo mismo que antes (reservas de hoy y por confirmar, solo si hay algo y la persona puede ver reservas); solo cambia a dónde lleva el botón.
@@ -739,3 +741,17 @@ Inicio muestra la operación del día en un widget propio y la barra inferior m�
 - **Pedidos manuales** (17.5) y sus ítem y acceso TEMPORALES.
 - **PR 6:** puerta 302 de `/panel`, `LoginRespuesta` y retiro de `panel.js`.
 - Métricas de escaneos (PR 11), fuera de este PR.
+
+## 21. Retiro de los pedidos manuales y del rol cocina: hecho
+
+Decisión de producto: no hay pedidos de mesa. Los pedidos por WhatsApp del menú público (`pedidos_activos`, `whatsapp_pedidos`, carrito) y la página `AjustesDeReservasYPedidos` **no se tocan**.
+
+- **Se quitó:** modelo `Pedido`, `PedidoPolicy`, `PedidoFactory`, `PedidoController` y `PedidoResource` de la API, las tres rutas `/api/v1/panel/{slug}/pedidos*` (ahora 404), el módulo `pedidos` de `PermisosPanel::MODULOS`, el rol `cocina` (`Catalogos::roles()`, `PermisosPanel`, `User::esSoloOperativo()`, que ahora solo cuenta a `recepcion`), el ítem y el acceso TEMPORALES "Pedidos (panel anterior)" de Filament (`panel.enlaces.servicio`, `panel.barra.pedidos`) y todo el tablero de `panel.js`, `panel/index.blade.php` y `panel.css`.
+- **API:** `GET /resumen` ya no trae `pedidos_activos` ni `ventas_hoy`. `GET /api/v1/panel` ofrece `inicio, reservas, menu, ajustes` según rol y plan.
+- **`/panel`:** `LoginRespuesta` sigue mandando a `route('panel')` a quien solo es recepción (hasta el PR 6). Desde `/admin` nadie tiene ya un enlace a `/panel`. Quien se queda sin membresías activas ve "Tu acceso está desactivado. Pídele al propietario del restaurante que lo revise." (antes, "Tu cuenta no tiene restaurantes asignados."). Una etiqueta de rol desconocida se muestra tal cual, nunca "undefined".
+- **Migraciones (dos, separadas):**
+  1. `2026_10_28_000001_retirar_rol_cocina_del_equipo`: llama a `App\Services\ReasignaRolRetirado` (`cocina` → `recepcion`; membresías con `activo = false`; invitaciones sin aceptar borradas, aceptadas a `recepcion`) y después reduce los enums de `restaurante_usuario.rol` e `invitaciones.rol`. Primero los datos: MariaDB estricto rechaza reducir un enum con filas que usan el valor. `down()` vuelve a ampliar los enums, sin recuperar las filas.
+  2. `2026_10_28_000002_eliminar_tabla_pedidos`: `dropIfExists('pedidos')`; `down()` recrea la tabla con las mismas columnas e índices, vacía.
+- **Pruebas:** `RetiroDePedidosManualesMigracionTest` (lógica de reasignación y forma final del esquema en SQLite y MariaDB; el rollback real solo corre en SQLite porque el DDL de MariaDB no es transaccional), `PanelRolesOperativosTest` (rutas 404, catálogo sin `cocina`, aviso sin membresías), `BarraInferiorDelPanelTest` y `PanelNavegacionUnificadaTest` (nadie ve enlace a `/panel`). Se eliminó `PanelApiPedidosTest`.
+- **Despliegue:** ver "Retiro de los pedidos manuales" en `docs/07-checklist-despliegue.md`.
+- **Sigue pendiente:** retiro de `/panel` y `/api/v1/panel` (PR 6); con Pedidos fuera ya no bloquea.

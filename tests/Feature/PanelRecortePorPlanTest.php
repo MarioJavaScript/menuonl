@@ -194,7 +194,7 @@ class PanelRecortePorPlanTest extends TestCase
             $this->assertContains($esperada, $etiquetas);
         }
 
-        foreach ([__('panel.enlaces.servicio'), __('panel.apariencia.nav'), __('panel.datos.nav'), __('panel.fotos.nav'), __('panel.recomendados.nav'), 'Platillos', 'Categorías'] as $oculta) {
+        foreach ([__('panel.apariencia.nav'), __('panel.datos.nav'), __('panel.fotos.nav'), __('panel.recomendados.nav'), 'Platillos', 'Categorías'] as $oculta) {
             $this->assertNotContains($oculta, $etiquetas);
         }
     }
@@ -205,7 +205,7 @@ class PanelRecortePorPlanTest extends TestCase
 
         $etiquetas = $this->etiquetasDelMenu();
 
-        foreach ([__('panel.enlaces.servicio'), __('panel.apariencia.nav'), __('panel.datos.nav'), __('panel.fotos.nav'), __('panel.recomendados.nav'), 'Platillos', 'Categorías'] as $esperada) {
+        foreach ([__('panel.apariencia.nav'), __('panel.datos.nav'), __('panel.fotos.nav'), __('panel.recomendados.nav'), 'Platillos', 'Categorías'] as $esperada) {
             $this->assertContains($esperada, $etiquetas);
         }
     }

@@ -259,7 +259,7 @@ class PanelFotosDelRestauranteTest extends TestCase
      */
     public static function rolesSinPermiso(): array
     {
-        return ['editor' => ['editor'], 'recepcion' => ['recepcion'], 'cocina' => ['cocina']];
+        return ['editor' => ['editor'], 'recepcion' => ['recepcion']];
     }
 
     public function test_un_usuario_de_otro_restaurante_no_entra(): void

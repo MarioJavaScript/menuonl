@@ -153,7 +153,7 @@ class PanelRecomendadosTest extends TestCase
     }
 
     #[DataProvider('rolesSinAcceso')]
-    public function test_recepcion_y_cocina_no_ven_recomendados(string $rol): void
+    public function test_recepcion_no_ve_recomendados(string $rol): void
     {
         $restaurante = $this->crearRestaurante('la-esquina');
         $this->entrarAlPanel($this->crearUsuario($rol, $restaurante), $restaurante);
@@ -175,6 +175,6 @@ class PanelRecomendadosTest extends TestCase
      */
     public static function rolesSinAcceso(): array
     {
-        return ['recepcion' => ['recepcion'], 'cocina' => ['cocina']];
+        return ['recepcion' => ['recepcion']];
     }
 }

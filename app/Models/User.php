@@ -182,7 +182,7 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     }
 
     /**
-     * Whether the user only holds operational roles (gerente, recepcion, cocina) and is not a superadmin,
+     * Whether the user only holds the operational role (recepcion) and is not a superadmin,
      * so the service panel (/panel) is their home instead of the advanced admin.
      */
     public function esSoloOperativo(): bool
@@ -193,7 +193,7 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
 
         $roles = DB::table('restaurante_usuario')->where('user_id', $this->getKey())->where('activo', true)->pluck('rol');
 
-        return $roles->isNotEmpty() && $roles->every(fn (string $rol): bool => in_array($rol, ['recepcion', 'cocina'], true));
+        return $roles->isNotEmpty() && $roles->every(fn (string $rol): bool => $rol === 'recepcion');
     }
 
     /**

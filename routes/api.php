@@ -5,7 +5,6 @@ use App\Http\Controllers\Api\V1\Panel\AjustesController;
 use App\Http\Controllers\Api\V1\Panel\EquipoController;
 use App\Http\Controllers\Api\V1\Panel\ImagenController;
 use App\Http\Controllers\Api\V1\Panel\MenuController;
-use App\Http\Controllers\Api\V1\Panel\PedidoController;
 use App\Http\Controllers\Api\V1\Panel\ReservaController;
 use App\Http\Controllers\Api\V1\Panel\ResumenController;
 use App\Http\Controllers\Api\V1\ReservaPublicaController;
@@ -37,12 +36,6 @@ Route::prefix('v1')->group(function (): void {
 
             Route::middleware(ModuloPanel::class.':reservas')->group(function (): void {
                 Route::apiResource('reservas', ReservaController::class)->except('show');
-            });
-
-            Route::middleware(ModuloPanel::class.':pedidos')->group(function (): void {
-                Route::get('pedidos', [PedidoController::class, 'index'])->name('pedidos.index');
-                Route::post('pedidos', [PedidoController::class, 'store'])->name('pedidos.store');
-                Route::post('pedidos/{pedido}/avanzar', [PedidoController::class, 'avanzar'])->name('pedidos.avanzar');
             });
 
             Route::middleware(ModuloPanel::class.':menu')->group(function (): void {

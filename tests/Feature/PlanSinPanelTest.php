@@ -37,7 +37,6 @@ class PlanSinPanelTest extends TestCase
             'gerente' => ['gerente'],
             'editor' => ['editor'],
             'recepcion' => ['recepcion'],
-            'cocina' => ['cocina'],
         ];
     }
 

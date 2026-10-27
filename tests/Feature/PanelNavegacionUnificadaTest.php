@@ -46,26 +46,25 @@ class PanelNavegacionUnificadaTest extends TestCase
     }
 
     /**
-     * Plan, rol, ve Reservas, ve Ajustes de reservas y pedidos, ve el ítem temporal hacia /panel.
+     * Plan, rol, ve Reservas, ve Ajustes de reservas y pedidos.
      *
-     * @return array<string, array{0: string, 1: string, 2: bool, 3: bool, 4: bool}>
+     * @return array<string, array{0: string, 1: string, 2: bool, 3: bool}>
      */
     public static function menuPorPlanYRol(): array
     {
         return [
-            'propietario completo' => ['completo', 'propietario', true, true, true],
-            'superadmin completo' => ['completo', 'superadmin', true, true, true],
-            'propietario sitio y menú' => ['sitio_menu', 'propietario', true, true, false],
-            'superadmin sitio y menú' => ['sitio_menu', 'superadmin', true, true, true],
-            'superadmin solo menú' => ['solo_menu', 'superadmin', false, true, true],
-            'gerente completo' => ['completo', 'gerente', true, false, true],
-            'recepción completo' => ['completo', 'recepcion', true, false, false],
-            'cocina completo' => ['completo', 'cocina', false, false, true],
+            'propietario completo' => ['completo', 'propietario', true, true],
+            'superadmin completo' => ['completo', 'superadmin', true, true],
+            'propietario sitio y menú' => ['sitio_menu', 'propietario', true, true],
+            'superadmin sitio y menú' => ['sitio_menu', 'superadmin', true, true],
+            'superadmin solo menú' => ['solo_menu', 'superadmin', false, true],
+            'gerente completo' => ['completo', 'gerente', true, false],
+            'recepción completo' => ['completo', 'recepcion', true, false],
         ];
     }
 
     #[DataProvider('menuPorPlanYRol')]
-    public function test_el_html_del_menu_ofrece_cada_pantalla_solo_a_quien_le_corresponde(string $plan, string $rol, bool $reservas, bool $ajustes, bool $temporal): void
+    public function test_el_html_del_menu_ofrece_cada_pantalla_solo_a_quien_le_corresponde(string $plan, string $rol, bool $reservas, bool $ajustes): void
     {
         $restaurante = $this->restauranteDePlan($plan);
         $this->entrarAlPanel($this->crearUsuario($rol, $restaurante), $restaurante);
@@ -74,19 +73,20 @@ class PanelNavegacionUnificadaTest extends TestCase
 
         $this->assertSame($reservas, str_contains($html, $this->enlace(Reservas::getUrl())), 'Reservas');
         $this->assertSame($ajustes, str_contains($html, $this->enlace(AjustesDeReservasYPedidos::getUrl())), 'Ajustes de reservas y pedidos');
-        $this->assertSame($temporal, str_contains($html, $this->enlace(route('panel'))), 'Ítem temporal hacia /panel');
+        $this->assertStringNotContainsString($this->enlace(route('panel')), $html, 'Nadie tiene un enlace a /panel en el menú.');
+        $this->assertStringNotContainsString('Pedidos (panel anterior)', $html);
         $this->assertStringNotContainsString('Pedidos y reservas de hoy', $html);
         $this->assertStringNotContainsString('/pedidos-y-reservas', $html, 'Ninguna dirección vieja en el menú.');
     }
 
-    public function test_el_html_del_propietario_trae_los_nombres_nuevos_y_marca_el_item_temporal(): void
+    public function test_el_html_del_propietario_trae_los_nombres_nuevos_y_ya_no_ofrece_pedidos(): void
     {
         $restaurante = $this->restauranteDePlan('completo');
         $this->entrarAlPanel($this->crearUsuario('propietario', $restaurante), $restaurante);
 
         $this->get(Inicio::getUrl())
             ->assertSee('Ajustes de reservas y pedidos')
-            ->assertSee('Pedidos (panel anterior)')
+            ->assertDontSee('Pedidos (panel anterior)')
             ->assertDontSee('Pedidos y reservas de hoy');
     }
 
@@ -130,7 +130,7 @@ class PanelNavegacionUnificadaTest extends TestCase
      */
     public static function rolesSinLosAjustes(): array
     {
-        return ['editor' => ['editor'], 'gerente' => ['gerente'], 'recepción' => ['recepcion'], 'cocina' => ['cocina']];
+        return ['editor' => ['editor'], 'gerente' => ['gerente'], 'recepción' => ['recepcion']];
     }
 
     #[DataProvider('rolesSinLosAjustes')]

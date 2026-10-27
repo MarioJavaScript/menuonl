@@ -8,7 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Livewire\Features\SupportRedirects\Redirector;
 
 /**
- * After the panel login, users who only hold operational roles (recepcion, cocina) land on the service panel.
+ * After the panel login, users who only hold the operational role (recepcion) land on the service panel.
  */
 class LoginRespuesta extends LoginResponse
 {

@@ -38,7 +38,7 @@ class PanelAjustesTest extends TestCase
         $restaurante = Restaurante::factory()->create();
         $this->getJson($this->url($restaurante))->assertUnauthorized();
 
-        foreach (['editor', 'recepcion', 'cocina'] as $rol) {
+        foreach (['editor', 'recepcion'] as $rol) {
             $usuario = $this->conRol($restaurante, $rol);
             $this->actingAs($usuario)->getJson($this->url($restaurante))->assertForbidden();
             $this->actingAs($usuario)->patchJson($this->url($restaurante), ['nombre' => 'Hack'])->assertForbidden();

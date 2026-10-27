@@ -70,7 +70,6 @@ class BannerDeSuperadminTest extends TestCase
             'editor' => ['editor'],
             'gerente' => ['gerente'],
             'recepción' => ['recepcion'],
-            'cocina' => ['cocina'],
         ];
     }
 
@@ -276,7 +275,7 @@ class BannerDeSuperadminTest extends TestCase
 
         $this->actingAs($this->crearUsuario('superadmin'))->get($destino)->assertOk();
 
-        foreach (['propietario', 'editor', 'gerente', 'recepcion', 'cocina'] as $rol) {
+        foreach (['propietario', 'editor', 'gerente', 'recepcion'] as $rol) {
             $this->actingAs($this->crearUsuario($rol, $restaurante))->get($destino)->assertForbidden();
         }
     }

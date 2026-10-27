@@ -83,13 +83,6 @@ class AdminPanelProvider extends PanelProvider
                 NavigationGroup::make('Plataforma'),
             ])
             ->navigationItems([
-                // TEMPORAL: los pedidos manuales siguen solo en /panel. Retirar cuando se decida Pedidos (docs/integracion-dashboard.md, 17.5).
-                NavigationItem::make(fn (): string => __('panel.enlaces.servicio'))
-                    ->group(fn (): string => __('panel.grupos.pedidos'))
-                    ->icon(Heroicon::OutlinedBolt)
-                    ->sort(20)
-                    ->url(fn (): string => route('panel'))
-                    ->visible(fn (): bool => BarraInferiorDelPanel::puedeUsarPedidosDelPanelAnterior()),
                 NavigationItem::make(fn (): string => __('panel.datos.nav'))
                     ->group(fn (): string => __('panel.grupos.informacion'))
                     ->icon(Heroicon::OutlinedBuildingStorefront)

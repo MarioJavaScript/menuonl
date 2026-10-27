@@ -259,7 +259,6 @@ class GestionDeReservasTest extends TestCase
             'gerente' => ['gerente', true],
             'editor' => ['editor', true],
             'recepcion' => ['recepcion', true],
-            'cocina' => ['cocina', false],
         ];
     }
 
@@ -301,12 +300,13 @@ class GestionDeReservasTest extends TestCase
 
     public function test_sin_permiso_se_responde_403_antes_que_error_de_validacion(): void
     {
-        [$restaurante, $cocina] = $this->escenario('cocina');
+        [$restaurante] = $this->escenario();
+        $ajeno = $this->crearUsuario('propietario', Restaurante::factory()->create());
         $reserva = Reserva::factory()->create(['restaurante_id' => $restaurante->id]);
 
         foreach ([
-            fn () => $this->gestion->crear($cocina, $restaurante, ['nombre' => '', 'personas' => 99]),
-            fn () => $this->gestion->actualizar($cocina, $restaurante, $reserva, ['estado' => 'x']),
+            fn () => $this->gestion->crear($ajeno, $restaurante, ['nombre' => '', 'personas' => 99]),
+            fn () => $this->gestion->actualizar($ajeno, $restaurante, $reserva, ['estado' => 'x']),
         ] as $intento) {
             try {
                 $intento();

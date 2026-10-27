@@ -72,7 +72,6 @@ class Catalogos
             'gerente' => 'Gerente',
             'editor' => 'Editor',
             'recepcion' => 'Recepción',
-            'cocina' => 'Cocina',
         ];
     }
 

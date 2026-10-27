@@ -384,7 +384,7 @@ class InvitacionesTest extends TestCase
             ->call('create')
             ->assertHasFormErrors(['email']);
 
-        foreach (['editor', 'gerente', 'recepcion', 'cocina'] as $rolNoOfrecido) {
+        foreach (['editor', 'gerente', 'recepcion'] as $rolNoOfrecido) {
             Livewire::test(CreateInvitacion::class)
                 ->fillForm(['email' => 'otro@ejemplo.com', 'rol' => $rolNoOfrecido])
                 ->call('create')
