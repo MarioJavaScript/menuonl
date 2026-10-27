@@ -5,8 +5,10 @@ namespace Tests\Feature;
 use App\Filament\Pages\AjustesDeReservasYPedidos;
 use App\Filament\Pages\Inicio;
 use App\Filament\Pages\Reservas;
+use App\Models\Reserva;
 use App\Models\Restaurante;
 use App\Services\BarraInferiorDelPanel;
+use Carbon\Carbon;
 use Filament\Facades\Filament;
 use Filament\Support\Facades\FilamentView;
 use Filament\View\PanelsRenderHook;
@@ -158,6 +160,63 @@ class BarraInferiorDelPanelTest extends TestCase
 
         $this->assertStringContainsString('href="'.Reservas::getUrl().'"', $html);
         $this->assertStringNotContainsString('href="'.route('panel').'"', $html);
+    }
+
+    /**
+     * @return array<string, array{0: int, 1: string|null}>
+     */
+    public static function reservasPorConfirmar(): array
+    {
+        return ['cero' => [0, null], 'una' => [1, '1'], 'ciento cincuenta' => [150, '99+']];
+    }
+
+    #[DataProvider('reservasPorConfirmar')]
+    public function test_la_insignia_de_reservas_cuenta_las_por_confirmar_y_se_limita_a_99(int $cuantas, ?string $texto): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-10-21 18:00:00', 'UTC'));
+        $restaurante = $this->entrar('completo', 'propietario');
+        Reserva::factory()->count($cuantas)->create(['restaurante_id' => $restaurante->id, 'fecha' => '2026-10-22', 'estado' => 'pendiente']);
+        Reserva::factory()->create(['restaurante_id' => $restaurante->id, 'fecha' => '2026-10-21', 'estado' => 'confirmada']);
+        Reserva::factory()->create(['restaurante_id' => $restaurante->id, 'fecha' => '2026-10-20', 'estado' => 'pendiente']);
+
+        $html = (string) FilamentView::renderHook(PanelsRenderHook::BODY_END);
+        $acceso = collect(app(BarraInferiorDelPanel::class)->accesos())->firstWhere('clave', 'reservas');
+
+        $this->assertSame($cuantas, $acceso['insignia']);
+
+        if ($texto === null) {
+            $this->assertStringNotContainsString('mo-barra-insignia', $html);
+            $this->assertSame($acceso['etiqueta'], $acceso['nombre']);
+
+            return;
+        }
+
+        $this->assertStringContainsString('<span class="mo-barra-insignia" aria-hidden="true">'.$texto.'</span>', $html);
+        $this->assertSame(1, substr_count($html, 'mo-barra-insignia'), 'Solo Reservas lleva insignia.');
+        $this->assertStringContainsString('aria-label="Reservas: '.$cuantas.' por confirmar"', $html, 'El nombre accesible lleva el número completo, no el 99+.');
+        $this->assertStringContainsString('<span>'.__('panel.barra.reservas').'</span>', $html);
+        $this->assertStringContainsString(__('panel.barra.reservas'), $acceso['nombre'], 'El nombre accesible debe contener el texto visible.');
+    }
+
+    public function test_la_insignia_es_decorativa_y_no_captura_toques_en_el_css(): void
+    {
+        $css = (string) file_get_contents(resource_path('css/filament/admin/theme.css'));
+        preg_match('/\.mo-barra-insignia \{([^}]*)\}/', $css, $regla);
+
+        $this->assertNotEmpty($regla, 'Falta la regla .mo-barra-insignia en theme.css');
+        $this->assertStringContainsString('pointer-events: none;', $regla[1]);
+        $this->assertStringContainsString('var(--mb-aviso)', $regla[1]);
+        $this->assertStringContainsString('var(--mb-aviso-bg)', $regla[1]);
+        $this->assertStringContainsString('var(--mb-aviso-borde)', $regla[1]);
+        $this->assertStringNotContainsString('#', $regla[1], 'Solo tokens --mb-*, sin colores escritos a mano.');
+    }
+
+    public function test_sin_acceso_a_reservas_la_barra_no_trae_insignia(): void
+    {
+        $restaurante = $this->entrar('completo', 'cocina');
+        Reserva::factory()->create(['restaurante_id' => $restaurante->id, 'fecha' => now($restaurante->zona_horaria)->toDateString(), 'estado' => 'pendiente']);
+
+        $this->assertStringNotContainsString('mo-barra-insignia', (string) FilamentView::renderHook(PanelsRenderHook::BODY_END));
     }
 
     public function test_sin_restaurante_activo_no_hay_barra(): void

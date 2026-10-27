@@ -294,6 +294,32 @@ html:root {
         height: 1.5rem;
     }
 
+    .mo-barra-icono {
+        position: relative;
+        display: inline-flex;
+    }
+
+    /* Reservas por confirmar: decorativa (el nombre accesible del enlace lleva el número) y sin capturar toques */
+    .mo-barra-insignia {
+        position: absolute;
+        top: -0.25rem;
+        inset-inline-start: 55%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 1.125rem;
+        height: 1.125rem;
+        padding: 0 0.25rem;
+        border: 1px solid var(--mb-aviso-borde);
+        border-radius: 999px;
+        background-color: var(--mb-aviso-bg);
+        color: var(--mb-aviso);
+        font-size: 0.6875rem;
+        font-weight: 700;
+        line-height: 1;
+        pointer-events: none;
+    }
+
     .mo-barra-inferior [aria-current='page'] {
         color: var(--mb-accion-activo);
     }
@@ -936,7 +962,11 @@ html:has(.mb-banner--fijo) {
     min-height: var(--mb-objetivo);
 }
 
-.mb-reservas__entrar {
+.mb-sondeo__aviso {
+    margin-bottom: 0.75rem;
+}
+
+.mb-sondeo__entrar {
     display: inline-flex;
     align-items: center;
     min-height: var(--mb-objetivo);

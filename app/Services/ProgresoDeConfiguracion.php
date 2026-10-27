@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Enums\Capacidad;
 use App\Filament\Pages\AjustesDeReservasYPedidos;
 use App\Filament\Pages\Apariencia;
-use App\Filament\Pages\Reservas;
 use App\Filament\Pages\Tenancy\EditRestauranteProfile;
 use App\Filament\Resources\Categorias\CategoriaResource;
 use App\Filament\Resources\CodigosQr\CodigoQrResource;
@@ -17,20 +16,17 @@ use App\Models\CodigoQr;
 use App\Models\Contacto;
 use App\Models\Horario;
 use App\Models\Producto;
-use App\Models\Reserva;
 use App\Models\Restaurante;
 use App\Models\User;
 
 /**
- * Lo que ve el dueño en Inicio: qué falta configurar (con porcentaje), avisos, cosas que atender y el resumen del día.
+ * Lo que ve el dueño en Inicio: qué falta configurar (con porcentaje), avisos y cosas que atender (la operación del día es del widget OperacionDelDiaWidget).
  *
  * Solo lee. Cada elemento aparece únicamente si la persona puede abrir la pantalla a la que lleva, con las políticas que
  * ya existen (no se cambia ningún permiso): por eso un gerente o un editor ven menos pasos que el propietario.
  */
 class ProgresoDeConfiguracion
 {
-    public function __construct(private ReservasDelDia $reservas) {}
-
     /**
      * @return array{
      *     pasos: list<array{clave: string, hecho: bool, importante: bool, url: string}>,
@@ -39,7 +35,6 @@ class ProgresoDeConfiguracion
      *     porcentaje: ?int,
      *     avisos: list<array{clave: string, url: string}>,
      *     atencion: list<array{clave: string, cantidad: int, url: string}>,
-     *     dia: ?array{reservas_hoy: int, por_confirmar: int, url: string},
      *     codigo_qr_url: ?string
      * }
      */
@@ -61,7 +56,6 @@ class ProgresoDeConfiguracion
             'porcentaje' => $total > 0 ? (int) round($hechos / $total * 100) : null,
             'avisos' => $this->avisos($restaurante, $usuario, $consultarHorario),
             'atencion' => $this->atencion($restaurante, $usuario),
-            'dia' => $this->resumenDelDia($restaurante, $usuario),
             'codigo_qr_url' => $this->urlDeDescargaDelQr($usuario),
         ];
     }
@@ -141,27 +135,6 @@ class ProgresoDeConfiguracion
         }
 
         return $atencion;
-    }
-
-    /**
-     * Reservas de hoy y reservas por confirmar, solo para quien puede ver las reservas y solo si hay algo que mostrar.
-     *
-     * @return array{reservas_hoy: int, por_confirmar: int, url: string}|null
-     */
-    private function resumenDelDia(Restaurante $restaurante, User $usuario): ?array
-    {
-        if (! $usuario->can('viewAny', Reserva::class)) {
-            return null;
-        }
-
-        $reservasHoy = $this->reservas->resumenDelDia($restaurante)['reservas_hoy'];
-        $porConfirmar = $this->reservas->porConfirmarDesdeHoy($restaurante);
-
-        if ($reservasHoy === 0 && $porConfirmar === 0) {
-            return null;
-        }
-
-        return ['reservas_hoy' => $reservasHoy, 'por_confirmar' => $porConfirmar, 'url' => Reservas::getUrl()];
     }
 
     /**

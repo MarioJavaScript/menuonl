@@ -26,7 +26,7 @@ La dirección del restaurante en la URL es su "slug"; el dueño nunca debería v
 
 | Pantalla | Clase | Grupo de navegación | Orden | Quién la ve (política) | Qué edita |
 |---|---|---|---|---|---|
-| Inicio | `Pages\Inicio` + `ResumenRestauranteWidget` | (sin grupo) | primera | todos los miembros | Solo lectura: estado (publicado/abierto), turnos de hoy, botón "Agregar platillo" y lista de pendientes (primera categoría, platillos, WhatsApp faltante, horario, agotados, platillos sin foto, QR de mesas) |
+| Inicio | `Pages\Inicio` + `OperacionDelDiaWidget` + `ResumenRestauranteWidget` | (sin grupo) | primera | todos los miembros (la operación del día, solo quien ve Reservas) | Solo lectura: operación del día (reservas de hoy, comensales, por confirmar, próxima reserva), estado (publicado/abierto), turnos de hoy, botón "Agregar platillo" y lista de pendientes (primera categoría, platillos, WhatsApp faltante, horario, agotados, platillos sin foto, QR de mesas) |
 | Platillos | `ProductoResource` | Menú | 10 | superadmin, propietario, editor, gerente | Nombre y descripción por idioma, precio, categoría, fotografía, disponible, destacado, precio promocional, etiquetas dietéticas, visible, orden, variantes (nombre por idioma, precio, orden, disponible). Tabla con interruptores de disponible y visible, filtro por categoría, filtro de agotados, papelera con deshacer |
 | Categorías | `CategoriaResource` | Menú | 20 | superadmin, propietario, editor (**gerente no**) | Nombre y descripción por idioma, visible, orden |
 | Horario | `HorarioResource` | Restaurante | 30 | superadmin, propietario, editor | Un registro por turno: día, cerrado, apertura, cierre (cierre menor que apertura = termina al día siguiente) |
@@ -47,7 +47,7 @@ Otros: inicio de sesión propio con límite de intentos (`Pages\Auth\Login`), do
 
 | Módulo | Rol que lo ve (`PermisosPanel`) | Qué hace |
 |---|---|---|
-| Inicio | propietario, gerente, editor, recepción | Resumen del día |
+| Inicio | propietario, gerente, editor, recepción | Resumen del día (widget "Hoy en tu restaurante", se actualiza solo cada 60 s) |
 | Reservas | propietario, gerente, editor, recepción | Crear, cambiar estado, borrar reservas |
 | Menú | propietario, gerente, editor | Ver menú, crear platillo en una categoría, editar, duplicar, borrar, subir o quitar foto del platillo |
 | Pedidos | propietario, gerente, editor, cocina | Tablero por estado, crear pedido, avanzar estado |
@@ -225,7 +225,7 @@ No encontré recursos de Filament sin alcance de restaurante fuera de los de Pla
 - Cada pantalla responde una pregunta: "¿Qué ve mi cliente?", "¿Cuándo y cómo me contactan?".
 - Guardado explícito con un botón fijo abajo en celular. Textos de error que dicen cómo arreglarlo.
 - Valores por defecto razonables para que un restaurante nuevo se pueda publicar con lo mínimo.
-- La barra inferior en celular: **Inicio, Mi menú, Reservas, Apariencia, Más** (los ajustes de reservas y pedidos quedan en "Más").
+- La barra inferior en celular: **Inicio, Mi menú, Reservas, Apariencia, Más** (los ajustes de reservas y pedidos quedan en "Más"). Reservas lleva una insignia con las reservas por confirmar (`99+` como tope) que se actualiza al cargar o navegar, no sola.
 
 ### 5.2 Árbol de navegación
 
@@ -260,6 +260,11 @@ La sección Plataforma queda tal cual y solo la ve el superadmin.
 
 **Inicio**
 ```
+Hoy en tu restaurante                 (solo si ves Reservas)
+  Tienes 5 reservas para hoy. Esperas 14 personas.
+  Hay 2 reservas por confirmar.
+  Próxima reserva: 20:30, Ana, 4 personas.        [Confirmar reservas]
+
 Hola, [nombre]. Tu menú está publicado.            [Ver mi menú]
 Hoy: Abierto ahora (13:00 a 22:00)
 

@@ -26,7 +26,7 @@ class BarraInferiorDelPanel
     public const int MAXIMO = 4;
 
     /**
-     * @return list<array{clave: string, etiqueta: string, nombre: string, url: string, icono: Heroicon, activa: bool}>
+     * @return list<array{clave: string, etiqueta: string, nombre: string, url: string, icono: Heroicon, activa: bool, insignia: int}>
      */
     public function accesos(): array
     {
@@ -41,8 +41,11 @@ class BarraInferiorDelPanel
                 continue;
             }
 
-            $nombre = __($candidato['nombre']);
             $etiqueta = __($candidato['etiqueta']);
+            $insignia = isset($candidato['insignia']) ? max(0, $candidato['insignia']()) : 0;
+            $nombre = $insignia > 0 && isset($candidato['nombre_con_insignia'])
+                ? __($candidato['nombre_con_insignia'], ['n' => $insignia])
+                : __($candidato['nombre']);
 
             $accesos[] = [
                 'clave' => $clave,
@@ -51,6 +54,7 @@ class BarraInferiorDelPanel
                 'url' => $candidato['url'](),
                 'icono' => $candidato['icono'],
                 'activa' => $candidato['activa'](),
+                'insignia' => $insignia,
             ];
         }
 
@@ -74,7 +78,9 @@ class BarraInferiorDelPanel
     /**
      * En orden de prioridad. "pedidos" (TEMPORAL, lleva a /panel) solo entra para quien tiene el módulo pedidos y no ve Reservas.
      *
-     * @return array<string, array{etiqueta: string, nombre: string, icono: Heroicon, visible: Closure(): bool, url: Closure(): string, activa: Closure(): bool}>
+     * "insignia" (opcional) es la cuenta que se pinta sobre el ícono; con ella, el nombre accesible pasa a "nombre_con_insignia".
+     *
+     * @return array<string, array{etiqueta: string, nombre: string, icono: Heroicon, visible: Closure(): bool, url: Closure(): string, activa: Closure(): bool, insignia?: Closure(): int, nombre_con_insignia?: string}>
      */
     private function candidatos(): array
     {
@@ -98,6 +104,8 @@ class BarraInferiorDelPanel
                 'visible' => fn (): bool => Reservas::canAccess(),
                 'url' => fn (): string => Reservas::getUrl(),
                 'activa' => $ruta(Reservas::getRouteName()),
+                'insignia' => fn (): int => (int) Reservas::getNavigationBadge(),
+                'nombre_con_insignia' => 'panel.barra.reservas_por_confirmar',
             ],
             'apariencia' => [
                 'etiqueta' => 'panel.barra.apariencia', 'nombre' => 'panel.barra.apariencia', 'icono' => Heroicon::OutlinedPaintBrush,

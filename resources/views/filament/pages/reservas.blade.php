@@ -1,21 +1,7 @@
 {{-- Reservas del servicio (docs/integracion-dashboard.md, sección 18). Con una ventana abierta el servidor ignora el sondeo (Reservas::refrescar). --}}
 <x-filament-panels::page>
-    <div class="mb-reservas" data-reservas-pagina>
-        <div
-            class="mb-reservas__aviso"
-            data-reservas-aviso
-            data-texto-red="{{ __('panel.reservas.sondeo.red') }}"
-            data-texto-sesion="{{ __('panel.reservas.sondeo.sesion') }}"
-            wire:ignore
-            hidden
-        >
-            <x-mb.aviso tono="atencion" :anuncia="false">
-                <span data-reservas-aviso-texto></span>
-                <x-slot:accion>
-                    <a class="mb-reservas__entrar" href="{{ filament()->getLoginUrl() ?? url('/admin') }}" data-reservas-entrar hidden>{{ __('panel.reservas.sondeo.entrar') }}</a>
-                </x-slot:accion>
-            </x-mb.aviso>
-        </div>
+    <div class="mb-reservas" data-sondeo-pagina>
+        <x-mb.aviso-sondeo :red="__('panel.reservas.sondeo.red')" :sesion="__('panel.reservas.sondeo.sesion')" :entrar="__('panel.reservas.sondeo.entrar')" />
 
         {{-- Solo se llena cuando un sondeo trae reservas nuevas por confirmar; un sondeo sin cambios no anuncia nada. --}}
         <p class="mb-sr" role="status" aria-live="polite" aria-atomic="true">{{ $this->anuncio }}</p>
@@ -37,7 +23,7 @@
 
         <p class="mb-reservas__resumen">{{ trans_choice('panel.reservas.resumen.cuenta', $activas, ['n' => $activas, 'donde' => $donde]) }}</p>
 
-        <div data-reservas-sondeo wire:poll.30s.visible="refrescar">
+        <div data-sondeo wire:poll.30s.visible="refrescar">
             @if ($eligeDia)
                 <x-mb.hoja>
                     <x-mb.vacio :titulo="__('panel.reservas.vacio.elige_dia.titulo')" :texto="__('panel.reservas.vacio.elige_dia.texto')" :icono="\Filament\Support\Icons\Heroicon::OutlinedCalendarDays" />
@@ -107,67 +93,5 @@
         </div>
     </div>
 
-    {{-- Errores del sondeo y sesión caducada. La API es la de Livewire 4.4.8: Livewire.interceptRequest con onError, onFailure y onSuccess. --}}
-    @script
-    <script>
-        if (! window.mbReservasInterceptor) {
-            window.mbReservasInterceptor = true
-
-            let aviso = () => document.querySelector('[data-reservas-aviso]')
-
-            let mostrar = (tipo) => {
-                let caja = aviso()
-                if (! caja) return
-                caja.querySelector('[data-reservas-aviso-texto]').textContent = tipo === 'sesion' ? caja.dataset.textoSesion : caja.dataset.textoRed
-                caja.querySelector('[data-reservas-entrar]').hidden = tipo !== 'sesion'
-                caja.querySelector('.mb-aviso').setAttribute('role', tipo === 'sesion' ? 'alert' : 'status')
-                caja.dataset.tipo = tipo
-                caja.hidden = false
-            }
-
-            let ocultarRed = () => {
-                let caja = aviso()
-                if (caja && caja.dataset.tipo === 'red') caja.hidden = true
-            }
-
-            let pararSondeo = () => {
-                document.querySelectorAll('[data-reservas-sondeo]').forEach((el) => {
-                    Array.from(el.attributes).filter((a) => a.name.startsWith('wire:poll')).forEach((a) => el.removeAttribute(a.name))
-                })
-            }
-
-            Livewire.interceptRequest(({ request, onError, onFailure, onSuccess }) => {
-                let propios = []
-
-                try {
-                    propios = Array.from(request.messages).filter((m) => m.component.el.querySelector('[data-reservas-pagina]'))
-                } catch (e) {
-                    return
-                }
-
-                if (propios.length === 0) return
-
-                let esSondeo = propios.every((m) => Array.from(m.actions).every((a) => a.metadata && a.metadata.type === 'poll'))
-
-                onError(({ response, preventDefault }) => {
-                    if (response.status === 419 || response.status === 401) {
-                        preventDefault()
-                        pararSondeo()
-                        mostrar('sesion')
-
-                        return
-                    }
-
-                    if (esSondeo) {
-                        preventDefault()
-                        mostrar('red')
-                    }
-                })
-
-                onFailure(() => mostrar('red'))
-                onSuccess(() => ocultarRed())
-            })
-        }
-    </script>
-    @endscript
+    @include('filament.partials.sondeo-con-sesion')
 </x-filament-panels::page>
