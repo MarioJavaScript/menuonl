@@ -299,7 +299,7 @@
         <footer class="pie-publico">
             <div class="contenedor flex flex-col items-center gap-4">
                 <x-apariencia />
-                <p class="inline-flex items-center gap-1.5">Hecho con <x-mb.logo variante="wordmark" :alto="16" /></p>
+                <p class="inline-flex items-center gap-1.5">Hecho con <x-mb.logo variante="wordmark" :alto="16" :lazy="true" /></p>
             </div>
         </footer>
 
