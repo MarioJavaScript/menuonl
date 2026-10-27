@@ -499,7 +499,7 @@ Opción A (páginas de Filament/Livewire que reutilizan servicios) ejecutada por
 | # | PR | Contenido | Pruebas | Riesgos |
 |---|---|---|---|---|
 | 1 | **Base de servicios (hecho, 17.9)** | Extraer de `ReservaController` (y `ResumenController`) servicios de reservas sin cambiar comportamiento. Ocultar roles distintos de propietario en la invitación (Filament y API) según la decisión 2 | `PanelApiReservasTest` y `PanelApiMenuYResumenTest` pasan intactas; `PanelEquipoTest`, `InvitacionesTest` y `PanelRolesOperativosTest` se ajustan a "solo propietario visible" | Que la extracción cambie una regla (estados, zona horaria, tope de 200 próximas); que ocultar roles rompa invitaciones ya enviadas con otro rol |
-| 2 | **Reservas en Filament** | Página con Próximas, Hoy y Fecha, todas las acciones de `/panel` y `wire:poll`. Con el mismo tope de plan (Sitio y menú la ve; Solo menú no). `/panel` sigue vivo | Pruebas Livewire de la página por rol y plan; reglas de `PanelApiReservasTest` y `PanelPlanAccesoTest` repetidas sobre la página (aislamiento entre restaurantes, 403 por rol) | Peso del sondeo en tablet y celular; no pisar un campo en edición; sesión caducada a mitad de turno |
+| 2 | **Reservas en Filament (hecho, sección 18)** | Página con Próximas, Hoy y Fecha, todas las acciones de `/panel` y `wire:poll`. Con el mismo tope de plan (Sitio y menú la ve; Solo menú no). `/panel` sigue vivo | Pruebas Livewire de la página por rol y plan; reglas de `PanelApiReservasTest` y `PanelPlanAccesoTest` repetidas sobre la página (aislamiento entre restaurantes, 403 por rol) | Peso del sondeo en tablet y celular; no pisar un campo en edición; sesión caducada a mitad de turno |
 | 3 | **Navegación, Inicio, barra inferior y renombre** | Ítem y acceso "hoy" de `BarraInferiorDelPanel` y "Panel de servicio" apuntan a la página nueva; enlace de reservas de `ProgresoDeConfiguracion`; Inicio con la operación del día (sin pedidos). Renombre a "Ajustes de reservas y pedidos" (`lang/es/panel.php`, claves `panel.pedidos.*`) | `BarraInferiorDelPanelTest`, `PanelInicioTest`, `PanelPedidosYReservasTest`, `PanelTextosDelDuenoTest`, `UxUiAccesibilidadTest` | Textos que otras pruebas buscan literalmente; el grupo de navegación `panel.grupos.pedidos` |
 | 4 | **Plataforma** (PR 7, 8 y 9 de la sección 8) | Sin cambios respecto a la sección 8 | Las de la sección 8 | Las de la sección 8 |
 | 5 | **Métricas: pantallas** (PR 11 de la sección 8) | Sin cambios; las reservas se cuentan desde `reservas` | Las de la sección 8 | Las de la sección 8 |
@@ -567,6 +567,101 @@ La API `/api/v1/panel` y `/panel` se comportan igual (mismo orden de errores, 40
 **Pendientes y riesgos anotados:**
 - **Último propietario activo (riesgo pendiente).** Hoy la API de equipo no lo protege: el superadmin puede desactivar al único propietario activo de un restaurante (`PATCH .../equipo/usuarios/{id}` con `activo: false` responde 200), y entonces `rolEn()` ya no devuelve propietario para nadie. Un propietario no puede desactivarse a sí mismo (422). La acción "Quitar acceso" de Filament sí lo protege (`UserPolicy::revocarAcceso`), aunque su conteo no distingue propietarios inactivos. No se cambió; hay una prueba que solo documenta el comportamiento (`RolesOfrecidosTest`). Decidir en otro PR si se bloquea (y qué mensaje).
 - **Texto del correo de invitación (pendiente menor).** `InvitacionMail` muestra "Propietario" o "Editor" según el rol, así que para gerente, recepción o cocina diría "Editor". No se tocó; no afecta mientras solo se ofrezca propietario.
-- **Historial de reservas:** sigue sin existir (`Reserva` no usa `Auditable`); queda para el PR 2.
+- **Historial de reservas:** no existía; lo resolvió el PR 2 con la tabla `reserva_eventos` (sección 18).
 
 **Qué no se pudo verificar:** MariaDB real (las pruebas usan SQLite en memoria; `lockForUpdate` no hace nada ahí, y la comparación de `fecha` se comprobó solo en SQLite), peticiones realmente simultáneas (la concurrencia se simula con instancias antiguas del mismo registro) y el aspecto de `/panel` en un navegador (solo se comprobó la sintaxis del JavaScript).
+
+
+## 18. PR 2 "Reservas en Filament": hecho
+
+La página **Reservas** vive en `/admin/{slug}/reservas` (clase `App\Filament\Pages\Reservas`). `/panel`, `/api/v1/panel` y la CSP no se tocaron; sus pruebas pasan sin cambios.
+
+### Qué hace
+
+- **Pestañas:** Próximas (agrupadas por día, tope de 200), Hoy y "Ver otro día". Viven en la URL (`?vista=` y `?fecha=`), así que recargar o volver atrás las conserva. Una vista o fecha inventada vuelve a Próximas.
+- **Acciones:** agregar, confirmar, "Llegó", cancelar (con confirmación), restaurar y mover de hora **y de fecha** (`/panel` solo movía la hora). Eliminar quedó fuera.
+- **Historial:** acción "Historial" por reserva (quién, qué y cuándo, en la zona del restaurante) y una línea en la tarjeta con el último cambio.
+- **Navegación:** grupo "Pedidos y reservas", orden 5, ícono `OutlinedCalendarDays`, con insignia de las reservas por confirmar desde hoy. La ve quien tiene el módulo `reservas` en `PermisosPanel` (rol por plan): Completo y Sitio y menú sí, Solo menú no (403 en la ruta, oculta en el menú). El superadmin la ve si el plan incluye reservas. El banner de superadmin y el modo oscuro vienen del layout.
+- **Diseño:** vista Blade propia con `x-mb.hoja`, `x-mb.vacio` y `x-mb.aviso`; acciones y ventanas estándar de Filament. Tarjetas en 390 px y fila en pantallas anchas (`resources/css/filament/admin/theme.css`, clases `mb-reserva*`). No se usó la tabla de Filament: con `records()` habría que reimplementar la consulta, el agrupado y el tope que ya da `ReservasDelDia`.
+- **Textos:** todos en `lang/es/panel.php` (`panel.reservas.*`). Los mensajes de validación salen de `lang/es/validation.php`, que ya trae las reglas que usa el servicio (`required`, `string`, `integer`, `between`, `max`, `date_format`, `in`).
+
+### Seguridad de las acciones
+
+Todo cambio pasa por `GestionDeReservas` (módulo por rol y plan, pertenencia al restaurante, política y validación). Lo que llega del navegador no es de confianza:
+
+- Cada botón manda un solo argumento escalar: `wire:click="mountAction('cancelar', { reserva: 12 })"`. El id se busca siempre dentro del restaurante actual; una reserva ajena, inexistente o con un id que no es número responde como "esa reserva ya no existe" y no escribe.
+- El estado, la hora y la fecha se leen del servidor a partir del id (el servicio sigue usando transacción y `lockForUpdate`). Lo demás que mande el navegador se ignora.
+- Los datos de una ventana (hora, fecha, nombre...) los valida el servicio; sus errores salen en los campos de la ventana.
+- Sin rol o con plan Solo menú (también si cambian con la página abierta) el servicio lanza 403 y no se escribe. Cada render y cada sondeo vuelven a comprobar el acceso.
+- Las pruebas de manipulación están en `ReservasPaginaTest`.
+
+### Historial (`reserva_eventos`)
+
+- Tabla propia, escrita por `GestionDeReservas` en la **misma transacción** que el cambio (si falla el evento se deshace el cambio; un conflicto no deja evento). Guarda: restaurante, id de la reserva (sin llave foránea, para que sobreviva si se borra), usuario, acción (`creada`, `confirmada`, `llego`, `cancelada`, `restaurada`, `movida`, `eliminada`), origen y los valores de estado, hora y fecha **solo de lo que cambió**.
+- **No guarda** nombre, teléfono, nota ni personas. No usa `Auditable`, así que no toca la caché del menú ni `historial_cambios`.
+- **Origen:** `admin` (esta página), `api` (por omisión; es lo que usa hoy el controlador de `/api/v1/panel`, y por tanto `/panel`) o `panel` (reservado). El controlador no se tocó, así que `/panel` queda registrado como `api`; para distinguirlo bastaría pasar `panel` desde `ReservaController` en el PR de retiro.
+- **Cambió el servicio:** las firmas de `GestionDeReservas` ganaron un último parámetro opcional `$origen` y las escrituras se hacen en una transacción que primero lee la fila con `lockForUpdate`. El comportamiento visible de la API es el mismo.
+- Las reservas que llegan del sitio público (`ReservasPublicas`) no pasan por el servicio y no generan evento; el primer evento aparece cuando alguien las atiende.
+- **Retención:** 12 meses, configurable en `config/menuonl.php` (`reservas.eventos_retencion_meses`, variable `RESERVAS_EVENTOS_RETENCION_MESES`, mínimo 1). `menuonl:purgar-reserva-eventos` borra en lotes de 1000 y está programado a las 04:50, sin solaparse (`withoutOverlapping`): el respaldo va a las 04:00 por omisión y la purga de escaneos a las 04:30.
+- **Respaldo y restauración:** `RespaldoService` vuelca la base completa con `mysqldump --single-transaction` (sin `--ignore-table`) o copia el archivo SQLite, y `RestauracionService` mueve todas las tablas de la base. La tabla nueva entra sin cambios. No se probó con MariaDB real.
+
+### Tiempo real
+
+- `wire:poll.30s.visible="refrescar"` en el contenedor de la lista. Cada ciclo es una petición Livewire que re-renderiza siempre (máximo 200 filas); no hay huella de cambios, por decisión.
+- **Con una ventana abierta (agregar, mover, cancelar, historial) el servidor no devuelve HTML** (`skipRender`), así que no se pisa lo que se escribe. El atributo `wire:poll` no sirve para esto: Filament pinta las ventanas como una parcial aparte y el atributo de la vista no se entera.
+- Livewire 4.4.8 baja el ritmo a ~5 % de los ciclos en una pestaña oculta (no la detiene), pausa `.visible` fuera de pantalla y se pausa solo sin conexión o tras un 419.
+- **Lector de pantalla:** una región `role="status"` que solo se llena cuando un sondeo trae más reservas por confirmar que antes; un sondeo sin cambios no anuncia nada.
+- **Punto a vigilar:** las peticiones de Livewire **no pasan por `throttle:panel-api`** (240/min por usuario, solo para la API). No se añadió un límite propio: el sondeo legítimo es de ~2 peticiones por minuto por pestaña, y un límite afectaría a todo `/admin`. Vigilar en producción el volumen de `POST /livewire/update` por usuario y el tiempo de respuesta con 200 reservas; si hace falta, el siguiente paso es un limitador por usuario en las rutas de Livewire o una huella de cambios para saltarse el render.
+
+### Conflictos
+
+Como el navegador solo manda el id, confirmar, "Llegó", restaurar y cancelar **ya no detectan** que la pantalla estaba desactualizada: parten del estado real de la reserva en el momento del clic (el sondeo mantiene la lista al día). **Mover** sí detecta el cambio de otra persona con la ventana abierta: la hora y la fecha que se vieron al abrirla las guarda el servidor al montar la ventana; si cambiaron, la ventana sigue abierta con lo que se eligió, el aviso dice cómo está ahora y esos valores pasan a ser los actuales.
+
+### Sesión expirada y errores de red
+
+Un `@script` en la vista (con el nonce de Livewire; sin cambio de CSP) registra `Livewire.interceptRequest`. Esa API se comprobó en el JS instalado (`vendor/livewire/livewire/dist/livewire.js`): el objeto `Livewire` trae `interceptRequest`, el interceptor recibe `onError({ response, body, preventDefault })`, `onFailure` y `onSuccess`, `request.messages` expone cada mensaje con su componente y sus acciones, y cada acción de un sondeo lleva `metadata.type === 'poll'`.
+
+- **419 o 401:** se cancela el aviso por omisión de Livewire (un `confirm` en inglés), se detiene el sondeo y se muestra, en español, "Tu sesión expiró..." con un enlace para entrar de nuevo.
+- **Fallo de un sondeo** (500, 403, red): se silencia el modal con el HTML del error y se muestra "No pudimos actualizar la lista...", que se oculta con el siguiente sondeo exitoso.
+- El script quedó en la vista (no en un archivo): un archivo requería registrar un asset de Filament (`filament:assets`) o cargarlo con `@assets`, y no se pudo comprobar en un navegador que Livewire cargue bien un módulo así.
+
+### Accesibilidad (lo que se hizo)
+
+- Las pestañas son un `role="group"` con botones `aria-pressed`: el componente `x-filament::tabs` emite un `<nav>` con `aria-current`, no un `tablist`, así que no se usó.
+- Objetivos de 44 px en botones, pestañas, fecha y teléfono. Cada botón de fila lleva `aria-label` con el nombre de la persona. El estado nunca va solo en color (cada chip trae texto; la cancelada además va tachada).
+- Contraste: solo tokens `--mb-*` del tema, claro y oscuro.
+
+### Pruebas
+
+- `ReservasPaginaTest` (37): acceso por rol y plan, navegación e insignia, pestañas, zona horaria (`Pacific/Auckland` frente a UTC), tope de 200, cada acción, errores de validación en español, manipulación de argumentos (reserva de otro restaurante, id inventado, estado inventado o ausente, hora y fecha inválidas, rol sin módulo, plan que baja a Solo menú con la página abierta), conflictos, sondeo y script con nonce.
+- `ReservaEventosTest` (16): un evento por acción con quién, qué y origen; solo lo que cambió; sin datos del comensal; conflicto sin evento; transacción; origen desconocido; sin efecto en la caché del menú; retención, lotes y programación.
+- `ReservasHtmlTest` (7): lee el HTML pintado (no solo las acciones de Livewire): sin directivas Blade sin compilar, `wire:click="mountAction('...', {...})"` con JSON válido en cada botón (incluso con un nombre con comillas, apóstrofo y etiquetas), esa misma expresión ejecutada por Livewire, y un recorrido de todas las vistas que falla si queda una directiva dentro de un atributo `wire:*`. Nació de un fallo real: `@js()` dentro de `<x-filament::button wire:click>` no se compila y llegaba literal al navegador; se usa `{{ Js::encode($argumentos) }}`.
+- Siguen intactas las del servicio y la API (`GestionDeReservasTest`, `ReservasDelDiaTest`, `PanelApiReservasTest`, `PanelPlanAccesoTest`, `RolesOfrecidosTest`).
+- Todas con `Carbon::setTestNow`, sin ids escritos a mano, valores que caben en sus columnas (MariaDB estricto) y sin `intl` ni `gd`.
+
+### Pendientes
+
+- **Pedidos** sigue pendiente (17.5); `/panel` sigue vivo.
+- Navegación (PR 3): apuntar a esta página el ítem "Pedidos y reservas de hoy", el acceso `hoy` de `BarraInferiorDelPanel` y el enlace de `ProgresoDeConfiguracion`, y renombrar la página de ajustes. Mientras tanto conviven "Reservas" y "Pedidos y reservas" en el mismo grupo.
+- Distinguir `panel` de `api` en el origen del historial (ver arriba).
+- Eliminar reservas desde la página (fuera de este PR; el servicio y el historial ya lo soportan).
+- Ajustes posibles tras probar en un navegador: pausar el sondeo por completo en pestañas ocultas y revisar el orden de foco en las ventanas.
+
+### Qué probar a mano (390 px y escritorio, claro y oscuro)
+
+1. Recibir una reserva del sitio público y confirmarla, moverla de hora y de fecha, marcar "Llegó", cancelarla y restaurarla.
+2. Dos pestañas abiertas: cambiar una reserva en una y ver la otra actualizarse sola en unos 30 s; provocar un conflicto y ver el aviso (y, en Mover, que la ventana sigue abierta).
+3. Con una ventana abierta (agregar), dejar pasar un sondeo y comprobar que lo escrito no se borra.
+4. Teclado: abrir y cerrar cada ventana y comprobar que **el foco vuelve al botón que la abrió**; orden de tabulación; Esc para cerrar.
+5. Lector de pantalla: que un sondeo sin cambios no diga nada y que uno con reservas nuevas diga "Hay N reservas nuevas por confirmar".
+6. Cada plan (Completo, Sitio y menú, Solo menú), propietario y superadmin (con el banner), y la insignia de la navegación.
+7. Sesión caducada a mitad de turno (borrar la cookie de sesión o esperar su vida de 120 min) y red cortada (modo avión): ver los avisos en español y que no aparece el modal con el HTML del error.
+8. Que la purga programada aparezca en `php artisan schedule:list`.
+
+### Qué no se pudo verificar
+
+- Nada visual, de teclado ni de foco: no hay navegador. Que las ventanas de Filament devuelvan el foco al botón que las abrió **no se verificó**.
+- MariaDB real: las pruebas usan SQLite en memoria (`lockForUpdate` no hace nada, el formato de `hora` y `fecha` puede variar, y el respaldo y la restauración con `mysqldump` no se ejecutaron).
+- Cómo responde Filament a una petición de Livewire con la sesión caducada: si es una respuesta 401 o 419 se cubre; si fuera una redirección al inicio de sesión con HTML, el comportamiento de Livewire no se comprobó.
+- El costo real del sondeo en una tablet o con 200 reservas, y peticiones realmente simultáneas.
+- `search-docs` (laravel-boost) no conectó; el análisis se hizo leyendo el código instalado de Livewire 4.4.8 y Filament 5.10.2.

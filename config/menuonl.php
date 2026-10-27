@@ -52,6 +52,8 @@ return [
         'max_dias' => (int) env('RESERVAS_MAX_DIAS', 60),
         'anticipacion_min' => (int) env('RESERVAS_ANTICIPACION_MIN', 30),
         'espera_min_segundos' => (int) env('RESERVAS_ESPERA_MIN_SEGUNDOS', 2),
+        // Historial de quién confirmó, canceló o movió una reserva; `menuonl:purgar-reserva-eventos` borra lo más viejo.
+        'eventos_retencion_meses' => max(1, (int) env('RESERVAS_EVENTOS_RETENCION_MESES', 12)),
     ],
 
     'imagenes' => [

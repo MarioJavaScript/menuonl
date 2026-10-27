@@ -74,7 +74,7 @@ class PanelNavegacionDuenoTest extends TestCase
         $this->assertSame(['Platillos', 'Categorías', 'Recomendados'], $porGrupo['Mi menú']);
         $this->assertSame(['Apariencia', 'Fotos de tu restaurante'], $porGrupo['Apariencia']);
         $this->assertSame(['Datos del restaurante', 'Horario', 'Contactos'], $porGrupo['Información']);
-        $this->assertSame(['Pedidos y reservas', 'Pedidos y reservas de hoy'], $porGrupo['Pedidos y reservas']);
+        $this->assertSame(['Reservas', 'Pedidos y reservas', 'Pedidos y reservas de hoy'], $porGrupo['Pedidos y reservas']);
         $this->assertSame(['Códigos QR'], $porGrupo['QR y mesas']);
     }
 

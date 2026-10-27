@@ -3,13 +3,16 @@
 namespace App\Services;
 
 use App\Models\Reserva;
+use App\Models\ReservaEvento;
 use App\Models\Restaurante;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use InvalidArgumentException;
 
 /**
  * Reservation writes of the service panel, shared by the panel API and the Filament pages.
@@ -24,6 +27,10 @@ use Illuminate\Validation\Rule;
  * Concurrency: Eloquent writes only the changed columns, so two people changing different fields do not overwrite each
  * other. When two people may change the same field, pass what the screen showed in `$esperado`: the write is then a
  * single UPDATE guarded by it, and a mismatch throws ConflictoDeReserva instead of silently overwriting.
+ *
+ * History: every write that changes something also stores a ReservaEvento (who, what, when, from where) in the same
+ * transaction. `$origen` says where the call came from: "api" (the default, the panel API), "panel" or "admin" (the
+ * Filament page). Events keep state, time and date changes only; never name, phone, note or party size.
  */
 class GestionDeReservas
 {
@@ -31,6 +38,16 @@ class GestionDeReservas
      * Fields a caller may require to be unchanged when updating.
      */
     private const array CAMPOS_ESPERABLES = ['estado', 'hora', 'fecha'];
+
+    /**
+     * History action for each state a reservation can be set to.
+     */
+    private const array ACCION_POR_ESTADO = [
+        'pendiente' => 'restaurada',
+        'confirmada' => 'confirmada',
+        'llego' => 'llego',
+        'cancelada' => 'cancelada',
+    ];
 
     public function __construct(private ReservasDelDia $dias) {}
 
@@ -59,20 +76,27 @@ class GestionDeReservas
      *
      * @param  array<string, mixed>  $datos
      */
-    public function crear(User $actor, Restaurante $restaurante, array $datos): Reserva
+    public function crear(User $actor, Restaurante $restaurante, array $datos, string $origen = 'api'): Reserva
     {
+        $this->exigirOrigenConocido($origen);
         $this->autorizarModulo($actor, $restaurante);
         Gate::forUser($actor)->authorize('create', Reserva::class);
 
         $datos = Validator::make($datos, self::reglas())->validate();
 
-        return Reserva::create([
-            ...$datos,
-            'restaurante_id' => $restaurante->getKey(),
-            'nombre' => trim($datos['nombre']),
-            'fecha' => $datos['fecha'] ?? $this->dias->hoy($restaurante),
-            'estado' => $datos['estado'] ?? 'confirmada',
-        ]);
+        return DB::transaction(function () use ($actor, $restaurante, $datos, $origen): Reserva {
+            $reserva = Reserva::create([
+                ...$datos,
+                'restaurante_id' => $restaurante->getKey(),
+                'nombre' => trim($datos['nombre']),
+                'fecha' => $datos['fecha'] ?? $this->dias->hoy($restaurante),
+                'estado' => $datos['estado'] ?? 'confirmada',
+            ]);
+
+            $this->registrarEvento($actor, $restaurante, $reserva, 'creada', $origen, null, $this->valores($reserva));
+
+            return $reserva;
+        });
     }
 
     /**
@@ -83,58 +107,73 @@ class GestionDeReservas
      *
      * @throws ConflictoDeReserva when `$esperado` no longer matches
      */
-    public function actualizar(User $actor, Restaurante $restaurante, Reserva $reserva, array $datos, array $esperado = []): Reserva
+    public function actualizar(User $actor, Restaurante $restaurante, Reserva $reserva, array $datos, array $esperado = [], string $origen = 'api'): Reserva
     {
+        $this->exigirOrigenConocido($origen);
         $this->autorizarModulo($actor, $restaurante);
         $this->exigirDelRestaurante($restaurante, $reserva);
         Gate::forUser($actor)->authorize('update', $reserva);
 
         $datos = Validator::make($datos, self::reglas(parcial: true))->validate();
-
-        if ($esperado === []) {
-            $reserva->update($datos);
-
-            return $reserva->refresh();
-        }
-
         $esperado = array_intersect_key($esperado, array_flip(self::CAMPOS_ESPERABLES));
-        $filas = Reserva::whereKey($reserva->getKey())
-            ->where($esperado)
-            ->update([...$datos, 'updated_at' => now()]);
 
-        if ($filas !== 1) {
-            throw new ConflictoDeReserva;
-        }
+        return DB::transaction(function () use ($actor, $restaurante, $reserva, $datos, $esperado, $origen): Reserva {
+            // What the database holds right now, so the history records the real change even if `$reserva` is stale.
+            $antes = Reserva::whereKey($reserva->getKey())->lockForUpdate()->first();
 
-        return $reserva->refresh();
+            if ($antes === null) {
+                throw $esperado === []
+                    ? (new ModelNotFoundException)->setModel(Reserva::class, [$reserva->getKey()])
+                    : new ConflictoDeReserva;
+            }
+
+            $valoresAntes = $this->valores($antes);
+
+            if ($esperado === []) {
+                $reserva->update($datos);
+            } else {
+                $filas = Reserva::whereKey($reserva->getKey())
+                    ->where($esperado)
+                    ->update([...$datos, 'updated_at' => now()]);
+
+                if ($filas !== 1) {
+                    throw new ConflictoDeReserva;
+                }
+            }
+
+            $reserva->refresh();
+            $this->registrarCambio($actor, $restaurante, $reserva, $origen, $valoresAntes);
+
+            return $reserva;
+        });
     }
 
     /**
      * Set the state. With `$estadoEsperado`, only if the reservation is still in that state.
      */
-    public function cambiarEstado(User $actor, Restaurante $restaurante, Reserva $reserva, string $estado, ?string $estadoEsperado = null): Reserva
+    public function cambiarEstado(User $actor, Restaurante $restaurante, Reserva $reserva, string $estado, ?string $estadoEsperado = null, string $origen = 'api'): Reserva
     {
-        return $this->actualizar($actor, $restaurante, $reserva, ['estado' => $estado], $estadoEsperado === null ? [] : ['estado' => $estadoEsperado]);
+        return $this->actualizar($actor, $restaurante, $reserva, ['estado' => $estado], $estadoEsperado === null ? [] : ['estado' => $estadoEsperado], $origen);
     }
 
-    public function confirmar(User $actor, Restaurante $restaurante, Reserva $reserva, ?string $estadoEsperado = null): Reserva
+    public function confirmar(User $actor, Restaurante $restaurante, Reserva $reserva, ?string $estadoEsperado = null, string $origen = 'api'): Reserva
     {
-        return $this->cambiarEstado($actor, $restaurante, $reserva, 'confirmada', $estadoEsperado);
+        return $this->cambiarEstado($actor, $restaurante, $reserva, 'confirmada', $estadoEsperado, $origen);
     }
 
-    public function marcarLlegada(User $actor, Restaurante $restaurante, Reserva $reserva, ?string $estadoEsperado = null): Reserva
+    public function marcarLlegada(User $actor, Restaurante $restaurante, Reserva $reserva, ?string $estadoEsperado = null, string $origen = 'api'): Reserva
     {
-        return $this->cambiarEstado($actor, $restaurante, $reserva, 'llego', $estadoEsperado);
+        return $this->cambiarEstado($actor, $restaurante, $reserva, 'llego', $estadoEsperado, $origen);
     }
 
-    public function cancelar(User $actor, Restaurante $restaurante, Reserva $reserva, ?string $estadoEsperado = null): Reserva
+    public function cancelar(User $actor, Restaurante $restaurante, Reserva $reserva, ?string $estadoEsperado = null, string $origen = 'api'): Reserva
     {
-        return $this->cambiarEstado($actor, $restaurante, $reserva, 'cancelada', $estadoEsperado);
+        return $this->cambiarEstado($actor, $restaurante, $reserva, 'cancelada', $estadoEsperado, $origen);
     }
 
-    public function restaurar(User $actor, Restaurante $restaurante, Reserva $reserva, ?string $estadoEsperado = null): Reserva
+    public function restaurar(User $actor, Restaurante $restaurante, Reserva $reserva, ?string $estadoEsperado = null, string $origen = 'api'): Reserva
     {
-        return $this->cambiarEstado($actor, $restaurante, $reserva, 'pendiente', $estadoEsperado);
+        return $this->cambiarEstado($actor, $restaurante, $reserva, 'pendiente', $estadoEsperado, $origen);
     }
 
     /**
@@ -142,18 +181,24 @@ class GestionDeReservas
      *
      * @param  array<string, string>  $esperado
      */
-    public function mover(User $actor, Restaurante $restaurante, Reserva $reserva, ?string $hora, ?string $fecha = null, array $esperado = []): Reserva
+    public function mover(User $actor, Restaurante $restaurante, Reserva $reserva, ?string $hora, ?string $fecha = null, array $esperado = [], string $origen = 'api'): Reserva
     {
-        return $this->actualizar($actor, $restaurante, $reserva, array_filter(['hora' => $hora, 'fecha' => $fecha], fn (?string $valor): bool => $valor !== null), $esperado);
+        return $this->actualizar($actor, $restaurante, $reserva, array_filter(['hora' => $hora, 'fecha' => $fecha], fn (?string $valor): bool => $valor !== null), $esperado, $origen);
     }
 
-    public function eliminar(User $actor, Restaurante $restaurante, Reserva $reserva): void
+    public function eliminar(User $actor, Restaurante $restaurante, Reserva $reserva, string $origen = 'api'): void
     {
+        $this->exigirOrigenConocido($origen);
         $this->autorizarModulo($actor, $restaurante);
         $this->exigirDelRestaurante($restaurante, $reserva);
         Gate::forUser($actor)->authorize('delete', $reserva);
 
-        $reserva->delete();
+        DB::transaction(function () use ($actor, $restaurante, $reserva, $origen): void {
+            $valoresAntes = $this->valores($reserva);
+            $reserva->delete();
+
+            $this->registrarEvento($actor, $restaurante, $reserva, 'eliminada', $origen, $valoresAntes, null);
+        });
     }
 
     /**
@@ -174,5 +219,76 @@ class GestionDeReservas
         if ((int) $reserva->restaurante_id !== (int) $restaurante->getKey()) {
             throw (new ModelNotFoundException)->setModel(Reserva::class, [$reserva->getKey()]);
         }
+    }
+
+    /**
+     * The history only knows the origins it can store.
+     */
+    private function exigirOrigenConocido(string $origen): void
+    {
+        if (! in_array($origen, ReservaEvento::ORIGENES, true)) {
+            throw new InvalidArgumentException("Origen de reserva desconocido: {$origen}.");
+        }
+    }
+
+    /**
+     * State, time ("H:i") and date ("Y-m-d") of a reservation, read from the stored values.
+     *
+     * @return array{estado: string, hora: string, fecha: string}
+     */
+    private function valores(Reserva $reserva): array
+    {
+        return [
+            'estado' => (string) $reserva->getRawOriginal('estado'),
+            'hora' => substr((string) $reserva->getRawOriginal('hora'), 0, 5),
+            'fecha' => substr((string) $reserva->getRawOriginal('fecha'), 0, 10),
+        ];
+    }
+
+    /**
+     * Store the event of an update: nothing when state, time and date stayed the same; the action follows the new state,
+     * or is "movida" when only the time or date changed.
+     *
+     * @param  array{estado: string, hora: string, fecha: string}  $antes
+     */
+    private function registrarCambio(User $actor, Restaurante $restaurante, Reserva $reserva, string $origen, array $antes): void
+    {
+        $despues = $this->valores($reserva);
+        $cambioEstado = $antes['estado'] !== $despues['estado'];
+
+        if (! $cambioEstado && $antes['hora'] === $despues['hora'] && $antes['fecha'] === $despues['fecha']) {
+            return;
+        }
+
+        $accion = $cambioEstado ? self::ACCION_POR_ESTADO[$despues['estado']] : 'movida';
+
+        $this->registrarEvento($actor, $restaurante, $reserva, $accion, $origen, $antes, $despues);
+    }
+
+    /**
+     * Store one event. Of each pair (before and after) only the fields that changed are kept; on create and delete the
+     * whole state is kept. Never guest data.
+     *
+     * @param  array{estado: string, hora: string, fecha: string}|null  $antes
+     * @param  array{estado: string, hora: string, fecha: string}|null  $despues
+     */
+    private function registrarEvento(User $actor, Restaurante $restaurante, Reserva $reserva, string $accion, string $origen, ?array $antes, ?array $despues): void
+    {
+        $evento = [
+            'restaurante_id' => $restaurante->getKey(),
+            'reserva_id' => $reserva->getKey(),
+            'usuario_id' => $actor->getKey(),
+            'accion' => $accion,
+            'origen' => $origen,
+        ];
+
+        foreach (['estado', 'hora', 'fecha'] as $campo) {
+            if ($antes === null || $despues === null || $antes[$campo] !== $despues[$campo]) {
+                $evento["{$campo}_antes"] = $antes[$campo] ?? null;
+                $evento["{$campo}_despues"] = $despues[$campo] ?? null;
+            }
+        }
+
+        ReservaEvento::create($evento);
     }
 }
