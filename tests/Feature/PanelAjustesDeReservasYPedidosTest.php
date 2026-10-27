@@ -2,7 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Filament\Pages\PedidosYReservas;
+use App\Filament\Pages\AjustesDeReservasYPedidos;
+use App\Filament\Pages\Reservas;
 use App\Models\Horario;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -14,16 +15,16 @@ use Tests\TestCase;
 /**
  * Pedidos por WhatsApp y reservas, desde el panel del propietario (antes las reservas solo estaban en /panel).
  */
-class PanelPedidosYReservasTest extends TestCase
+class PanelAjustesDeReservasYPedidosTest extends TestCase
 {
     use ArmaEscenarioDePanel, RefreshDatabase;
 
-    public function test_el_propietario_ve_pedidos_y_reservas_con_la_ayuda_de_cada_ajuste(): void
+    public function test_el_propietario_ve_los_ajustes_de_reservas_y_pedidos_con_la_ayuda_de_cada_ajuste(): void
     {
         $restaurante = $this->crearRestaurante('la-esquina');
         $this->entrarAlPanel($this->crearUsuario('propietario', $restaurante), $restaurante);
 
-        $this->get(PedidosYReservas::getUrl())
+        $this->get(AjustesDeReservasYPedidos::getUrl())
             ->assertOk()
             ->assertSee('Recibir pedidos por WhatsApp')
             ->assertSee('el menú deja elegir platillos y enviar el pedido')
@@ -38,7 +39,7 @@ class PanelPedidosYReservasTest extends TestCase
         $restaurante = $this->crearRestaurante('la-esquina');
         $this->entrarAlPanel($this->crearUsuario('propietario', $restaurante), $restaurante);
 
-        Livewire::test(PedidosYReservas::class)
+        Livewire::test(AjustesDeReservasYPedidos::class)
             ->fillForm([
                 'pedidos_activos' => true,
                 'whatsapp_pedidos' => '5215512345678',
@@ -64,7 +65,7 @@ class PanelPedidosYReservasTest extends TestCase
         $restaurante->update(['whatsapp_pedidos' => null]);
         $this->entrarAlPanel($this->crearUsuario('propietario', $restaurante), $restaurante);
 
-        Livewire::test(PedidosYReservas::class)
+        Livewire::test(AjustesDeReservasYPedidos::class)
             ->fillForm(['pedidos_activos' => true, 'whatsapp_pedidos' => ''])
             ->call('save')
             ->assertHasErrors(['data.whatsapp_pedidos' => 'required'])
@@ -78,7 +79,7 @@ class PanelPedidosYReservasTest extends TestCase
         $restaurante = $this->crearRestaurante('la-esquina');
         $this->entrarAlPanel($this->crearUsuario('propietario', $restaurante), $restaurante);
 
-        Livewire::test(PedidosYReservas::class)
+        Livewire::test(AjustesDeReservasYPedidos::class)
             ->fillForm(['pedidos_activos' => false, 'whatsapp_pedidos' => ''])
             ->call('save')
             ->assertHasNoErrors();
@@ -108,7 +109,7 @@ class PanelPedidosYReservasTest extends TestCase
         $restaurante = $this->crearRestaurante('la-esquina');
         $this->entrarAlPanel($this->crearUsuario('propietario', $restaurante), $restaurante);
 
-        Livewire::test(PedidosYReservas::class)
+        Livewire::test(AjustesDeReservasYPedidos::class)
             ->fillForm($valores)
             ->call('save')
             ->assertHasErrors([$campo]);
@@ -121,11 +122,11 @@ class PanelPedidosYReservasTest extends TestCase
         $restaurante = $this->crearRestaurante('la-esquina');
         $this->entrarAlPanel($this->crearUsuario('propietario', $restaurante), $restaurante);
 
-        Livewire::test(PedidosYReservas::class)->assertSee('Aún no tienes horario');
+        Livewire::test(AjustesDeReservasYPedidos::class)->assertSee('Aún no tienes horario');
 
         Horario::factory()->create(['restaurante_id' => $restaurante->id, 'cerrado' => false, 'dia_semana' => 1, 'abre' => '09:00', 'cierra' => '18:00']);
 
-        Livewire::test(PedidosYReservas::class)->assertDontSee('Aún no tienes horario');
+        Livewire::test(AjustesDeReservasYPedidos::class)->assertDontSee('Aún no tienes horario');
     }
 
     public function test_solo_cambia_el_restaurante_activo(): void
@@ -134,7 +135,7 @@ class PanelPedidosYReservasTest extends TestCase
         $b = $this->crearRestaurante('restaurante-b');
         $this->entrarAlPanel($this->crearUsuario('propietario', $a), $a);
 
-        Livewire::test(PedidosYReservas::class)
+        Livewire::test(AjustesDeReservasYPedidos::class)
             ->fillForm(['reservas_cupo' => 7])
             ->call('save');
 
@@ -143,14 +144,14 @@ class PanelPedidosYReservasTest extends TestCase
     }
 
     #[DataProvider('rolesSinAcceso')]
-    public function test_los_demas_roles_no_ven_pedidos_y_reservas(string $rol): void
+    public function test_los_demas_roles_no_ven_los_ajustes_de_reservas_y_pedidos(string $rol): void
     {
         $restaurante = $this->crearRestaurante('la-esquina');
         $this->entrarAlPanel($this->crearUsuario($rol, $restaurante), $restaurante);
 
-        $this->assertFalse(PedidosYReservas::canAccess());
-        $this->assertNotContains('Pedidos y reservas', collect(Filament::getNavigation())->flatMap(fn ($grupo) => $grupo->getItems())->map(fn ($item): string => (string) $item->getLabel())->all());
-        Livewire::test(PedidosYReservas::class)->assertForbidden();
+        $this->assertFalse(AjustesDeReservasYPedidos::canAccess());
+        $this->assertNotContains(AjustesDeReservasYPedidos::getUrl(), collect(Filament::getNavigation())->flatMap(fn ($grupo) => $grupo->getItems())->map(fn ($item): string => $item->getUrl())->all());
+        Livewire::test(AjustesDeReservasYPedidos::class)->assertForbidden();
     }
 
     /**
@@ -161,14 +162,17 @@ class PanelPedidosYReservasTest extends TestCase
         return ['editor' => ['editor'], 'gerente' => ['gerente'], 'recepcion' => ['recepcion'], 'cocina' => ['cocina']];
     }
 
-    public function test_el_propietario_ve_el_enlace_al_trabajo_del_dia_en_la_misma_seccion(): void
+    public function test_el_propietario_ve_reservas_y_los_ajustes_en_el_grupo_de_operacion_sin_la_segunda_ventana_de_servicio(): void
     {
         $restaurante = $this->crearRestaurante('la-esquina');
         $this->entrarAlPanel($this->crearUsuario('propietario', $restaurante), $restaurante);
 
-        $etiquetas = collect(Filament::getNavigation())->flatMap(fn ($grupo) => $grupo->getItems())->map(fn ($item): string => (string) $item->getLabel())->all();
+        $urls = collect(Filament::getNavigation())->flatMap(fn ($grupo) => $grupo->getItems())->map(fn ($item): string => $item->getUrl())->all();
 
-        $this->assertContains('Pedidos y reservas', $etiquetas);
-        $this->assertContains('Pedidos y reservas de hoy', $etiquetas);
+        $this->assertContains(Reservas::getUrl(), $urls);
+        $this->assertContains(AjustesDeReservasYPedidos::getUrl(), $urls);
+        $this->assertSame('ajustes-de-reservas-y-pedidos', AjustesDeReservasYPedidos::getSlug());
+        $this->assertSame('Ajustes de reservas y pedidos', AjustesDeReservasYPedidos::getNavigationLabel());
+        $this->assertSame('Pedidos y reservas', AjustesDeReservasYPedidos::getNavigationGroup());
     }
 }

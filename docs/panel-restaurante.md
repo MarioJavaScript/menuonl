@@ -101,7 +101,7 @@ Campos: estilo visual (4 temas), plantilla del sitio (8), color principal, fotog
 | Ver cómo queda el sitio/menú antes de cambiar de plantilla o color | No hay vista previa; el cambio se aplica al instante | Vista previa en la propia pantalla de Apariencia (ver 2.2) |
 | Un solo lugar para editar su información | Repartida en 2 paneles y 5 pantallas | Sección "Información" única |
 | Elegir mapa sin coordenadas | Debe escribir latitud y longitud | Campo "Enlace de Google Maps" o "Dirección" y, si es posible, extraer coordenadas (D6) |
-| Reservas fuera de `/panel` | Solo allí | Sección "Pedidos y reservas" |
+| Reservas fuera de `/panel` | Solo allí | Página "Reservas" del grupo "Pedidos y reservas"; los ajustes están en "Ajustes de reservas y pedidos" (PR 2 y 3 de la sección 17 de `integracion-dashboard.md`) |
 | Galería desde Filament | No existe | Sección Apariencia → Fotos del local |
 | Saber qué falta para publicar | Lista de pendientes en Inicio, no ordenada ni con avance | "Qué falta configurar" con porcentaje y orden fijo |
 | Cambiar idioma y moneda con consecuencias claras | Campos sueltos | Textos de ayuda (ver sección 5) |
@@ -225,7 +225,7 @@ No encontré recursos de Filament sin alcance de restaurante fuera de los de Pla
 - Cada pantalla responde una pregunta: "¿Qué ve mi cliente?", "¿Cuándo y cómo me contactan?".
 - Guardado explícito con un botón fijo abajo en celular. Textos de error que dicen cómo arreglarlo.
 - Valores por defecto razonables para que un restaurante nuevo se pueda publicar con lo mínimo.
-- La barra inferior en celular: **Inicio, Mi menú, Pedidos y reservas, Apariencia, Más**.
+- La barra inferior en celular: **Inicio, Mi menú, Reservas, Apariencia, Más** (los ajustes de reservas y pedidos quedan en "Más").
 
 ### 5.2 Árbol de navegación
 
@@ -242,9 +242,9 @@ INFORMACIÓN
    Horario
    Contacto y ubicación        (teléfono, WhatsApp, dirección, mapa, redes)
 PEDIDOS Y RESERVAS
-   Pedidos por WhatsApp
-   Reservas
-   Pedidos y reservas de hoy   (enlace al tablero en vivo)
+   Reservas                    (la operación del día; página propia en /admin)
+   Ajustes de reservas y pedidos   (pedidos por WhatsApp, activar reservas, cupo y duración)
+   Pedidos (panel anterior)    (TEMPORAL: enlace a /panel mientras no se decida Pedidos manuales)
 QR Y MESAS
 CUENTA
    Equipo
@@ -305,9 +305,9 @@ Color principal         [selector]  [Usar el original]
 
 **Información → Contacto y ubicación**: Teléfono, WhatsApp, Dirección, Enlace de Google Maps (opcional), Instagram, Facebook, TikTok, Sitio web. Cada campo con ejemplo. Un único registro por tipo; lo avanzado (varios números, etiquetas, orden) en "Más contactos".
 
-**Pedidos y reservas → Pedidos por WhatsApp**: interruptor "Recibir pedidos por WhatsApp"; "Número de WhatsApp que recibe los pedidos" con selector de país y número; "Mostrar platillos agotados". Botón "Enviarme un mensaje de prueba" (opcional, D6).
+**Ajustes de reservas y pedidos → Pedidos por WhatsApp**: interruptor "Recibir pedidos por WhatsApp"; "Número de WhatsApp que recibe los pedidos" con selector de país y número; "Mostrar platillos agotados". Botón "Enviarme un mensaje de prueba" (opcional, D6).
 
-**Pedidos y reservas → Reservas**: interruptor "Aceptar reservas desde mi sitio"; "¿Cuántas personas puedes recibir al mismo tiempo?" (cupo); "Duración de cada reserva" (30 min, 1 h, 1 h 30, 2 h); "Anticipación mínima" informativa. Si está activa y no hay horario, aviso.
+**Ajustes de reservas y pedidos → Reservas**: interruptor "Aceptar reservas desde mi sitio"; "¿Cuántas personas puedes recibir al mismo tiempo?" (cupo); "Duración de cada reserva" (30 min, 1 h, 1 h 30, 2 h); "Anticipación mínima" informativa. Si está activa y no hay horario, aviso.
 
 **QR y mesas**: botón "Crear QR de mi menú" (uno general) y "Crear QR de mesas": pide "¿Cuántas mesas?" y los genera de una vez (Mesa 1 a Mesa N). Lista con "Descargar", "Imprimir hoja" y "Desactivar". El código corto se genera solo y queda en "Opciones avanzadas".
 
@@ -372,10 +372,10 @@ Palabras que no deben verse: slug, tema, plantilla_sitio, tenant, módulo, `pedi
 | Teléfono, dirección, redes | Contactos / Ajustes | Información → Contacto y ubicación |
 | WhatsApp (contacto) | Contactos / Ajustes (mezclado con pedidos) | Información → Contacto y ubicación |
 | Mapa | Ajustes (latitud, longitud) | Información → Contacto y ubicación (enlace de Google Maps) |
-| Reservas activar / cupo / franja | Ajustes (`/panel`) | Pedidos y reservas → Reservas |
-| Pedidos por WhatsApp activar | Mi restaurante | Pedidos y reservas → Pedidos por WhatsApp |
-| Número de WhatsApp para pedidos | Mi restaurante | Pedidos y reservas → Pedidos por WhatsApp |
-| Mostrar agotados | Mi restaurante | Pedidos y reservas → Pedidos por WhatsApp (o Mi menú, D8) |
+| Reservas activar / cupo / franja | Ajustes (`/panel`) | Ajustes de reservas y pedidos → Reservas |
+| Pedidos por WhatsApp activar | Mi restaurante | Ajustes de reservas y pedidos → Pedidos por WhatsApp |
+| Número de WhatsApp para pedidos | Mi restaurante | Ajustes de reservas y pedidos → Pedidos por WhatsApp |
+| Mostrar agotados | Mi restaurante | Ajustes de reservas y pedidos → Pedidos por WhatsApp (o Mi menú, D8) |
 | Categorías | Categorías | Mi menú → Categorías |
 | Platillos | Platillos | Mi menú → Platillos |
 | Variantes | Platillos (repetidor) | Mi menú → Platillos → Más opciones |

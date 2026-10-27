@@ -2,10 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Pages\AjustesDeReservasYPedidos;
 use App\Filament\Pages\Apariencia;
 use App\Filament\Pages\FotosDelRestaurante;
 use App\Filament\Pages\Inicio;
-use App\Filament\Pages\PedidosYReservas;
 use App\Filament\Pages\Recomendados;
 use App\Filament\Pages\Tenancy\EditRestauranteProfile;
 use App\Filament\Resources\Categorias\CategoriaResource;
@@ -41,7 +41,7 @@ class PanelNavegacionDuenoTest extends TestCase
             EditRestauranteProfile::getUrl(),
             HorarioResource::getUrl('index'),
             ContactoResource::getUrl('index'),
-            PedidosYReservas::getUrl(),
+            AjustesDeReservasYPedidos::getUrl(),
             CodigoQrResource::getUrl('index'),
         ];
 
@@ -74,7 +74,7 @@ class PanelNavegacionDuenoTest extends TestCase
         $this->assertSame(['Platillos', 'Categorías', 'Recomendados'], $porGrupo['Mi menú']);
         $this->assertSame(['Apariencia', 'Fotos de tu restaurante'], $porGrupo['Apariencia']);
         $this->assertSame(['Datos del restaurante', 'Horario', 'Contactos'], $porGrupo['Información']);
-        $this->assertSame(['Reservas', 'Pedidos y reservas', 'Pedidos y reservas de hoy'], $porGrupo['Pedidos y reservas']);
+        $this->assertSame(['Reservas', 'Ajustes de reservas y pedidos', 'Pedidos (panel anterior)'], $porGrupo['Pedidos y reservas']);
         $this->assertSame(['Códigos QR'], $porGrupo['QR y mesas']);
     }
 
@@ -83,7 +83,7 @@ class PanelNavegacionDuenoTest extends TestCase
         $restaurante = $this->crearRestaurante('la-esquina');
         $this->entrarAlPanel($this->crearUsuario('propietario', $restaurante), $restaurante);
 
-        foreach ([Inicio::getUrl(), Apariencia::getUrl(), FotosDelRestaurante::getUrl(), Recomendados::getUrl(), PedidosYReservas::getUrl(), ProductoResource::getUrl('index')] as $url) {
+        foreach ([Inicio::getUrl(), Apariencia::getUrl(), FotosDelRestaurante::getUrl(), Recomendados::getUrl(), AjustesDeReservasYPedidos::getUrl(), ProductoResource::getUrl('index')] as $url) {
             $this->get($url)
                 ->assertSee('Ver mi sitio')
                 ->assertSee('Ver mi menú')
@@ -92,7 +92,7 @@ class PanelNavegacionDuenoTest extends TestCase
         }
     }
 
-    public function test_un_pendiente_de_whatsapp_lleva_a_pedidos_y_reservas(): void
+    public function test_un_pendiente_de_whatsapp_lleva_a_los_ajustes_de_reservas_y_pedidos(): void
     {
         $restaurante = $this->crearRestaurante('la-esquina');
         $restaurante->update(['pedidos_activos' => true, 'whatsapp_pedidos' => null]);
@@ -100,7 +100,7 @@ class PanelNavegacionDuenoTest extends TestCase
 
         $this->get(Inicio::getUrl())
             ->assertSee('falta tu WhatsApp')
-            ->assertSee(PedidosYReservas::getUrl(), escape: false);
+            ->assertSee(AjustesDeReservasYPedidos::getUrl(), escape: false);
     }
 
     /**
@@ -108,10 +108,10 @@ class PanelNavegacionDuenoTest extends TestCase
      */
     public static function visibilidadPorRol(): array
     {
-        $dueno = ['Platillos', 'Categorías', 'Recomendados', 'Apariencia', 'Datos del restaurante', 'Horario', 'Contactos', 'Pedidos y reservas', 'Códigos QR'];
+        $dueno = ['Platillos', 'Categorías', 'Recomendados', 'Apariencia', 'Datos del restaurante', 'Horario', 'Contactos', 'Ajustes de reservas y pedidos', 'Códigos QR'];
 
         return [
-            'editor' => ['editor', ['Platillos', 'Categorías', 'Recomendados', 'Horario', 'Contactos', 'Códigos QR'], ['Apariencia', 'Datos del restaurante', 'Pedidos y reservas']],
+            'editor' => ['editor', ['Platillos', 'Categorías', 'Recomendados', 'Horario', 'Contactos', 'Códigos QR'], ['Apariencia', 'Datos del restaurante', 'Ajustes de reservas y pedidos']],
             'gerente' => ['gerente', ['Platillos', 'Recomendados'], array_values(array_diff($dueno, ['Platillos', 'Recomendados']))],
             'recepcion' => ['recepcion', [], $dueno],
             'cocina' => ['cocina', [], $dueno],

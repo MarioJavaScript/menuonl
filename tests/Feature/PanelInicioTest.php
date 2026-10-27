@@ -2,9 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Pages\AjustesDeReservasYPedidos;
 use App\Filament\Pages\Apariencia;
 use App\Filament\Pages\Inicio;
-use App\Filament\Pages\PedidosYReservas;
 use App\Filament\Pages\Tenancy\EditRestauranteProfile;
 use App\Filament\Resources\Categorias\CategoriaResource;
 use App\Filament\Resources\Contactos\ContactoResource;
@@ -194,7 +194,7 @@ class PanelInicioTest extends TestCase
         $this->assertSame(EditRestauranteProfile::getUrl(), $urls['mapa']);
         $this->assertSame(Apariencia::getUrl(), $urls['logotipo']);
         $this->assertSame(Apariencia::getUrl(), $urls['portada']);
-        $this->assertSame(PedidosYReservas::getUrl(), $urls['whatsapp']);
+        $this->assertSame(AjustesDeReservasYPedidos::getUrl(), $urls['whatsapp']);
 
         foreach ($urls as $url) {
             $this->get($url)->assertOk();
