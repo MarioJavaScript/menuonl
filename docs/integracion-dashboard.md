@@ -498,7 +498,7 @@ Opción A (páginas de Filament/Livewire que reutilizan servicios) ejecutada por
 
 | # | PR | Contenido | Pruebas | Riesgos |
 |---|---|---|---|---|
-| 1 | **Base de servicios** | Extraer de `ReservaController` (y `ResumenController`) servicios de reservas sin cambiar comportamiento. Ocultar roles distintos de propietario en la invitación (Filament y API) según la decisión 2 | `PanelApiReservasTest` y `PanelApiMenuYResumenTest` pasan intactas; `PanelEquipoTest`, `InvitacionesTest` y `PanelRolesOperativosTest` se ajustan a "solo propietario visible" | Que la extracción cambie una regla (estados, zona horaria, tope de 200 próximas); que ocultar roles rompa invitaciones ya enviadas con otro rol |
+| 1 | **Base de servicios (hecho, 17.9)** | Extraer de `ReservaController` (y `ResumenController`) servicios de reservas sin cambiar comportamiento. Ocultar roles distintos de propietario en la invitación (Filament y API) según la decisión 2 | `PanelApiReservasTest` y `PanelApiMenuYResumenTest` pasan intactas; `PanelEquipoTest`, `InvitacionesTest` y `PanelRolesOperativosTest` se ajustan a "solo propietario visible" | Que la extracción cambie una regla (estados, zona horaria, tope de 200 próximas); que ocultar roles rompa invitaciones ya enviadas con otro rol |
 | 2 | **Reservas en Filament** | Página con Próximas, Hoy y Fecha, todas las acciones de `/panel` y `wire:poll`. Con el mismo tope de plan (Sitio y menú la ve; Solo menú no). `/panel` sigue vivo | Pruebas Livewire de la página por rol y plan; reglas de `PanelApiReservasTest` y `PanelPlanAccesoTest` repetidas sobre la página (aislamiento entre restaurantes, 403 por rol) | Peso del sondeo en tablet y celular; no pisar un campo en edición; sesión caducada a mitad de turno |
 | 3 | **Navegación, Inicio, barra inferior y renombre** | Ítem y acceso "hoy" de `BarraInferiorDelPanel` y "Panel de servicio" apuntan a la página nueva; enlace de reservas de `ProgresoDeConfiguracion`; Inicio con la operación del día (sin pedidos). Renombre a "Ajustes de reservas y pedidos" (`lang/es/panel.php`, claves `panel.pedidos.*`) | `BarraInferiorDelPanelTest`, `PanelInicioTest`, `PanelPedidosYReservasTest`, `PanelTextosDelDuenoTest`, `UxUiAccesibilidadTest` | Textos que otras pruebas buscan literalmente; el grupo de navegación `panel.grupos.pedidos` |
 | 4 | **Plataforma** (PR 7, 8 y 9 de la sección 8) | Sin cambios respecto a la sección 8 | Las de la sección 8 | Las de la sección 8 |
@@ -544,3 +544,29 @@ Propietario y superadmin, en cada plan (Solo menú debe ver "sin panel"). Reserv
 - **Límite `panel-api`:** no se abrió; no se sabe si habría que replicarlo para Livewire.
 - **Rendimiento del sondeo en una tablet real:** sin medir.
 - **Invitaciones en Filament:** no se comprobó si `InvitacionResource` ofrece todos los roles o solo algunos; el PR 1 debe empezar por ahí.
+
+### 17.9 PR 1 "Base de servicios de reservas y roles ofrecidos": hecho
+
+La API `/api/v1/panel` y `/panel` se comportan igual (mismo orden de errores, 403 antes que 422; misma forma del JSON; mismos 404). Sus pruebas pasan sin cambios. No se crearon páginas de Filament ni se tocó Pedidos.
+
+**Servicios** (`app/Services/`):
+- `ReservasDelDia`: `hoy()` (fecha en la zona del restaurante), `delDia()`, `proximas()` (tope `MAXIMO_PROXIMAS` = 200), `resumenDelDia()` y `porConfirmarDesdeHoy()`. Sustituyen tres cálculos repetidos (`ReservaController`, `ResumenController` y `ProgresoDeConfiguracion`). Cada consulta filtra además por `restaurante_id`, así que es segura sin contexto activo.
+- `GestionDeReservas`: `crear`, `actualizar`, `cambiarEstado` (con los atajos `confirmar`, `marcarLlegada`, `cancelar` y `restaurar`), `mover` y `eliminar`. Cada operación sigue el mismo orden: módulo por rol y plan (`PermisosPanel`), pertenencia al restaurante (404 si es ajena), política (403), validación (422) y escritura. Las reglas de validación viven en `GestionDeReservas::reglas()`. Un restaurante distinto del contexto activo no guarda nada.
+- `ConflictoDeReserva`: se lanza cuando el valor esperado ya no coincide.
+
+**Concurrencia.** Eloquent escribe solo las columnas modificadas, así que dos personas que cambian campos distintos no se pisan (hay una prueba). Quien necesite proteger un mismo campo pasa lo que vio en pantalla (`estado`, `hora` o `fecha`): la escritura es un único `UPDATE ... WHERE` con ese valor y, si no coincide, lanza `ConflictoDeReserva` en lugar de pisar el cambio ajeno. La API actual nunca lo usa; lo usarán las páginas de Filament (PR 2). El panel sigue sin mirar el cupo de la franja ni las fechas pasadas (solo el sitio público lo hace), y el cupo del sitio sigue serializado con `lockForUpdate` sobre el restaurante.
+
+**`whereDate` se conserva.** Se comprobó cómo guarda `fecha` el cast de Eloquent en SQLite: un texto `2026-10-26` se guarda tal cual, pero un `Carbon` se guarda como `2026-10-26 00:00:00`. Una igualdad directa (`where('fecha', ...)`) solo encontraba 2 de 5 filas creadas de distintas formas; `whereDate` encuentra las 5. En MariaDB no se pudo comprobar, así que no se cambió. Las pruebas de `ReservasDelDiaTest` escriben de tres formas (texto, `Carbon` y inserción directa) y esperan las mismas filas.
+
+**Roles ofrecidos.**
+- `PermisosPanel::ROLES_OFRECIDOS = ['propietario']` es el único interruptor. `rolesAsignables()` (a quién se puede dar un rol nuevo) es ahora `rolesModificables()` (a quién se puede gestionar) ∩ los ofrecidos; un gerente no puede dar propietario, así que no puede invitar.
+- El servidor rechaza un rol no ofrecido: `InvitacionService::invitar` lanza `ValidationException` (422 en la API; en Filament el formulario ya lo rechaza como error del campo `rol`, y el servicio es la última defensa). La API de equipo rechaza `rol` con 422, pero sigue permitiendo desactivar y reactivar a miembros con cualquier rol (antes quedaban fuera por usar una sola lista para las dos cosas).
+- El servidor acepta convertir a un miembro existente en propietario. La interfaz no muestra el selector de rol mientras se ofrezca un solo rol, y oculta el formulario de invitar si no hay roles asignables. Ese es el único cambio de `panel.js`.
+- Siguen funcionando: los usuarios con otros roles, sus módulos y las invitaciones ya emitidas con otro rol (se aceptan hasta que caducan a los 7 días).
+
+**Pendientes y riesgos anotados:**
+- **Último propietario activo (riesgo pendiente).** Hoy la API de equipo no lo protege: el superadmin puede desactivar al único propietario activo de un restaurante (`PATCH .../equipo/usuarios/{id}` con `activo: false` responde 200), y entonces `rolEn()` ya no devuelve propietario para nadie. Un propietario no puede desactivarse a sí mismo (422). La acción "Quitar acceso" de Filament sí lo protege (`UserPolicy::revocarAcceso`), aunque su conteo no distingue propietarios inactivos. No se cambió; hay una prueba que solo documenta el comportamiento (`RolesOfrecidosTest`). Decidir en otro PR si se bloquea (y qué mensaje).
+- **Texto del correo de invitación (pendiente menor).** `InvitacionMail` muestra "Propietario" o "Editor" según el rol, así que para gerente, recepción o cocina diría "Editor". No se tocó; no afecta mientras solo se ofrezca propietario.
+- **Historial de reservas:** sigue sin existir (`Reserva` no usa `Auditable`); queda para el PR 2.
+
+**Qué no se pudo verificar:** MariaDB real (las pruebas usan SQLite en memoria; `lockForUpdate` no hace nada ahí, y la comparación de `fecha` se comprobó solo en SQLite), peticiones realmente simultáneas (la concurrencia se simula con instancias antiguas del mismo registro) y el aspecto de `/panel` en un navegador (solo se comprobó la sintaxis del JavaScript).

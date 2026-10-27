@@ -43,6 +43,7 @@ class EquipoController extends Controller
             'miembros' => $miembros,
             'invitaciones' => $pendientes,
             'roles_asignables' => PermisosPanel::rolesAsignables($request->user(), $restaurante->id),
+            'roles_modificables' => PermisosPanel::rolesModificables($request->user(), $restaurante->id),
         ]]);
     }
 
@@ -67,6 +68,7 @@ class EquipoController extends Controller
         }
 
         $asignables = PermisosPanel::rolesAsignables($request->user(), $restaurante->id);
+        $modificables = PermisosPanel::rolesModificables($request->user(), $restaurante->id);
 
         $datos = $request->validate([
             'rol' => ['sometimes', 'required', Rule::in($asignables)],
@@ -77,7 +79,7 @@ class EquipoController extends Controller
             return response()->json(['message' => 'No puedes cambiar tu propio rol ni desactivarte.'], 422);
         }
 
-        if (! in_array($actual->rol, $asignables, true)) {
+        if (! in_array($actual->rol, $modificables, true)) {
             return response()->json(['message' => 'Solo un propietario puede modificar a otro propietario.'], 403);
         }
 

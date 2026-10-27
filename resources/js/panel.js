@@ -37,7 +37,7 @@ async function subir(path,file){
 }
 
 const ROLES={propietario:'Propietario',gerente:'Gerente',editor:'Editor',recepcion:'Recepción',cocina:'Cocina'};
-let S={aj:null,reservas:[],prox:[],resDia:[],hoy:'',resModo:'proximas',resFecha:'',menu:[],pedidos:[],resumen:{},equipo:{miembros:[],invitaciones:[],roles_asignables:[]},modulos:[],ok:false};
+let S={aj:null,reservas:[],prox:[],resDia:[],hoy:'',resModo:'proximas',resFecha:'',menu:[],pedidos:[],resumen:{},equipo:{miembros:[],invitaciones:[],roles_asignables:[],roles_modificables:[]},modulos:[],ok:false};
 const has=m=>S.modulos.includes(m);
 /* cada carga pertenece a un módulo; un rol sin permiso nunca la pide (la API respondería 403) */
 const MODULO_DE={reservas:'reservas',pedidos:'pedidos',menu:'menu',resumen:'inicio',equipo:'ajustes',ajustes:'ajustes'};
@@ -188,12 +188,12 @@ V.ajustes=()=>{const E=S.equipo,A=S.aj;return `<div class="inner"><div class="he
   <div><label class="f" for="a-cupo">Cupo por franja (personas)</label><input id="a-cupo" type="number" min="1" max="500" value="${A.reservas_cupo}" data-f="aj.reservas_cupo" inputmode="numeric"></div>
   <div><label class="f" for="a-franja">Duración de la franja</label><select id="a-franja" data-f="aj.reservas_franja_min">${[30,60,90,120].map(m=>`<option value="${m}" ${A.reservas_franja_min===m?'selected':''}>${m} min</option>`).join('')}</select></div></div></section>
  <section class="card"><h2>Equipo</h2><ul class="list">${E.miembros.map(u=>`<li class="${u.activo?'':'cancelled'}"><div class="grow"><strong>${esc(u.nombre)}</strong>${u.es_yo?' <span class="chip soft">Tú</span>':''}<div class="muted">${esc(u.email)}${u.activo?'':' · Desactivado'}</div></div>
-   ${u.es_yo||!E.roles_asignables.includes(u.rol)?`<span class="chip">${ROLES[u.rol]||esc(u.rol)}</span>`:`<select style="width:auto" aria-label="Rol de ${esc(u.nombre)}" data-f="usr.rol" data-id="${u.id}">${E.roles_asignables.map(r=>`<option value="${r}" ${r===u.rol?'selected':''}>${ROLES[r]}</option>`).join('')}</select>
+   ${u.es_yo||!(E.roles_modificables||E.roles_asignables).includes(u.rol)?`<span class="chip">${ROLES[u.rol]||esc(u.rol)}</span>`:`${E.roles_asignables.length>1?`<select style="width:auto" aria-label="Rol de ${esc(u.nombre)}" data-f="usr.rol" data-id="${u.id}">${E.roles_asignables.map(r=>`<option value="${r}" ${r===u.rol?'selected':''}>${ROLES[r]}</option>`).join('')}</select>`:`<span class="chip">${ROLES[u.rol]||esc(u.rol)}</span>`}
    <button class="btn sm ${u.activo?'danger':'primary'}" data-act="usr-activo" data-id="${u.id}" data-v="${u.activo?0:1}">${u.activo?'Desactivar':'Activar'}</button>`}</li>`).join('')}</ul>
   ${E.invitaciones.length?`<h2 style="margin-top:16px">Invitaciones pendientes</h2><ul class="list">${E.invitaciones.map(i=>`<li><div class="grow"><strong>${esc(i.email)}</strong><div class="muted">${ROLES[i.rol]||esc(i.rol)}</div></div><button class="btn sm danger" data-act="inv-revocar" data-id="${i.id}">Revocar</button></li>`).join('')}</ul>`:''}
-  <form class="addform" data-form="usr" style="margin-top:12px"><div class="wide"><label class="f" for="ue">Invitar por correo</label><input id="ue" name="email" type="email" required maxlength="190" autocomplete="off"></div>
+  ${E.roles_asignables.length?`<form class="addform" data-form="usr" style="margin-top:12px"><div class="wide"><label class="f" for="ue">Invitar por correo</label><input id="ue" name="email" type="email" required maxlength="190" autocomplete="off"></div>
    <div><label class="f" for="ur">Rol</label><select id="ur" name="rol">${E.roles_asignables.map(r=>`<option value="${r}" ${r==='recepcion'?'selected':''}>${ROLES[r]}</option>`).join('')}</select></div>
-   <button class="btn primary" type="submit">Enviar invitación</button></form></section>
+   <button class="btn primary" type="submit">Enviar invitación</button></form>`:''}</section>
  <section class="card"><h2>Administración avanzada</h2><p class="muted" style="margin-bottom:12px">Idiomas, QR, turnos partidos e historial de cambios.</p>
   <div class="row"><a class="btn" href="/admin">Abrir administración</a><a class="btn ghost" href="/${esc(slug)}/menu" target="_blank" rel="noopener">Ver menú público</a></div></section>
  ${S.restaurantes.length>1?`<section class="card"><h2>Cambiar de restaurante</h2><select aria-label="Restaurante" data-f="rest">${S.restaurantes.map(r=>`<option value="${esc(r.slug)}" ${r.slug===slug?'selected':''}>${esc(r.nombre)}</option>`).join('')}</select></section>`:''}</div>`};

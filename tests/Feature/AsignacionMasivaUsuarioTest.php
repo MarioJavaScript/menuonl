@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Mail\InvitacionMail;
+use App\Models\Invitacion;
 use App\Models\User;
 use App\Services\InvitacionService;
 use Database\Seeders\DatabaseSeeder;
@@ -66,7 +67,9 @@ class AsignacionMasivaUsuarioTest extends TestCase
         Mail::fake();
         $restaurante = $this->crearRestaurante('a');
         $propietario = $this->crearUsuario('propietario', $restaurante);
-        $invitacion = app(InvitacionService::class)->invitar($restaurante, 'nuevo@ejemplo.com', 'editor', $propietario);
+        $invitacion = app(InvitacionService::class)->invitar($restaurante, 'nuevo@ejemplo.com', 'propietario', $propietario);
+        // Invitación anterior a que solo se ofreciera "propietario": sigue valiendo y debe quedar como editor.
+        Invitacion::withoutGlobalScopes()->whereKey($invitacion->getKey())->update(['rol' => 'editor']);
 
         $token = null;
         Mail::assertSent(InvitacionMail::class, function (InvitacionMail $mail) use (&$token): bool {
@@ -88,6 +91,7 @@ class AsignacionMasivaUsuarioTest extends TestCase
         $usuario = User::where('email', 'nuevo@ejemplo.com')->firstOrFail();
         $this->assertFalse($usuario->isSuperadmin());
         $this->assertTrue($usuario->activo);
+        $this->assertSame('editor', $usuario->rolEn($restaurante));
         $this->assertSame('editor', $usuario->rolEn($restaurante));
         $this->assertDatabaseMissing('users', ['email' => 'otro@ejemplo.com']);
         $this->assertNotNull($invitacion->fresh()->aceptada_en);

@@ -48,17 +48,41 @@ class PanelEquipoTest extends TestCase
         $this->assertNotContains('propietario', $r->json('data.roles_asignables'));
     }
 
-    public function test_gerente_invites_by_email_with_an_operational_role(): void
+    public function test_solo_se_ofrece_propietario_y_el_servidor_rechaza_los_demas_roles(): void
     {
         Mail::fake();
         $restaurante = Restaurante::factory()->create();
         $gerente = $this->conRol($restaurante, 'gerente');
+        $propietario = $this->conRol($restaurante, 'propietario');
 
-        $this->actingAs($gerente)->postJson($this->url($restaurante, '/invitaciones'), ['email' => 'Nueva@Example.com', 'rol' => 'recepcion'])
-            ->assertCreated()->assertJsonPath('data.email', 'nueva@example.com')->assertJsonPath('data.rol', 'recepcion');
+        foreach (['gerente', 'editor', 'recepcion', 'cocina'] as $rol) {
+            $this->actingAs($propietario)->postJson($this->url($restaurante, '/invitaciones'), ['email' => 'nueva@example.com', 'rol' => $rol])->assertJsonValidationErrors('rol');
+        }
+
+        $this->actingAs($gerente)->postJson($this->url($restaurante, '/invitaciones'), ['email' => 'nueva@example.com', 'rol' => 'recepcion'])->assertJsonValidationErrors('rol');
+
+        Mail::assertNothingSent();
+        $this->assertDatabaseMissing('invitaciones', ['restaurante_id' => $restaurante->id]);
+
+        $this->actingAs($propietario)->postJson($this->url($restaurante, '/invitaciones'), ['email' => 'Nueva@Example.com', 'rol' => 'propietario'])
+            ->assertCreated()->assertJsonPath('data.email', 'nueva@example.com')->assertJsonPath('data.rol', 'propietario');
 
         Mail::assertSent(InvitacionMail::class, fn (InvitacionMail $m): bool => $m->hasTo('nueva@example.com'));
-        $this->assertDatabaseHas('invitaciones', ['restaurante_id' => $restaurante->id, 'rol' => 'recepcion']);
+    }
+
+    public function test_el_listado_separa_los_roles_asignables_de_los_modificables(): void
+    {
+        $restaurante = Restaurante::factory()->create();
+        $propietario = $this->conRol($restaurante, 'propietario');
+        $gerente = $this->conRol($restaurante, 'gerente');
+
+        $this->actingAs($propietario)->getJson($this->url($restaurante))->assertOk()
+            ->assertJsonPath('data.roles_asignables', ['propietario'])
+            ->assertJsonPath('data.roles_modificables', ['propietario', 'gerente', 'editor', 'recepcion', 'cocina']);
+
+        $this->actingAs($gerente)->getJson($this->url($restaurante))->assertOk()
+            ->assertJsonPath('data.roles_asignables', [])
+            ->assertJsonPath('data.roles_modificables', ['gerente', 'editor', 'recepcion', 'cocina']);
     }
 
     public function test_gerente_cannot_hand_out_propietario_but_propietario_can(): void
@@ -80,16 +104,34 @@ class PanelEquipoTest extends TestCase
         $this->actingAs($gerente)->postJson($this->url($restaurante, '/invitaciones'), ['email' => 'no-es-correo', 'rol' => 'x'])->assertJsonValidationErrors(['email', 'rol']);
     }
 
-    public function test_changes_role_and_deactivates_a_member(): void
+    public function test_deactivates_and_reactivates_a_member_whose_role_is_no_longer_offered(): void
     {
         $restaurante = Restaurante::factory()->create();
         $gerente = $this->conRol($restaurante, 'gerente');
         $cocina = $this->conRol($restaurante, 'cocina');
 
-        $this->actingAs($gerente)->patchJson($this->url($restaurante, "/usuarios/{$cocina->id}"), ['rol' => 'recepcion', 'activo' => false])
-            ->assertOk()->assertJsonPath('data.rol', 'recepcion')->assertJsonPath('data.activo', false);
+        $this->actingAs($gerente)->patchJson($this->url($restaurante, "/usuarios/{$cocina->id}"), ['activo' => false])
+            ->assertOk()->assertJsonPath('data.rol', 'cocina')->assertJsonPath('data.activo', false);
+        $this->assertDatabaseHas('restaurante_usuario', ['user_id' => $cocina->id, 'rol' => 'cocina', 'activo' => 0]);
 
-        $this->assertDatabaseHas('restaurante_usuario', ['user_id' => $cocina->id, 'rol' => 'recepcion', 'activo' => 0]);
+        $this->actingAs($gerente)->patchJson($this->url($restaurante, "/usuarios/{$cocina->id}"), ['activo' => true])->assertOk();
+        $this->assertDatabaseHas('restaurante_usuario', ['user_id' => $cocina->id, 'rol' => 'cocina', 'activo' => 1]);
+    }
+
+    public function test_el_cambio_de_rol_solo_acepta_propietario_y_el_servidor_rechaza_los_demas(): void
+    {
+        $restaurante = Restaurante::factory()->create();
+        $propietario = $this->conRol($restaurante, 'propietario');
+        $gerente = $this->conRol($restaurante, 'gerente');
+        $cocina = $this->conRol($restaurante, 'cocina');
+
+        $this->actingAs($propietario)->patchJson($this->url($restaurante, "/usuarios/{$cocina->id}"), ['rol' => 'recepcion'])->assertJsonValidationErrors('rol');
+        $this->actingAs($gerente)->patchJson($this->url($restaurante, "/usuarios/{$cocina->id}"), ['rol' => 'propietario'])->assertJsonValidationErrors('rol');
+        $this->assertDatabaseHas('restaurante_usuario', ['user_id' => $cocina->id, 'rol' => 'cocina']);
+
+        $this->actingAs($propietario)->patchJson($this->url($restaurante, "/usuarios/{$cocina->id}"), ['rol' => 'propietario'])
+            ->assertOk()->assertJsonPath('data.rol', 'propietario');
+        $this->assertDatabaseHas('restaurante_usuario', ['user_id' => $cocina->id, 'rol' => 'propietario']);
     }
 
     public function test_cannot_change_own_role_nor_touch_a_propietario_nor_a_stranger(): void
@@ -101,8 +143,8 @@ class PanelEquipoTest extends TestCase
         $forastero = $this->conRol($ajeno, 'cocina');
 
         $this->actingAs($gerente)->patchJson($this->url($restaurante, "/usuarios/{$gerente->id}"), ['activo' => false])->assertUnprocessable();
-        $this->actingAs($gerente)->patchJson($this->url($restaurante, "/usuarios/{$propietario->id}"), ['rol' => 'cocina'])->assertForbidden();
-        $this->actingAs($gerente)->patchJson($this->url($restaurante, "/usuarios/{$forastero->id}"), ['rol' => 'cocina'])->assertNotFound();
+        $this->actingAs($gerente)->patchJson($this->url($restaurante, "/usuarios/{$propietario->id}"), ['activo' => false])->assertForbidden();
+        $this->actingAs($gerente)->patchJson($this->url($restaurante, "/usuarios/{$forastero->id}"), ['activo' => false])->assertNotFound();
         $this->assertDatabaseHas('restaurante_usuario', ['user_id' => $propietario->id, 'rol' => 'propietario']);
     }
 

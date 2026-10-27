@@ -51,11 +51,31 @@ class PermisosPanel
     }
 
     /**
-     * Roles a team manager (propietario or gerente) can assign; only a propietario or superadmin hands out "propietario".
+     * Roles offered when inviting or changing a role: the only switch to offer more of them again. The other roles stay
+     * in the code (modules, policies, existing members) but cannot be handed out to anyone new.
+     *
+     * @var list<string>
+     */
+    public const array ROLES_OFRECIDOS = ['propietario'];
+
+    /**
+     * Roles a team manager (propietario or gerente) can hand out now: those they may manage that are also offered.
+     * A gerente cannot hand out "propietario", so for them the list is empty.
      *
      * @return list<string>
      */
     public static function rolesAsignables(User $usuario, int $restauranteId): array
+    {
+        return array_values(array_intersect(self::rolesModificables($usuario, $restauranteId), self::ROLES_OFRECIDOS));
+    }
+
+    /**
+     * Roles whose members a team manager can manage (deactivate, change): only a propietario or superadmin touches a
+     * "propietario". Members keep these roles whether or not they are still offered.
+     *
+     * @return list<string>
+     */
+    public static function rolesModificables(User $usuario, int $restauranteId): array
     {
         $esPropietario = $usuario->isSuperadmin() || $usuario->rolEn($restauranteId) === 'propietario';
 

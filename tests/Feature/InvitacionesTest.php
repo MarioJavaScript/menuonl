@@ -39,11 +39,19 @@ class InvitacionesTest extends TestCase
     /**
      * Invite through the service and return the invitation with the plain token taken from the mail.
      *
+     * Only "propietario" is offered now. With another role it simulates an invitation issued before that restriction
+     * (it is rewritten in the table), which must still be accepted.
+     *
      * @return array{0: Invitacion, 1: string}
      */
-    private function invitar(string $email = 'nuevo@ejemplo.com', string $rol = 'editor'): array
+    private function invitar(string $email = 'nuevo@ejemplo.com', string $rol = 'propietario'): array
     {
-        $invitacion = app(InvitacionService::class)->invitar($this->a, $email, $rol, $this->propietario);
+        $invitacion = app(InvitacionService::class)->invitar($this->a, $email, 'propietario', $this->propietario);
+
+        if ($rol !== 'propietario') {
+            Invitacion::withoutGlobalScopes()->whereKey($invitacion->getKey())->update(['rol' => $rol]);
+            $invitacion = $invitacion->refresh();
+        }
 
         $token = null;
         Mail::assertSent(InvitacionMail::class, function (InvitacionMail $mail) use ($invitacion, &$token): bool {
@@ -358,11 +366,11 @@ class InvitacionesTest extends TestCase
         $this->entrarAlPanel($this->propietario, $this->a);
 
         Livewire::test(CreateInvitacion::class)
-            ->fillForm(['email' => 'Nuevo@Ejemplo.com', 'rol' => 'editor'])
+            ->fillForm(['email' => 'Nuevo@Ejemplo.com', 'rol' => 'propietario'])
             ->call('create')
             ->assertHasNoFormErrors();
 
-        $this->assertDatabaseHas('invitaciones', ['email' => 'nuevo@ejemplo.com', 'rol' => 'editor', 'restaurante_id' => $this->a->id]);
+        $this->assertDatabaseHas('invitaciones', ['email' => 'nuevo@ejemplo.com', 'rol' => 'propietario', 'restaurante_id' => $this->a->id]);
         Mail::assertSent(InvitacionMail::class, fn (InvitacionMail $mail) => $mail->hasTo('nuevo@ejemplo.com'));
     }
 
@@ -372,9 +380,16 @@ class InvitacionesTest extends TestCase
         $this->entrarAlPanel($this->propietario, $this->a);
 
         Livewire::test(CreateInvitacion::class)
-            ->fillForm(['email' => $editor->email, 'rol' => 'editor'])
+            ->fillForm(['email' => $editor->email, 'rol' => 'propietario'])
             ->call('create')
             ->assertHasFormErrors(['email']);
+
+        foreach (['editor', 'gerente', 'recepcion', 'cocina'] as $rolNoOfrecido) {
+            Livewire::test(CreateInvitacion::class)
+                ->fillForm(['email' => 'otro@ejemplo.com', 'rol' => $rolNoOfrecido])
+                ->call('create')
+                ->assertHasFormErrors(['rol']);
+        }
 
         Livewire::test(CreateInvitacion::class)
             ->fillForm(['email' => 'otro@ejemplo.com', 'rol' => 'superadmin'])

@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Invitaciones\Schemas;
 
+use App\Services\Catalogos;
+use App\Services\PermisosPanel;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -24,12 +26,33 @@ class InvitacionForm
                     ->rule(fn (): \Closure => self::noEsMiembro()),
                 Select::make('rol')
                     ->label('Rol asignado')
-                    ->helperText('Propietario: control total de configuración y equipo. Editor: gestión de menú, platillos, horarios y códigos QR.')
-                    ->options(['editor' => 'Editor', 'propietario' => 'Propietario'])
-                    ->in(['editor', 'propietario'])
-                    ->default('editor')
+                    ->helperText('Propietario: control total de configuración y equipo.')
+                    ->options(fn (): array => self::rolesOfrecidos())
+                    ->in(fn (): array => array_keys(self::rolesOfrecidos()))
+                    ->default(fn (): ?string => array_key_first(self::rolesOfrecidos()))
                     ->required(),
             ]);
+    }
+
+    /**
+     * Roles the signed-in user can hand out in this restaurant, with their labels (PermisosPanel::ROLES_OFRECIDOS).
+     *
+     * @return array<string, string>
+     */
+    private static function rolesOfrecidos(): array
+    {
+        $usuario = auth()->user();
+        $restaurante = Filament::getTenant();
+
+        if ($usuario === null || $restaurante === null) {
+            return [];
+        }
+
+        $etiquetas = Catalogos::roles();
+
+        return collect(PermisosPanel::rolesAsignables($usuario, (int) $restaurante->getKey()))
+            ->mapWithKeys(fn (string $rol): array => [$rol => $etiquetas[$rol] ?? ucfirst($rol)])
+            ->all();
     }
 
     /**
