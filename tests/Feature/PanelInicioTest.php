@@ -19,7 +19,6 @@ use App\Models\Restaurante;
 use App\Models\User;
 use App\Services\ProgresoDeConfiguracion;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Carbon;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Concerns\ArmaEscenarioDePanel;
@@ -218,53 +217,6 @@ class PanelInicioTest extends TestCase
         $this->assertSame([], $servicio->para($restaurante->fresh(), $usuario)['avisos']);
     }
 
-    public function test_sin_reservas_el_resumen_del_dia_no_aparece_ni_muestra_ceros(): void
-    {
-        $this->propietario();
-
-        Livewire::test(ResumenRestauranteWidget::class)
-            ->assertDontSee('Tu día')
-            ->assertDontSee('Ver reservas')
-            ->assertDontSee('0 reservas');
-    }
-
-    public function test_resumen_del_dia_con_reservas_de_hoy_y_por_confirmar(): void
-    {
-        [$restaurante] = $this->propietario();
-        $hoy = now($restaurante->zona_horaria)->toDateString();
-        $manana = now($restaurante->zona_horaria)->addDay()->toDateString();
-        Reserva::factory()->confirmada()->create(['restaurante_id' => $restaurante->id, 'fecha' => $hoy]);
-        Reserva::factory()->create(['restaurante_id' => $restaurante->id, 'fecha' => $hoy, 'estado' => 'pendiente']);
-        Reserva::factory()->create(['restaurante_id' => $restaurante->id, 'fecha' => $hoy, 'estado' => 'cancelada']);
-        Reserva::factory()->create(['restaurante_id' => $restaurante->id, 'fecha' => $manana, 'estado' => 'pendiente']);
-        Reserva::factory()->create(['restaurante_id' => $restaurante->id, 'fecha' => now($restaurante->zona_horaria)->subDay()->toDateString(), 'estado' => 'pendiente']);
-
-        Livewire::test(ResumenRestauranteWidget::class)
-            ->assertSee('Tu día')
-            ->assertSee('Tienes 2 reservas para hoy.')
-            ->assertSee('Hay 2 reservas por confirmar.')
-            ->assertSee('Ver reservas');
-    }
-
-    public function test_si_solo_hay_reservas_por_confirmar_no_se_muestra_la_linea_de_hoy(): void
-    {
-        [$restaurante] = $this->propietario();
-        Reserva::factory()->create(['restaurante_id' => $restaurante->id, 'fecha' => now($restaurante->zona_horaria)->addDays(2)->toDateString(), 'estado' => 'pendiente']);
-
-        Livewire::test(ResumenRestauranteWidget::class)
-            ->assertSee('Hay 1 reserva por confirmar.')
-            ->assertDontSee('para hoy');
-    }
-
-    public function test_el_resumen_del_dia_no_cuenta_reservas_de_otro_restaurante(): void
-    {
-        $otro = $this->crearRestaurante('otro-local');
-        Reserva::factory()->create(['restaurante_id' => $otro->id, 'fecha' => now($otro->zona_horaria)->toDateString()]);
-        $this->propietario();
-
-        Livewire::test(ResumenRestauranteWidget::class)->assertDontSee('Tu día');
-    }
-
     public function test_accesos_rapidos_para_el_propietario(): void
     {
         [$restaurante] = $this->propietario();
@@ -392,26 +344,6 @@ class PanelInicioTest extends TestCase
         }
     }
 
-    /**
-     * @return array<string, array{0: string, 1: bool}>
-     */
-    public static function rolesYReservas(): array
-    {
-        return ['propietario' => ['propietario', true], 'gerente' => ['gerente', true], 'editor' => ['editor', true], 'recepcion' => ['recepcion', true], 'cocina' => ['cocina', false]];
-    }
-
-    #[DataProvider('rolesYReservas')]
-    public function test_el_resumen_del_dia_sigue_la_politica_de_reservas(string $rol, bool $lasVe): void
-    {
-        $restaurante = $this->crearRestaurante('la-esquina');
-        $this->entrarAlPanel($this->crearUsuario($rol, $restaurante), $restaurante);
-        Reserva::factory()->create(['restaurante_id' => $restaurante->id, 'fecha' => now($restaurante->zona_horaria)->toDateString()]);
-
-        $prueba = Livewire::test(ResumenRestauranteWidget::class);
-
-        $lasVe ? $prueba->assertSee('Tu día')->assertSee('Tienes 1 reserva para hoy.') : $prueba->assertDontSee('Tu día');
-    }
-
     public function test_lo_que_hay_que_revisar_se_muestra_solo_a_quien_ve_platillos_o_qr(): void
     {
         $restaurante = $this->crearRestaurante('la-esquina');
@@ -436,7 +368,6 @@ class PanelInicioTest extends TestCase
         Livewire::test(ResumenRestauranteWidget::class)
             ->assertSee('Qué falta configurar')
             ->assertSee('Crea tu primera categoría')
-            ->assertDontSee('Tu día')
             ->assertDontSee('Para revisar')
             ->assertDontSee('Descargar mi QR')
             ->assertDontSee('platillos agotados')
@@ -480,91 +411,5 @@ class PanelInicioTest extends TestCase
 
         $this->assertStringContainsString('flex-col gap-2 py-3 sm:flex-row', $html);
         $this->assertStringContainsString('flex flex-wrap gap-2', $html);
-    }
-
-    /**
-     * Las reservas guardan fecha y hora locales del restaurante (sin UTC): "hoy" es el día calendario en su zona.
-     * Se usa el mismo instante UTC para dos restaurantes que están en días distintos.
-     *
-     * @return array{0: array{0: Restaurante, 1: User}, 1: array{0: Restaurante, 1: User}}
-     */
-    private function dosRestaurantesConReservasAlLimiteDelDia(): array
-    {
-        $hermosillo = $this->crearRestaurante('hermosillo');
-        $hermosillo->update(['zona_horaria' => 'America/Hermosillo']);
-        $mexico = $this->crearRestaurante('mexico');
-        $mexico->update(['zona_horaria' => 'America/Mexico_City']);
-
-        foreach ([$hermosillo, $mexico] as $restaurante) {
-            Reserva::factory()->count(2)->create(['restaurante_id' => $restaurante->id, 'fecha' => '2031-03-09', 'hora' => '23:45:00', 'estado' => 'confirmada']);
-            Reserva::factory()->create(['restaurante_id' => $restaurante->id, 'fecha' => '2031-03-10', 'hora' => '00:15:00', 'estado' => 'pendiente']);
-        }
-
-        return [[$hermosillo, $this->crearUsuario('propietario', $hermosillo)], [$mexico, $this->crearUsuario('propietario', $mexico)]];
-    }
-
-    /**
-     * @return array{reservas_hoy: int, por_confirmar: int}|null
-     */
-    private function diaDe(Restaurante $restaurante, User $usuario): ?array
-    {
-        $this->entrarAlPanel($usuario, $restaurante);
-
-        return app(ProgresoDeConfiguracion::class)->para($restaurante->fresh(), $usuario)['dia'];
-    }
-
-    public function test_hoy_se_calcula_en_la_zona_del_restaurante_y_no_en_la_del_servidor(): void
-    {
-        [[$hermosillo, $duenoH], [$mexico, $duenoM]] = $this->dosRestaurantesConReservasAlLimiteDelDia();
-
-        // 06:30 UTC: en Hermosillo (UTC-7) son las 23:30 del día 9; en Ciudad de México (UTC-6) ya son las 00:30 del día 10.
-        Carbon::setTestNow(Carbon::parse('2031-03-10 06:30:00', 'UTC'));
-
-        $this->assertSame('UTC', config('app.timezone'));
-
-        $dia = $this->diaDe($hermosillo, $duenoH);
-        $this->assertSame(2, $dia['reservas_hoy'], 'Hermosillo sigue en el día 9: cuentan las dos reservas de las 23:45');
-        $this->assertSame(2, $dia['por_confirmar'] + 1, 'La pendiente del día 10 sigue por confirmar');
-
-        $dia = $this->diaDe($mexico, $duenoM);
-        $this->assertSame(1, $dia['reservas_hoy'], 'México ya está en el día 10: solo cuenta la reserva de las 00:15');
-        $this->assertSame(1, $dia['por_confirmar']);
-    }
-
-    public function test_el_conteo_cambia_al_cruzar_la_medianoche_local(): void
-    {
-        [[$hermosillo, $duenoH]] = $this->dosRestaurantesConReservasAlLimiteDelDia();
-
-        // 23:59 locales del día 9 en Hermosillo.
-        Carbon::setTestNow(Carbon::parse('2031-03-09 23:59:00', 'America/Hermosillo'));
-        $antes = $this->diaDe($hermosillo, $duenoH);
-        $this->assertSame(2, $antes['reservas_hoy']);
-        $this->assertSame(1, $antes['por_confirmar']);
-
-        // 00:00 locales del día 10: la reserva de las 23:45 ya es de ayer, y la pendiente de las 00:15 es de hoy.
-        Carbon::setTestNow(Carbon::parse('2031-03-10 00:00:00', 'America/Hermosillo'));
-        $despues = $this->diaDe($hermosillo, $duenoH);
-        $this->assertSame(1, $despues['reservas_hoy']);
-        $this->assertSame(1, $despues['por_confirmar']);
-
-        Livewire::test(ResumenRestauranteWidget::class)
-            ->assertSee('Tienes 1 reserva para hoy.')
-            ->assertSee('Hay 1 reserva por confirmar.');
-    }
-
-    public function test_una_reserva_pendiente_de_ayer_local_no_cuenta_aunque_sea_hoy_en_el_servidor(): void
-    {
-        $hermosillo = $this->crearRestaurante('hermosillo');
-        $hermosillo->update(['zona_horaria' => 'America/Hermosillo']);
-        Reserva::factory()->create(['restaurante_id' => $hermosillo->id, 'fecha' => '2031-03-09', 'hora' => '23:45:00', 'estado' => 'pendiente']);
-        $dueno = $this->crearUsuario('propietario', $hermosillo);
-
-        // En UTC ya es el día 10, pero en Hermosillo todavía es el 9: la reserva es de hoy y está por confirmar.
-        Carbon::setTestNow(Carbon::parse('2031-03-10 06:30:00', 'UTC'));
-        $this->assertSame(['reservas_hoy' => 1, 'por_confirmar' => 1], collect($this->diaDe($hermosillo, $dueno))->only(['reservas_hoy', 'por_confirmar'])->all());
-
-        // Una hora después ya es el día 10 local: la reserva del 9 no es de hoy ni está por confirmar.
-        Carbon::setTestNow(Carbon::parse('2031-03-10 07:30:00', 'UTC'));
-        $this->assertNull($this->diaDe($hermosillo, $dueno));
     }
 }

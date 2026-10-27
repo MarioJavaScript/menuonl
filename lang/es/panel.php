@@ -24,6 +24,7 @@ return [
         'inicio' => 'Inicio',
         'platillos' => 'Platillos',
         'reservas' => 'Reservas',
+        'reservas_por_confirmar' => 'Reservas: :n por confirmar',
         'pedidos' => 'Pedidos',
         'apariencia' => 'Apariencia',
         'categorias' => 'Categorías',
@@ -317,10 +318,23 @@ return [
             'descargar_qr' => 'Descargar mi QR',
         ],
         'dia' => [
-            'titulo' => 'Tu día',
-            'reservas_hoy' => '{1} Tienes 1 reserva para hoy.|[2,*] Tienes :n reservas para hoy.',
+            'titulo' => 'Hoy en tu restaurante',
+            'reservas_hoy' => '{0} No tienes reservas para hoy.|{1} Tienes 1 reserva para hoy.|[2,*] Tienes :n reservas para hoy.',
+            'comensales' => '{1} Esperas 1 persona.|[2,*] Esperas :n personas.',
             'por_confirmar' => '{1} Hay 1 reserva por confirmar.|[2,*] Hay :n reservas por confirmar.',
+            'personas' => '{1} 1 persona|[2,*] :n personas',
+            'proxima' => 'Próxima reserva: :hora, :personas.',
+            'proxima_con_nombre' => 'Próxima reserva: :hora, :nombre, :personas.',
             'ver' => 'Ver reservas',
+            'confirmar' => 'Confirmar reservas',
+            'vacio' => [
+                'titulo' => 'Hoy no hay reservas',
+                'texto' => 'Cuando alguien reserve desde tu sitio, aparecerá aquí.',
+            ],
+            'sondeo' => [
+                'red' => 'No pudimos actualizar tu día. Lo intentaremos de nuevo en un momento.',
+                'sesion' => 'Tu sesión expiró. Entra de nuevo para seguir viendo tu día.',
+            ],
         ],
         'avisos' => [
             'reservas_sin_horario' => [

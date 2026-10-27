@@ -557,12 +557,12 @@ class ReservasPaginaTest extends TestCase
         $respuesta = $this->get(Reservas::getUrl())->assertOk();
 
         $html = $respuesta->getContent();
-        $this->assertStringContainsString('mbReservasInterceptor', $html);
+        $this->assertStringContainsString('mbSondeoInterceptor', $html);
         $this->assertStringContainsString('Livewire.interceptRequest', $html);
 
         $csp = (string) $respuesta->headers->get('Content-Security-Policy');
         $this->assertMatchesRegularExpression("/'nonce-([A-Za-z0-9]+)'/", $csp);
         preg_match("/'nonce-([A-Za-z0-9]+)'/", $csp, $coincidencia);
-        $this->assertStringContainsString('nonce="'.$coincidencia[1].'"', substr($html, (int) strrpos(substr($html, 0, (int) strpos($html, 'mbReservasInterceptor')), '<script'), 400));
+        $this->assertStringContainsString('nonce="'.$coincidencia[1].'"', substr($html, (int) strrpos(substr($html, 0, (int) strpos($html, 'mbSondeoInterceptor')), '<script'), 400));
     }
 }

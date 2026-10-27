@@ -7,7 +7,6 @@ use App\Filament\Pages\Inicio;
 use App\Filament\Pages\Reservas;
 use App\Models\Reserva;
 use App\Models\Restaurante;
-use App\Services\ProgresoDeConfiguracion;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -193,7 +192,7 @@ class PanelNavegacionUnificadaTest extends TestCase
         $this->get($pagina::getUrl())->assertOk()->assertDontSee(self::MARCA_BANNER, escape: false);
     }
 
-    public function test_el_resumen_del_dia_de_inicio_enlaza_a_reservas_y_no_a_panel(): void
+    public function test_la_operacion_del_dia_de_inicio_enlaza_a_reservas_y_no_a_panel(): void
     {
         Carbon::setTestNow(Carbon::parse('2026-10-21 18:00:00', 'UTC'));
         $restaurante = $this->restauranteDePlan('completo');
@@ -201,11 +200,11 @@ class PanelNavegacionUnificadaTest extends TestCase
         $this->entrarAlPanel($propietario, $restaurante);
         Reserva::factory()->create(['restaurante_id' => $restaurante->id, 'fecha' => '2026-10-21', 'hora' => '20:00:00', 'estado' => 'pendiente']);
 
-        $dia = app(ProgresoDeConfiguracion::class)->para($restaurante, $propietario)['dia'];
-        $this->assertSame(Reservas::getUrl(), $dia['url']);
-
         $html = $this->get(Inicio::getUrl())->assertOk()->getContent();
-        $this->assertStringContainsString('class="fi-btn', substr($html, (int) strpos($html, $this->enlace(Reservas::getUrl()))));
-        $this->assertStringContainsString(__('panel.inicio.dia.ver'), $html);
+        $widget = substr($html, (int) strpos($html, 'data-sondeo-pagina'), 9000);
+
+        $this->assertStringContainsString($this->enlace(Reservas::getUrl()), $widget);
+        $this->assertStringNotContainsString($this->enlace(route('panel')), $widget);
+        Carbon::setTestNow();
     }
 }

@@ -7,7 +7,6 @@
             $porcentaje = $progreso['porcentaje'] ?? null;
             $avisos = $progreso['avisos'] ?? [];
             $atencion = $progreso['atencion'] ?? [];
-            $dia = $progreso['dia'] ?? null;
             $qrUrl = $progreso['codigo_qr_url'] ?? null;
         @endphp
 
@@ -76,32 +75,6 @@
                     </x-filament::button>
                 @endif
             </nav>
-
-            {{-- Resumen del día: solo si hay reservas que mostrar --}}
-            @if ($dia)
-                <x-filament::section>
-                    <x-slot name="heading">{{ __('panel.inicio.dia.titulo') }}</x-slot>
-
-                    <ul class="flex flex-col gap-2 text-sm text-gray-950 dark:text-white" role="list">
-                        @if ($dia['reservas_hoy'] > 0)
-                            <li class="flex items-start gap-3">
-                                <x-filament::icon icon="heroicon-o-calendar-days" class="mt-0.5 h-5 w-5 shrink-0 text-gray-500 dark:text-gray-400" />
-                                {{ trans_choice('panel.inicio.dia.reservas_hoy', $dia['reservas_hoy'], ['n' => $dia['reservas_hoy']]) }}
-                            </li>
-                        @endif
-                        @if ($dia['por_confirmar'] > 0)
-                            <li class="flex items-start gap-3">
-                                <x-filament::icon icon="heroicon-o-clock" class="mt-0.5 h-5 w-5 shrink-0 text-warning-700 dark:text-warning-400" />
-                                {{ trans_choice('panel.inicio.dia.por_confirmar', $dia['por_confirmar'], ['n' => $dia['por_confirmar']]) }}
-                            </li>
-                        @endif
-                    </ul>
-
-                    <x-filament::button tag="a" :href="$dia['url']" color="gray" size="sm" class="mt-4">
-                        {{ __('panel.inicio.dia.ver') }}
-                    </x-filament::button>
-                </x-filament::section>
-            @endif
 
             {{-- Avisos importantes --}}
             @foreach ($avisos as $aviso)

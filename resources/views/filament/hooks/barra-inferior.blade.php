@@ -6,7 +6,12 @@
             @if ($acceso['nombre'] !== $acceso['etiqueta']) aria-label="{{ $acceso['nombre'] }}" @endif
             @if ($acceso['activa']) aria-current="page" @endif
         >
-            <x-filament::icon :icon="$acceso['icono']" />
+            <span class="mo-barra-icono">
+                <x-filament::icon :icon="$acceso['icono']" />
+                @if ($acceso['insignia'] > 0)
+                    <span class="mo-barra-insignia" aria-hidden="true">{{ $acceso['insignia'] > 99 ? '99+' : $acceso['insignia'] }}</span>
+                @endif
+            </span>
             <span>{{ $acceso['etiqueta'] }}</span>
         </a>
     @endforeach

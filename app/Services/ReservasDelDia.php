@@ -71,6 +71,48 @@ class ReservasDelDia
     }
 
     /**
+     * La operación del día para Inicio, en dos consultas: las reservas de hoy que no están canceladas (de ahí salen las
+     * cuentas, los comensales y la próxima) y las pendientes de hoy en adelante.
+     *
+     * La próxima es la primera de hoy, pendiente o confirmada, cuya hora no ha pasado en la zona del restaurante.
+     *
+     * @return array{reservas_hoy: int, comensales_esperados: int, por_confirmar: int, proxima: ?array{hora: string, personas: int, nombre: ?string}}
+     */
+    public function operacionDelDia(Restaurante $restaurante): array
+    {
+        $ahora = now($restaurante->zona_horaria);
+        $hoy = $ahora->toDateString();
+        $horaActual = $ahora->format('H:i');
+
+        $deHoy = Reserva::where('restaurante_id', $restaurante->getKey())
+            ->whereDate('fecha', $hoy)
+            ->where('estado', '!=', 'cancelada')
+            ->orderBy('hora')->orderBy('id')
+            ->get(['id', 'nombre', 'personas', 'hora', 'estado']);
+
+        $proxima = $deHoy->first(
+            fn (Reserva $reserva): bool => in_array($reserva->estado, ['pendiente', 'confirmada'], true)
+                && substr((string) $reserva->getRawOriginal('hora'), 0, 5) >= $horaActual,
+        );
+
+        $porConfirmar = Reserva::where('restaurante_id', $restaurante->getKey())
+            ->whereDate('fecha', '>=', $hoy)
+            ->where('estado', 'pendiente')
+            ->count();
+
+        return [
+            'reservas_hoy' => $deHoy->count(),
+            'comensales_esperados' => (int) $deHoy->sum('personas'),
+            'por_confirmar' => $porConfirmar,
+            'proxima' => $proxima === null ? null : [
+                'hora' => substr((string) $proxima->getRawOriginal('hora'), 0, 5),
+                'personas' => (int) $proxima->personas,
+                'nombre' => filled($proxima->nombre) ? (string) $proxima->nombre : null,
+            ],
+        ];
+    }
+
+    /**
      * Pending reservations from today onward (not only today's).
      */
     public function porConfirmarDesdeHoy(Restaurante $restaurante): int

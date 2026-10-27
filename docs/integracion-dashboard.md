@@ -698,6 +698,44 @@ Una sola superficie para la operación del día dentro de `/admin`. No se tocaro
 
 ### Pendientes
 
-- **PR 3b:** Inicio con la operación del día.
+- **PR 3b:** hecho, ver la sección 20.
 - **Pedidos manuales** (17.5): retirar el ítem y el acceso TEMPORALES cuando se decida.
 - **PR 6:** puerta 302 de `/panel`, `LoginRespuesta` y retiro de `panel.js`.
+
+
+## 20. PR 3b "Operación del día en Inicio": hecho
+
+Inicio muestra la operación del día en un widget propio y la barra inferior móvil lleva la insignia de las reservas por confirmar. No se tocaron Pedidos manuales, `/panel`, `/api/v1/panel`, `LoginRespuesta` ni las reglas de plan y rol.
+
+### Qué cambió
+
+- **Widget "Hoy en tu restaurante"** (`App\Filament\Widgets\OperacionDelDiaWidget`, orden -20): va arriba de todo Inicio, antes del resumen del restaurante y de los accesos rápidos, y reemplaza al bloque "Tu día" de `ResumenRestauranteWidget`. `ProgresoDeConfiguracion` ya no devuelve la clave `dia`.
+  - Muestra las reservas de hoy (sin canceladas), los comensales esperados, las reservas por confirmar **de hoy en adelante** (con ícono y texto, y el botón pasa a "Confirmar reservas"), y la próxima reserva de hoy (hora y personas; el nombre solo si existe).
+  - "Próxima": la primera de hoy, pendiente o confirmada, cuya hora no ha pasado en la zona del restaurante. Una cancelada, una que ya llegó o una pasada no cuentan.
+  - Datos de `ReservasDelDia::operacionDelDia()`: **dos consultas** (las reservas de hoy y las pendientes desde hoy), siempre con `restaurante_id` y con "hoy" en la zona horaria del restaurante.
+- **Quién lo ve:** `Reservas::canAccess()` (módulo `reservas` por rol y plan, más `viewAny` de `Reserva`). Propietario, superadmin, gerente, editor y recepción lo ven en Completo; el propietario y el superadmin también en Sitio y menú (que sí tiene reservas). Cocina y Solo menú no ven nada nuevo.
+- **Sin reservas:** si hay reservas de hoy o por confirmar se pinta el resumen; si no hay y el restaurante tiene las reservas disponibles (`reservasDisponibles()`), se pinta `x-mb.vacio` "Hoy no hay reservas" con enlace a Reservas; si no, el bloque no aparece ni se sondea.
+- **Sondeo:** el widget se vuelve a pintar con `wire:poll.60s.visible` (solo con la pestaña visible), 2 consultas de reservas por vuelta. El resto de Inicio (configuración, avisos) no se recalcula porque es otro componente.
+- **Sesión caducada y red, compartido:** el interceptor de Livewire que estaba dentro de `reservas.blade.php` pasó a `resources/views/filament/partials/sondeo-con-sesion.blade.php` (con `@script`, así que lleva el nonce de la CSP de `/admin` y no hace falta `unsafe-inline`), y el aviso a `x-mb.aviso-sondeo`. Reservas e Inicio lo incluyen. Un 401 o 419 quita el `wire:poll` y avisa "Tu sesión expiró"; un fallo de red avisa y se reintenta. Los atributos pasaron de `data-reservas-*` a `data-sondeo-*` y la clase de CSS de `mb-reservas__entrar` a `mb-sondeo__entrar`; el comportamiento de Reservas es el mismo.
+- **Insignia en la barra inferior:** el acceso `reservas` lleva `insignia` (`Reservas::getNavigationBadge()`, las pendientes de hoy en adelante). Se pinta sobre el ícono con `99+` como tope y no se pinta en cero. La insignia es `aria-hidden`; el nombre accesible del enlace pasa a "Reservas: :n por confirmar" (con el número completo, no el 99+) y contiene el texto visible. CSS en `theme.css`: `.mo-barra-icono` y `.mo-barra-insignia` con los tokens `--mb-aviso`, `--mb-aviso-bg` y `--mb-aviso-borde` (que ya cambian en modo oscuro), `pointer-events: none`; el objetivo táctil sigue siendo el enlace completo (78 por 56 px a 390 px, sobre los 44 px de `--mb-objetivo`).
+- **Sin caché de petición:** la barra y la insignia del menú lateral cuentan por separado (una consulta cada una), como se decidió.
+
+### Pruebas
+
+- Nueva `PanelOperacionDelDiaTest`: HTML de Inicio con `Carbon::setTestNow` (orden: operación del día antes de los accesos rápidos; cuentas, comensales y próxima; vacío; oculto con reservas apagadas), plan y rol, otro restaurante, Hermosillo contra Ciudad de México y la medianoche local, **máximo 2 consultas de reservas** del widget (`DB::listen`), `wire:poll.60s.visible`, el manejo compartido de 401/419 en el HTML de Inicio y de Reservas, la CSP sin `unsafe-inline` en `script-src`, y que ningún atributo `wire:*` lleve `@js`, `@json` ni `JSON.parse`.
+- `BarraInferiorDelPanelTest`: insignia en 0, 1 y 150 (`99+`), nombre accesible, CSS con tokens y `pointer-events: none`, y sin insignia sin acceso a Reservas.
+- `PanelInicioTest`: se quitaron las pruebas de "Tu día" (pasaron a la nueva); `ReservasPaginaTest`: el interceptor se llama ahora `mbSondeoInterceptor`.
+
+### Qué no se pudo verificar
+
+- Nada en un navegador: el sondeo real de 60 segundos, el interceptor de 401 y 419 corriendo (las pruebas leen el HTML y el script, no lo ejecutan), la insignia a 390 px (columna de 78 px) con `99+`, el modo oscuro y el foco.
+- `npm run build`: `theme.css` cambió (insignia y `mb-sondeo__*`) y las clases de Tailwind del widget son nuevas; hace falta compilar para verlo.
+- MariaDB real (SQLite en memoria).
+- `search-docs` (laravel-boost) no conectó.
+
+### Pendientes
+
+- **La insignia de la barra solo se actualiza al cargar o navegar.** No hay evento de navegador ni Alpine: tras confirmar una reserva en la página Reservas, la barra conserva el número viejo hasta la siguiente carga. Se puede resolver más adelante con un evento que emitan Reservas y el widget.
+- **Pedidos manuales** (17.5) y sus ítem y acceso TEMPORALES.
+- **PR 6:** puerta 302 de `/panel`, `LoginRespuesta` y retiro de `panel.js`.
+- Métricas de escaneos (PR 11), fuera de este PR.
