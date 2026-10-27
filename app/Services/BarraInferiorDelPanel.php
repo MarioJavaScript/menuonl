@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Filament\Pages\Apariencia;
 use App\Filament\Pages\Inicio;
-use App\Filament\Pages\PedidosYReservas;
+use App\Filament\Pages\Reservas;
 use App\Filament\Resources\Categorias\CategoriaResource;
 use App\Filament\Resources\Contactos\ContactoResource;
 use App\Filament\Resources\Horarios\HorarioResource;
@@ -58,20 +58,21 @@ class BarraInferiorDelPanel
     }
 
     /**
-     * "Panel de servicio" (/panel) solo se ofrece a quien tiene algún módulo en el restaurante activo (el plan es un techo).
+     * TEMPORAL: los pedidos manuales siguen solo en /panel. Se ofrece a quien tiene el módulo pedidos en el restaurante
+     * activo (rol ∩ plan). Se retira cuando se decida qué pasa con Pedidos (docs/integracion-dashboard.md, 17.5).
      */
-    public static function puedeUsarElPanelDeServicio(): bool
+    public static function puedeUsarPedidosDelPanelAnterior(): bool
     {
         $tenant = Filament::getTenant();
         $usuario = auth()->user();
 
         return $tenant instanceof Restaurante
             && $usuario !== null
-            && PermisosPanel::modulosDe($usuario, $tenant) !== [];
+            && PermisosPanel::permite($usuario, $tenant, 'pedidos');
     }
 
     /**
-     * En orden de prioridad. "hoy" solo entra para quien no ve la página de Pedidos y reservas de Filament.
+     * En orden de prioridad. "pedidos" (TEMPORAL, lleva a /panel) solo entra para quien tiene el módulo pedidos y no ve Reservas.
      *
      * @return array<string, array{etiqueta: string, nombre: string, icono: Heroicon, visible: Closure(): bool, url: Closure(): string, activa: Closure(): bool}>
      */
@@ -92,11 +93,11 @@ class BarraInferiorDelPanel
                 'url' => fn (): string => ProductoResource::getUrl('index'),
                 'activa' => $ruta(ProductoResource::getRouteBaseName().'.*'),
             ],
-            'pedidos' => [
-                'etiqueta' => 'panel.barra.pedidos', 'nombre' => 'panel.pedidos.nav', 'icono' => Heroicon::OutlinedChatBubbleLeftRight,
-                'visible' => fn (): bool => PedidosYReservas::canAccess(),
-                'url' => fn (): string => PedidosYReservas::getUrl(),
-                'activa' => $ruta(PedidosYReservas::getRouteName()),
+            'reservas' => [
+                'etiqueta' => 'panel.barra.reservas', 'nombre' => 'panel.barra.reservas', 'icono' => Heroicon::OutlinedCalendarDays,
+                'visible' => fn (): bool => Reservas::canAccess(),
+                'url' => fn (): string => Reservas::getUrl(),
+                'activa' => $ruta(Reservas::getRouteName()),
             ],
             'apariencia' => [
                 'etiqueta' => 'panel.barra.apariencia', 'nombre' => 'panel.barra.apariencia', 'icono' => Heroicon::OutlinedPaintBrush,
@@ -122,9 +123,9 @@ class BarraInferiorDelPanel
                 'url' => fn (): string => ContactoResource::getUrl('index'),
                 'activa' => $ruta(ContactoResource::getRouteBaseName().'.*'),
             ],
-            'hoy' => [
-                'etiqueta' => 'panel.barra.hoy', 'nombre' => 'panel.enlaces.servicio', 'icono' => Heroicon::OutlinedBolt,
-                'visible' => fn (): bool => ! PedidosYReservas::canAccess() && self::puedeUsarElPanelDeServicio(),
+            'pedidos' => [
+                'etiqueta' => 'panel.barra.pedidos', 'nombre' => 'panel.enlaces.servicio', 'icono' => Heroicon::OutlinedBolt,
+                'visible' => fn (): bool => ! Reservas::canAccess() && self::puedeUsarPedidosDelPanelAnterior(),
                 'url' => fn (): string => route('panel'),
                 'activa' => fn (): bool => false,
             ],

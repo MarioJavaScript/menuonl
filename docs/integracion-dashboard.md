@@ -50,7 +50,7 @@ Leyenda: **Existe** = hay equivalente real; **Cambia** = existe, el diseño nuev
 | Fotos de tu restaurante | `Pages\FotosDelRestaurante` | **Cambia** | Arrastrar para ordenar: por revisar contra la subida actual (`ImagenRestauranteUpload`) |
 | Datos del restaurante | `EditRestauranteProfile` | **Cambia** | |
 | Horario, Contactos | `HorarioResource`, `ContactoResource` | **Cambia** | Contactos en "Sitio y menú": solo teléfono y WhatsApp (ya implementado) |
-| Pedidos y reservas | `Pages\PedidosYReservas` (config) + reservas en `/panel` | **Cambia** + **Nuevo en Filament** | Calendario y lista del día con Confirmar/Cancelar: hoy en `/panel`. Decisión 2 de la sección 9: se quedan en `/panel` |
+| Pedidos y reservas | `Pages\AjustesDeReservasYPedidos` (config) + reservas en `/panel` | **Cambia** + **Nuevo en Filament** | Calendario y lista del día con Confirmar/Cancelar: hoy en `/panel`. Decisión 2 de la sección 9: se quedan en `/panel` |
 | QR y mesas | `CodigoQrResource`, `QrDownloadController` | **Cambia** | Escaneos por mesa: **Sin backend** |
 | Métricas del restaurante | Nada | **Nuevo** + **Sin backend** | Solo plan Completo y superadmin (`Capacidad::Metricas` ya existe) |
 | Equipo e invitaciones | `UserResource` / `InvitacionResource` | **Cambia** | El prototipo solo modela propietario; el real tiene 5 roles (propietario, gerente, editor, recepción, cocina) |
@@ -457,7 +457,7 @@ Estado: **análisis aprobado; no hay código ni pruebas escritas.** Revierte la 
 
 ### 17.1 Hallazgo que fija el alcance
 
-`/panel` no es solo "Pedidos y reservas de hoy". Es una aplicación de una sola página (`resources/js/panel.js`, 298 líneas, sin framework; `resources/css/panel.css`; `panel/index.blade.php`) con seis funciones, servida por la API `/api/v1/panel` (siete controladores, 807 líneas). La página de Filament que hoy se llama "Pedidos y reservas" (`PedidosYReservas`) es otra cosa: solo guarda configuración.
+`/panel` no es solo "Pedidos y reservas de hoy". Es una aplicación de una sola página (`resources/js/panel.js`, 298 líneas, sin framework; `resources/css/panel.css`; `panel/index.blade.php`) con seis funciones, servida por la API `/api/v1/panel` (siete controladores, 807 líneas). La página de Filament que hoy se llama "Pedidos y reservas" (`AjustesDeReservasYPedidos`) es otra cosa: solo guarda configuración.
 
 | Función de `/panel` | Qué hace | Equivalente en Filament hoy | Destino |
 |---|---|---|---|
@@ -465,7 +465,7 @@ Estado: **análisis aprobado; no hay código ni pruebas escritas.** Revierte la 
 | Reservas | Próximas, Hoy y por fecha; confirmar, "Llegó", cancelar, restaurar, mover de hora, crear, agrupar por día | Ninguno (no hay recurso de Reserva) | PR 2 |
 | Pedidos | Tablero Nuevo, En cocina, Listo y Entregado; avanzar con un toque; crear pedido a mano; marca "tarde" a los 15 min | Ninguno | **Pendiente** (17.5) |
 | Menú | Editar nombre y precio al salir del campo, disponible, ocultar, duplicar, eliminar, subir y quitar foto (con reducción en el navegador) | `ProductoResource` y `CategoriaResource` (formulario, no edición rápida) | Auditoría (PR 6) |
-| Ajustes | Plantilla del sitio, portada y galería, datos, horarios, reservas del sitio (cupo y franja) | `Apariencia`, `FotosDelRestaurante`, `EditRestauranteProfile`, `HorarioResource`, `PedidosYReservas` | Auditoría (PR 6) |
+| Ajustes | Plantilla del sitio, portada y galería, datos, horarios, reservas del sitio (cupo y franja) | `Apariencia`, `FotosDelRestaurante`, `EditRestauranteProfile`, `HorarioResource`, `AjustesDeReservasYPedidos` | Auditoría (PR 6) |
 | Equipo | Cambiar rol, activar o desactivar, invitar y revocar | `UserResource` e `InvitacionResource` (no auditado a fondo) | Auditoría (PR 6) |
 
 Datos que importan para el plan:
@@ -642,7 +642,7 @@ Un `@script` en la vista (con el nonce de Livewire; sin cambio de CSP) registra 
 ### Pendientes
 
 - **Pedidos** sigue pendiente (17.5); `/panel` sigue vivo.
-- Navegación (PR 3): apuntar a esta página el ítem "Pedidos y reservas de hoy", el acceso `hoy` de `BarraInferiorDelPanel` y el enlace de `ProgresoDeConfiguracion`, y renombrar la página de ajustes. Mientras tanto conviven "Reservas" y "Pedidos y reservas" en el mismo grupo.
+- Navegación (PR 3): hecho, ver la sección 19.
 - Distinguir `panel` de `api` en el origen del historial (ver arriba).
 - Eliminar reservas desde la página (fuera de este PR; el servicio y el historial ya lo soportan).
 - Ajustes posibles tras probar en un navegador: pausar el sondeo por completo en pestañas ocultas y revisar el orden de foco en las ventanas.
@@ -665,3 +665,39 @@ Un `@script` en la vista (con el nonce de Livewire; sin cambio de CSP) registra 
 - Cómo responde Filament a una petición de Livewire con la sesión caducada: si es una respuesta 401 o 419 se cubre; si fuera una redirección al inicio de sesión con HTML, el comportamiento de Livewire no se comprobó.
 - El costo real del sondeo en una tablet o con 200 reservas, y peticiones realmente simultáneas.
 - `search-docs` (laravel-boost) no conectó; el análisis se hizo leyendo el código instalado de Livewire 4.4.8 y Filament 5.10.2.
+
+
+## 19. PR 3 "Navegación": hecho
+
+Una sola superficie para la operación del día dentro de `/admin`. No se tocaron `/panel`, `/api/v1/panel`, `LoginRespuesta`, `theme.css` ni la lógica de reservas.
+
+### Qué cambió
+
+- **Grupo "Pedidos y reservas"** (nombre sin cambio, `panel.grupos.pedidos`): **Reservas** (orden 5, pantalla principal), **Ajustes de reservas y pedidos** (orden 10) y, solo con el módulo `pedidos`, el ítem TEMPORAL "Pedidos (panel anterior)" (orden 20).
+- **Ajustes de reservas y pedidos:** la clase `PedidosYReservas` pasó a `App\Filament\Pages\AjustesDeReservasYPedidos`, con slug `ajustes-de-reservas-y-pedidos`, nav y título "Ajustes de reservas y pedidos" y un subtítulo que remite a Reservas (`panel.pedidos.*`: se cambiaron los valores, no las claves). Permisos y descarte de campos por plan, intactos.
+- **Se retiró** "Pedidos y reservas de hoy", el ítem que abría la segunda ventana.
+- **TEMPORAL, a retirar cuando se decida Pedidos manuales (17.5):** el ítem "Pedidos (panel anterior)" (`panel.enlaces.servicio`) lleva a `route('panel')`. Se ve con `BarraInferiorDelPanel::puedeUsarPedidosDelPanelAnterior()`, es decir, con el módulo `pedidos` de `PermisosPanel` (rol ∩ plan): propietario y superadmin en Completo, y el superadmin de cualquier plan; no lo ven el propietario de Sitio y menú ni recepción. Antes el ítem se veía con cualquier módulo.
+- **Redirección:** `/admin/{slug}/pedidos-y-reservas` responde 302 a la dirección nueva. Está registrada con `authenticatedTenantRoutes()`, así que pasa por la sesión, el 2FA y el acceso al restaurante del panel; además comprueba `AjustesDeReservasYPedidos::canAccess()` antes de redirigir. Sin sesión: inicio de sesión. Sin acceso (editor, gerente, recepción, cocina): 403 sin `Location`. Restaurante ajeno: la misma respuesta que da la página nueva, sin `Location`.
+- **Barra inferior:** la clave `pedidos` (que apuntaba a los ajustes) pasó a `reservas` (`Reservas::getUrl()`, activa con `Reservas::getRouteName()`, visible con `Reservas::canAccess()`); la etiqueta es `panel.barra.reservas`. Los ajustes salen de la barra y quedan en "Más". La clave `hoy` se convirtió en `pedidos` (TEMPORAL): solo para quien tiene el módulo `pedidos` y no ve Reservas (cocina). **Sin insignia** y sin cambios de CSS. Accesos: propietario Completo y superadmin: Inicio, Platillos, Reservas, Apariencia; propietario de Sitio y menú: Inicio, Reservas, Horario, Contactos; gerente: Inicio, Platillos, Reservas; editor: Inicio, Platillos, Reservas, Categorías; recepción: Inicio, Reservas; cocina: Inicio, Pedidos.
+- **Inicio:** `ProgresoDeConfiguracion` apunta el botón "Ver reservas" del resumen del día a `Reservas::getUrl()` (antes `/panel`) y el paso de WhatsApp a la página de ajustes renombrada. El widget muestra lo mismo que antes (reservas de hoy y por confirmar, solo si hay algo y la persona puede ver reservas); solo cambia a dónde lleva el botón.
+- **Sin cambios:** el plan y el rol que ve cada pantalla, `LoginRespuesta` (recepción y cocina siguen entrando por `route('panel')` hasta el PR 6) y el banner de superadmin (Reservas y Ajustes no son del grupo "Plataforma").
+- **Superadmin en Solo menú:** ve los ajustes (`canAccess` ya lo permitía; `docs/planes.md` decía lo contrario) y no ve Reservas. No se cambió.
+
+### Pruebas
+
+- Nueva `PanelNavegacionUnificadaTest`: HTML pintado del menú por plan y rol (Reservas, Ajustes y el ítem temporal por URL; ni "Pedidos y reservas de hoy" ni `/pedidos-y-reservas`), redirección (con sesión, superadmin, sin sesión, roles sin acceso, otro restaurante), banner de superadmin sobre Reservas y Ajustes, y el enlace del resumen del día.
+- Ajustadas: `BarraInferiorDelPanelTest` (accesos por rol y plan, HTML de la barra con `href` de Reservas y sin `/panel` salvo cocina), `PanelNavegacionDuenoTest`, `PanelAjustesDeReservasYPedidosTest` (antes `PanelPedidosYReservasTest`), `PanelRecortePorPlanTest`, `UxUiAccesibilidadTest`.
+- Suite completa: 2354 pruebas, 2353 pasan y 1 se omite (SQLite en memoria).
+
+### Qué no se pudo verificar
+
+- Nada visual: la barra a 390 px con la etiqueta "Reservas", el orden del menú móvil y el modo oscuro no se vieron en un navegador.
+- MariaDB real.
+- `search-docs` (laravel-boost) no conectó; las rutas del panel se verificaron leyendo `vendor/filament/filament/routes/web.php`.
+- El PHP de este equipo no trae `php.ini`; las pruebas se corrieron con un `php.ini` temporal que activa `mbstring`, `pdo_sqlite`, `intl` y `gd`, fuera del repo.
+
+### Pendientes
+
+- **PR 3b:** Inicio con la operación del día.
+- **Pedidos manuales** (17.5): retirar el ítem y el acceso TEMPORALES cuando se decida.
+- **PR 6:** puerta 302 de `/panel`, `LoginRespuesta` y retiro de `panel.js`.

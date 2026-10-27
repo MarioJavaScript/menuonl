@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\AjustesDeReservasYPedidos;
 use App\Filament\Pages\Auth\Login;
 use App\Filament\Pages\Inicio;
 use App\Filament\Pages\Tenancy\EditRestauranteProfile;
@@ -28,8 +29,10 @@ use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\HtmlString;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
@@ -80,12 +83,13 @@ class AdminPanelProvider extends PanelProvider
                 NavigationGroup::make('Plataforma'),
             ])
             ->navigationItems([
+                // TEMPORAL: los pedidos manuales siguen solo en /panel. Retirar cuando se decida Pedidos (docs/integracion-dashboard.md, 17.5).
                 NavigationItem::make(fn (): string => __('panel.enlaces.servicio'))
                     ->group(fn (): string => __('panel.grupos.pedidos'))
                     ->icon(Heroicon::OutlinedBolt)
                     ->sort(20)
                     ->url(fn (): string => route('panel'))
-                    ->visible(fn (): bool => BarraInferiorDelPanel::puedeUsarElPanelDeServicio()),
+                    ->visible(fn (): bool => BarraInferiorDelPanel::puedeUsarPedidosDelPanelAnterior()),
                 NavigationItem::make(fn (): string => __('panel.datos.nav'))
                     ->group(fn (): string => __('panel.grupos.informacion'))
                     ->icon(Heroicon::OutlinedBuildingStorefront)
@@ -94,6 +98,15 @@ class AdminPanelProvider extends PanelProvider
                     ->isActiveWhen(fn (): bool => request()->routeIs(EditRestauranteProfile::getRouteName()))
                     ->visible(fn (): bool => Filament::getTenant() !== null && EditRestauranteProfile::canView(Filament::getTenant())),
             ])
+            // La página de ajustes se llamaba pedidos-y-reservas: la dirección vieja pasa por la autenticación y el acceso al
+            // restaurante del panel, y por la autorización de la página nueva antes de redirigir (si no, 403).
+            ->authenticatedTenantRoutes(function (): void {
+                Route::get('pedidos-y-reservas', function (): RedirectResponse {
+                    abort_unless(AjustesDeReservasYPedidos::canAccess(), 403);
+
+                    return redirect()->to(AjustesDeReservasYPedidos::getUrl());
+                });
+            })
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
                 ResumenRestauranteWidget::class,

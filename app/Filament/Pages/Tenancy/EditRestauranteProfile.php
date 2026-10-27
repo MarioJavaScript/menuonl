@@ -25,7 +25,7 @@ use Illuminate\Validation\ValidationException;
 /**
  * Datos del restaurante (RF-19): nombre, frase, descripción, ubicación en el mapa, moneda e idiomas. Only propietario and
  * superadmin reach it: canView() asks the Restaurante policy for `update`. El diseño del sitio vive en Apariencia y los
- * pedidos y reservas en Pedidos y reservas. La dirección corta (slug) no se edita aquí: es de la plataforma.
+ * pedidos y reservas en Ajustes de reservas y pedidos. La dirección corta (slug) no se edita aquí: es de la plataforma.
  */
 class EditRestauranteProfile extends EditTenantProfile
 {

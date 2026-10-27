@@ -19,16 +19,16 @@ use Filament\Support\Icons\Heroicon;
 use UnitEnum;
 
 /**
- * Pedidos y reservas: pedidos por WhatsApp (activar y número) y reservas desde el sitio (activar, cupo y duración).
+ * Ajustes de reservas y pedidos: pedidos por WhatsApp (activar y número) y reservas desde el sitio (activar, cupo y duración).
  *
  * Con el plan Sitio y menú el propietario solo ve y cambia el número de WhatsApp de pedidos (D3): activar pedidos y las
  * reservas las maneja el superadmin. Esos campos se ocultan y además se descartan al guardar.
  */
-class PedidosYReservas extends Page
+class AjustesDeReservasYPedidos extends Page
 {
     use EditaAjustesDelRestaurante;
 
-    protected static ?string $slug = 'pedidos-y-reservas';
+    protected static ?string $slug = 'ajustes-de-reservas-y-pedidos';
 
     protected static ?int $navigationSort = 10;
 

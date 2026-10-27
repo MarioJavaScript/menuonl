@@ -42,9 +42,9 @@ Leyenda: ✔ puede · ✖ no puede · ◐ parcial (se explica) · ⚠ depende de
 | Apariencia (plantilla, estilo, color, logotipo, portada) | `Pages\Apariencia` | ✔ | ✖ | ✖ | `editar_diseno` |
 | Fotos de tu restaurante (galería) | `Pages\FotosDelRestaurante` | ✔ | ✖ | ✖ | `editar_diseno`. Ver sección 6 |
 | Datos del restaurante (nombre, frase, descripción, mapa, moneda, idiomas) | `EditRestauranteProfile` | ✔ | ✖ | ✖ | `editar_datos` |
-| Pedidos y reservas: número de WhatsApp de pedidos | `Pages\PedidosYReservas` | ✔ | ✔ solo el número | ✖ | Es uno de los tres teléfonos. Ver D3 |
-| Pedidos y reservas: activar pedidos | idem | ✔ | ⚠ D3 | ✖ | |
-| Pedidos y reservas: reservas (activar, cupo, duración) | idem | ✔ | ⚠ D2 | ✖ | En Solo menú esta sección no existe ni para el superadmin |
+| Ajustes de reservas y pedidos: número de WhatsApp de pedidos | `Pages\AjustesDeReservasYPedidos` | ✔ | ✔ solo el número | ✖ | Es uno de los tres teléfonos. Ver D3 |
+| Ajustes de reservas y pedidos: activar pedidos | idem | ✔ | ⚠ D3 | ✖ | |
+| Ajustes de reservas y pedidos: reservas (activar, cupo, duración) | idem | ✔ | ⚠ D2 | ✖ | En Solo menú esta sección no existe ni para el superadmin |
 | Equipo (cuentas) | `UserResource` | ✔ | ✖ | ✖ | `equipo` |
 | Invitaciones | `InvitacionResource` | ✔ | ✖ | ✖ | `equipo` |
 | Historial de cambios | `HistorialCambioResource` | ✔ | ✖ | ✖ | La política hoy solo deja ver al propietario y al superadmin |
@@ -104,12 +104,12 @@ Es la tabla de referencia para las pruebas. "Sup." = superadmin. Los tres teléf
 | Dirección, Instagram, Facebook, TikTok, sitio web, correo (Contactos) | Contactos | Prop. y Sup. | Sup. | Sup. |
 | **Teléfono de llamada** | Contactos | Prop. y Sup. | **Prop. y Sup.** | Sup. |
 | **WhatsApp de contacto** | Contactos | Prop. y Sup. | **Prop. y Sup.** | Sup. |
-| **WhatsApp de pedidos** (número) | Pedidos y reservas | Prop. y Sup. | **Prop. y Sup.** | Sup. |
-| Activar o apagar pedidos por WhatsApp (`pedidos_activos`) | Pedidos y reservas | Prop. y Sup. | ⚠ D3 | Sup. |
+| **WhatsApp de pedidos** (número) | Ajustes de reservas y pedidos | Prop. y Sup. | **Prop. y Sup.** | Sup. |
+| Activar o apagar pedidos por WhatsApp (`pedidos_activos`) | Ajustes de reservas y pedidos | Prop. y Sup. | ⚠ D3 | Sup. |
 | **Horario** | Horario, `/panel → Ajustes` | Prop. y Sup. | **Prop. y Sup.** | Sup. |
 | Mostrar platillos agotados (`mostrar_agotados`) | Pedidos o Datos (por confirmar la pantalla) | Prop. y Sup. | Sup. | Sup. |
-| Reservas: activar, cupo, duración | Pedidos y reservas, `/panel → Ajustes` | Prop. y Sup. | ⚠ D2 | no aplica |
-| Atender reservas recibidas | `/panel → Reservas` | Prop. y Sup. | ⚠ D2 | no aplica |
+| Reservas: activar, cupo, duración | Ajustes de reservas y pedidos, `/panel → Ajustes` | Prop. y Sup. | ⚠ D2 | no aplica |
+| Atender reservas recibidas | Reservas (`/admin/{slug}/reservas`; antes `/panel → Reservas`) | Prop. y Sup. | ⚠ D2 | no aplica |
 | Códigos QR y mesas | Códigos QR | Prop. y Sup. | ⚠ D4 | Sup. |
 | Equipo e invitaciones | Equipo, Invitaciones, `/panel → Ajustes` | Prop. y Sup. | Sup. | Sup. |
 | Nombre de la dirección corta (`slug`), estado, **plan** | Plataforma | Sup. | Sup. | Sup. |
@@ -176,8 +176,8 @@ Un solo punto de control en lugar de tocar cada recurso:
 
 - **Políticas.** `MatrizPolicy::permite()` ya recibe el restaurante y el nivel. Se agrega una constante opcional por política (`CAPACIDAD`). Si el nivel **no** es superadmin y el plan del restaurante no incluye esa capacidad, devuelve `false`. Todas las políticas hijas (`Producto`, `Categoria`, `Horario`, `Contacto`, `CodigoQr`, `GaleriaImagen`, `Reserva`, `Pedido`, `Invitacion`) heredan el recorte con una línea cada una. Los recursos, la navegación, la barra inferior y las acciones de tabla ya preguntan a la política, así que se ocultan solos. El plan de un restaurante se consulta una vez por petición (memoria por id) para no multiplicar consultas.
 - **Contactos por tipo.** `ContactoPolicy` revisa además `tipo`: en Sitio y menú solo `telefono` y `whatsapp`. La lista se filtra por esos tipos y el selector de tipo del formulario solo ofrece esos dos. La política es la que decide (el filtro es comodidad), así que no se puede saltar editando la petición.
-- **Páginas que editan columnas del restaurante.** `EditaAjustesDelRestaurante::canAccess()` hoy solo pide `update` sobre el restaurante. Cada página agrega su capacidad: `Apariencia` → `editar_diseno`; `EditRestauranteProfile::canView` → `editar_datos`; `PedidosYReservas` → `editar_telefonos` (la página se ve, pero sus secciones se muestran según D2 y D3). `FotosDelRestaurante` y `Recomendados` ya van por políticas.
-- **Página `PedidosYReservas` en Sitio y menú.** Muestra solo el campo del número de WhatsApp de pedidos (y lo demás según D2 y D3). En el servidor, `save()` debe **descartar** los campos que el plan no permite aunque lleguen en la petición. Esta es la defensa real; ocultar el campo es solo apariencia.
+- **Páginas que editan columnas del restaurante.** `EditaAjustesDelRestaurante::canAccess()` hoy solo pide `update` sobre el restaurante. Cada página agrega su capacidad: `Apariencia` → `editar_diseno`; `EditRestauranteProfile::canView` → `editar_datos`; `AjustesDeReservasYPedidos` → `editar_telefonos` (la página, antes "Pedidos y reservas" y desde el PR 3 "Ajustes de reservas y pedidos", se ve, pero sus secciones se muestran según D2 y D3). `FotosDelRestaurante` y `Recomendados` ya van por políticas.
+- **Página `AjustesDeReservasYPedidos` en Sitio y menú.** Muestra solo el campo del número de WhatsApp de pedidos (y lo demás según D2 y D3). En el servidor, `save()` debe **descartar** los campos que el plan no permite aunque lleguen en la petición. Esta es la defensa real; ocultar el campo es solo apariencia.
 - **Acceso y cambio de restaurante.** `User::canAccessTenant()` y `getTenants()` dejan fuera los restaurantes en Solo menú para quien no es superadmin. `canAccessPanel()` es falso si todos sus restaurantes activos son Solo menú. `ContextoRestaurantePanel` usa `canAccessTenant`, así que `/panel` queda cerrado con el mismo cambio. Cada petición vuelve a evaluarlo: una sesión abierta pierde el acceso en cuanto se baja el plan.
 - **Enlaces.** `ver-menu-publico` recibe la URL del sitio solo si `tieneSitio()`. `ResumenRestauranteWidget` y `ProgresoDeConfiguracion` omiten pendientes cuyo destino el usuario no puede abrir (hoy ya filtran por política; falta revisar `reservas_sin_horario`, que apunta al horario y debe depender de `reservasDisponibles()`).
 - **Dos factores.** `requiereDosFactores()` hoy se exige a cualquier propietario. Un propietario solo de restaurantes en Solo menú no entra, así que no tiene sentido exigírselo. Se refina después (baja prioridad).
@@ -243,7 +243,7 @@ Con planes, el superadmin conserva todo: `permiteA()` y `MatrizPolicy` lo dejan 
 Se espera que **no cambien** porque el plan por defecto es `completo`, pero conviene correrlas en el primer paso para confirmarlo:
 
 - Aislamiento y políticas: `PoliticasMatrizTest`, `RoleAndPolicyAuthorizationTest`, `AislamientoPanelTest`, `AislamientoModelosTest`, `PanelTenancyTest`, `RestauranteMultiTenantIsolationTest`, `RestauranteAislamientoTest`.
-- Panel Filament: `PanelNavegacionDuenoTest`, `PanelRolesOperativosTest`, `PanelAparienciaTest`, `PanelFotosDelRestauranteTest`, `PanelPedidosYReservasTest`, `PanelInicioTest`, `PanelRecomendadosTest`, `PanelDatosYMapaTest`, `PanelEquipoTest`, `PanelQrMesasTest`, `FilamentAdminAdversarialTest`, `FilamentM4ChallengerTest`.
+- Panel Filament: `PanelNavegacionDuenoTest`, `PanelRolesOperativosTest`, `PanelAparienciaTest`, `PanelFotosDelRestauranteTest`, `PanelAjustesDeReservasYPedidosTest`, `PanelInicioTest`, `PanelRecomendadosTest`, `PanelDatosYMapaTest`, `PanelEquipoTest`, `PanelQrMesasTest`, `FilamentAdminAdversarialTest`, `FilamentM4ChallengerTest`.
 - `/panel` (API): `PanelAjustesTest`, `PanelApiMenuYResumenTest`, `PanelApiPedidosTest`, `PanelApiReservasTest`, `PanelImagenesTest`, `PanelMenuOrdenYAgotadosTest`, `Api/`.
 - Público: `SitioPublicoTest`, `SitioBarTest`, `SitioCafeteriaTest`, `SitioPastelTest`, `SitioPizzeriaTest`, `SitioEditorialOscuroTest`, `ReservasPublicasTest`, `ReservasBarTest`, `ReservasCafeteriaTest`, `ReservasPastelTest`, `ReservasPizzeriaTest`, `DireccionesLimpiasTest`, `QrRedirectYDescargaTest`, `MenuPublicoTest`, `PerfilPlantillaSitioTest`.
 - Base de datos y siembra: `DatabaseMigrationAndSeederTest`, `DatabaseLayerAndSeedersTest`, `DemoRestauranteSeederTest`, `RespaldoMenuonlTest` y los de respaldo (si el respaldo lista columnas, hay que incluir `plan`).
@@ -299,7 +299,7 @@ Fábrica de `Restaurante`: dos estados nuevos, `sitioMenu()` y `soloMenu()`.
 1. **Base, sin efectos.** Migración, enum de plan y de capacidades, atajos en el modelo, estados de fábrica, textos de los planes, pruebas de unidad y de migración. Nadie puede cambiar un plan todavía. Todo sigue como está.
 2. **Sitio público.** Redirección de Solo menú, `reservasDisponibles()` en sitio, servicio de reservas y API pública. Pruebas "sin sesión" por plan (usando la fábrica para poner el plan).
 3. **`/panel`.** Techo del plan en `PermisosPanel`, bloqueo de acceso en `canAccessTenant` y `getTenants`, prueba de todas las rutas de la API.
-4. **Panel Filament.** Constante `CAPACIDAD` en las políticas, `ContactoPolicy` por tipo, páginas de ajustes (`Apariencia`, `Datos`, `PedidosYReservas` con descarte de campos), widget, pendientes, barra inferior y enlaces "Ver mi sitio". Pruebas por plan y por rol.
+4. **Panel Filament.** Constante `CAPACIDAD` en las políticas, `ContactoPolicy` por tipo, páginas de ajustes (`Apariencia`, `Datos`, `AjustesDeReservasYPedidos` con descarte de campos), widget, pendientes, barra inferior y enlaces "Ver mi sitio". Pruebas por plan y por rol.
 5. **Plataforma.** Columna y filtro por plan, selector al crear, acción "Cambiar plan" con confirmación, historial y limpieza de caché. **Aquí se enciende el uso real.** Antes de este paso ningún restaurante puede salir de Completo.
 6. **Ajustes de uso** (opcionales): plan visible en el encabezado para el superadmin, mensaje de Solo menú al intentar entrar, avisos de las secciones 6, refinar los dos factores.
 

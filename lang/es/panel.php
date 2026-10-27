@@ -23,12 +23,12 @@ return [
         'nombre' => 'Principal',
         'inicio' => 'Inicio',
         'platillos' => 'Platillos',
+        'reservas' => 'Reservas',
         'pedidos' => 'Pedidos',
         'apariencia' => 'Apariencia',
         'categorias' => 'Categorías',
         'horario' => 'Horario',
         'contactos' => 'Contactos',
-        'hoy' => 'Hoy',
         'mas' => 'Más',
         'mas_opciones' => 'Más opciones del menú',
     ],
@@ -95,7 +95,7 @@ return [
         'ver_sitio' => 'Ver mi sitio',
         'ver_menu' => 'Ver mi menú',
         'abre_en_otra_pestana' => '(se abre en otra pestaña)',
-        'servicio' => 'Pedidos y reservas de hoy',
+        'servicio' => 'Pedidos (panel anterior)',
     ],
 
     'apariencia' => [
@@ -216,9 +216,9 @@ return [
     ],
 
     'pedidos' => [
-        'nav' => 'Pedidos y reservas',
-        'titulo' => 'Pedidos y reservas',
-        'subtitulo' => 'Decide cómo te hacen pedidos y reservas tus clientes desde tu sitio y tu menú.',
+        'nav' => 'Ajustes de reservas y pedidos',
+        'titulo' => 'Ajustes de reservas y pedidos',
+        'subtitulo' => 'Decide cómo te hacen pedidos y reservas tus clientes desde tu sitio y tu menú. Para atender las reservas, ve a Reservas.',
         'whatsapp' => [
             'titulo' => 'Pedidos por WhatsApp',
             'descripcion' => 'Tus clientes arman su pedido en el menú y te llega listo a tu WhatsApp.',

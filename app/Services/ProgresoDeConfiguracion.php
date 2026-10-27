@@ -3,8 +3,9 @@
 namespace App\Services;
 
 use App\Enums\Capacidad;
+use App\Filament\Pages\AjustesDeReservasYPedidos;
 use App\Filament\Pages\Apariencia;
-use App\Filament\Pages\PedidosYReservas;
+use App\Filament\Pages\Reservas;
 use App\Filament\Pages\Tenancy\EditRestauranteProfile;
 use App\Filament\Resources\Categorias\CategoriaResource;
 use App\Filament\Resources\CodigosQr\CodigoQrResource;
@@ -84,7 +85,7 @@ class ProgresoDeConfiguracion
             ['mapa', $puedeEditarDatos, fn (): bool => $restaurante->latitud !== null && $restaurante->longitud !== null, false, fn (): string => EditRestauranteProfile::getUrl()],
             ['logotipo', $puedeEditarDiseno, fn (): bool => filled($restaurante->logo), false, fn (): string => Apariencia::getUrl()],
             ['portada', $puedeEditarDiseno, fn (): bool => filled($restaurante->portada), false, fn (): string => Apariencia::getUrl()],
-            ['whatsapp', $puedeEditarTelefonos && $restaurante->pedidos_activos, fn (): bool => filled($restaurante->whatsapp_pedidos), true, fn (): string => PedidosYReservas::getUrl()],
+            ['whatsapp', $puedeEditarTelefonos && $restaurante->pedidos_activos, fn (): bool => filled($restaurante->whatsapp_pedidos), true, fn (): string => AjustesDeReservasYPedidos::getUrl()],
         ];
 
         $pasos = [];
@@ -160,7 +161,7 @@ class ProgresoDeConfiguracion
             return null;
         }
 
-        return ['reservas_hoy' => $reservasHoy, 'por_confirmar' => $porConfirmar, 'url' => route('panel')];
+        return ['reservas_hoy' => $reservasHoy, 'por_confirmar' => $porConfirmar, 'url' => Reservas::getUrl()];
     }
 
     /**

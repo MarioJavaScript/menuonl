@@ -2,9 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Pages\AjustesDeReservasYPedidos;
 use App\Filament\Pages\Apariencia;
 use App\Filament\Pages\FotosDelRestaurante;
-use App\Filament\Pages\PedidosYReservas;
 use App\Filament\Pages\Recomendados;
 use App\Filament\Pages\Tenancy\EditRestauranteProfile;
 use App\Filament\Resources\Categorias\CategoriaResource;
@@ -117,7 +117,7 @@ class PanelRecortePorPlanTest extends TestCase
         $this->assertFalse(FotosDelRestaurante::canAccess());
         $this->assertFalse(Recomendados::canAccess());
         $this->assertFalse(EditRestauranteProfile::canView($restaurante));
-        $this->assertTrue(PedidosYReservas::canAccess());
+        $this->assertTrue(AjustesDeReservasYPedidos::canAccess());
     }
 
     public function test_el_superadmin_y_el_propietario_completo_abren_las_paginas_de_diseno_y_datos(): void
@@ -133,7 +133,7 @@ class PanelRecortePorPlanTest extends TestCase
             $this->assertTrue(Apariencia::canAccess(), $plan);
             $this->assertTrue(FotosDelRestaurante::canAccess(), $plan);
             $this->assertTrue(EditRestauranteProfile::canView($restaurante), $plan);
-            $this->assertTrue(PedidosYReservas::canAccess(), $plan);
+            $this->assertTrue(AjustesDeReservasYPedidos::canAccess(), $plan);
         }
     }
 
@@ -190,11 +190,11 @@ class PanelRecortePorPlanTest extends TestCase
 
         $etiquetas = $this->etiquetasDelMenu();
 
-        foreach ([__('panel.pedidos.nav'), 'Horario', 'Contactos', __('panel.enlaces.servicio')] as $esperada) {
+        foreach ([__('panel.reservas.nav'), __('panel.pedidos.nav'), 'Horario', 'Contactos'] as $esperada) {
             $this->assertContains($esperada, $etiquetas);
         }
 
-        foreach ([__('panel.apariencia.nav'), __('panel.datos.nav'), __('panel.fotos.nav'), __('panel.recomendados.nav'), 'Platillos', 'Categorías'] as $oculta) {
+        foreach ([__('panel.enlaces.servicio'), __('panel.apariencia.nav'), __('panel.datos.nav'), __('panel.fotos.nav'), __('panel.recomendados.nav'), 'Platillos', 'Categorías'] as $oculta) {
             $this->assertNotContains($oculta, $etiquetas);
         }
     }
@@ -205,7 +205,7 @@ class PanelRecortePorPlanTest extends TestCase
 
         $etiquetas = $this->etiquetasDelMenu();
 
-        foreach ([__('panel.apariencia.nav'), __('panel.datos.nav'), __('panel.fotos.nav'), __('panel.recomendados.nav'), 'Platillos', 'Categorías'] as $esperada) {
+        foreach ([__('panel.enlaces.servicio'), __('panel.apariencia.nav'), __('panel.datos.nav'), __('panel.fotos.nav'), __('panel.recomendados.nav'), 'Platillos', 'Categorías'] as $esperada) {
             $this->assertContains($esperada, $etiquetas);
         }
     }
@@ -227,7 +227,7 @@ class PanelRecortePorPlanTest extends TestCase
         [$restaurante] = $this->entrar('sitio_menu');
         $restaurante->update(['pedidos_activos' => false, 'whatsapp_pedidos' => '5215500000000', 'reservas_activas' => false, 'reservas_cupo' => 10, 'reservas_franja_min' => 60]);
 
-        Livewire::test(PedidosYReservas::class)
+        Livewire::test(AjustesDeReservasYPedidos::class)
             ->assertFormFieldExists('whatsapp_pedidos')
             ->assertFormFieldHidden('pedidos_activos')
             ->assertFormFieldHidden('reservas_activas')
@@ -253,7 +253,7 @@ class PanelRecortePorPlanTest extends TestCase
         [$restaurante] = $this->entrar('sitio_menu');
         $restaurante->update(['pedidos_activos' => true, 'whatsapp_pedidos' => '5215500000000']);
 
-        Livewire::test(PedidosYReservas::class)
+        Livewire::test(AjustesDeReservasYPedidos::class)
             ->set('data.whatsapp_pedidos', '')
             ->call('save')
             ->assertHasErrors(['data.whatsapp_pedidos' => 'required']);
@@ -265,7 +265,7 @@ class PanelRecortePorPlanTest extends TestCase
     {
         [$restaurante] = $this->entrar('sitio_menu', 'superadmin');
 
-        Livewire::test(PedidosYReservas::class)
+        Livewire::test(AjustesDeReservasYPedidos::class)
             ->assertFormFieldVisible('pedidos_activos')
             ->assertFormFieldVisible('reservas_activas')
             ->fillForm([
@@ -288,7 +288,7 @@ class PanelRecortePorPlanTest extends TestCase
     {
         $this->entrar('solo_menu', 'superadmin');
 
-        Livewire::test(PedidosYReservas::class)
+        Livewire::test(AjustesDeReservasYPedidos::class)
             ->assertFormFieldVisible('pedidos_activos')
             ->assertFormFieldHidden('reservas_activas');
     }

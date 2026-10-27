@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Pages\AjustesDeReservasYPedidos;
 use App\Filament\Pages\Inicio;
+use App\Filament\Pages\Reservas;
 use App\Models\Restaurante;
 use App\Services\BarraInferiorDelPanel;
 use Filament\Facades\Filament;
@@ -44,14 +46,14 @@ class BarraInferiorDelPanelTest extends TestCase
     public static function accesosPorRolYPlan(): array
     {
         return [
-            'propietario completo' => ['completo', 'propietario', ['inicio', 'platillos', 'pedidos', 'apariencia']],
-            'superadmin completo' => ['completo', 'superadmin', ['inicio', 'platillos', 'pedidos', 'apariencia']],
-            'propietario sitio y menú' => ['sitio_menu', 'propietario', ['inicio', 'pedidos', 'horario', 'contactos']],
-            'superadmin sitio y menú' => ['sitio_menu', 'superadmin', ['inicio', 'platillos', 'pedidos', 'apariencia']],
-            'editor' => ['completo', 'editor', ['inicio', 'platillos', 'categorias', 'horario']],
-            'gerente' => ['completo', 'gerente', ['inicio', 'platillos', 'hoy']],
-            'recepción' => ['completo', 'recepcion', ['inicio', 'hoy']],
-            'cocina' => ['completo', 'cocina', ['inicio', 'hoy']],
+            'propietario completo' => ['completo', 'propietario', ['inicio', 'platillos', 'reservas', 'apariencia']],
+            'superadmin completo' => ['completo', 'superadmin', ['inicio', 'platillos', 'reservas', 'apariencia']],
+            'propietario sitio y menú' => ['sitio_menu', 'propietario', ['inicio', 'reservas', 'horario', 'contactos']],
+            'superadmin sitio y menú' => ['sitio_menu', 'superadmin', ['inicio', 'platillos', 'reservas', 'apariencia']],
+            'editor' => ['completo', 'editor', ['inicio', 'platillos', 'reservas', 'categorias']],
+            'gerente' => ['completo', 'gerente', ['inicio', 'platillos', 'reservas']],
+            'recepción' => ['completo', 'recepcion', ['inicio', 'reservas']],
+            'cocina' => ['completo', 'cocina', ['inicio', 'pedidos']],
         ];
     }
 
@@ -100,29 +102,62 @@ class BarraInferiorDelPanelTest extends TestCase
         $this->assertStringContainsString('grid-template-columns: repeat(5, minmax(0, 1fr))', $html);
     }
 
-    public function test_el_nombre_completo_va_en_aria_label_cuando_la_etiqueta_es_corta(): void
+    public function test_reservas_apunta_a_la_pagina_de_reservas_y_no_a_los_ajustes_ni_a_panel(): void
     {
         $this->entrar('completo', 'propietario');
 
         $html = (string) FilamentView::renderHook(PanelsRenderHook::BODY_END);
 
-        $this->assertStringContainsString('<span>'.__('panel.barra.pedidos').'</span>', $html);
-        $this->assertStringContainsString('aria-label="'.__('panel.pedidos.nav').'"', $html);
-        $this->assertStringContainsString(__('panel.barra.pedidos'), __('panel.pedidos.nav'), 'El nombre accesible debe contener el texto visible.');
+        $this->assertStringContainsString('href="'.Reservas::getUrl().'"', $html);
+        $this->assertStringContainsString('<span>'.__('panel.barra.reservas').'</span>', $html);
+        $this->assertStringNotContainsString('href="'.AjustesDeReservasYPedidos::getUrl().'"', $html, 'Los ajustes quedan en "Más", no en la barra.');
+        $this->assertStringNotContainsString('href="'.route('panel').'"', $html);
+        $this->assertStringNotContainsString('aria-label="'.__('panel.enlaces.servicio').'"', $html);
+        $this->assertStringNotContainsString('mo-barra-insignia', $html, 'La barra no lleva insignia en este PR.');
     }
 
-    public function test_quien_solo_tiene_el_servicio_lo_ve_como_hoy_con_su_nombre_completo(): void
+    public function test_la_pagina_de_reservas_es_la_activa_solo_estando_en_ella(): void
     {
-        $this->entrar('completo', 'recepcion');
+        $this->entrar('completo', 'propietario');
+        $acceso = collect(app(BarraInferiorDelPanel::class)->accesos())->firstWhere('clave', 'reservas');
+
+        $this->assertFalse($acceso['activa']);
+        $this->assertSame(Reservas::getUrl(), $acceso['url']);
+        $this->assertSame($acceso['etiqueta'], $acceso['nombre'], 'El nombre accesible coincide con el texto visible.');
+    }
+
+    public function test_cocina_solo_tiene_los_pedidos_del_panel_anterior_con_su_nombre_completo(): void
+    {
+        $this->entrar('completo', 'cocina');
 
         $html = (string) FilamentView::renderHook(PanelsRenderHook::BODY_END);
 
-        $this->assertStringContainsString('<span>'.__('panel.barra.hoy').'</span>', $html);
+        $this->assertStringContainsString('<span>'.__('panel.barra.pedidos').'</span>', $html);
         $this->assertStringContainsString('aria-label="'.__('panel.enlaces.servicio').'"', $html);
         $this->assertStringContainsString('href="'.route('panel').'"', $html);
+        $this->assertStringNotContainsString('href="'.Reservas::getUrl().'"', $html);
         $this->assertSame(2 + 1, substr_count($html, '<span>'));
         $this->assertStringContainsString('grid-template-columns: repeat(3, minmax(0, 1fr))', $html);
-        $this->assertStringContainsString(strtolower(__('panel.barra.hoy')), strtolower(__('panel.enlaces.servicio')), 'El nombre accesible debe contener el texto visible.');
+        $this->assertStringContainsString(__('panel.barra.pedidos'), __('panel.enlaces.servicio'), 'El nombre accesible debe contener el texto visible.');
+    }
+
+    /**
+     * @return array<string, array{0: string, 1: string}>
+     */
+    public static function rolesConReservas(): array
+    {
+        return ['propietario' => ['completo', 'propietario'], 'superadmin' => ['completo', 'superadmin'], 'gerente' => ['completo', 'gerente'], 'recepción' => ['completo', 'recepcion'], 'propietario sitio y menú' => ['sitio_menu', 'propietario']];
+    }
+
+    #[DataProvider('rolesConReservas')]
+    public function test_quien_ve_reservas_no_recibe_ningun_enlace_a_panel_en_la_barra(string $plan, string $rol): void
+    {
+        $this->entrar($plan, $rol);
+
+        $html = (string) FilamentView::renderHook(PanelsRenderHook::BODY_END);
+
+        $this->assertStringContainsString('href="'.Reservas::getUrl().'"', $html);
+        $this->assertStringNotContainsString('href="'.route('panel').'"', $html);
     }
 
     public function test_sin_restaurante_activo_no_hay_barra(): void

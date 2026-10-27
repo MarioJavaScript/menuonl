@@ -1048,7 +1048,7 @@ class UxUiAccesibilidadTest extends TestCase
         $this->assertStringNotContainsString('Accesos rápidos', $hook);
         $this->assertStringContainsString('Inicio', $hook);
         $this->assertStringContainsString('Platillos', $hook);
-        $this->assertStringContainsString('Pedidos', $hook);
+        $this->assertStringContainsString('<span>Reservas</span>', $hook);
         $this->assertStringContainsString('Apariencia', $hook);
         $this->assertStringContainsString('Más', $hook);
         $this->assertStringContainsString('aria-label="Más opciones del menú"', $hook);
