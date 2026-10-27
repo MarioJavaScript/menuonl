@@ -777,3 +777,204 @@ html:has(.mb-banner--fijo) {
 /* Logo de Menubly (x-mb.logo): dos <img>, la de modo oscuro con `hidden`; Filament pone .dark en <html>. */
 :root.dark .mb-logo--claro { display: none; }
 :root.dark .mb-logo--oscuro { display: inline; }
+
+/* Reservas del servicio (página Reservas): tarjetas en el celular, fila en pantallas anchas. Objetivos de 44 px. */
+.mb-reservas {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.mb-reservas__vistas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.mb-reservas__vista,
+.mb-reservas__fecha input {
+    min-height: var(--mb-objetivo);
+    padding: 0 1rem;
+    border: 1px solid var(--mb-borde-control);
+    border-radius: var(--mb-r-md);
+    background-color: var(--mb-superficie);
+    color: var(--mb-tinta);
+    font-size: 0.9375rem;
+    font-weight: 600;
+}
+
+.mb-reservas__vista[aria-pressed='true'],
+.mb-reservas__fecha[data-activo='true'] input {
+    border-color: var(--mb-accion);
+    background-color: var(--mb-accion);
+    color: var(--mb-sobre-accion);
+}
+
+/* Botones y enlaces ya reciben el contorno de foco global (.fi-body :is(a, button...):focus-visible); el campo de fecha no. */
+.mb-reservas__fecha input:focus-visible {
+    box-shadow: 0 0 0 var(--mb-foco-grosor) var(--mb-foco);
+}
+
+.mb-reservas__resumen {
+    margin: 0;
+    color: var(--mb-tinta-2);
+    font-size: 0.9375rem;
+}
+
+.mb-reservas__dia {
+    margin: 0 0 0.5rem;
+    color: var(--mb-tinta-2);
+    font-family: var(--mb-fuente-titulo);
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.mb-reservas__grupo + .mb-reservas__grupo {
+    margin-top: 1rem;
+}
+
+.mb-reservas__lista {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.mb-reserva {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.5rem 0.875rem;
+    padding: 1rem;
+    border-top: 1px solid var(--mb-linea);
+    color: var(--mb-tinta);
+}
+
+.mb-reserva:first-child {
+    border-top: 0;
+}
+
+.mb-reserva__hora {
+    min-width: 3.5rem;
+    font-family: var(--mb-fuente-titulo);
+    font-size: 1.25rem;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+}
+
+.mb-reserva__datos {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    min-width: 0;
+}
+
+.mb-reserva__nombre {
+    overflow-wrap: anywhere;
+}
+
+.mb-reserva--cancelada .mb-reserva__nombre {
+    text-decoration: line-through;
+}
+
+.mb-reserva__detalle,
+.mb-reserva__rastro {
+    color: var(--mb-tinta-2);
+    font-size: 0.875rem;
+}
+
+.mb-reserva__tel {
+    display: inline-block;
+    padding: 0.75rem 0.25rem;
+    margin: -0.75rem 0;
+    color: var(--mb-accion);
+}
+
+.mb-reserva__chips,
+.mb-reserva__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    grid-column: 1 / -1;
+}
+
+.mb-reserva__chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.625rem;
+    border: 1px solid var(--mb-linea);
+    border-radius: 999px;
+    background-color: var(--mb-superficie-2);
+    color: var(--mb-tinta);
+    font-size: 0.8125rem;
+    font-weight: 600;
+}
+
+.mb-reserva__chip--pendiente {
+    border-color: var(--mb-aviso-borde);
+    background-color: var(--mb-aviso-bg);
+    color: var(--mb-aviso);
+}
+
+.mb-reserva__chip--confirmada {
+    border-color: var(--mb-info-borde);
+    background-color: var(--mb-info-bg);
+    color: var(--mb-info);
+}
+
+.mb-reserva__chip--llego {
+    border-color: var(--mb-exito-borde);
+    background-color: var(--mb-exito-bg);
+    color: var(--mb-exito);
+}
+
+.mb-reserva__chip--cancelada {
+    color: var(--mb-tinta-2);
+}
+
+.mb-reserva__acciones .fi-btn {
+    min-height: var(--mb-objetivo);
+}
+
+.mb-reservas__entrar {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--mb-objetivo);
+    font-weight: 600;
+    text-decoration: underline;
+}
+
+.mb-reservas__historial {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.mb-reservas__historial li {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.mb-reservas__historial span,
+.mb-reservas__historial-vacio {
+    color: var(--mb-tinta-2);
+    font-size: 0.875rem;
+}
+
+@media (min-width: 48rem) {
+    .mb-reserva {
+        grid-template-columns: 4.5rem minmax(0, 1fr) auto auto;
+        align-items: center;
+    }
+
+    .mb-reserva__chips,
+    .mb-reserva__acciones {
+        grid-column: auto;
+    }
+
+    .mb-reserva__acciones {
+        justify-content: flex-end;
+    }
+}

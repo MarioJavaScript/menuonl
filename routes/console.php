@@ -21,3 +21,9 @@ Schedule::command('menuonl:purgar-escaneos')
     ->timezone(RespaldoService::zonaHorariaProgramada())
     ->withoutOverlapping()
     ->onFailure(fn () => Log::error('menuonl:purgar-escaneos - El scheduler registró una purga fallida.'));
+
+Schedule::command('menuonl:purgar-reserva-eventos')
+    ->dailyAt('04:50')
+    ->timezone(RespaldoService::zonaHorariaProgramada())
+    ->withoutOverlapping()
+    ->onFailure(fn () => Log::error('menuonl:purgar-reserva-eventos - El scheduler registró una purga fallida.'));
