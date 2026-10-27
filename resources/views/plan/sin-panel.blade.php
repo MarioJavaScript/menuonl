@@ -59,6 +59,7 @@
             border-radius: 12px;
         }
         .marca { margin: 0 0 16px; }
+        .mb-logo--oscuro { display: none; }
         :root[data-apariencia="dark"] .mb-logo--claro { display: none; }
         :root[data-apariencia="dark"] .mb-logo--oscuro { display: inline; }
         @media (prefers-color-scheme: dark) {

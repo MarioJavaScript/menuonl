@@ -96,7 +96,12 @@ class LogoMenublyTest extends TestCase
         $this->assertSame(2, substr_count($html, 'alt="Marca Fija de Prueba"'));
         $this->assertStringContainsString('menubly-horizontal-color.svg?v=', $html);
         $this->assertStringContainsString('menubly-horizontal-negativo.svg?v=', $html);
-        $this->assertSame(1, substr_count($html, ' hidden'));
+        $this->assertStringNotContainsString(' hidden', $html);
+        $this->assertStringNotContainsString('loading=', $html);
+
+        $conCarga = view('components.mb.logo', ['variante' => 'wordmark', 'alto' => 16, 'lazy' => true])->render();
+        $this->assertSame(2, substr_count($conCarga, 'loading="lazy"'));
+        $this->assertStringNotContainsString(' hidden', $conCarga);
 
         $decorativo = view('components.mb.logo', ['variante' => 'wordmark', 'alto' => 16, 'decorativo' => true])->render();
         $this->assertSame(2, substr_count($decorativo, 'alt=""'));
@@ -114,9 +119,115 @@ class LogoMenublyTest extends TestCase
         $this->assertStringContainsString(':root[data-apariencia="dark"] .mb-logo--oscuro { display: inline; }', $publico);
         $this->assertMatchesRegularExpression('/@media \(prefers-color-scheme: dark\) \{\s*:root\[data-apariencia="system"\] \.mb-logo--claro/', $publico);
 
+        $this->assertReglaPorOmisionAntesDeLasOscuras($publico, [
+            ':root[data-apariencia="dark"] .mb-logo--oscuro {',
+            ':root[data-apariencia="system"] .mb-logo--oscuro {',
+        ]);
+
         $admin = (string) file_get_contents(resource_path('css/filament/admin/theme.css'));
         $this->assertStringContainsString(':root.dark .mb-logo--claro { display: none; }', $admin);
         $this->assertStringContainsString(':root.dark .mb-logo--oscuro { display: inline; }', $admin);
+        $this->assertReglaPorOmisionAntesDeLasOscuras($admin, [':root.dark .mb-logo--oscuro {']);
+    }
+
+    /**
+     * La regla por omisión (`.mb-logo--oscuro { display: none; }`) existe una vez, al inicio de línea, y va antes de cualquier
+     * regla que muestre el logo oscuro. Solo se leen fuentes versionadas: public/build no se commitea.
+     *
+     * @param  list<string>  $reglasOscuras
+     */
+    private function assertReglaPorOmisionAntesDeLasOscuras(string $css, array $reglasOscuras): void
+    {
+        $this->assertSame(1, preg_match_all('/^\.mb-logo--oscuro \{ display: none; \}$/m', $css), 'Falta la regla por omisión del logo oscuro');
+        $omision = (int) strpos($css, "\n.mb-logo--oscuro { display: none; }");
+
+        foreach ($reglasOscuras as $regla) {
+            $posicion = strpos($css, $regla);
+            $this->assertNotFalse($posicion, "Falta la regla {$regla}");
+            $this->assertLessThan($posicion, $omision, "La regla por omisión debe ir antes de {$regla}");
+        }
+    }
+
+    public function test_ningun_uso_del_logo_emite_hidden_en_las_imagenes(): void
+    {
+        $restaurante = $this->menuActivo();
+
+        $paginas = [
+            'login' => $this->get('/admin/login')->assertOk()->getContent(),
+            'portada' => $this->get('/')->assertOk()->getContent(),
+            'invitaciones' => $this->get('/invitaciones/token-que-no-existe')->getContent(),
+            'menu publico' => $this->get(route('menu.publico', ['slug' => $restaurante->slug]))->assertOk()->getContent(),
+            'plan sin panel' => view('plan.sin-panel', ['restaurantes' => ['Fonda Uno'], 'enlaceWhatsapp' => null, 'urlCerrarSesion' => '/salir'])->render(),
+            // La barra superior y la lateral de /admin pintan esta misma vista (->brandLogo(fn () => view('filament.logo'))).
+            'barra superior y lateral de /admin' => view('filament.logo')->render(),
+        ];
+
+        foreach ($paginas as $donde => $html) {
+            $imagenes = $this->imagenesDelLogo((string) $html);
+            $this->assertNotEmpty($imagenes, "No hay logo en: {$donde}");
+
+            foreach ($imagenes as $imagen) {
+                $this->assertFalse($imagen->hasAttribute('hidden'), "Un <img> del logo lleva hidden en: {$donde}");
+            }
+        }
+
+        foreach (['login', 'portada', 'invitaciones', 'plan sin panel', 'barra superior y lateral de /admin'] as $donde) {
+            foreach ($this->imagenesDelLogo((string) $paginas[$donde]) as $imagen) {
+                $this->assertFalse($imagen->hasAttribute('loading'), "El logo de cabecera no debe ser lazy en: {$donde}");
+            }
+        }
+
+        foreach ($this->imagenesDelLogo((string) $paginas['menu publico']) as $imagen) {
+            $this->assertSame('lazy', $imagen->getAttribute('loading'), 'El wordmark del pie del menú sí va lazy');
+        }
+    }
+
+    /**
+     * @return list<\DOMElement>
+     */
+    private function imagenesDelLogo(string $html): array
+    {
+        $documento = new \DOMDocument;
+        libxml_use_internal_errors(true);
+        $documento->loadHTML('<?xml encoding="utf-8"?>'.$html);
+        libxml_clear_errors();
+
+        $imagenes = [];
+        foreach ($documento->getElementsByTagName('img') as $imagen) {
+            if (in_array('mb-logo', preg_split('/\s+/', $imagen->getAttribute('class')) ?: [], true)) {
+                $imagenes[] = $imagen;
+            }
+        }
+
+        return $imagenes;
+    }
+
+    public function test_ninguna_vista_escribe_hidden_en_un_logo_ni_usa_las_clases_fuera_de_los_sitios_conocidos(): void
+    {
+        $it = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(resource_path('views'), \RecursiveDirectoryIterator::SKIP_DOTS));
+        $usos = [];
+
+        foreach ($it as $archivo) {
+            $ruta = str_replace('\\', '/', substr((string) $archivo, strlen(resource_path('views')) + 1));
+            if (! str_ends_with($ruta, '.blade.php')) {
+                continue;
+            }
+            $texto = (string) file_get_contents((string) $archivo);
+
+            $this->assertDoesNotMatchRegularExpression('/<x-mb\.logo\b[^>]*\shidden\b/', $texto, "x-mb.logo con hidden en {$ruta}");
+            $this->assertDoesNotMatchRegularExpression('/<img\b[^>]*mb-logo[^>]*\shidden\b/', $texto, "<img> del logo con hidden en {$ruta}");
+
+            if (str_contains($texto, '<x-mb.logo') || str_contains($texto, 'mb-logo--')) {
+                $usos[] = $ruta;
+            }
+        }
+
+        // Todo uso del logo o de sus clases debe estar en la prueba de páginas de arriba.
+        $conocidos = [
+            'components/mb/logo.blade.php', 'filament/logo.blade.php', 'invitaciones/layout.blade.php',
+            'menu/publico.blade.php', 'plan/sin-panel.blade.php', 'welcome.blade.php',
+        ];
+        $this->assertSame([], array_values(array_diff($usos, $conocidos)), 'Hay un uso nuevo del logo: añádelo a la prueba de páginas');
     }
 
     public function test_el_logo_aparece_en_login_portada_invitaciones_y_pie_del_menu(): void
@@ -136,6 +247,12 @@ class LogoMenublyTest extends TestCase
         $this->assertStringContainsString('brand/menubly-horizontal-color.svg', $html);
         $this->assertStringContainsString('brand/menubly-horizontal-negativo.svg', $html);
         $this->assertStringContainsString(':root[data-apariencia="dark"] .mb-logo--claro { display: none; }', $html);
+        $this->assertStringContainsString("\n        .mb-logo--oscuro { display: none; }", $html);
+        $this->assertLessThan(
+            strpos($html, ':root[data-apariencia="dark"] .mb-logo--oscuro'),
+            strpos($html, "\n        .mb-logo--oscuro { display: none; }"),
+        );
+        $this->assertStringNotContainsString(' hidden', $html);
     }
 
     public function test_los_favicons_se_declaran_con_version_en_todas_las_pestanas(): void
