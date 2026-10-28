@@ -43,7 +43,6 @@ class AppServiceProvider extends ServiceProvider
             Limit::perMinute(3)->by('reserva:min:'.$request->ip()),
             Limit::perHour(10)->by('reserva:hora:'.$request->ip().':'.$request->route('slug')),
         ]);
-        RateLimiter::for('panel-api', fn (Request $request): Limit => Limit::perMinute(240)->by($request->user()?->getAuthIdentifier() ?? $request->ip()));
 
         Categoria::observe(AuditableObserver::class);
         Producto::observe(AuditableObserver::class);

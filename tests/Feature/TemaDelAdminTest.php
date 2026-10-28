@@ -336,9 +336,10 @@ class TemaDelAdminTest extends TestCase
         $this->assertSame(['https://fonts.bunny.net'], array_values(array_unique($hosts[0])));
     }
 
-    public function test_el_menu_publico_y_el_panel_de_servicio_no_conocen_los_tokens_del_admin(): void
+    public function test_el_menu_publico_y_la_portada_no_conocen_los_tokens_del_admin(): void
     {
-        foreach (['public/css/menuonl.css', 'resources/css/panel.css', 'resources/css/app.css'] as $archivo) {
+        foreach (['public/css/menuonl.css', 'resources/css/app.css'] as $archivo) {
+            $this->assertFileExists(base_path($archivo), "Falta {$archivo}: la prueba no puede revisarlo.");
             $contenido = (string) file_get_contents(base_path($archivo));
 
             $this->assertStringNotContainsString('--mb-', $contenido, "{$archivo} no debe usar los tokens del admin.");

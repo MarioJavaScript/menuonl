@@ -5,7 +5,7 @@ Menú digital con QR (y NFC) para restaurantes, multi-restaurante.
 El comensal escanea un QR, ve el menú al instante sin instalar ninguna app y, si el restaurante lo tiene habilitado, arma un carrito y envía su pedido por WhatsApp. Cada restaurante administra sus platillos, precios, variantes, fotos, contactos y horarios desde un panel web responsivo.
 
 **Estado actual (19 de octubre de 2026) — rama `rediseno-simplicidad`:**
-- ✅ **Un solo panel, `/admin` (Filament):** reservas, menú, ajustes, equipo y fotos con recorte, WebP y tamaños responsive. El panel de servicio anterior ya no existe: `/panel` y `/panel/*` redirigen (302) a `/admin` y `/api/v1/panel/*` responde 410 (`docs/integracion-dashboard.md`, sección 22).
+- ✅ **Un solo panel, `/admin` (Filament):** reservas, menú, ajustes, equipo y fotos con recorte, WebP y tamaños responsive. El panel de servicio anterior ya no existe: `/panel` y `/panel/*` redirigen (302) a `/admin` y `/api/v1/panel/*` responde 410 (`docs/integracion-dashboard.md`, secciones 22 y 23); su código (`panel.js`, la API y sus middleware) ya se eliminó.
 - ✅ **Sitios públicos `/{slug}` (Fase 5):** sitio dinámico del restaurante con tres plantillas en Blade.
 - 🚧 **Reservas públicas:** formulario de reserva en el sitio conectado a `ReservaPublicaController` / `ReservasPublicas` (disponibilidad por horario y aforo, validación de datos de contacto, rate limiting, origen de la reserva). Aún hay pruebas pendientes de ajustar.
 - ✅ **API REST + frontend Next.js 15 (`frontend/`):** menú público desacoplado vía `/api/v1` (experimental).

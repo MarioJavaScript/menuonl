@@ -8,9 +8,8 @@ use App\Models\Restaurante;
 use App\Models\User;
 
 /**
- * Which modules of the service panel (/panel) each restaurant role can use.
+ * Which modules of the panel (/admin) each restaurant role can use: Reservas, Invitaciones, el inicio de sesión y GestionDeReservas la consultan.
  *
- * The panel hides the others and the API answers 403 to them (see ModuloPanel).
  * The restaurant's plan is a ceiling over the role: modules of the role ∩ modules of the plan (docs/planes.md, 2.4).
  */
 class PermisosPanel

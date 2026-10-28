@@ -294,10 +294,10 @@ Políticas por grupo (`app/Services/PoliticaDeContenido.php`):
 | Grupo | `script-src` | Notas |
 |---|---|---|
 | `/{slug}`, `/{slug}/menu`, `/q/*` (públicas) | `'self'` | **Sin `'unsafe-inline'` en scripts.** El único script en línea (apariencia clara/oscura) pasó a `public/js/apariencia.js`. Sin nonce a propósito: el HTML debe ser igual en cada petición para que Cloudflare lo cachee. `default-src` conserva `'unsafe-inline'` solo para estilos (hay unos 40 atributos `style=`). |
-| `/invitaciones/*` (y la ruta exacta `/panel`, hasta borrar su rama en `CabecerasDeSeguridad`) | `'self'` | Vite propio, sin scripts en línea. `connect-src 'self'`, `object-src 'none'`, `base-uri 'self'`. |
+| `/invitaciones/*` (`PoliticaDeContenido::estricta()`) | `'self'` | Vite propio, sin scripts en línea. `connect-src 'self'`, `object-src 'none'`, `base-uri 'self'`. |
 | `/admin` (Filament y Livewire) | `'self' 'nonce-…' 'unsafe-eval'` | Nonce nuevo por petición (`Vite::useCspNonce()`); Filament y Livewire lo ponen a sus scripts en línea. Estilos: `'unsafe-inline'` y `fonts.bunny.net` (la tipografía por defecto de Filament). |
 
-Nota: `/panel` ya no tiene pantalla: es una redirección 302 a `/admin` (`docs/integracion-dashboard.md`, sección 22). Esta política se conserva para `/invitaciones/*`; la rama `is('panel')` se borra con el código muerto en el PR siguiente. Las reglas de Cloudflare para `/panel*` siguen valiendo mientras exista la puerta.
+Nota: `/panel` ya no tiene pantalla: es una redirección 302 a `/admin` y recibe la política pública (`docs/integracion-dashboard.md`, secciones 22 y 23). La política estricta quedó solo para `/invitaciones/*`. Las reglas de Cloudflare para `/panel*` y `/api/v1/panel*` siguen valiendo mientras exista la puerta.
 
 - **Por qué `'unsafe-eval'` en el admin:** Alpine (versión estándar, la que usan Filament y Livewire) evalúa las expresiones de las plantillas con `new Function`. Livewire trae una versión compatible con CSP, pero las plantillas de Filament usan expresiones que esa versión no soporta (no se probó en un navegador; es la razón conocida de que Filament no la active), así que no se activó. Mientras Filament no lo soporte, `'unsafe-eval'` es lo que falta endurecer: un XSS en `/admin` aún podría ejecutar código vía `eval`, aunque ya no por scripts en línea ni atributos `on…=`.
 - **Por qué `'unsafe-inline'` sigue en estilos:** Filament y las plantillas del sitio usan atributos `style=`. El riesgo de XSS por estilos es mucho menor que por scripts.
@@ -328,8 +328,8 @@ Antes, cualquier archivo inválido en la API de `/panel` se reportaba como "dema
 | Caso | Mensaje | Dónde se detecta |
 |---|---|---|
 | Pesa más que nuestro límite (10 MB) | "La foto es demasiado grande. Prueba con una de menos de 10 MB." | `validateImage()`; regla `max` de Filament; regla de subida temporal |
-| Tipo no permitido (PDF, SVG, GIF, texto…) | "Ese tipo de archivo no se puede subir. Elige una foto en JPG, PNG o WebP." | `validateImage()` (tipo real, no la extensión); reglas `image`/`mimetypes` de Filament; API de `/panel` si no es un archivo |
-| Límite del servidor (`upload_max_filesize`, `post_max_size`) | "El servidor no pudo recibir la foto porque supera el tamaño que acepta. Prueba con una más pequeña; si ya es pequeña, avisa a soporte." | `UPLOAD_ERR_INI_SIZE/FORM_SIZE`; cuerpo mayor que `post_max_size` (Laravel responde 413 y `bootstrap/app.php` lo traduce, con el mismo formato de errores, en `/api/v1/panel/*` y en la subida temporal de Livewire) |
+| Tipo no permitido (PDF, SVG, GIF, texto…) | "Ese tipo de archivo no se puede subir. Elige una foto en JPG, PNG o WebP." | `validateImage()` (tipo real, no la extensión); reglas `image`/`mimetypes` de Filament; Livewire si no es un archivo |
+| Límite del servidor (`upload_max_filesize`, `post_max_size`) | "El servidor no pudo recibir la foto porque supera el tamaño que acepta. Prueba con una más pequeña; si ya es pequeña, avisa a soporte." | `UPLOAD_ERR_INI_SIZE/FORM_SIZE`; cuerpo mayor que `post_max_size` (Laravel responde 413 y `bootstrap/app.php` lo traduce: 422 con el mismo formato de errores en la subida temporal de Livewire, y 410 en `/api/v1/panel*`) |
 | Subida incompleta | "La foto no llegó completa. Revisa tu conexión e inténtalo de nuevo." | `UPLOAD_ERR_PARTIAL`; archivo ausente en la subida temporal |
 | Falla el archivo temporal | "No pudimos guardar tu foto en este momento. Intenta de nuevo en unos minutos; si sigue pasando, avisa a soporte." | `UPLOAD_ERR_NO_TMP_DIR/CANT_WRITE/EXTENSION`; regla `uploaded` de Filament |
 | Imagen ilegible o dañada | "No pudimos leer esa imagen. Prueba con otra en JPG, PNG o WebP." | sin cambios |

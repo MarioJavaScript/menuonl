@@ -183,7 +183,7 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
 
     /**
      * Whether the user only holds the operational role (recepcion) and is not a superadmin,
-     * so the service panel (/panel) is their home instead of the advanced admin.
+     * so their home is the Reservas page of /admin (see LoginRespuesta).
      */
     public function esSoloOperativo(): bool
     {
