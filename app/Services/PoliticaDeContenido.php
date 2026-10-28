@@ -27,6 +27,12 @@ class PoliticaDeContenido
      */
     public const MENU = "default-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; script-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'self'";
 
+    /**
+     * Portada (/) y páginas legales: sin nonce (el HTML es cacheable), sin scripts ni estilos en línea y solo recursos propios.
+     * El JSON-LD (`application/ld+json`) es un dato, no un script, así que `script-src` no lo bloquea.
+     */
+    public const LANDING = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
+
     public function publica(): string
     {
         return self::MENU;

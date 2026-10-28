@@ -49,8 +49,8 @@ class MarcaYModoClaroTest extends TestCase
     {
         $this->get('/')
             ->assertOk()
-            ->assertSee(self::MARCA.' — Menú Digital Interactivo', false)
-            ->assertSee(self::MARCA.'. Todos los derechos', false)
+            ->assertSee('<title>'.self::MARCA.' | Menú digital con QR y NFC para restaurantes</title>', false)
+            ->assertSee('&copy; '.date('Y').' '.self::MARCA, false)
             ->assertDontSee('MENUONL');
     }
 

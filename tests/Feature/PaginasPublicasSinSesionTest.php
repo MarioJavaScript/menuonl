@@ -58,6 +58,9 @@ class PaginasPublicasSinSesionTest extends TestCase
             'ruta anterior del sitio' => ['anterior-sitio'],
             'ruta anterior del menu' => ['anterior-menu'],
             'no disponible' => ['inexistente'],
+            'portada' => ['portada'],
+            'privacidad' => ['privacidad'],
+            'terminos' => ['terminos'],
         ];
     }
 
@@ -73,6 +76,9 @@ class PaginasPublicasSinSesionTest extends TestCase
             'anterior-sitio' => '/s/'.$restaurante->slug,
             'anterior-menu' => '/m/'.$restaurante->slug,
             'inexistente' => '/'.$restaurante->slug.'-no-existe',
+            'portada' => '/',
+            'privacidad' => '/privacidad',
+            'terminos' => '/terminos',
         };
 
         return $this->get($url);

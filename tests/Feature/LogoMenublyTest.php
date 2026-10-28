@@ -154,7 +154,6 @@ class LogoMenublyTest extends TestCase
 
         $paginas = [
             'login' => $this->get('/admin/login')->assertOk()->getContent(),
-            'portada' => $this->get('/')->assertOk()->getContent(),
             'invitaciones' => $this->get('/invitaciones/token-que-no-existe')->getContent(),
             'menu publico' => $this->get(route('menu.publico', ['slug' => $restaurante->slug]))->assertOk()->getContent(),
             'plan sin panel' => view('plan.sin-panel', ['restaurantes' => ['Fonda Uno'], 'enlaceWhatsapp' => null, 'urlCerrarSesion' => '/salir'])->render(),
@@ -171,7 +170,7 @@ class LogoMenublyTest extends TestCase
             }
         }
 
-        foreach (['login', 'portada', 'invitaciones', 'plan sin panel', 'barra superior y lateral de /admin'] as $donde) {
+        foreach (['login', 'invitaciones', 'plan sin panel', 'barra superior y lateral de /admin'] as $donde) {
             foreach ($this->imagenesDelLogo((string) $paginas[$donde]) as $imagen) {
                 $this->assertFalse($imagen->hasAttribute('loading'), "El logo de cabecera no debe ser lazy en: {$donde}");
             }
@@ -225,7 +224,7 @@ class LogoMenublyTest extends TestCase
         // Todo uso del logo o de sus clases debe estar en la prueba de páginas de arriba.
         $conocidos = [
             'components/mb/logo.blade.php', 'filament/logo.blade.php', 'invitaciones/layout.blade.php',
-            'menu/publico.blade.php', 'plan/sin-panel.blade.php', 'welcome.blade.php',
+            'menu/publico.blade.php', 'plan/sin-panel.blade.php',
         ];
         $this->assertSame([], array_values(array_diff($usos, $conocidos)), 'Hay un uso nuevo del logo: añádelo a la prueba de páginas');
     }

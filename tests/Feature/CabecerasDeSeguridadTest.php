@@ -189,6 +189,11 @@ class CabecerasDeSeguridadTest extends TestCase
 
         preg_match_all('#<script\b([^>]*)>#i', $respuesta->getContent(), $etiquetas);
         foreach ($etiquetas[1] as $atributos) {
+            // El JSON-LD de la portada es un dato (no se ejecuta) y la CSP no lo bloquea.
+            if (str_contains($atributos, 'type="application/ld+json"')) {
+                continue;
+            }
+
             $this->assertStringContainsString('src=', $atributos, 'No debe haber scripts en línea: <script '.$atributos.'>');
         }
     }

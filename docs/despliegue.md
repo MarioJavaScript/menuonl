@@ -18,7 +18,7 @@ Prioridad: **P0** bloquea publicar con clientes reales, **P1** antes del primer 
 
 | # | Hallazgo | Prioridad |
 |---|---|---|
-| H1 | **RESUELTO.** `/{slug}`, `/{slug}/menu`, `/q/{codigo}`, `/m/{slug}` y `/s/{slug}` ya no pasan por `EncryptCookies`, `AddQueuedCookiesToResponse`, `StartSession`, `ShareErrorsFromSession` ni `PreventRequestForgery` (`routes/web.php`, variable `$middlewareDeSesion`): sin `Set-Cookie`, sin fila en `sessions`, sin token CSRF. Conservan el límite `throttle:menu-publico` y sus `Cache-Control`. Pruebas: `tests/Feature/PaginasPublicasSinSesionTest.php`. Quedan igual con sesión: `/admin`, `/panel`, `/api/v1/panel/*`, `/invitaciones/*` y `/` (portada). Descripción original: **Las páginas públicas mandaban cookies de sesión junto con `Cache-Control: public`.** Medido en local contra `/{slug}/menu` y `/{slug}`: ambas responden con `Set-Cookie: laravel-session` y `XSRF-TOKEN` y `Cache-Control: max-age=30, public`. `/q/{codigo}` también abre sesión (medido con un código inexistente, que da 404; falta medir uno válido). Cloudflare no guarda en caché respuestas con `Set-Cookie` por defecto, así que **hoy el menú no se serviría desde el borde** (RNF-02 y RNF-09 no se cumplirían). Peor: si alguien activa "Cache Everything" para forzarlo, una cookie de sesión de un visitante podría servirse a otros. Además, con `SESSION_DRIVER=database`, cada visita anónima (y cada bot) escribe una fila en `sessions`. | P0 |
+| H1 | **RESUELTO.** `/{slug}`, `/{slug}/menu`, `/q/{codigo}`, `/m/{slug}` y `/s/{slug}` ya no pasan por `EncryptCookies`, `AddQueuedCookiesToResponse`, `StartSession`, `ShareErrorsFromSession` ni `PreventRequestForgery` (`routes/web.php`, variable `$middlewareDeSesion`): sin `Set-Cookie`, sin fila en `sessions`, sin token CSRF. Conservan el límite `throttle:menu-publico` y sus `Cache-Control`. Pruebas: `tests/Feature/PaginasPublicasSinSesionTest.php`. Quedan igual con sesión: `/admin`, `/panel`, `/api/v1/panel/*`, y `/invitaciones/*`. La portada (`/`) y las páginas legales (`/privacidad`, `/terminos`) también son sin sesión desde la landing (punto 5.1). Descripción original: **Las páginas públicas mandaban cookies de sesión junto con `Cache-Control: public`.** Medido en local contra `/{slug}/menu` y `/{slug}`: ambas responden con `Set-Cookie: laravel-session` y `XSRF-TOKEN` y `Cache-Control: max-age=30, public`. `/q/{codigo}` también abre sesión (medido con un código inexistente, que da 404; falta medir uno válido). Cloudflare no guarda en caché respuestas con `Set-Cookie` por defecto, así que **hoy el menú no se serviría desde el borde** (RNF-02 y RNF-09 no se cumplirían). Peor: si alguien activa "Cache Everything" para forzarlo, una cookie de sesión de un visitante podría servirse a otros. Además, con `SESSION_DRIVER=database`, cada visita anónima (y cada bot) escribe una fila en `sessions`. | P0 |
 | H2 | **RESUELTO.** `DemoRestauranteSeeder` ahora se niega a correr fuera de `local` y `testing` (lanza un error claro y termina con código distinto de cero; prueba en `tests/Feature/GuardaSeederDemoTest.php`). Descripción original: `DemoRestauranteSeeder` crea `superadmin@menuonl.test` con contraseña `password` y no tiene ninguna guarda de entorno.** La guarda (`local`/`testing`) está solo en `DatabaseSeeder`. Un `php artisan db:seed --class=DemoRestauranteSeeder` en producción crea un superadmin con contraseña pública. | P0 |
 | H3 | **RESUELTO.** Existe `php artisan menuonl:crear-superadmin` (ver punto 7; pruebas en `tests/Feature/CrearSuperadminTest.php`). Descripción original: **No había forma segura de crear el primer superadmin.** No existe comando; hoy habría que usar `tinker` con `forceFill(['es_superadmin' => true])` (el campo no es asignable en masa). Sin superadmin no se puede crear ningún restaurante ni invitar a nadie. | P0 |
 | H4 | **RESUELTO.** Hay configuración lista en `deploy/` (Supervisor, systemd y un `desplegar.sh` con `queue:restart`), documentada en `deploy/README.md` (cómo comprobar que el worker vive y qué hacer con trabajos fallidos), y el comando `menuonl:verificar-produccion` lo comprueba con un trabajo de prueba. Las tablas `jobs` y `failed_jobs` ya tienen migración. Descripción original: **Los trabajos en cola necesitan un proceso `queue:work`** y el repositorio no trae su configuración. `PurgarCacheRestauranteJob` (`app/Jobs/PurgarCacheRestauranteJob.php`) implementa `ShouldQueue` y `QUEUE_CONNECTION=database`: sin worker, la purga de Cloudflare al cambiar un menú o un plan **nunca se ejecuta**. | P0 |
@@ -26,7 +26,7 @@ Prioridad: **P0** bloquea publicar con clientes reales, **P1** antes del primer 
 | H6 | **RESUELTO en lo que se pudo hacer con seguridad; queda una parte documentada (punto 6.1).** Todas las respuestas llevan `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` y `Permissions-Policy`; `/admin` tiene una CSP con nonce, `/panel` e `/invitaciones` una estricta, las páginas públicas ya no permiten scripts en línea y HSTS sale solo en producción por https. **Falta:** quitar `'unsafe-eval'` del admin y `'unsafe-inline'` de los estilos. Descripción original: **La política de contenido (CSP) no protege de XSS en la práctica y solo existe en las páginas públicas.** Es `default-src 'self' 'unsafe-inline'`, que permite scripts en línea. `/admin/login` no manda CSP, `X-Frame-Options` ni `X-Content-Type-Options` (medido), y en el código solo tres controladores públicos (sitio, menú y `/q`) añaden esas cabeceras, así que `/panel` e `/invitaciones/*` tampoco las tendrían (deducido, no medido). Nadie manda HSTS. | P1 |
 | H7 | **RESUELTO.** El respaldo puede usar un usuario propio de solo lectura (`BACKUP_DB_USERNAME`/`BACKUP_DB_PASSWORD`; si faltan, cae al de la aplicación). Permisos exactos y cómo crearlo: punto 4. Descripción original: **El respaldo usa las credenciales de base de datos de la aplicación**, que según [02-seguridad.md](02-seguridad.md) §1 deberían ser solo `SELECT/INSERT/UPDATE/DELETE`. `mysqldump --single-transaction --routines --triggers` necesita más permisos, y las migraciones necesitan DDL. Hay que decidir usuarios de base de datos separados. | P1 |
 | H8 | **RESUELTO.** Existe `php artisan menuonl:restaurar-respaldo` y un procedimiento de ensayo paso a paso (punto 4). **Falta ejecutarlo contra MariaDB real.** Descripción original: **No hay comando de restauración.** Existe `menuonl:backup-verify` (descifra y revisa), pero restaurar es un procedimiento manual que nunca se ha ensayado. | P1 |
-| H9 | **El `.env.example` de la rama actual trae un número de WhatsApp que parece real** (`SOPORTE_WHATSAPP=526333345729`, cambio sin commit). El ejemplo debe ir vacío; el número real solo en el `.env` del servidor. | P1 |
+| H9 | **El `.env.example` de la rama actual trae un número de WhatsApp que parece real** (un número completo en `SOPORTE_WHATSAPP`, cambio sin commit; ya no se repite aquí). El ejemplo debe ir vacío; el número real solo en el `.env` del servidor. | P1 |
 | H10 | **RESUELTO.** Corre a las 04:00 hora de Ciudad de México (`BACKUP_TIME`, `BACKUP_TIMEZONE`; zona explícita en el programador). Descripción original: **El respaldo diario corre a las 03:00 UTC** (`routes/console.php`, `config/app.php` tiene `timezone => UTC`): son las 21:00 en Ciudad de México, en pleno servicio de cena. | P2 |
 
 ---
@@ -76,7 +76,7 @@ Se parte de `.env.example`. La columna "Producción" es el valor esperado; las m
 | `LOG_CHANNEL` / `LOG_STACK` | `stack` / `daily` | **NO** `single`: un solo archivo sin rotación crece sin límite. `LOG_DAILY_DAYS` (por defecto 14) controla cuántos se guardan. |
 | `LOG_LEVEL` | `warning` (o `error`) | **NO** `debug`. |
 | `DB_CONNECTION` | `mariadb` | **NO** `sqlite` (es el valor del ejemplo). Más `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` (descomentar). |
-| `SESSION_DRIVER` | `database` o `redis` | Las páginas públicas ya no abren sesión (H1 resuelto); solo la usan el panel, las invitaciones y la portada. |
+| `SESSION_DRIVER` | `database` o `redis` | Las páginas públicas ya no abren sesión (H1 resuelto); solo la usan el panel y las invitaciones. |
 | `SESSION_SECURE_COOKIE` / `SESSION_SAME_SITE` | `true` / `lax` | Ya vienen así en el ejemplo. `http_only` es `true` por defecto (`config/session.php`). |
 | `SESSION_LIFETIME` | 120 (min) o menos para el panel | |
 | `CACHE_STORE` | `redis` (o `database`) | Es el nivel L1 del menú (`MenuCacheService`, TTL 24 h). Con `database` funciona, solo es más lento. |
@@ -88,7 +88,8 @@ Se parte de `.env.example`. La columna "Producción" es el valor esperado; las m
 | `BCRYPT_ROUNDS` | 12 | Solo aplica si se vuelve a bcrypt. |
 | `TRUSTED_PROXIES` | rangos de Cloudflare (vienen en el ejemplo) | Vacía si **no** hay Cloudflare delante. Nunca `*` (se descarta). Revisar contra `cloudflare.com/ips-v4` e `ips-v6`. |
 | `CLOUDFLARE_ZONE_ID`, `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_DOMAIN` | reales | Token con permiso solo de "Purgar caché" en esa zona. Si faltan, la purga se omite con un `Log::info` (no falla). `CLOUDFLARE_DOMAIN` por defecto es `menuonl.com`. |
-| `SOPORTE_WHATSAPP` | solo dígitos con lada, p. ej. `5215512345678` | Vacía = la pantalla de "Tu plan no incluye el panel" no muestra el botón. El número real va solo en el `.env` del servidor (H9). |
+| `SOPORTE_WHATSAPP` | solo dígitos con lada, p. ej. `5215512345678` | **Obligatoria en producción.** Entre 10 y 15 dígitos (con lada). Vacía o inválida = la portada no pinta sus botones de WhatsApp (ni el principal) y la pantalla de "Tu plan no incluye el panel" no muestra el botón de soporte; `menuonl:verificar-produccion` falla. El número real va solo en el `.env` del servidor (H9), nunca en el repositorio. |
+| `MENU_DEMO_URL` | ruta relativa (`/la-esquina/menu`) o URL de tu propio dominio | Menú que enseña el botón "Ver un menú de ejemplo" de la portada. Cualquier otra cosa (otro dominio, usuario en la URL, espacios) se ignora. Vacía = el primer restaurante activo (el de muestra `la-esquina` si existe); sin ninguno, el botón no sale. |
 | `BACKUP_DISK`, `BACKUP_ACCESS_KEY_ID`, `BACKUP_SECRET_ACCESS_KEY`, `BACKUP_BUCKET`, `BACKUP_ENDPOINT`, `BACKUP_REGION`, `BACKUP_USE_PATH_STYLE_ENDPOINT` | bucket **privado** R2/B2 | Credenciales limitadas a ese bucket. |
 | `BACKUP_ARCHIVE_PASSWORD` | contraseña larga y aleatoria | Guardada **fuera** del servidor. Vacía = el respaldo se niega a correr. |
 | `BACKUP_RETENTION_DAYS`, `BACKUP_PREFIX`, `BACKUP_MYSQLDUMP_PATH`, `BACKUP_TIMEOUT_SECONDS` | 14 / `menuonl` / `mariadb-dump` si aplica / 1800 | |
@@ -159,11 +160,13 @@ Revisa la configuración de producción y dice con claridad qué está mal. Term
 | `APP_URL` | no empieza con `https://` |
 | `MAIL_MAILER` | es `log` o `array` |
 | `QUEUE_CONNECTION` | es `sync` o `null` |
-| `SOPORTE_WHATSAPP` | falta o no tiene dígitos |
+| `SOPORTE_WHATSAPP` | falta o no tiene entre 10 y 15 dígitos (no imprime el número) |
 | `APP_LOCALE` | no es `es` |
 | Worker de colas | encola un trabajo de prueba (`LatidoColasJob`) y ningún worker lo procesa en `--espera` segundos (15 por defecto); también falla si `CACHE_STORE` es `array` o `null`, porque entonces no se puede comprobar |
 
 Opciones: `--espera=30` (segundos de espera al worker) y `--sin-worker` (omite esa comprobación; no recomendado). Además avisa (`[AVISO]`, sin afectar el código de salida) si hay trabajos en `failed_jobs` y si el **último respaldo tiene más de 36 horas** (`BACKUP_MAX_AGE_HOURS`), no hay ninguno o no se puede leer el disco de respaldos. Es un aviso y no una falla porque en un servidor recién instalado todavía no hay respaldo; revísalo igual antes del primer cliente. Pruebas: `tests/Feature/VerificarProduccionTest.php`.
+
+También avisa (`[AVISO]`, sin fallar) si `/`, `/privacidad` o `/terminos` aún muestran texto pendiente: `[PRECIO]`, `[CONFIRMAR]`, `[CAPTURA DEL MENÚ]`, `[CAPTURA DEL PANEL]`, `[TESTIMONIO]`, `[NOMBRE Y RESTAURANTE]` o `[PÁGINA POR ESCRIBIR]` (lista en `App\Services\MarcadoresPendientes`). No publiques la landing mientras el comando los siga listando.
 
 El comando lee la configuración **tal como la ve la aplicación**: si usas `config:cache`, corre `php artisan optimize` antes de verificar.
 
@@ -248,6 +251,19 @@ Pendientes del ensayo: un respaldo con volumen real (miles de imágenes: tiempo,
 
 ## 5. Cloudflare
 
+### 5.1 Landing (`/`, `/privacidad`, `/terminos`)
+
+La portada es pública, sin sesión ni cookies, y manda `Cache-Control: public, max-age=300, stale-while-revalidate=600`. Sus recursos son del propio dominio: CSS compilado por Vite (`/build/*`, entrada `resources/css/landing.css`, con las fuentes latinas de `@fontsource`), `public/js/landing-reveal.js`, imágenes en `public/landing/img/` y `public/brand/`.
+
+Reglas de Cloudflare (Caching → Cache Rules), en este orden:
+
+| Acción | Rutas |
+|---|---|
+| **Cachear** (respetar el `Cache-Control` del origen) | `/`, `/privacidad`, `/terminos`, `/build/*`, `/brand/*`, `/js/*`, `/landing/*` |
+| **Bypass de caché** | `/admin*`, `/q/*`, `/livewire*`, `/api/*`, `/invitaciones/*` |
+
+No uses "Cache Everything" para todo el dominio. Tras cambiar el texto de la portada, purga `/`, `/privacidad` y `/terminos` (si no, tardan hasta 5 minutos más la ventana de revalidación en verse). Antes de abrir a clientes: `curl -sI https://dominio/` no debe mostrar `Set-Cookie`, y `menuonl:verificar-produccion` no debe avisar de marcadores pendientes.
+
 ### Checklist
 
 - [ ] Dominio en Cloudflare con proxy naranja y SSL/TLS **Full (strict)** con certificado de origen. La aplicación manda `Strict-Transport-Security` sola (solo en producción y por https, 7 días al principio, ver 6.1); no actives también HSTS en Cloudflare con otra duración hasta decidir cuál manda, y sube la duración por etapas.
@@ -294,6 +310,7 @@ Políticas por grupo (`app/Services/PoliticaDeContenido.php`):
 | Grupo | `script-src` | Notas |
 |---|---|---|
 | `/{slug}`, `/{slug}/menu`, `/q/*` (públicas) | `'self'` | **Sin `'unsafe-inline'` en scripts.** El único script en línea (apariencia clara/oscura) pasó a `public/js/apariencia.js`. Sin nonce a propósito: el HTML debe ser igual en cada petición para que Cloudflare lo cachee. `default-src` conserva `'unsafe-inline'` solo para estilos (hay unos 40 atributos `style=`). |
+| `/`, `/privacidad`, `/terminos` (`PoliticaDeContenido::LANDING`) | `'self'` | Landing: `default-src 'none'` y solo `'self'` en scripts, estilos, imágenes y fuentes; sin `unsafe-inline`, sin nonce, `connect-src`, `frame-src` y `form-action` en `'none'`. El JSON-LD es un dato, no un script. Los botones de WhatsApp son enlaces (navegación), no los afecta. |
 | `/invitaciones/*` (`PoliticaDeContenido::estricta()`) | `'self'` | Vite propio, sin scripts en línea. `connect-src 'self'`, `object-src 'none'`, `base-uri 'self'`. |
 | `/admin` (Filament y Livewire) | `'self' 'nonce-…' 'unsafe-eval'` | Nonce nuevo por petición (`Vite::useCspNonce()`); Filament y Livewire lo ponen a sus scripts en línea. Estilos: `'unsafe-inline'` y `fonts.bunny.net` (la tipografía por defecto de Filament). |
 

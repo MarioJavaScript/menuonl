@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\InvitacionAceptarController;
+use App\Http\Controllers\PaginaLegalController;
 use App\Http\Controllers\PortadaController;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -8,8 +9,6 @@ use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-
-Route::get('/', PortadaController::class)->name('portada');
 
 // Design system sample (DISEÑO.md): local environment only.
 if (app()->isLocal()) {
@@ -41,6 +40,11 @@ $middlewareDeSesion = [
 ];
 
 Route::middleware('throttle:menu-publico')->withoutMiddleware($middlewareDeSesion)->group(function (): void {
+    // Portada y páginas legales: estáticas para el visitante, cacheables (Cache-Control lo pone cada controlador).
+    Route::get('/', PortadaController::class)->name('portada');
+    Route::get('/privacidad', [PaginaLegalController::class, 'privacidad'])->name('privacidad');
+    Route::get('/terminos', [PaginaLegalController::class, 'terminos'])->name('terminos');
+
     Route::get('/q/{codigo}', [QrRedirectController::class, 'redirigir'])
         ->where('codigo', '.*')
         ->name('qr.redirect');

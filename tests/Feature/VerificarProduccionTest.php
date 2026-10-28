@@ -214,6 +214,29 @@ class VerificarProduccionTest extends TestCase
         $this->assertStringContainsString('1 trabajo(s) fallido(s)', $salida);
     }
 
+    public function test_un_whatsapp_con_menos_de_10_o_mas_de_15_digitos_falla_sin_imprimir_el_numero(): void
+    {
+        foreach (['123456789', '1234567890123456'] as $invalido) {
+            $this->configurarProduccionCorrecta(['menuonl.soporte_whatsapp' => $invalido]);
+
+            [$codigo, $salida] = $this->ejecutar();
+
+            $this->assertSame(1, $codigo);
+            $this->assertMatchesRegularExpression('/\[FALLA\]\s+SOPORTE_WHATSAPP/', $salida);
+            $this->assertStringNotContainsString($invalido, $salida);
+        }
+    }
+
+    public function test_los_marcadores_pendientes_de_la_portada_se_avisan_sin_cambiar_el_codigo_de_salida(): void
+    {
+        [$codigo, $salida] = $this->ejecutar();
+
+        $this->assertSame(0, $codigo);
+        $this->assertMatchesRegularExpression('/\[AVISO\]\s+\/ aún muestra texto pendiente: .*\[PRECIO\]/', $salida);
+        $this->assertMatchesRegularExpression('/\[AVISO\]\s+\/privacidad aún muestra texto pendiente: \[PÁGINA POR ESCRIBIR\]/', $salida);
+        $this->assertMatchesRegularExpression('/\[AVISO\]\s+\/terminos aún muestra texto pendiente/', $salida);
+    }
+
     public function test_ninguna_salida_imprime_secretos_ni_valores_privados(): void
     {
         $prohibidos = [...array_values(self::SECRETOS), '525512349988', 'menu-secreto.ejemplo.com'];

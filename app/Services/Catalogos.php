@@ -23,7 +23,7 @@ class Catalogos
             'admin', 'panel', 'api', 'q', 'm', 's', 'menu', 'invitaciones', 'login', 'logout', 'register',
             'storage', 'build', 'up', 'livewire', 'filament', 'vendor', 'assets', 'css', 'js', 'fonts', 'images',
             'favicon.ico', 'robots.txt', 'sitemap.xml', 'health', 'diseno', 'sanctum', 'horizon', 'telescope',
-            'dashboard', 'password', 'email', 'user', 'users', 'index.php',
+            'dashboard', 'privacidad', 'terminos', 'password', 'email', 'user', 'users', 'index.php',
         ];
     }
 
