@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Services\ContactoSoporte;
+use App\Services\MarcadoresPendientes;
 use App\Services\RespaldoService;
 use App\Services\SondaDeCola;
 use Carbon\CarbonImmutable;
@@ -41,11 +42,12 @@ class VerificarProduccionMenuonl extends Command
         $cola = (string) config('queue.default');
         $this->revisar('QUEUE_CONNECTION', ! in_array($cola, ['sync', 'null'], true), 'es "'.$cola.'"', 'es "'.$cola.'"; los trabajos no se procesarían en segundo plano');
 
-        $this->revisar('SOPORTE_WHATSAPP', app(ContactoSoporte::class)->enlaceWhatsapp() !== null, 'está definida', 'falta o no tiene dígitos; los propietarios de "Solo menú" no verían el botón de soporte');
+        $this->revisar('SOPORTE_WHATSAPP', app(ContactoSoporte::class)->numero() !== null, 'está definida', 'falta o no es válida (10 a 15 dígitos, con lada); la portada no mostraría sus botones de WhatsApp y los propietarios de "Solo menú" no verían el botón de soporte');
         $this->revisar('APP_LOCALE', config('app.locale') === 'es', 'es "es"', 'es "'.config('app.locale').'"; debe ser "es"');
 
         $this->revisarWorker($sonda, in_array($cola, ['sync', 'null'], true));
         $this->avisos();
+        $this->avisarDeMarcadoresPendientes();
         $this->avisarDelUltimoRespaldo($respaldos);
 
         $fallas = array_filter($this->resultados, fn (array $r): bool => ! $r['ok']);
@@ -129,6 +131,30 @@ class VerificarProduccionMenuonl extends Command
         $horas > $maximo
             ? $this->line("  <comment>[AVISO]</comment>  El último respaldo exitoso tiene {$horas} horas (máximo {$maximo}). Revisa storage/logs/laravel.log y el cron de schedule:run.")
             : $this->line("  <info>[OK]</info>     Último respaldo hace {$horas} horas");
+    }
+
+    /**
+     * Warns when the home page or the legal pages still show placeholder text ([PRECIO], [CONFIRMAR]...). Never changes the exit code.
+     */
+    private function avisarDeMarcadoresPendientes(): void
+    {
+        try {
+            $pendientes = app(MarcadoresPendientes::class)->enPaginasPublicas();
+        } catch (Throwable $e) {
+            $this->line('  <comment>[AVISO]</comment>  No se pudo revisar la portada ('.class_basename($e).').');
+
+            return;
+        }
+
+        if ($pendientes === []) {
+            $this->line('  <info>[OK]</info>     La portada y las páginas legales no tienen marcadores pendientes');
+
+            return;
+        }
+
+        foreach ($pendientes as $ruta => $marcadores) {
+            $this->line("  <comment>[AVISO]</comment>  {$ruta} aún muestra texto pendiente: ".implode(' ', $marcadores).'. No publiques hasta escribirlo.');
+        }
     }
 
     /**

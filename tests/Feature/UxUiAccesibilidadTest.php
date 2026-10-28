@@ -77,11 +77,9 @@ class UxUiAccesibilidadTest extends TestCase
         $response = $this->get('/');
 
         $response->assertStatus(200);
-        $response->assertViewIs('welcome');
+        $response->assertViewIs('landing.inicio');
         $response->assertSee(config('app.name'));
-        $response->assertSee('La carta digital que tus comensales recordarán.');
-        $response->assertSee('Entrar al panel');
-        $response->assertSee('Acceder a la administración');
+        $response->assertSee('Entrar');
         $response->assertSee(url('/admin'));
 
         // Cero anglicismos o residuos del scaffold predeterminado de Laravel
@@ -93,7 +91,7 @@ class UxUiAccesibilidadTest extends TestCase
         $response->assertDontSee('Register');
 
         // Atributo lang="es" en HTML para lectores de pantalla
-        $response->assertSee('lang="es"', false);
+        $response->assertSee('lang="es-MX"', false);
     }
 
     public function test_portada_publica_muestra_enlace_a_menu_de_muestra_cuando_existe_restaurante_activo(): void
@@ -107,8 +105,7 @@ class UxUiAccesibilidadTest extends TestCase
         $response = $this->get('/');
 
         $response->assertStatus(200);
-        $response->assertSee('Ver menú de muestra');
-        $response->assertSee('Explorar menú de muestra');
+        $response->assertSee('Ver un menú de ejemplo');
         $response->assertSee(url('/'.$demo->slug.'/menu'));
     }
 
@@ -1080,7 +1077,6 @@ class UxUiAccesibilidadTest extends TestCase
         RestauranteIdioma::factory()->create(['restaurante_id' => $restaurante->id, 'idioma' => 'es']);
 
         $urls = [
-            '/',
             route('menu.publico', ['slug' => $restaurante->slug]),
             route('menu.publico', ['slug' => 'no-existe']),
             route('invitaciones.mostrar', ['token' => 'token-invalido']),
@@ -1182,18 +1178,15 @@ class UxUiAccesibilidadTest extends TestCase
         $this->assertStringContainsString("document.documentElement.setAttribute('data-apariencia', modo);", $guion);
     }
 
-    public function test_portada_usa_tokens_y_no_colores_fijos_ni_consultas_en_la_vista(): void
+    public function test_la_portada_no_hace_consultas_en_la_vista_y_no_depende_de_los_tokens_del_menu(): void
     {
-        $respuesta = $this->get('/');
+        $this->get('/')->assertOk()->assertDontSee('css/menuonl.css', false);
 
-        $respuesta->assertOk();
-        $respuesta->assertSee('bg-fondo', false);
-        $respuesta->assertDontSee('#FBFBFD', false);
-        $respuesta->assertDontSee('#1D1D1F', false);
-
-        $vista = (string) file_get_contents(resource_path('views/welcome.blade.php'));
-        $this->assertStringNotContainsString('Schema::', $vista);
-        $this->assertStringNotContainsString('Restaurante::', $vista);
+        foreach (['inicio', 'layout', 'privacidad', 'terminos'] as $nombre) {
+            $vista = (string) file_get_contents(resource_path("views/landing/{$nombre}.blade.php"));
+            $this->assertStringNotContainsString('Schema::', $vista);
+            $this->assertStringNotContainsString('Restaurante::', $vista);
+        }
     }
 
     public function test_panel_tiene_marca_propia_favicon_y_boton_de_menu_publico_con_componentes_filament(): void
@@ -1265,7 +1258,8 @@ class UxUiAccesibilidadTest extends TestCase
         $vite = (string) file_get_contents(base_path('vite.config.js'));
         $this->assertStringContainsString('resources/js/menu.js', $vite);
         $this->assertSame('', trim((string) file_get_contents(resource_path('js/app.js')), '/ 
-'));
+
+'));
         $this->assertStringContainsString('@alpinejs/csp', (string) file_get_contents(resource_path('js/menu.js')));
     }
 

@@ -111,6 +111,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Menú de ejemplo de la portada
+    |--------------------------------------------------------------------------
+    |
+    | Dirección del menú que enseña el botón "Ver un menú de ejemplo": una ruta relativa ("/la-esquina/menu") o una URL del
+    | propio dominio (APP_URL). Vacía o inválida = se usa el primer restaurante activo (el de muestra "la-esquina" si existe).
+    |
+    */
+
+    'demo_url' => env('MENU_DEMO_URL'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Cabeceras de seguridad
     |--------------------------------------------------------------------------
     |
