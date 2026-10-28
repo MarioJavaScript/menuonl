@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Pages\Apariencia;
 use App\Models\Categoria;
 use App\Models\CategoriaTraduccion;
 use App\Models\Contacto;
@@ -13,14 +14,15 @@ use App\Models\ProductoVariante;
 use App\Models\Restaurante;
 use App\Models\RestauranteIdioma;
 use App\Models\Scopes\RestauranteScope;
-use App\Models\User;
 use App\Models\VarianteTraduccion;
 use App\Services\Catalogos;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Testing\TestResponse;
+use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\DataProvider;
+use Tests\Concerns\ArmaEscenarioDePanel;
 use Tests\TestCase;
 
 /**
@@ -29,7 +31,7 @@ use Tests\TestCase;
  */
 class SitioCafeteriaTest extends TestCase
 {
-    use RefreshDatabase;
+    use ArmaEscenarioDePanel, RefreshDatabase;
 
     protected function setUp(): void
     {
@@ -117,15 +119,15 @@ class SitioCafeteriaTest extends TestCase
         $this->assertSame('Cafetería', Catalogos::plantillasSitio()['e']['nombre']);
     }
 
-    public function test_el_panel_permite_elegir_la_plantilla_e(): void
+    public function test_admin_permite_elegir_la_plantilla_e(): void
     {
         $restaurante = Restaurante::factory()->create();
-        $usuario = User::factory()->create();
-        $restaurante->usuarios()->attach($usuario->id, ['rol' => 'gerente']);
+        $this->entrarAlPanel($this->crearUsuario('propietario', $restaurante), $restaurante);
 
-        $this->actingAs($usuario)
-            ->patchJson('/api/v1/panel/'.$restaurante->slug.'/ajustes', ['plantilla' => 'e'])
-            ->assertOk()->assertJsonPath('data.plantilla', 'e');
+        Livewire::test(Apariencia::class)
+            ->set('data.sitio_plantilla', 'e')
+            ->call('save')
+            ->assertHasNoErrors();
 
         $this->assertDatabaseHas('restaurantes', ['id' => $restaurante->id, 'sitio_plantilla' => 'e']);
     }

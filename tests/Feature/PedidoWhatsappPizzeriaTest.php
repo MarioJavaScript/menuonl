@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Pages\Apariencia;
 use App\Models\Categoria;
 use App\Models\CategoriaTraduccion;
 use App\Models\Contacto;
@@ -11,12 +12,14 @@ use App\Models\ProductoTraduccion;
 use App\Models\ProductoVariante;
 use App\Models\Restaurante;
 use App\Models\Scopes\RestauranteScope;
-use App\Models\User;
 use App\Models\VarianteTraduccion;
+use App\Services\AparienciaSitio;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Testing\TestResponse;
+use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\DataProvider;
+use Tests\Concerns\ArmaEscenarioDePanel;
 use Tests\TestCase;
 
 /**
@@ -25,7 +28,7 @@ use Tests\TestCase;
  */
 class PedidoWhatsappPizzeriaTest extends TestCase
 {
-    use RefreshDatabase;
+    use ArmaEscenarioDePanel, RefreshDatabase;
 
     /** Miércoles 12:00 en Ciudad de México (18:00 UTC): dentro del horario de los restaurantes de estas pruebas. */
     private const ABIERTO = '2026-10-21 18:00:00';
@@ -379,15 +382,11 @@ class PedidoWhatsappPizzeriaTest extends TestCase
         }
     }
 
-    public function test_pizzeria_aparece_como_opcion_en_el_selector_de_plantilla_del_panel(): void
+    public function test_pizzeria_aparece_como_opcion_en_el_selector_de_plantilla_de_admin(): void
     {
         $restaurante = Restaurante::factory()->create(['slug' => 'panel-e']);
-        $usuario = User::factory()->create();
-        $restaurante->usuarios()->attach($usuario->id, ['rol' => 'gerente']);
+        $this->entrarAlPanel($this->crearUsuario('propietario', $restaurante), $restaurante);
 
-        $respuesta = $this->actingAs($usuario)->getJson('/api/v1/panel/panel-e/ajustes')->assertOk();
-
-        $this->assertContains('Pizzería', collect($respuesta->json('data.plantillas'))->where('clave', 'h')->pluck('nombre')->all());
-        $this->assertStringContainsString('A.plantillas.map', (string) file_get_contents(resource_path('js/panel.js')));
+        Livewire::test(Apariencia::class)->assertSee(AparienciaSitio::fichas()['h']['nombre']);
     }
 }

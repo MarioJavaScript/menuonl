@@ -60,7 +60,6 @@ class PlanSinPanelTest extends TestCase
     {
         return [
             'admin' => ['/admin'],
-            'panel de servicio' => ['/panel'],
         ];
     }
 
@@ -95,12 +94,12 @@ class PlanSinPanelTest extends TestCase
     }
 
     #[DataProvider('rolesDelEquipo')]
-    public function test_cada_rol_del_equipo_de_un_restaurante_solo_menu_ve_la_pantalla_en_admin_y_panel(string $rol): void
+    public function test_cada_rol_del_equipo_de_un_restaurante_solo_menu_ve_la_pantalla_en_admin(string $rol): void
     {
         $restaurante = Restaurante::factory()->soloMenu()->create();
         $usuario = $this->miembro($restaurante, $rol);
 
-        foreach (['/admin', '/panel', '/admin/'.$restaurante->slug] as $ruta) {
+        foreach (['/admin', '/admin/'.$restaurante->slug] as $ruta) {
             $this->actingAs($usuario)->get($ruta)
                 ->assertForbidden()
                 ->assertSee(__('panel.plan_sin_panel.titulo'));
@@ -116,7 +115,7 @@ class PlanSinPanelTest extends TestCase
         ]);
         $propietario = $this->miembro($restaurante);
 
-        foreach (['/admin', '/panel'] as $ruta) {
+        foreach (['/admin'] as $ruta) {
             $html = $this->actingAs($propietario)->get($ruta)->getContent();
 
             $this->assertStringContainsString('Cocina de Doña Lupe', $html);
@@ -148,7 +147,7 @@ class PlanSinPanelTest extends TestCase
         $restaurante = Restaurante::factory()->soloMenu()->create();
         $propietario = $this->miembro($restaurante);
 
-        foreach (['/admin', '/panel'] as $ruta) {
+        foreach (['/admin'] as $ruta) {
             $this->actingAs($propietario)->get($ruta)
                 ->assertForbidden()
                 ->assertSee(__('panel.plan_sin_panel.sin_whatsapp'))
@@ -207,10 +206,6 @@ class PlanSinPanelTest extends TestCase
         $this->actingAs($usuario)->get('/admin/'.$completo->slug)
             ->assertOk()
             ->assertDontSee(__('panel.plan_sin_panel.titulo'));
-
-        $this->actingAs($usuario)->get('/panel')
-            ->assertOk()
-            ->assertDontSee(__('panel.plan_sin_panel.titulo'));
     }
 
     public function test_el_equipo_de_sitio_y_menu_y_de_completo_no_ve_la_pantalla(): void
@@ -219,7 +214,6 @@ class PlanSinPanelTest extends TestCase
             $usuario = $this->miembro($restaurante);
 
             $this->assertFalse($usuario->debeVerElAvisoDePlanSinPanel());
-            $this->actingAs($usuario)->get('/panel')->assertOk()->assertDontSee(__('panel.plan_sin_panel.titulo'));
             $this->actingAs($usuario)->get('/admin/'.$restaurante->slug)->assertDontSee(__('panel.plan_sin_panel.titulo'), false);
         }
     }
@@ -249,7 +243,7 @@ class PlanSinPanelTest extends TestCase
         foreach ([$inactivo, $huerfano] as $usuario) {
             $this->assertFalse($usuario->debeVerElAvisoDePlanSinPanel());
 
-            foreach (['/admin', '/panel'] as $ruta) {
+            foreach (['/admin'] as $ruta) {
                 $respuesta = $this->actingAs($usuario)->get($ruta);
 
                 if ($ruta === '/admin') {
@@ -263,7 +257,6 @@ class PlanSinPanelTest extends TestCase
     public function test_un_invitado_sigue_yendo_al_inicio_de_sesion(): void
     {
         $this->get('/admin')->assertRedirect('/admin/login');
-        $this->get('/panel')->assertRedirect('/admin/login');
     }
 
     public function test_desde_la_pantalla_se_puede_cerrar_sesion(): void
@@ -320,13 +313,13 @@ class PlanSinPanelTest extends TestCase
         $propietario = $this->miembro($restaurante);
         $superadmin = User::factory()->superadmin()->create();
 
-        $this->actingAs($propietario)->get('/panel')->assertOk();
+        $this->actingAs($propietario)->get('/admin/'.$restaurante->slug)->assertOk();
 
         $restaurante->cambiarPlan(PlanRestaurante::SoloMenu, $superadmin);
-        $this->actingAs($propietario->fresh())->get('/panel')->assertForbidden()->assertSee(__('panel.plan_sin_panel.titulo'));
+        $this->actingAs($propietario->fresh())->get('/admin/'.$restaurante->slug)->assertForbidden()->assertSee(__('panel.plan_sin_panel.titulo'));
 
         $restaurante->cambiarPlan(PlanRestaurante::Completo, $superadmin);
-        $this->actingAs($propietario->fresh())->get('/panel')->assertOk()->assertDontSee(__('panel.plan_sin_panel.titulo'));
+        $this->actingAs($propietario->fresh())->get('/admin/'.$restaurante->slug)->assertOk()->assertDontSee(__('panel.plan_sin_panel.titulo'));
     }
 
     public function test_la_pantalla_esta_pensada_para_celular_y_sin_emojis(): void

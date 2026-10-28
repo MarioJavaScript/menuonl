@@ -3,17 +3,17 @@
 namespace Tests\Feature;
 
 use App\Filament\Components\ImagenRestauranteUpload;
+use App\Filament\Pages\Apariencia;
 use App\Models\Restaurante;
 use App\Models\Scopes\RestauranteScope;
 use App\Rules\SubidaRecibida;
 use App\Services\WebpImageService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Testing\TestResponse;
 use Livewire\Features\SupportFileUploads\FileUploadConfiguration;
+use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Concerns\ArmaEscenarioDePanel;
 use Tests\TestCase;
@@ -58,17 +58,6 @@ class ErroresDeSubidaDeImagenTest extends TestCase
         return new UploadedFile($this->temporal, 'foto.jpg', 'image/jpeg', $codigo, true);
     }
 
-    private function subirAlPanel(?UploadedFile $archivo): TestResponse
-    {
-        $usuario = $this->crearUsuario('propietario', $this->restaurante);
-
-        return $this->actingAs($usuario)->post(
-            "/api/v1/panel/{$this->restaurante->slug}/ajustes/hero",
-            $archivo === null ? [] : ['imagen' => $archivo],
-            ['Accept' => 'application/json'],
-        );
-    }
-
     /**
      * @return array<string, array{0: int, 1: string}>
      */
@@ -84,47 +73,6 @@ class ErroresDeSubidaDeImagenTest extends TestCase
         ];
     }
 
-    #[DataProvider('erroresDePhp')]
-    public function test_la_api_del_panel_explica_cada_error_de_php(int $codigo, string $metodo): void
-    {
-        Log::spy();
-
-        $respuesta = $this->subirAlPanel($this->conCodigo($codigo));
-
-        $respuesta->assertUnprocessable();
-        $this->assertSame($this->servicio()->{$metodo}(), $respuesta->json('errors.imagen.0'));
-        Log::shouldHaveReceived('error')->withArgs(fn (string $mensaje, array $contexto): bool => $contexto === ['codigo_php' => $codigo])->once();
-        $this->assertSame([], Storage::disk('public')->allFiles());
-    }
-
-    #[DataProvider('erroresDePhp')]
-    public function test_ningun_mensaje_expone_rutas_ni_detalles_internos(int $codigo, string $metodo): void
-    {
-        $mensaje = (string) $this->subirAlPanel($this->conCodigo($codigo))->json('errors.imagen.0');
-
-        $this->assertNotSame('', $mensaje);
-        $this->assertStringNotContainsString(sys_get_temp_dir(), $mensaje);
-        $this->assertDoesNotMatchRegularExpression('#[\\\\/]|UPLOAD_ERR|php\.ini|upload_max|post_max|tmp#i', $mensaje);
-    }
-
-    public function test_si_el_cuerpo_supera_post_max_size_la_api_responde_con_el_mensaje_del_servidor(): void
-    {
-        $usuario = $this->crearUsuario('propietario', $this->restaurante);
-
-        $respuesta = $this->actingAs($usuario)->call(
-            'POST',
-            "/api/v1/panel/{$this->restaurante->slug}/ajustes/hero",
-            [],
-            [],
-            [],
-            ['CONTENT_LENGTH' => 5_000_000_000, 'HTTP_ACCEPT' => 'application/json'],
-        );
-
-        $respuesta->assertStatus(413);
-        $this->assertSame($this->servicio()->mensajeLimiteDelServidor(), $respuesta->json('errors.imagen.0'));
-        $this->assertSame($this->servicio()->mensajeLimiteDelServidor(), $respuesta->json('message'));
-    }
-
     public function test_si_el_cuerpo_supera_post_max_size_en_la_subida_temporal_de_livewire_responde_422_con_el_mensaje(): void
     {
         $respuesta = $this->call(
@@ -138,29 +86,6 @@ class ErroresDeSubidaDeImagenTest extends TestCase
 
         $respuesta->assertStatus(422);
         $this->assertSame($this->servicio()->mensajeLimiteDelServidor(), $respuesta->json('errors')['files.0'][0]);
-    }
-
-    public function test_sin_archivo_pide_elegir_una_imagen(): void
-    {
-        $this->subirAlPanel(null)->assertUnprocessable()->assertJsonPath('errors.imagen.0', 'Elige una imagen.');
-    }
-
-    public function test_un_archivo_de_otro_tipo_dice_que_el_tipo_no_se_puede_subir(): void
-    {
-        $pdf = UploadedFile::fake()->createWithContent('menu.pdf', "%PDF-1.4\n%%EOF\n");
-
-        $this->subirAlPanel($pdf)->assertUnprocessable()->assertJsonPath('errors.imagen.0', $this->servicio()->mensajeTipoNoPermitido());
-    }
-
-    public function test_un_archivo_que_supera_nuestro_limite_sigue_diciendo_demasiado_grande_con_el_limite_real(): void
-    {
-        config(['menuonl.imagenes.max_bytes' => 1024]);
-        $grande = UploadedFile::fake()->createWithContent('foto.jpg', str_repeat('A', 2048));
-
-        $respuesta = $this->subirAlPanel($grande);
-
-        $respuesta->assertUnprocessable();
-        $this->assertSame('La foto es demasiado grande. Prueba con una de menos de 1 KB.', $respuesta->json('errors.imagen.0'));
     }
 
     public function test_los_cinco_casos_tienen_mensajes_distintos_y_en_espanol(): void
@@ -223,5 +148,44 @@ class ErroresDeSubidaDeImagenTest extends TestCase
         $this->assertSame($this->servicio()->mensajeTipoNoPermitido(), $mensajes['image']);
         $this->assertSame($this->servicio()->mensajeTipoNoPermitido(), $mensajes['mimetypes']);
         $this->assertSame($this->servicio()->mensajeDemasiadoGrande(), $mensajes['max']);
+    }
+
+    #[DataProvider('erroresDePhp')]
+    public function test_ningun_mensaje_de_la_subida_temporal_expone_rutas_ni_detalles_internos(int $codigo, string $metodo): void
+    {
+        $validador = Validator::make(['files' => [$this->conCodigo($codigo)]], ['files.*' => FileUploadConfiguration::rules()]);
+        $mensaje = (string) $validador->errors()->first('files.0');
+
+        $this->assertNotSame('', $mensaje);
+        $this->assertStringNotContainsString(sys_get_temp_dir(), $mensaje);
+        $this->assertDoesNotMatchRegularExpression('#[\\/]|UPLOAD_ERR|php\.ini|upload_max|post_max|tmp#i', $mensaje);
+    }
+
+    public function test_un_archivo_que_supera_nuestro_limite_dice_demasiado_grande_con_el_limite_real_en_filament(): void
+    {
+        config(['menuonl.imagenes.max_bytes' => 1024]);
+        $this->entrarAlPanel($this->crearUsuario('propietario', $this->restaurante), $this->restaurante);
+
+        $formulario = Livewire::test(Apariencia::class)
+            ->set('data.logo', UploadedFile::fake()->createWithContent('foto.jpg', str_repeat('A', 2048)))
+            ->call('save');
+
+        $formulario->assertHasErrors();
+        $this->assertContains('La foto es demasiado grande. Prueba con una de menos de 1 KB.', $formulario->errors()->all());
+        $this->assertNull($this->restaurante->fresh()->logo);
+        $this->assertSame([], Storage::disk('public')->allFiles());
+    }
+
+    public function test_un_archivo_de_otro_tipo_dice_que_el_tipo_no_se_puede_subir_en_filament(): void
+    {
+        $this->entrarAlPanel($this->crearUsuario('propietario', $this->restaurante), $this->restaurante);
+
+        $formulario = Livewire::test(Apariencia::class)
+            ->set('data.portada', UploadedFile::fake()->createWithContent('menu.pdf', "%PDF-1.4\n%%EOF\n"))
+            ->call('save');
+
+        $formulario->assertHasErrors();
+        $this->assertContains($this->servicio()->mensajeTipoNoPermitido(), $formulario->errors()->all());
+        $this->assertSame([], Storage::disk('public')->allFiles());
     }
 }

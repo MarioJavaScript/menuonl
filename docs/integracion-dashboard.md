@@ -754,4 +754,44 @@ Decisión de producto: no hay pedidos de mesa. Los pedidos por WhatsApp del men�
   2. `2026_10_28_000002_eliminar_tabla_pedidos`: `dropIfExists('pedidos')`; `down()` recrea la tabla con las mismas columnas e índices, vacía.
 - **Pruebas:** `RetiroDePedidosManualesMigracionTest` (lógica de reasignación y forma final del esquema en SQLite y MariaDB; el rollback real solo corre en SQLite porque el DDL de MariaDB no es transaccional), `PanelRolesOperativosTest` (rutas 404, catálogo sin `cocina`, aviso sin membresías), `BarraInferiorDelPanelTest` y `PanelNavegacionUnificadaTest` (nadie ve enlace a `/panel`). Se eliminó `PanelApiPedidosTest`.
 - **Despliegue:** ver "Retiro de los pedidos manuales" en `docs/07-checklist-despliegue.md`.
-- **Sigue pendiente:** retiro de `/panel` y `/api/v1/panel` (PR 6); con Pedidos fuera ya no bloquea.
+- **Sigue pendiente:** retiro de `/panel` y `/api/v1/panel`: la puerta (302 y 410) está en la sección 22; el borrado del código muerto es el PR siguiente.
+
+
+## 22. La puerta del panel viejo: /panel y /api/v1/panel retirados (PR "panel-unif-puerta"): hecho
+
+Decisiones aprobadas: `/panel` redirige con 302 a `/admin`; `/api/v1/panel/*` responde 410; duplicar platillo pasa al backlog; la reducción de la foto en el navegador va en un PR aparte antes del piloto; Equipo se queda con "Quitar acceso + reinvitar"; el gerente puede perder funciones (rol no ofrecido, sin datos en producción); la promoción a propietario por API desaparece (backlog: transferir la propiedad desde superadmin).
+
+### Qué hace la puerta
+
+| Ruta | Respuesta | Notas |
+|---|---|---|
+| `/panel` y `/panel/*` (GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS) | `302` a `/admin`, `Cache-Control: no-store` | Sin sesión, cookies ni token CSRF: un formulario viejo que hace POST recibe la redirección y no un 419. No pide inicio de sesión: lo decide `/admin` (login, aviso de plan sin panel o Inicio). Nombre de ruta: `panel`. |
+| `/api/v1/panel` y `/api/v1/panel/*` (cualquier método) | `410` con `{"message":"Esta versión del panel ya no existe. Recarga la página."}`, `no-store` | Antes que cualquier 401, 403, 404, 419 o 429: no hay sesión, ni CSRF ni el límite `panel-api`. Una subida mayor que `post_max_size` también recibe 410 (el 413 de `ValidatePostSize` corre antes de las rutas; `bootstrap/app.php` lo traduce). Nombre de ruta: `api.v1.panel.retirado`. |
+
+Las rutas públicas vecinas (`/api/v1/menu/{slug}`, `/api/v1/sitio/{slug}/*`, `/{slug}`, `/{slug}/menu`) no cambian.
+
+### Dónde entra ahora cada persona
+
+- **Recepción heredada** (`User::esSoloOperativo()`): `LoginRespuesta` la manda a `Reservas::getUrl(tenant)` del primer restaurante, por nombre, donde `PermisosPanel` le da el módulo `reservas` (el plan lo permite). Si no tiene ninguno, a `/admin`, que le muestra el aviso que corresponda; no hay bucle. Quien tiene otro rol en cualquier restaurante sigue el destino normal de Filament.
+- **Plan sin panel** (`solo_menu`) y **cuenta sin membresías activas**: las atiende `AutenticaPanelAdmin` en `/admin`, igual que antes; `/panel` ya no tiene pantalla propia.
+- **Segundo factor:** la recepción no lo necesita (`requiereDosFactores()` es solo para superadmin y propietario). Quien además es propietario en otro restaurante sí lo configura; el perfil y el cierre de sesión quedan fuera de la redirección de `ExigeDosFactores`, así que no hay trampa.
+- **Inicio para la recepción:** ve "Hoy" (reservas) con enlace a Reservas y los accesos públicos (ver menú y sitio). No ve "Agregar platillo", la lista de pendientes ni "Cosas que revisar": `ProgresoDeConfiguracion` filtra por política y `ProductoResource::canCreate()` por rol. No hizo falta tocar `ResumenRestauranteWidget`.
+
+### Paridad verificada antes de quitar pruebas
+
+- **Contactos:** `ValorContactoSeguro` (/admin) rechaza todo lo que rechazaba el cierre `contactoSeguro` del panel viejo y además los caracteres de control en los bordes (el panel viejo hacía `trim()` antes de mirarlos), comillas, espacios y esquemas ajenos al tipo. Sin cambio de código: `ContactoValorSeguroParidadTest`.
+- **Imágenes:** el camino único `WebpImageService::procesar` ya era el de /admin; las defensas (tipo real, extensión, tamaño, dimensiones, políglotas, EXIF, recompresión a WebP, nombres aleatorios, ruta por restaurante, aislamiento entre restaurantes, mensajes de error) están cubiertas por `ImagenesSeguridadTest`, `ErroresDeSubidaDeImagenTest` y `AislamientoArchivosTest` con componentes Livewire de Filament.
+- **Equipo, ajustes, reservas, plan y 2FA:** `EquipoEnAdminTest`, `PanelPlanAccesoTest`, `PlanSinPanelTest`, `PlanSinPanelDosFactoresTest`, `RolesOfrecidosTest`, `ReservasPaginaTest`, `ReservasPublicasTest`, `ReservaEventosTest`, `RecepcionEnAdminTest`, `PanelRolesOperativosTest`.
+- **Diferencia conocida:** un restaurante suspendido sigue pudiendo abrir /admin; la API vieja respondía 404. El menú público sí muestra "Menú no disponible".
+
+### Pruebas
+
+`PuertaDelPanelTest` (302 y 410 por método, con y sin sesión, sin cookies ni 429, cuerpo demasiado grande), `RecepcionEnAdminTest`, `PanelRolesOperativosTest`, `PaginasPublicasSinSesionTest`, `CabecerasDeSeguridadTest`. Se eliminaron las que solo probaban endpoints retirados: `PanelApiReservasTest`, `PanelAjustesTest`, `PanelApiMenuYResumenTest`, `PanelEquipoTest`, `PanelImagenesTest`.
+
+### Lo que queda para el PR siguiente (código muerto, no se borró aquí)
+
+`resources/js/panel.js`, `panel.css`, la vista `panel/index.blade.php`, los seis controladores de `Api/V1/Panel`, `ContextoRestaurantePanel`, `ModuloPanel`, el límite `panel-api`, `PlanSinPanelController` y la rama `is('panel')` de `CabecerasDeSeguridad` (que hoy aún pone la política estricta a la ruta exacta `/panel`, sin efecto en un 302). `/invitaciones/*` conserva esa política.
+
+### Qué no se pudo verificar
+
+Ningún navegador real abrió una pestaña vieja con el `panel.js` anterior (se comprobó el contrato con pruebas HTTP); tampoco el comportamiento de Cloudflare con estas respuestas (ver `docs/despliegue.md`, punto 5).

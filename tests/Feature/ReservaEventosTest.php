@@ -186,13 +186,11 @@ class ReservaEventosTest extends TestCase
         }
     }
 
-    public function test_la_api_actual_registra_el_evento_con_origen_api(): void
+    public function test_sin_indicar_origen_el_servicio_registra_el_evento_con_origen_api(): void
     {
         $reserva = $this->reserva();
 
-        $this->actingAs($this->propietario)
-            ->patchJson("/api/v1/panel/{$this->restaurante->slug}/reservas/{$reserva->id}", ['estado' => 'confirmada'])
-            ->assertOk();
+        $this->gestion->cambiarEstado($this->propietario, $this->restaurante, $reserva, 'confirmada');
 
         $evento = ReservaEvento::where('reserva_id', $reserva->id)->firstOrFail();
         $this->assertSame(['confirmada', 'api', $this->propietario->id], [$evento->accion, $evento->origen, $evento->usuario_id]);

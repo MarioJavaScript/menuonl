@@ -13,7 +13,7 @@ use Tests\Concerns\ArmaEscenarioDePanel;
 use Tests\TestCase;
 
 /**
- * Cabeceras de seguridad por grupo de rutas (docs/despliegue.md, 6.1): admin (Filament + Livewire), panel, invitaciones,
+ * Cabeceras de seguridad por grupo de rutas (docs/despliegue.md, 6.1): admin (Filament + Livewire), invitaciones,
  * páginas públicas y API. La CSP del admin lleva nonce y sus scripts en línea lo usan; lo demás no tiene scripts en línea.
  */
 class CabecerasDeSeguridadTest extends TestCase
@@ -39,7 +39,6 @@ class CabecerasDeSeguridadTest extends TestCase
 
         return match ($grupo) {
             'admin' => $this->get($base.'/admin/login'),
-            'panel' => $this->actingAs($this->crearUsuario('propietario', $this->crearRestaurante(self::SLUG)))->get($base.'/panel'),
             'invitaciones' => $this->get($base.'/invitaciones/token-que-no-existe'),
             'menu' => $this->get($base.'/'.Restaurante::factory()->create(['slug' => self::SLUG])->slug.'/menu'),
             'portada' => $this->get($base.'/'),
@@ -56,7 +55,6 @@ class CabecerasDeSeguridadTest extends TestCase
     {
         return [
             'admin (Filament)' => ['admin', true],
-            'panel' => ['panel', true],
             'invitaciones' => ['invitaciones', true],
             'menú público' => ['menu', true],
             'portada' => ['portada', true],
@@ -173,7 +171,6 @@ class CabecerasDeSeguridadTest extends TestCase
     public static function gruposSinScriptsEnLinea(): array
     {
         return [
-            'panel' => ['panel'],
             'invitaciones' => ['invitaciones'],
             'menú público' => ['menu'],
             'portada' => ['portada'],
@@ -196,9 +193,9 @@ class CabecerasDeSeguridadTest extends TestCase
         }
     }
 
-    public function test_el_panel_tiene_una_politica_propia_y_estricta(): void
+    public function test_las_invitaciones_tienen_una_politica_propia_y_estricta(): void
     {
-        $csp = (string) $this->pedir('panel')->assertOk()->headers->get('Content-Security-Policy');
+        $csp = (string) $this->pedir('invitaciones')->headers->get('Content-Security-Policy');
 
         $this->assertSame("'self'", $this->directiva($csp, 'default-src'));
         $this->assertSame("'self'", $this->directiva($csp, 'connect-src'));
