@@ -3,21 +3,26 @@
 namespace Tests\Feature;
 
 use App\Filament\Pages\Apariencia;
+use App\Filament\Pages\FotosDelRestaurante;
+use App\Filament\Resources\Productos\Pages\EditProducto;
 use App\Models\GaleriaImagen;
+use App\Models\Producto;
 use App\Models\Restaurante;
 use App\Models\Scopes\RestauranteScope;
 use App\Services\WebpImageService;
+use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+use Livewire\Features\SupportTesting\Testable;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Concerns\ArmaEscenarioDePanel;
 use Tests\TestCase;
 
 /**
- * Hardened image uploads: one pipeline (WebpImageService::procesar) behind Filament and /panel.
+ * Hardened image uploads: one pipeline (WebpImageService::procesar) behind every Filament upload (the old /panel API is gone).
  * Valid files become random-named WebP without metadata and upright; hostile files are rejected with a
  * clear Spanish message, no server error and nothing left on disk.
  */
@@ -379,30 +384,6 @@ class ImagenesSeguridadTest extends TestCase
     }
 
     #[DataProvider('archivosHostiles')]
-    public function test_panel_rechaza_lo_mismo_que_el_servicio_con_422_y_el_mismo_mensaje(string $nombre, string $contenido, string $mensaje): void
-    {
-        $usuario = $this->crearUsuario('propietario', $this->a);
-
-        $r = $this->actingAs($usuario)->post("/api/v1/panel/{$this->a->slug}/ajustes/hero", ['imagen' => $this->subida($nombre, $contenido)], ['Accept' => 'application/json']);
-
-        $r->assertUnprocessable();
-        $this->assertSame($mensaje, $r->json('errors.imagen.0'));
-        $this->sinArchivosGuardados();
-    }
-
-    #[DataProvider('archivosHostilesConstruidos')]
-    public function test_panel_rechaza_lo_mismo_que_el_servicio_en_los_archivos_construidos(string $nombre, string $tipo, string $mensaje): void
-    {
-        $usuario = $this->crearUsuario('propietario', $this->a);
-
-        $r = $this->actingAs($usuario)->post("/api/v1/panel/{$this->a->slug}/ajustes/galeria", ['imagen' => $this->subida($nombre, $this->construir($tipo))], ['Accept' => 'application/json']);
-
-        $r->assertUnprocessable();
-        $this->assertSame($mensaje, $r->json('errors.imagen.0'));
-        $this->sinArchivosGuardados();
-    }
-
-    #[DataProvider('archivosHostiles')]
     public function test_filament_rechaza_lo_mismo_que_el_servicio_con_el_mismo_mensaje(string $nombre, string $contenido, string $mensaje): void
     {
         $this->entrarAlPanel($this->crearUsuario('propietario', $this->a), $this->a);
@@ -432,51 +413,120 @@ class ImagenesSeguridadTest extends TestCase
         $this->sinArchivosGuardados();
     }
 
-    public function test_filament_y_panel_recortan_la_portada_igual(): void
+    /**
+     * Platillo existente con su formulario de /admin abierto (Livewire), como propietario del restaurante A.
+     *
+     * @return array{0: Testable, 1: Producto}
+     */
+    private function editarPlatillo(string $rol = 'propietario'): array
     {
-        $usuario = $this->crearUsuario('propietario', $this->a);
-        $this->entrarAlPanel($usuario, $this->a);
+        $this->entrarAlPanel($this->crearUsuario($rol, $this->a), $this->a);
+        $producto = $this->crearPlatillo($this->a, $this->crearCategoria($this->a), 'Sopa', ['imagen' => null]);
 
-        Livewire::test(Apariencia::class)
+        return [Livewire::test(EditProducto::class, ['record' => $producto->getRouteKey()]), $producto];
+    }
+
+    #[DataProvider('archivosHostiles')]
+    public function test_filament_rechaza_en_la_foto_del_platillo_los_mismos_archivos_hostiles(string $nombre, string $contenido, string $mensaje): void
+    {
+        [$formulario, $producto] = $this->editarPlatillo();
+
+        $formulario->set('data.imagen', $this->subida($nombre, $contenido))->call('save');
+
+        $formulario->assertHasErrors();
+        $this->assertContains($mensaje, collect($formulario->errors()->all())->all());
+        $this->assertNull($producto->fresh()->imagen);
+        $this->sinArchivosGuardados();
+    }
+
+    #[DataProvider('archivosHostilesConstruidos')]
+    public function test_filament_rechaza_en_la_foto_del_platillo_los_archivos_construidos(string $nombre, string $tipo, string $mensaje): void
+    {
+        [$formulario, $producto] = $this->editarPlatillo();
+
+        $formulario->set('data.imagen', $this->subida($nombre, $this->construir($tipo)))->call('save');
+
+        $formulario->assertHasErrors();
+        $this->assertContains($mensaje, collect($formulario->errors()->all())->all());
+        $this->assertNull($producto->fresh()->imagen);
+        $this->sinArchivosGuardados();
+    }
+
+    public function test_la_foto_del_platillo_sube_recortada_4_5_en_webp_con_copias_dentro_del_restaurante(): void
+    {
+        [$formulario, $producto] = $this->editarPlatillo('editor');
+
+        $formulario->set('data.imagen', UploadedFile::fake()->image('plato.jpg', 2000, 1000))->call('save')->assertHasNoErrors();
+
+        $ruta = $producto->fresh()->imagen;
+        $this->assertStringStartsWith("restaurantes/{$this->a->id}/productos/", $ruta);
+        $this->assertStringEndsWith('.webp', $ruta);
+        $this->assertStringNotContainsString('plato', $ruta, 'El nombre original nunca se usa.');
+        $info = getimagesizefromstring(Storage::disk('public')->get($ruta));
+        $this->assertSame('image/webp', $info['mime']);
+        $this->assertSame(0.8, round($info[0] / $info[1], 2));
+        $this->assertSame(800, $info[0]);
+        Storage::disk('public')->assertExists($this->servicio()->rutaVariante($ruta, 480));
+    }
+
+    public function test_quitar_la_foto_del_platillo_deja_el_campo_vacio(): void
+    {
+        [$formulario, $producto] = $this->editarPlatillo();
+        $formulario->set('data.imagen', UploadedFile::fake()->image('plato.jpg', 800, 1000))->call('save')->assertHasNoErrors();
+        $this->assertNotNull($producto->fresh()->imagen);
+
+        Livewire::test(EditProducto::class, ['record' => $producto->getRouteKey()])
+            ->set('data.imagen', null)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertNull($producto->fresh()->imagen);
+    }
+
+    public function test_filament_recorta_la_portada_16_9_y_al_reemplazarla_borra_los_archivos_anteriores(): void
+    {
+        $this->entrarAlPanel($this->crearUsuario('propietario', $this->a), $this->a);
+
+        $pantalla = Livewire::test(Apariencia::class)
             ->set('data.portada', $this->subida('p.jpg', $this->bytes('jpg', 2400, 1600)))
             ->call('save')
             ->assertHasNoErrors();
-        $desdeFilament = $this->a->fresh()->portada;
-        $medidasFilament = getimagesizefromstring(Storage::disk('public')->get($desdeFilament));
+        $primera = $this->a->fresh()->portada;
+        $medidas = getimagesizefromstring(Storage::disk('public')->get($primera));
+        $this->assertSame(1.78, round($medidas[0] / $medidas[1], 2));
+        $this->assertSame(1600, $medidas[0]);
 
-        $this->actingAs($usuario)->post("/api/v1/panel/{$this->a->slug}/ajustes/hero", ['imagen' => $this->subida('p.jpg', $this->bytes('jpg', 2400, 1600))], ['Accept' => 'application/json'])->assertOk();
-        $desdePanel = $this->a->fresh()->portada;
+        // Como el navegador: con una portada ya guardada, FilePond primero quita la anterior y luego agrega la nueva.
+        $pantalla
+            ->set('data.portada', [])
+            ->set('data.portada', $this->subida('q.jpg', $this->bytes('jpg', 1800, 900)))
+            ->call('save')
+            ->assertHasNoErrors();
 
-        $this->assertNotSame($desdeFilament, $desdePanel);
-        $medidasPanel = getimagesizefromstring(Storage::disk('public')->get($desdePanel));
-        $this->assertSame([$medidasFilament[0], $medidasFilament[1]], [$medidasPanel[0], $medidasPanel[1]]);
-        $this->assertSame(1.78, round($medidasPanel[0] / $medidasPanel[1], 2));
+        $this->assertNotSame($primera, $this->a->fresh()->portada);
+        Storage::disk('public')->assertMissing($primera);
+        Storage::disk('public')->assertMissing($this->servicio()->rutaVariante($primera, 480));
     }
 
-    public function test_filament_y_panel_enderezan_la_foto_vertical_de_celular(): void
+    public function test_filament_endereza_la_foto_vertical_de_celular_en_la_galeria(): void
     {
-        $usuario = $this->crearUsuario('propietario', $this->a);
-        $this->entrarAlPanel($usuario, $this->a);
+        $this->entrarAlPanel($this->crearUsuario('propietario', $this->a), $this->a);
 
-        $this->actingAs($usuario)->post("/api/v1/panel/{$this->a->slug}/ajustes/galeria", ['imagen' => $this->subida('c.jpg', $this->jpegConOrientacion(6, 600, 400))], ['Accept' => 'application/json'])->assertCreated();
+        Livewire::test(FotosDelRestaurante::class)
+            ->callAction(TestAction::make('subir')->table(), ['fotos' => [$this->subida('c.jpg', $this->jpegConOrientacion(6, 600, 400))]])
+            ->assertHasNoActionErrors();
 
-        $ruta = GaleriaImagen::withoutGlobalScopes()->first()->imagen;
-        $info = getimagesizefromstring(Storage::disk('public')->get($ruta));
+        $info = getimagesizefromstring(Storage::disk('public')->get(GaleriaImagen::withoutGlobalScopes()->firstOrFail()->imagen));
         $this->assertSame(0.8, round($info[0] / $info[1], 2));
         $this->assertSame(400, $info[0]);
     }
 
-    public function test_un_dueno_no_sube_ni_sobrescribe_imagenes_en_otro_restaurante(): void
+    public function test_un_dueno_no_sube_ni_sobrescribe_imagenes_en_otro_restaurante_desde_filament(): void
     {
         $rutaDeB = "restaurantes/{$this->b->id}/portadas/secreta.webp";
         Storage::disk('public')->put($rutaDeB, 'contenido-de-b');
-        $usuarioDeA = $this->crearUsuario('propietario', $this->a);
+        $this->entrarAlPanel($this->crearUsuario('propietario', $this->a), $this->a);
 
-        $this->actingAs($usuarioDeA)
-            ->post("/api/v1/panel/{$this->b->slug}/ajustes/hero", ['imagen' => $this->subida('x.png', $this->bytes('png'))], ['Accept' => 'application/json'])
-            ->assertStatus(404);
-
-        $this->entrarAlPanel($usuarioDeA, $this->a);
         Livewire::test(Apariencia::class)
             ->set('data.portada', $this->subida('x.png', $this->bytes('png')))
             ->call('save')
@@ -486,5 +536,29 @@ class ImagenesSeguridadTest extends TestCase
         $this->assertNull($this->b->fresh()->portada);
         $this->assertSame([$rutaDeB], Storage::disk('public')->allFiles("restaurantes/{$this->b->id}"));
         $this->assertStringStartsWith("restaurantes/{$this->a->id}/portadas/", $this->a->fresh()->portada);
+    }
+
+    public function test_una_foto_pequena_de_la_galeria_se_guarda_con_una_sola_copia(): void
+    {
+        $this->entrarAlPanel($this->crearUsuario('propietario', $this->a), $this->a);
+
+        Livewire::test(FotosDelRestaurante::class)
+            ->callAction(TestAction::make('subir')->table(), ['fotos' => [UploadedFile::fake()->image('chica.jpg', 300, 300)]])
+            ->assertHasNoActionErrors();
+
+        $ruta = GaleriaImagen::withoutGlobalScopes()->firstOrFail()->imagen;
+        $info = getimagesizefromstring(Storage::disk('public')->get($ruta));
+        $this->assertSame([240, 300], [$info[0], $info[1]]);
+        $this->assertNull($this->servicio()->srcset($ruta));
+    }
+
+    public function test_quien_no_edita_platillos_no_abre_el_formulario_de_la_foto(): void
+    {
+        $this->entrarAlPanel($this->crearUsuario('recepcion', $this->a), $this->a);
+        $producto = $this->crearPlatillo($this->a, $this->crearCategoria($this->a), 'Sopa', ['imagen' => null]);
+
+        Livewire::test(EditProducto::class, ['record' => $producto->getRouteKey()])->assertForbidden();
+
+        $this->assertNull($producto->fresh()->imagen);
     }
 }

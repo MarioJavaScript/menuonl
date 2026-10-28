@@ -83,7 +83,6 @@ class PlanSinPanelDosFactoresTest extends TestCase
         $login->assertDontSee(__('panel.plan_sin_panel.titulo'))->assertDontSee('Fonda Sin Panel');
 
         $this->get('/admin')->assertRedirect('/admin/login');
-        $this->get('/panel')->assertRedirect('/admin/login');
         $this->assertGuest();
     }
 
@@ -118,7 +117,7 @@ class PlanSinPanelDosFactoresTest extends TestCase
 
         $this->assertAuthenticatedAs($propietario);
 
-        foreach (['/admin', '/panel'] as $ruta) {
+        foreach (['/admin'] as $ruta) {
             $this->get($ruta)
                 ->assertForbidden()
                 ->assertSee(__('panel.plan_sin_panel.titulo'))
@@ -201,6 +200,6 @@ class PlanSinPanelDosFactoresTest extends TestCase
             ->assertHasNoErrors();
 
         $this->assertAuthenticatedAs($propietario);
-        $this->get('/panel')->assertOk()->assertDontSee(__('panel.plan_sin_panel.titulo'));
+        $this->get('/admin/'.$completo->slug)->assertOk()->assertDontSee(__('panel.plan_sin_panel.titulo'));
     }
 }

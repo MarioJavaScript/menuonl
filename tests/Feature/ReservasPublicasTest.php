@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Pages\Reservas;
 use App\Models\Horario;
 use App\Models\Reserva;
 use App\Models\Restaurante;
@@ -11,11 +12,13 @@ use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\RateLimiter;
+use Livewire\Livewire;
+use Tests\Concerns\ArmaEscenarioDePanel;
 use Tests\TestCase;
 
 class ReservasPublicasTest extends TestCase
 {
-    use RefreshDatabase;
+    use ArmaEscenarioDePanel, RefreshDatabase;
 
     /** Wednesday 2026-10-21, 10:00 in Mexico City. */
     private const AHORA = '2026-10-21 10:00:00';
@@ -126,11 +129,17 @@ class ReservasPublicasTest extends TestCase
         $recepcion = User::factory()->create();
         $this->restaurante->usuarios()->attach($recepcion, ['rol' => 'recepcion']);
 
-        $lista = $this->actingAs($recepcion)->getJson('/api/v1/panel/mesa-larga/reservas')->assertOk()->assertJsonCount(1, 'data');
-        $lista->assertJsonPath('data.0.estado', 'pendiente')->assertJsonPath('data.0.origen', 'sitio')->assertJsonPath('data.0.telefono', '+52 55 9999 0000');
+        $reserva = Reserva::where('restaurante_id', $this->restaurante->id)->firstOrFail();
+        $this->assertSame(['pendiente', 'sitio'], [$reserva->estado, $reserva->origen]);
 
-        $id = $lista->json('data.0.id');
-        $this->actingAs($recepcion)->patchJson("/api/v1/panel/mesa-larga/reservas/{$id}", ['estado' => 'confirmada'])->assertOk()->assertJsonPath('data.estado', 'confirmada');
+        $this->entrarAlPanel($recepcion, $this->restaurante);
+
+        Livewire::test(Reservas::class)
+            ->assertSee('Lucía Márquez')
+            ->callAction('confirmar', arguments: ['reserva' => $reserva->id])
+            ->assertNotified('Reserva confirmada');
+
+        $this->assertSame('confirmada', $reserva->fresh()->estado);
     }
 
     public function test_rejects_invalid_guest_data(): void

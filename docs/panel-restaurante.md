@@ -1,5 +1,7 @@
 # Rediseño del panel del restaurante: auditoría y propuesta (Fase 1)
 
+> **Actualización:** el panel de servicio `/panel` y su API `/api/v1/panel` ya se retiraron; `/panel` redirige (302) a `/admin` y la API responde 410. Las referencias a `/panel` de este documento son históricas (ver `docs/integracion-dashboard.md`, sección 22).
+
 Estado: propuesta para aprobación. No se escribió código de producción. No se hizo `git add`, `commit` ni `push`.
 Alcance: panel del dueño en `/admin/{restaurante}` (Filament 5) y el panel de servicio `/panel`. Quedan fuera el sitio público, las plantillas a–h y la sección de Plataforma (Plataforma, Restaurantes, Cuentas).
 

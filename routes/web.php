@@ -1,13 +1,10 @@
 <?php
 
 use App\Http\Controllers\InvitacionAceptarController;
-use App\Http\Controllers\PlanSinPanelController;
 use App\Http\Controllers\PortadaController;
-use App\Models\User;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
-use Illuminate\Http\Request;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
@@ -56,17 +53,12 @@ Route::middleware('throttle:menu-publico')->withoutMiddleware($middlewareDeSesio
         ->where('slug', Catalogos::patronSlugRuta());
 });
 
-// Service panel (reservations, orders, menu): Blade shell + Vite assets that talk to /api/v1/panel with the login session.
-Route::middleware('auth')
-    ->get('/panel', function (Request $request) {
-        $usuario = $request->user();
-
-        if ($usuario instanceof User && $usuario->debeVerElAvisoDePlanSinPanel()) {
-            return app(PlanSinPanelController::class)->respuesta($usuario);
-        }
-
-        return response()->view('panel.index')->header('Cache-Control', 'no-store');
-    })
+// The old service panel is gone: /panel and everything under it send people to /admin (docs/integracion-dashboard.md, sección 22).
+// No session, cookies or CSRF here, so a stale form POST gets the redirect instead of a 419, and nobody sees a login first:
+// /admin decides (login, "sin panel" notice or the dashboard). 302 and no-store: the door must never be cached for good.
+Route::withoutMiddleware($middlewareDeSesion)
+    ->match(['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], '/panel/{ruta?}', fn () => redirect('/admin', 302)->header('Cache-Control', 'no-store'))
+    ->where('ruta', '.*')
     ->name('panel');
 
 Route::middleware('auth')

@@ -319,22 +319,19 @@ class PlataformaPlanTest extends TestCase
         $restaurante = Restaurante::factory()->create();
         $propietario = $this->crearUsuario('propietario', $restaurante);
         $superadmin = $this->crearUsuario('superadmin');
-        $base = "/api/v1/panel/{$restaurante->slug}";
-
         $this->get(route('sitio.publico', ['slug' => $restaurante->slug]))->assertOk();
-        $this->actingAs($propietario)->getJson($base.'/ajustes')->assertOk();
+        $this->actingAs($propietario)->get("/admin/{$restaurante->slug}")->assertOk();
 
         $restaurante->cambiarPlan(PlanRestaurante::SoloMenu, $superadmin);
 
         $this->get(route('sitio.publico', ['slug' => $restaurante->slug]))
             ->assertRedirect(route('menu.publico', ['slug' => $restaurante->slug]));
-        $this->actingAs($propietario)->getJson($base.'/ajustes')->assertNotFound();
         $this->actingAs($propietario)->get("/admin/{$restaurante->slug}")->assertForbidden();
 
         $restaurante->cambiarPlan(PlanRestaurante::Completo, $superadmin);
 
         $this->get(route('sitio.publico', ['slug' => $restaurante->slug]))->assertOk();
-        $this->actingAs($propietario)->getJson($base.'/ajustes')->assertOk();
+        $this->actingAs($propietario)->get("/admin/{$restaurante->slug}")->assertOk();
     }
 
     public function test_el_plan_de_un_restaurante_no_afecta_a_otro(): void

@@ -243,8 +243,10 @@ class PaginasPublicasSinSesionTest extends TestCase
         $this->assertGreaterThan($antes, DB::table('sessions')->count());
     }
 
-    public function test_el_panel_de_servicio_sigue_pidiendo_sesion(): void
+    public function test_la_puerta_del_panel_viejo_manda_a_admin_sin_abrir_sesion_ni_cookies(): void
     {
-        $this->get('/panel')->assertRedirect('/admin/login');
+        $respuesta = $this->get('/panel')->assertRedirect('/admin');
+
+        $this->assertSame([], $respuesta->headers->getCookies());
     }
 }

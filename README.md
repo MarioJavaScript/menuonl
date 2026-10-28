@@ -5,7 +5,7 @@ Menú digital con QR (y NFC) para restaurantes, multi-restaurante.
 El comensal escanea un QR, ve el menú al instante sin instalar ninguna app y, si el restaurante lo tiene habilitado, arma un carrito y envía su pedido por WhatsApp. Cada restaurante administra sus platillos, precios, variantes, fotos, contactos y horarios desde un panel web responsivo.
 
 **Estado actual (19 de octubre de 2026) — rama `rediseno-simplicidad`:**
-- ✅ **Panel de servicio `/panel` (Fases 1–4):** vista Blade + Vite que consume la API `/api/v1/panel` con la sesión de login. Reservas, pedidos, menú, resumen del día, roles operativos (`gerente`, `recepcion`, `cocina`) con gestión de equipo, ajustes funcionales del restaurante y subida de fotos con recorte, WebP y tamaños responsive (galería de imágenes).
+- ✅ **Un solo panel, `/admin` (Filament):** reservas, menú, ajustes, equipo y fotos con recorte, WebP y tamaños responsive. El panel de servicio anterior ya no existe: `/panel` y `/panel/*` redirigen (302) a `/admin` y `/api/v1/panel/*` responde 410 (`docs/integracion-dashboard.md`, sección 22).
 - ✅ **Sitios públicos `/{slug}` (Fase 5):** sitio dinámico del restaurante con tres plantillas en Blade.
 - 🚧 **Reservas públicas:** formulario de reserva en el sitio conectado a `ReservaPublicaController` / `ReservasPublicas` (disponibilidad por horario y aforo, validación de datos de contacto, rate limiting, origen de la reserva). Aún hay pruebas pendientes de ajustar.
 - ✅ **API REST + frontend Next.js 15 (`frontend/`):** menú público desacoplado vía `/api/v1` (experimental).
@@ -165,7 +165,7 @@ menuonl/
 │   └── seeders/            # EtiquetaSeeder y DemoRestauranteSeeder
 ├── docs/                   # Especificación, seguridad, roadmap, DDL y contrato Mitad B
 ├── resources/views/        # Vistas de menú público (/{slug}/menu), ficha imprimible QR, invitaciones y correos
-├── routes/                 # web.php (/panel, /{slug}, /{slug}/menu, /q/{codigo}, /admin/codigos-qr/{id}/descargar/{formato}, /invitaciones/{token}) y api.php (/api/v1, /api/v1/panel)
+├── routes/                 # web.php (/panel → 302 a /admin, /{slug}, /{slug}/menu, /q/{codigo}, /admin/codigos-qr/{id}/descargar/{formato}, /invitaciones/{token}) y api.php (/api/v1; /api/v1/panel responde 410)
 └── tests/Feature/          # Suite completa de pruebas automatizadas en PHPUnit (770 pruebas)
 ```
 

@@ -126,21 +126,4 @@ class RolesOfrecidosTest extends TestCase
         $this->assertSame(['inicio', 'reservas', 'menu'], PermisosPanel::modulosDe($this->crearUsuario('editor', $restaurante), $restaurante));
         $this->assertSame(['inicio', 'reservas'], PermisosPanel::modulosDe($this->crearUsuario('recepcion', $restaurante), $restaurante));
     }
-
-    /**
-     * Riesgo pendiente (docs/integracion-dashboard.md, sección 17): la API de equipo no protege al último propietario
-     * activo. Filament sí (UserPolicy::revocarAcceso). Esta prueba solo documenta el comportamiento actual.
-     */
-    public function test_hoy_el_superadmin_puede_desactivar_al_unico_propietario_activo(): void
-    {
-        $restaurante = Restaurante::factory()->create();
-        $propietario = $this->crearUsuario('propietario', $restaurante);
-        $superadmin = $this->crearUsuario('superadmin');
-        $url = "/api/v1/panel/{$restaurante->slug}/equipo/usuarios/{$propietario->id}";
-
-        $this->actingAs($propietario)->patchJson($url, ['activo' => false])->assertUnprocessable();
-        $this->actingAs($superadmin)->patchJson($url, ['activo' => false])->assertOk();
-
-        $this->assertDatabaseHas('restaurante_usuario', ['user_id' => $propietario->id, 'rol' => 'propietario', 'activo' => 0]);
-    }
 }
