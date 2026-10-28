@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Vite;
  * - SITIO y MENU (y publica()): sitio, menú y /q. Sin sesión y cacheables en Cloudflare, así que NO puede llevar nonce (el HTML sería
  *   distinto en cada petición). Por eso no hay scripts en línea: todo el JavaScript va en archivos propios y
  *   `script-src` es solo 'self'. Los estilos en línea (atributos style="") siguen permitidos.
- * - panel(): /panel e /invitaciones (Blade + Vite propios, sin scripts en línea): igual de estricta en scripts.
+ * - estricta(): /invitaciones (Blade + Vite propios, sin scripts en línea): igual de estricta en scripts.
  * - admin(): Filament + Livewire. Ambos leen el nonce de Vite::cspNonce() y se lo ponen a sus scripts en línea, así que
  *   `script-src` lleva 'nonce-…' y no 'unsafe-inline'. Alpine (estándar) evalúa expresiones con `new Function`, por lo
  *   que hace falta 'unsafe-eval'; es la parte que falta endurecer (ver el documento).
@@ -32,7 +32,7 @@ class PoliticaDeContenido
         return self::MENU;
     }
 
-    public function panel(): string
+    public function estricta(): string
     {
         return implode('; ', [
             "default-src 'self'",

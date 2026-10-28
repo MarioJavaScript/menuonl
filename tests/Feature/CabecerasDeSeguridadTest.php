@@ -203,6 +203,14 @@ class CabecerasDeSeguridadTest extends TestCase
         $this->assertStringContainsString("object-src 'none'", $csp);
     }
 
+    public function test_una_invitacion_conserva_exactamente_la_politica_estricta(): void
+    {
+        $this->assertSame(
+            app(PoliticaDeContenido::class)->paraEntorno(app(PoliticaDeContenido::class)->estricta()),
+            $this->pedir('invitaciones')->headers->get('Content-Security-Policy'),
+        );
+    }
+
     public function test_las_paginas_publicas_conservan_su_politica_y_el_script_de_apariencia_es_un_archivo(): void
     {
         $respuesta = $this->pedir('menu')->assertOk();
@@ -295,14 +303,14 @@ class CabecerasDeSeguridadTest extends TestCase
 
         try {
             $politicas = app(PoliticaDeContenido::class);
-            $desarrollo = $politicas->paraEntorno($politicas->panel());
+            $desarrollo = $politicas->paraEntorno($politicas->estricta());
 
             $this->assertStringContainsString("script-src 'self' http://localhost:5173", $desarrollo);
             $this->assertStringContainsString('ws://localhost:5173', $this->directiva($desarrollo, 'connect-src'));
 
             $this->app->instance('env', 'production');
 
-            $this->assertSame($politicas->panel(), $politicas->paraEntorno($politicas->panel()));
+            $this->assertSame($politicas->estricta(), $politicas->paraEntorno($politicas->estricta()));
         } finally {
             @unlink($caliente);
         }

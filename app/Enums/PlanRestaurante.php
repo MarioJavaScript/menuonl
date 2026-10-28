@@ -34,7 +34,7 @@ enum PlanRestaurante: string implements HasColor, HasLabel
     }
 
     /**
-     * Capacidades del plan para quien no es superadmin. Sitio y menú: "servicio" se limita en /panel
+     * Capacidades del plan para quien no es superadmin. Sitio y menú: "servicio" se limita
      * al módulo de reservas (D2); QR y equipo los gestiona solo el superadmin (D3, D4).
      */
     public function incluye(Capacidad $capacidad): bool

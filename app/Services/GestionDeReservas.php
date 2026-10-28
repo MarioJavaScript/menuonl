@@ -29,8 +29,8 @@ use InvalidArgumentException;
  * single UPDATE guarded by it, and a mismatch throws ConflictoDeReserva instead of silently overwriting.
  *
  * History: every write that changes something also stores a ReservaEvento (who, what, when, from where) in the same
- * transaction. `$origen` says where the call came from: "api" (the default, the panel API), "panel" or "admin" (the
- * Filament page). Events keep state, time and date changes only; never name, phone, note or party size.
+ * transaction. `$origen` says where the call came from: "api" (the default; the old panel API is gone, the value stays for
+ * existing history rows), "panel" or "admin" (the Filament page). Events keep state, time and date changes only; never name, phone, note or party size.
  */
 class GestionDeReservas
 {
@@ -72,7 +72,7 @@ class GestionDeReservas
     }
 
     /**
-     * Create a reservation: confirmed by default, today by default (restaurant time zone), origin "panel".
+     * Create a reservation: confirmed by default, today by default (restaurant time zone), origin given by the caller.
      *
      * @param  array<string, mixed>  $datos
      */
@@ -202,7 +202,7 @@ class GestionDeReservas
     }
 
     /**
-     * The module "reservas" must be open for the role and the plan (what the ModuloPanel middleware checks on the API).
+     * The module "reservas" must be open for the role and the plan (the same rule the Reservas page applies).
      */
     private function autorizarModulo(User $actor, Restaurante $restaurante): void
     {

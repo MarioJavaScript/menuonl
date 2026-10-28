@@ -788,10 +788,21 @@ Las rutas públicas vecinas (`/api/v1/menu/{slug}`, `/api/v1/sitio/{slug}/*`, `/
 
 `PuertaDelPanelTest` (302 y 410 por método, con y sin sesión, sin cookies ni 429, cuerpo demasiado grande), `RecepcionEnAdminTest`, `PanelRolesOperativosTest`, `PaginasPublicasSinSesionTest`, `CabecerasDeSeguridadTest`. Se eliminaron las que solo probaban endpoints retirados: `PanelApiReservasTest`, `PanelAjustesTest`, `PanelApiMenuYResumenTest`, `PanelEquipoTest`, `PanelImagenesTest`.
 
-### Lo que queda para el PR siguiente (código muerto, no se borró aquí)
+### Lo que quedaba para el PR siguiente
 
-`resources/js/panel.js`, `panel.css`, la vista `panel/index.blade.php`, los seis controladores de `Api/V1/Panel`, `ContextoRestaurantePanel`, `ModuloPanel`, el límite `panel-api`, `PlanSinPanelController` y la rama `is('panel')` de `CabecerasDeSeguridad` (que hoy aún pone la política estricta a la ruta exacta `/panel`, sin efecto en un 302). `/invitaciones/*` conserva esa política.
+Hecho: ver la sección 23.
 
 ### Qué no se pudo verificar
 
 Ningún navegador real abrió una pestaña vieja con el `panel.js` anterior (se comprobó el contrato con pruebas HTTP); tampoco el comportamiento de Cloudflare con estas respuestas (ver `docs/despliegue.md`, punto 5).
+
+## 23. Limpieza del código muerto del panel viejo (PR "panel-unif-limpieza"): hecho
+
+Sin cambiar nada vivo: solo se borró lo que la puerta (sección 22) dejó sin uso.
+
+- **Borrado:** `resources/js/panel.js`, `resources/css/panel.css`, `resources/views/panel/index.blade.php`, los seis controladores de `app/Http/Controllers/Api/V1/Panel/`, `app/Http/Resources/Api/V1/Panel/ReservaResource.php`, los middleware `ModuloPanel` y `ContextoRestaurantePanel` (y su `prependToPriorityList`), el limitador `panel-api` y las dos entradas de `vite.config.js`. En `public/build` ya no salen `panel-*.js` ni `panel-*.css` (unos 34 KB de 1,2 MB).
+- **Renombrado:** `PoliticaDeContenido::panel()` pasa a `estricta()`. `CabecerasDeSeguridad` la aplica solo a `/invitaciones` y `/invitaciones/*`; la redirección de `/panel` recibe ahora la política pública, sin efecto práctico en un 302.
+- **Manejador de excepciones (`bootstrap/app.php`):** un solo renderer de `PostTooLargeException`. Para `/api/v1/panel` y `/api/v1/panel/*` responde 410 con el mensaje de la puerta (ValidatePostSize corre antes de enrutar, por eso hace falta); para el resto conserva el 413 y el 422 de `livewire*/upload-file`. Se quitó la rama de `TokenMismatchException`: la API no usa CSRF.
+- **Se conserva a propósito:** la puerta (rutas `panel` y `api.v1.panel.retirado`), `PlanSinPanelController` (lo usa `AutenticaPanelAdmin`), los slugs reservados `panel` y `api`, `PermisosPanel` (Reservas, Invitaciones, inicio de sesión, `GestionDeReservas`), el origen `api` de `ReservaEvento::ORIGENES` (hay historial con ese valor) y `Capacidad::Servicio` con su texto en `lang/es/panel.php`, que sigue nombrando `/panel` y queda anotado como pendiente de revisar con las reglas de plan.
+- **Pruebas:** `LimpiezaDelPanelViejoTest` (ningún archivo referencia lo borrado, cada entrada de Vite existe, `route:list` sin controladores ni middleware retirados, solo las dos rutas de la puerta, invitaciones con política estricta, puerta igual). `TemaDelAdminTest` ya no lee `panel.css` y falla si un archivo de su lista no existe.
+- **Hallazgo aparte, sin tocar:** `php artisan config:cache` falla (también en `main`) con "livewire.temporary_file_upload.rules.0 is non-serializable", porque `AppServiceProvider::boot()` asigna `new SubidaRecibida` en la configuración en tiempo de ejecución. `route:cache` sí funciona. Como `docs/despliegue.md` pide `php artisan optimize`, hay que corregirlo antes de desplegar (por ejemplo, referenciar la regla por clase o por cadena y no por instancia).

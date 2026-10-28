@@ -9,6 +9,7 @@ use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Exceptions\PostTooLargeException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
@@ -80,14 +81,14 @@ class PuertaDelPanelTest extends TestCase
     }
 
     /**
-     * La rama is('panel') de CabecerasDeSeguridad sigue viva hasta el PR que borra el código muerto: en la ruta exacta /panel la
-     * redirección aún lleva esa política (sin efecto en un 302 sin documento); en las demás rutas del panel no lleva ninguna.
+     * La política estricta quedó solo para /invitaciones: ni /panel ni sus subrutas la llevan.
      */
-    public function test_las_rutas_internas_del_panel_viejo_no_llevan_la_politica_del_panel(): void
+    #[DataProvider('rutasDelPanel')]
+    public function test_la_puerta_no_lleva_la_politica_estricta_de_las_invitaciones(string $ruta): void
     {
-        $respuesta = $this->get('/panel/reservas');
+        $respuesta = $this->get($ruta);
 
-        $this->assertNotSame(app(PoliticaDeContenido::class)->panel(), $respuesta->headers->get('Content-Security-Policy'));
+        $this->assertNotSame(app(PoliticaDeContenido::class)->estricta(), $respuesta->headers->get('Content-Security-Policy'));
         $this->assertNull($respuesta->headers->get('Content-Security-Policy-Report-Only'));
     }
 
@@ -164,6 +165,13 @@ class PuertaDelPanelTest extends TestCase
 
         $subida = Request::create('/livewire/upload-file', 'POST', server: ['HTTP_ACCEPT' => 'application/json']);
         $this->assertSame(422, app(ExceptionHandler::class)->render($subida, new PostTooLargeException)->getStatusCode());
+    }
+
+    public function test_una_ruta_que_lanza_la_excepcion_conserva_el_413_fuera_de_la_api_vieja(): void
+    {
+        Route::post('/prueba/cuerpo-grande', fn () => throw new PostTooLargeException);
+
+        $this->postJson('/prueba/cuerpo-grande')->assertStatus(413);
     }
 
     public function test_un_cuerpo_demasiado_grande_recibe_410_por_http_con_cualquier_php_ini(): void

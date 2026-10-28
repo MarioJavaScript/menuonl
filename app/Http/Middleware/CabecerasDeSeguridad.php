@@ -44,7 +44,7 @@ class CabecerasDeSeguridad
         if ($this->esHtml($respuesta)) {
             $politica = $respuesta->headers->get('Content-Security-Policy') ?? match (true) {
                 $nonce !== null => $this->politicas->admin($nonce),
-                $request->is('panel', 'invitaciones', 'invitaciones/*') => $this->politicas->panel(),
+                $request->is('invitaciones', 'invitaciones/*') => $this->politicas->estricta(),
                 default => $this->politicas->publica(),
             };
 
