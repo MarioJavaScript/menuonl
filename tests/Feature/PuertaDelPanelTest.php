@@ -5,7 +5,10 @@ namespace Tests\Feature;
 use App\Models\Restaurante;
 use App\Models\User;
 use App\Services\PoliticaDeContenido;
+use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Exceptions\PostTooLargeException;
+use Illuminate\Http\Request;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
@@ -137,7 +140,33 @@ class PuertaDelPanelTest extends TestCase
         }
     }
 
-    public function test_un_cuerpo_demasiado_grande_recibe_410_y_no_413(): void
+    /**
+     * No depende del php.ini: se le entrega al manejador la excepción que lanzaría ValidatePostSize.
+     */
+    public function test_el_manejador_responde_410_a_un_cuerpo_demasiado_grande_en_la_api_vieja(): void
+    {
+        foreach (['POST', 'PUT', 'PATCH', 'DELETE'] as $metodo) {
+            foreach (['/api/v1/panel', '/api/v1/panel/la-esquina/imagenes/portada'] as $ruta) {
+                $peticion = Request::create($ruta, $metodo);
+                $respuesta = app(ExceptionHandler::class)->render($peticion, new PostTooLargeException);
+
+                $this->assertSame(410, $respuesta->getStatusCode(), "{$metodo} {$ruta}");
+                $this->assertSame(['message' => self::MENSAJE], json_decode((string) $respuesta->getContent(), true));
+            }
+        }
+    }
+
+    public function test_el_manejador_no_cambia_el_413_fuera_de_la_api_vieja(): void
+    {
+        $respuesta = app(ExceptionHandler::class)->render(Request::create('/admin/algo', 'POST'), new PostTooLargeException);
+
+        $this->assertSame(413, $respuesta->getStatusCode());
+
+        $subida = Request::create('/livewire/upload-file', 'POST', server: ['HTTP_ACCEPT' => 'application/json']);
+        $this->assertSame(422, app(ExceptionHandler::class)->render($subida, new PostTooLargeException)->getStatusCode());
+    }
+
+    public function test_un_cuerpo_demasiado_grande_recibe_410_por_http_con_cualquier_php_ini(): void
     {
         $this->call('POST', '/api/v1/panel/la-esquina/imagenes/portada', [], [], [], [
             'CONTENT_LENGTH' => 4 * 1024 * 1024 * 1024,
