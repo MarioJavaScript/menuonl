@@ -86,20 +86,21 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     public function restaurantesSinPanelPorPlan(): Collection
     {
         return $this->restaurantes()->wherePivot('activo', true)->get()
-            ->reject(fn (Restaurante $restaurante): bool => $restaurante->incluye(Capacidad::Panel))
+            ->reject(fn (Restaurante $restaurante): bool => $restaurante->estaPausado() || $restaurante->incluye(Capacidad::Panel))
             ->sortBy('nombre')
             ->values();
     }
 
     /**
-     * Active restaurants whose plan lets their team into the panel (Solo menú does not).
+     * Active memberships in restaurants whose team can use the panel: the plan includes it (Solo menú does not) and the
+     * restaurant is not paused (see Restaurante::permiteElPanelAlEquipo()).
      *
      * @return Collection<int, Restaurante>
      */
     private function restaurantesConPanel(): Collection
     {
         return $this->restaurantes()->wherePivot('activo', true)->get()
-            ->filter(fn (Restaurante $restaurante): bool => $restaurante->incluye(Capacidad::Panel))
+            ->filter(fn (Restaurante $restaurante): bool => $restaurante->permiteElPanelAlEquipo())
             ->values();
     }
 
@@ -131,7 +132,7 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
         }
 
         return $this->isSuperadmin()
-            || ($tenant->incluye(Capacidad::Panel) && $this->restaurantes()->wherePivot('activo', true)->whereKey($tenant->getKey())->exists());
+            || ($tenant->permiteElPanelAlEquipo() && $this->restaurantes()->wherePivot('activo', true)->whereKey($tenant->getKey())->exists());
     }
 
     /**
