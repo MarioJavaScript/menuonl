@@ -290,6 +290,16 @@ No uses "Cache Everything" para todo el dominio. Tras cambiar el texto de la por
 
 ---
 
+### 5.2 Restaurante suspendido (fuera de servicio): caché y worker
+
+Lo activa y desactiva solo el equipo desde Plataforma (`estado = suspendido`). Al suspender, el equipo del restaurante (propietario, gerente, editor, recepción) pierde el panel y ve un aviso neutro de "fuera de servicio" con el contacto de soporte (`SOPORTE_WHATSAPP`); el superadmin entra a todo.
+
+- **Origen:** el menú, el sitio, los QR, la API y las reservas del restaurante responden 404 en el mismo instante; no dependen de ninguna caché.
+- **Cloudflare:** guardar el restaurante dispara `PurgarCacheRestauranteJob`, que borra `/{slug}/menu` y `/{slug}` en el borde. Hasta que ese trabajo corre, el borde puede seguir sirviendo la copia anterior: hasta `max-age=30` s más `stale-while-revalidate=86400` (24 h) si la purga no llega a ejecutarse.
+- **Worker de colas:** la purga va por la cola (`QUEUE_CONNECTION=database`). Con el worker caído la suspensión no llega al borde y el menú público puede seguir visible hasta 24 h. Antes de suspender (o si hay urgencia), comprueba el worker con `php artisan menuonl:verificar-produccion` y purga a mano en Cloudflare si hace falta.
+- **Sesión abierta:** un miembro con la sesión abierta recibe el 404 de Filament en su siguiente acción y el aviso en la siguiente carga de página.
+- **Invitaciones:** Plataforma no crea ni reenvía invitaciones de un restaurante suspendido; hay que reactivarlo primero.
+
 ## 6. Seguridad pendiente
 
 ### 6.1 Política de contenido (CSP) y cabeceras (H6, resuelto)

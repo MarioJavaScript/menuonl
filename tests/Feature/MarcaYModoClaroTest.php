@@ -161,9 +161,9 @@ class MarcaYModoClaroTest extends TestCase
         $this->assertMatchesRegularExpression('/filament:theme:mode.{0,3}\)\s*\?\?\s*\S{0,10}light/', $html);
     }
 
-    public function test_la_pantalla_de_plan_sin_panel_se_ve_en_claro_y_respeta_la_preferencia(): void
+    public function test_las_pantallas_de_aviso_de_acceso_se_ven_en_claro_y_respetan_la_preferencia(): void
     {
-        $vista = str_replace("\r\n", "\n", (string) file_get_contents(resource_path('views/plan/sin-panel.blade.php')));
+        $vista = str_replace("\r\n", "\n", (string) file_get_contents(resource_path('views/components/layout/aviso-de-acceso.blade.php')));
 
         $this->assertStringContainsString('content="light"', $vista);
         $this->assertStringContainsString(':root[data-apariencia="dark"]', $vista);

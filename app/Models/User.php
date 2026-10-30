@@ -79,6 +79,32 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     }
 
     /**
+     * Whether this user should be shown the "account out of service" screen: an active, non-superadmin account with
+     * no restaurant it can enter and at least one active membership in a paused restaurant. It wins over the
+     * "your plan has no panel" screen. Someone who can still enter another restaurant goes straight in.
+     */
+    public function debeVerElAvisoDeCuentaPausada(): bool
+    {
+        return $this->activo
+            && ! $this->isSuperadmin()
+            && $this->restaurantesConPanel()->isEmpty()
+            && $this->restaurantesPausados()->isNotEmpty();
+    }
+
+    /**
+     * Active memberships in paused restaurants, by name for the notice.
+     *
+     * @return Collection<int, Restaurante>
+     */
+    public function restaurantesPausados(): Collection
+    {
+        return $this->restaurantes()->wherePivot('activo', true)->get()
+            ->filter(fn (Restaurante $restaurante): bool => $restaurante->estaPausado())
+            ->sortBy('nombre')
+            ->values();
+    }
+
+    /**
      * Active memberships in restaurants whose plan does not include the panel, by name for the notice.
      *
      * @return Collection<int, Restaurante>

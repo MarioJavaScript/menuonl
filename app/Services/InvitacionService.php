@@ -35,7 +35,7 @@ class InvitacionService
      * token), so a mail failure never breaks the caller: it flags the invitation so it can be resent.
      *
      * @throws AuthorizationException when the inviter is neither superadmin nor propietario or gerente of the restaurant
-     * @throws ValidationException when the role is not one of those offered (PermisosPanel::ROLES_OFRECIDOS) to that inviter
+     * @throws ValidationException when the restaurant is paused (out of service), or the role is not one of those offered (PermisosPanel::ROLES_OFRECIDOS) to that inviter
      */
     public function invitar(Restaurante $restaurante, string $email, string $rol, ?User $invitadoPor): Invitacion
     {
@@ -46,6 +46,8 @@ class InvitacionService
         ) {
             throw new AuthorizationException('Solo un propietario o gerente puede invitar usuarios.');
         }
+
+        $this->rechazarSiEstaPausado($restaurante);
 
         $ofrecidos = $invitadoPor === null
             ? PermisosPanel::ROLES_OFRECIDOS
@@ -82,12 +84,25 @@ class InvitacionService
     }
 
     /**
+     * A paused restaurant sends no invitations: nobody could accept them (buscarVigente) and the platform must reactivate it first.
+     *
+     * @throws ValidationException
+     */
+    private function rechazarSiEstaPausado(Restaurante $restaurante): void
+    {
+        if ($restaurante->estaPausado()) {
+            throw ValidationException::withMessages(['restaurante' => __('panel.cuenta_pausada.invitar_bloqueado')]);
+        }
+    }
+
+    /**
      * Resend a pending invitation with a fresh token and a fresh expiry date, on the same row.
      *
      * The previous link stops working, and any job still carrying the previous token does nothing, so the invitation
      * is neither duplicated nor sent twice with different links.
      *
      * @throws AuthorizationException when the user is neither superadmin nor propietario or gerente of the restaurant
+     * @throws ValidationException when the restaurant is paused (out of service)
      * @throws \LogicException when the invitation was already accepted
      */
     public function reenviar(Invitacion $invitacion, ?User $usuario): Invitacion
@@ -101,6 +116,8 @@ class InvitacionService
         ) {
             throw new AuthorizationException('Solo un propietario o gerente puede reenviar invitaciones.');
         }
+
+        $this->rechazarSiEstaPausado($restaurante);
 
         $token = Str::random(self::LONGITUD_TOKEN);
 

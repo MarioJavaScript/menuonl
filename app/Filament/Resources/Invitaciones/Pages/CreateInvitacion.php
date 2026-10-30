@@ -7,8 +7,10 @@ use App\Models\Invitacion;
 use App\Models\Restaurante;
 use App\Services\InvitacionService;
 use Filament\Facades\Filament;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Validation\ValidationException;
 
 class CreateInvitacion extends CreateRecord
 {
@@ -26,13 +28,22 @@ class CreateInvitacion extends CreateRecord
         /** @var Restaurante $restaurante */
         $restaurante = Filament::getTenant();
 
-        /** @var Invitacion $invitacion */
-        $invitacion = app(InvitacionService::class)->invitar(
-            $restaurante,
-            $data['email'],
-            $data['rol'],
-            auth()->user(),
-        );
+        try {
+            /** @var Invitacion $invitacion */
+            $invitacion = app(InvitacionService::class)->invitar(
+                $restaurante,
+                $data['email'],
+                $data['rol'],
+                auth()->user(),
+            );
+        } catch (ValidationException $e) {
+            if (! $restaurante->estaPausado()) {
+                throw $e;
+            }
+
+            Notification::make()->danger()->title(__('panel.cuenta_pausada.invitar_bloqueado'))->send();
+            $this->halt();
+        }
 
         return $invitacion;
     }

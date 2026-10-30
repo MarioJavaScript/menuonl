@@ -39,6 +39,7 @@ return [
         'prefijo_corto' => 'Superadmin:',
         'volver' => 'Volver a la plataforma',
         'volver_corto' => 'Volver',
+        'fuera_de_servicio' => 'Fuera de servicio',
     ],
 
     'componentes_mb' => [
@@ -542,6 +543,22 @@ return [
         'sin_whatsapp' => 'Si quieres cambiar algo, contacta a tu proveedor.',
         'boton_whatsapp' => 'Escribir por WhatsApp',
         'cerrar_sesion' => 'Cerrar sesión',
+    ],
+
+    'cuenta_pausada' => [
+        'titulo' => 'Tu cuenta está fuera de servicio',
+        'uno' => 'Hola. El acceso de :restaurante está fuera de servicio por ahora.',
+        'varios' => 'Hola. El acceso de estos restaurantes está fuera de servicio por ahora:',
+        // Un motivo nuevo de pausa (MotivoDePausa) suma aquí su entrada con el valor del enum como llave.
+        'motivos' => [
+            'fuera_de_servicio' => 'Mientras tanto no puedes ver ni cambiar nada desde el panel.',
+        ],
+        'con_whatsapp' => 'Si necesitas más información, escríbenos por WhatsApp.',
+        'sin_whatsapp' => 'Si necesitas más información, contacta a tu proveedor.',
+        'boton_whatsapp' => 'Escribir por WhatsApp',
+        'cerrar_sesion' => 'Cerrar sesión',
+        'invitar_bloqueado' => 'Este restaurante está fuera de servicio. Reactívalo antes de enviar o reenviar invitaciones.',
+        'invitacion_omitida' => 'El restaurante se creó fuera de servicio, así que no se envió la invitación. Reactívalo y envía la invitación desde Usuarios.',
     ],
 
     'planes' => [
