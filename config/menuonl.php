@@ -167,6 +167,9 @@ return [
         ],
         // verificar-produccion avisa cuando el último respaldo es más viejo que esto.
         'horas_maximas_sin_respaldo' => (int) env('BACKUP_MAX_AGE_HOURS', 36),
+        // menuonl:backup-alerta: a quién avisar por correo si el último respaldo falta o es muy viejo (vacío = solo registro) y a qué hora revisar.
+        'alerta_correo' => env('BACKUP_ALERT_EMAIL'),
+        'alerta_hora' => env('BACKUP_ALERT_TIME', '06:00'),
     ],
 
     /*

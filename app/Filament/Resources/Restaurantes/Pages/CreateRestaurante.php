@@ -58,6 +58,12 @@ class CreateRestaurante extends CreateRecord
             'orden' => 0,
         ]));
 
+        if ($restaurante->estaPausado()) {
+            Notification::make()->warning()->title(__('panel.cuenta_pausada.invitacion_omitida'))->persistent()->send();
+
+            return;
+        }
+
         $invitacion = app(InvitacionService::class)->invitar(
             $restaurante,
             $this->data['email_propietario'],

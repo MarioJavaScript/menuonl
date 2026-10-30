@@ -61,7 +61,7 @@
 
         <div class="cal-pedido__pie">
             <p class="cal-pedido__total"><span>Total</span> <span data-cal-total></span></p>
-            <p class="cal-pedido__nota">El total es informativo. El restaurante confirma tu pedido por WhatsApp.</p>
+            <p class="cal-pedido__nota">Pedidos para domicilio o para recoger. El total es informativo. El restaurante confirma tu pedido por WhatsApp.</p>
             <p class="cal-aviso" role="status" hidden data-cal-aviso-envio></p>
 
             <div class="cal-aviso cal-aviso--exito" role="status" tabindex="-1" hidden data-cal-enviado>

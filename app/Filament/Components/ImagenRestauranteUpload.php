@@ -18,18 +18,41 @@ use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
  * is written, under restaurantes/{id}/. String values coming back from the form are client-controlled:
  * preventFilePathTampering() only accepts the path the record already has, and the model
  * (ProtegeImagenesDelRestaurante) rejects any other.
+ *
+ * The browser shrinks the photo before uploading (longest side, never enlarged, never cropped) only to save the person's
+ * data and to let 48 MP phone photos through the pixel cap. It is a convenience, not a defence: the server validates and
+ * rebuilds every file as if the browser had done nothing (WebpImageService, SubidaRecibida).
  */
 class ImagenRestauranteUpload
 {
+    /**
+     * Longest side (px) the browser reduces each kind of photo to. Well under WebpImageService::MAX_LADO, and above what the
+     * server finally keeps (2400 px working side for photos, 800 px for logos), so the server still does the final crop and resize.
+     *
+     * @var array<string, int>
+     */
+    public const array LADO_EN_NAVEGADOR = [
+        'logotipo' => 1600,
+        'portada' => 2400,
+        'platillo' => 2400,
+        'galeria' => 2400,
+    ];
+
     /**
      * @param  string  $perfil  One of the keys of WebpImageService::PERFILES (logotipo, portada, platillo, galeria)
      */
     public static function make(string $name, string $perfil): FileUpload
     {
         $imagenes = app(WebpImageService::class);
+        $lado = (string) (self::LADO_EN_NAVEGADOR[$perfil] ?? WebpImageService::MAX_LADO);
 
         return FileUpload::make($name)
             ->image()
+            // 'contain' fits inside the square box, no client crop; Filament enlarges by default, so it is turned off.
+            ->automaticallyResizeImagesMode('contain')
+            ->automaticallyResizeImagesToWidth($lado)
+            ->automaticallyResizeImagesToHeight($lado)
+            ->automaticallyUpscaleImagesWhenResizing(false)
             ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
             ->maxSize((int) ceil((int) config('menuonl.imagenes.max_bytes') / 1024))
             ->validationMessages([

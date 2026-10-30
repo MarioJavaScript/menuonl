@@ -7,6 +7,9 @@
         </span>
         <strong class="mb-banner__nombre" title="{{ $restaurante->nombre }}">{{ $restaurante->nombre }}</strong>
         <x-mb.glifo-plan :plan="$restaurante->plan" class="mb-banner__plan" />
+        @if ($restaurante->estaPausado())
+            <strong class="mb-banner__estado" data-fuera-de-servicio>· {{ __('panel.banner_superadmin.fuera_de_servicio') }}</strong>
+        @endif
     </span>
     <x-slot:accion>
         <a href="{{ $urlDeVuelta }}" aria-label="{{ __('panel.banner_superadmin.volver') }}">

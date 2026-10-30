@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\Capacidad;
+use App\Enums\MotivoDePausa;
 use App\Enums\PlanRestaurante;
 use App\Services\Catalogos;
 use App\Traits\Auditable;
@@ -148,6 +149,29 @@ class Restaurante extends Model implements HasName
     public function incluye(Capacidad $capacidad): bool
     {
         return $this->plan->incluye($capacidad);
+    }
+
+    /**
+     * Motivo por el que el restaurante está pausado para su equipo, o null si no lo está. Único lugar donde se decide:
+     * un motivo nuevo se agrega aquí y el acceso al panel no cambia.
+     */
+    public function motivoDePausa(): ?MotivoDePausa
+    {
+        return $this->isActivo() ? null : MotivoDePausa::FueraDeServicio;
+    }
+
+    public function estaPausado(): bool
+    {
+        return $this->motivoDePausa() !== null;
+    }
+
+    /**
+     * Si el equipo (todo el que no es superadmin) puede usar el panel de este restaurante: el plan incluye el panel
+     * y el restaurante no está pausado. Regla única del panel, de la lista de restaurantes y de la descarga de QR.
+     */
+    public function permiteElPanelAlEquipo(): bool
+    {
+        return ! $this->estaPausado() && $this->incluye(Capacidad::Panel);
     }
 
     /**

@@ -22,6 +22,17 @@ class MarcadoresPendientes
     ];
 
     /**
+     * Si el aviso de privacidad sigue sin escribirse (muestra algún marcador pendiente). Mientras sea así, los formularios
+     * de reservas no lo enlazan y `menuonl:verificar-produccion` avisa si hay reservas activas.
+     *
+     * @param  string  $vista  Vista del aviso; solo cambia en pruebas.
+     */
+    public function privacidadPendiente(string $vista = 'landing.privacidad'): bool
+    {
+        return $this->enHtml(view($vista, ['soporte' => app(ContactoSoporte::class)])->render()) !== [];
+    }
+
+    /**
      * @return list<string> Los marcadores de la lista que aparecen en el HTML.
      */
     public function enHtml(string $html): array

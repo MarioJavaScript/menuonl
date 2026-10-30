@@ -63,7 +63,7 @@ class RestaurantesTable
                     ->modalHeading('¿Reenviar la invitación?')
                     ->modalDescription('Se genera un enlace nuevo para cada invitación cuyo correo no salió; los enlaces anteriores dejan de funcionar.')
                     ->modalSubmitActionLabel('Sí, reenviar')
-                    ->visible(fn (Restaurante $record): bool => (int) $record->invitaciones_fallidas_count > 0)
+                    ->visible(fn (Restaurante $record): bool => $record->isActivo() && (int) $record->invitaciones_fallidas_count > 0)
                     ->authorize('update')
                     ->action(function (Restaurante $record): void {
                         $servicio = app(InvitacionService::class);

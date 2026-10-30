@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\Capacidad;
 use App\Models\CodigoQr;
 use App\Services\QrGeneratorService;
 use Filament\Facades\Filament;
@@ -27,7 +26,7 @@ class QrDownloadController extends Controller
             abort(403, 'No autorizado para acceder a este código QR.');
         }
 
-        if ($user !== null && ! $user->isSuperadmin() && ($user->rolEn($codigoQr->restaurante_id) === null || ! $codigoQr->restaurante->incluye(Capacidad::Panel))) {
+        if ($user !== null && ! $user->isSuperadmin() && ($user->rolEn($codigoQr->restaurante_id) === null || ! $codigoQr->restaurante->permiteElPanelAlEquipo())) {
             abort(403, 'No autorizado para acceder a este código QR.');
         }
 

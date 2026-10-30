@@ -504,6 +504,8 @@
                             <span id="modalCartTotal" data-mo-total>{{ \App\Services\FormatoMoneda::formatear(0, $restaurante->moneda, $idioma) }}</span>
                         </div>
 
+                        <p class="text-xs text-texto-suave" data-mo-tipo-de-pedido>Pedidos para domicilio o para recoger.</p>
+
                         <!-- WhatsApp Submit Button -->
                         <button
                             type="button"

@@ -13,6 +13,7 @@
         <div class="honeypot" aria-hidden="true"><label>No llenar este campo<input name="sitio_web" tabindex="-1" autocomplete="off"></label></div>
         <input type="hidden" name="ts" value="{{ now()->timestamp }}">
         <button class="btn full" type="submit">Solicitar reserva</button>
+        @include('sitio.partes.aviso-privacidad', ['clase' => 'full'])
         <div class="reserva-msg" id="reserva-msg" role="status" aria-live="polite" tabindex="-1" hidden></div>
     </form>
     <noscript><p>Activa JavaScript para reservar en línea, o usa WhatsApp o teléfono.</p></noscript>

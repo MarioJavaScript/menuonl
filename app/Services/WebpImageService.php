@@ -121,7 +121,7 @@ class WebpImageService
      */
     public function ayudaDeSubida(string $perfil): string
     {
-        return 'Formatos: JPG, PNG o WebP. Máximo '.$this->limiteLegible().'. '.(self::PERFILES[$perfil]['recomendado'] ?? '');
+        return 'Formatos: JPG, PNG o WebP. Máximo '.$this->limiteLegible().' por foto. Se reduce sola antes de subir. '.(self::PERFILES[$perfil]['recomendado'] ?? '');
     }
 
     /**

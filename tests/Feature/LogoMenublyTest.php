@@ -224,7 +224,7 @@ class LogoMenublyTest extends TestCase
         // Todo uso del logo o de sus clases debe estar en la prueba de páginas de arriba.
         $conocidos = [
             'components/mb/logo.blade.php', 'filament/logo.blade.php', 'invitaciones/layout.blade.php',
-            'menu/publico.blade.php', 'plan/sin-panel.blade.php',
+            'menu/publico.blade.php', 'components/layout/aviso-de-acceso.blade.php',
         ];
         $this->assertSame([], array_values(array_diff($usos, $conocidos)), 'Hay un uso nuevo del logo: añádelo a la prueba de páginas');
     }

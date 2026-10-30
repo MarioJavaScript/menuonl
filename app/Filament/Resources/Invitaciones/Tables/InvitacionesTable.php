@@ -12,6 +12,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Validation\ValidationException;
 
 class InvitacionesTable
 {
@@ -64,7 +65,13 @@ class InvitacionesTable
                     ->visible(fn (Invitacion $record): bool => $record->aceptada_en === null)
                     ->authorize('create')
                     ->action(function (Invitacion $record): void {
-                        app(InvitacionService::class)->reenviar($record, auth()->user());
+                        try {
+                            app(InvitacionService::class)->reenviar($record, auth()->user());
+                        } catch (ValidationException $e) {
+                            Notification::make()->danger()->title(collect($e->errors())->flatten()->first())->send();
+
+                            return;
+                        }
 
                         Notification::make()->success()->title('Invitación reenviada')->body('El correo se enviará en unos momentos.')->send();
                     }),

@@ -79,6 +79,32 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     }
 
     /**
+     * Whether this user should be shown the "account out of service" screen: an active, non-superadmin account with
+     * no restaurant it can enter and at least one active membership in a paused restaurant. It wins over the
+     * "your plan has no panel" screen. Someone who can still enter another restaurant goes straight in.
+     */
+    public function debeVerElAvisoDeCuentaPausada(): bool
+    {
+        return $this->activo
+            && ! $this->isSuperadmin()
+            && $this->restaurantesConPanel()->isEmpty()
+            && $this->restaurantesPausados()->isNotEmpty();
+    }
+
+    /**
+     * Active memberships in paused restaurants, by name for the notice.
+     *
+     * @return Collection<int, Restaurante>
+     */
+    public function restaurantesPausados(): Collection
+    {
+        return $this->restaurantes()->wherePivot('activo', true)->get()
+            ->filter(fn (Restaurante $restaurante): bool => $restaurante->estaPausado())
+            ->sortBy('nombre')
+            ->values();
+    }
+
+    /**
      * Active memberships in restaurants whose plan does not include the panel, by name for the notice.
      *
      * @return Collection<int, Restaurante>
@@ -86,20 +112,21 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     public function restaurantesSinPanelPorPlan(): Collection
     {
         return $this->restaurantes()->wherePivot('activo', true)->get()
-            ->reject(fn (Restaurante $restaurante): bool => $restaurante->incluye(Capacidad::Panel))
+            ->reject(fn (Restaurante $restaurante): bool => $restaurante->estaPausado() || $restaurante->incluye(Capacidad::Panel))
             ->sortBy('nombre')
             ->values();
     }
 
     /**
-     * Active restaurants whose plan lets their team into the panel (Solo menú does not).
+     * Active memberships in restaurants whose team can use the panel: the plan includes it (Solo menú does not) and the
+     * restaurant is not paused (see Restaurante::permiteElPanelAlEquipo()).
      *
      * @return Collection<int, Restaurante>
      */
     private function restaurantesConPanel(): Collection
     {
         return $this->restaurantes()->wherePivot('activo', true)->get()
-            ->filter(fn (Restaurante $restaurante): bool => $restaurante->incluye(Capacidad::Panel))
+            ->filter(fn (Restaurante $restaurante): bool => $restaurante->permiteElPanelAlEquipo())
             ->values();
     }
 
@@ -131,7 +158,7 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
         }
 
         return $this->isSuperadmin()
-            || ($tenant->incluye(Capacidad::Panel) && $this->restaurantes()->wherePivot('activo', true)->whereKey($tenant->getKey())->exists());
+            || ($tenant->permiteElPanelAlEquipo() && $this->restaurantes()->wherePivot('activo', true)->whereKey($tenant->getKey())->exists());
     }
 
     /**
