@@ -55,8 +55,10 @@ class ReduccionDeFotosEnNavegadorTest extends TestCase
     }
 
     #[DataProvider('perfiles')]
-    public function test_los_limites_y_tipos_de_la_subida_no_cambian(string $perfil): void
+    public function test_los_limites_y_tipos_de_la_subida_no_cambian(string $perfil, int $lado): void
     {
+        $this->assertSame($lado, ImagenRestauranteUpload::LADO_EN_NAVEGADOR[$perfil], 'El provider perfiles() quedó desfasado de la constante.');
+
         $campo = ImagenRestauranteUpload::make('imagen', $perfil);
 
         $this->assertSame((int) ceil((int) config('menuonl.imagenes.max_bytes') / 1024), $campo->getMaxSize());
