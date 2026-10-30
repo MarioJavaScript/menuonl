@@ -61,7 +61,7 @@
 
         <div class="bar-pedido__pie">
             <p class="bar-pedido__total"><span>Total</span> <span data-bar-total></span></p>
-            <p class="bar-pedido__nota">El total es informativo. El restaurante confirma tu pedido por WhatsApp.</p>
+            <p class="bar-pedido__nota">Pedidos para domicilio o para recoger. El total es informativo. El restaurante confirma tu pedido por WhatsApp.</p>
             <p class="bar-aviso" role="status" hidden data-bar-aviso-envio></p>
 
             <div class="bar-aviso bar-aviso--exito" role="status" tabindex="-1" hidden data-bar-enviado>

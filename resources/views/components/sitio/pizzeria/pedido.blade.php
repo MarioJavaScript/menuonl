@@ -61,7 +61,7 @@
 
         <div class="piz-pedido__pie">
             <p class="piz-pedido__total"><span>Total</span> <span data-piz-total></span></p>
-            <p class="piz-pedido__nota">El total es informativo. El restaurante confirma tu pedido por WhatsApp.</p>
+            <p class="piz-pedido__nota">Pedidos para domicilio o para recoger. El total es informativo. El restaurante confirma tu pedido por WhatsApp.</p>
             <p class="piz-aviso" role="status" hidden data-piz-aviso-envio></p>
 
             <div class="piz-aviso piz-aviso--exito" role="status" tabindex="-1" hidden data-piz-enviado>

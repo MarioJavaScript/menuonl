@@ -221,7 +221,7 @@ return [
         'subtitulo' => 'Decide cómo te hacen pedidos y reservas tus clientes desde tu sitio y tu menú. Para atender las reservas, ve a Reservas.',
         'whatsapp' => [
             'titulo' => 'Pedidos por WhatsApp',
-            'descripcion' => 'Tus clientes arman su pedido en el menú y te llega listo a tu WhatsApp.',
+            'descripcion' => 'Tus clientes arman su pedido en el menú y te llega listo a tu WhatsApp. Pedidos para domicilio o para recoger.',
             'activar' => 'Recibir pedidos por WhatsApp',
             'activar_ayuda' => 'Si lo enciendes, el menú deja elegir platillos y enviar el pedido. Si lo apagas, el menú solo se puede leer.',
             'numero' => 'Número de WhatsApp que recibe los pedidos',

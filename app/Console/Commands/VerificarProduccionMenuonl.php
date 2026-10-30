@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Restaurante;
 use App\Services\ContactoSoporte;
 use App\Services\MarcadoresPendientes;
 use App\Services\RespaldoService;
@@ -48,6 +49,7 @@ class VerificarProduccionMenuonl extends Command
         $this->revisarWorker($sonda, in_array($cola, ['sync', 'null'], true));
         $this->avisos();
         $this->avisarDeMarcadoresPendientes();
+        $this->avisarDeReservasSinAvisoDePrivacidad();
         $this->avisarDelUltimoRespaldo($respaldos);
 
         $fallas = array_filter($this->resultados, fn (array $r): bool => ! $r['ok']);
@@ -154,6 +156,35 @@ class VerificarProduccionMenuonl extends Command
 
         foreach ($pendientes as $ruta => $marcadores) {
             $this->line("  <comment>[AVISO]</comment>  {$ruta} aún muestra texto pendiente: ".implode(' ', $marcadores).'. No publiques hasta escribirlo.');
+        }
+    }
+
+    /**
+     * Warns when some active restaurant takes reservations but the privacy notice is still unwritten (its form would not
+     * link to it). Never changes the exit code.
+     */
+    private function avisarDeReservasSinAvisoDePrivacidad(): void
+    {
+        try {
+            $conReservas = Restaurante::query()
+                ->where('estado', 'activo')
+                ->where('reservas_activas', true)
+                ->lazy()
+                ->contains(fn (Restaurante $restaurante): bool => $restaurante->reservasDisponibles());
+
+            if (! $conReservas) {
+                return;
+            }
+
+            if (app(MarcadoresPendientes::class)->privacidadPendiente()) {
+                $this->line('  <comment>[AVISO]</comment>  Hay restaurantes con reservas activas y el aviso de privacidad (/privacidad) sigue sin escribirse: sus formularios no lo enlazan. No publiques hasta escribirlo.');
+
+                return;
+            }
+
+            $this->line('  <info>[OK]</info>     El aviso de privacidad está escrito y los formularios de reservas lo enlazan');
+        } catch (Throwable $e) {
+            $this->line('  <comment>[AVISO]</comment>  No se pudo revisar el aviso de privacidad de las reservas ('.class_basename($e).').');
         }
     }
 

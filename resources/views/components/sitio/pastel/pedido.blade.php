@@ -61,7 +61,7 @@
 
         <div class="pas-pedido__pie">
             <p class="pas-pedido__total"><span>Total</span> <span data-pas-total></span></p>
-            <p class="pas-pedido__nota">El total es informativo. El restaurante confirma tu pedido por WhatsApp.</p>
+            <p class="pas-pedido__nota">Pedidos para domicilio o para recoger. El total es informativo. El restaurante confirma tu pedido por WhatsApp.</p>
             <p class="pas-aviso" role="status" hidden data-pas-aviso-envio></p>
 
             <div class="pas-aviso pas-aviso--exito" role="status" tabindex="-1" hidden data-pas-enviado>
