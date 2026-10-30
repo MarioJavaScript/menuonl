@@ -419,7 +419,7 @@ class MenuPublicoTest extends TestCase
         $response->assertDontSee('Hamburguesa Clásica');
     }
 
-    public function test_language_fallback_accept_language_header_used_when_no_query_param(): void
+    public function test_accept_language_header_is_ignored_and_default_language_is_used_when_no_query_param(): void
     {
         $restaurante = Restaurante::factory()->create([
             'idioma_default' => 'es',
@@ -438,7 +438,47 @@ class MenuPublicoTest extends TestCase
             ->get(route('menu.publico', ['slug' => $restaurante->slug]));
 
         $response->assertOk();
-        $response->assertSee('Classic Burger');
+        $response->assertSee('Hamburguesa Clásica');
+        $response->assertDontSee('Classic Burger');
+        $this->assertSame('es', $response->viewData('idioma'));
+    }
+
+    public function test_the_default_language_of_the_restaurant_is_used_even_when_it_is_not_spanish(): void
+    {
+        $restaurante = Restaurante::factory()->create(['idioma_default' => 'en']);
+        RestauranteIdioma::factory()->create(['restaurante_id' => $restaurante->id, 'idioma' => 'es', 'orden' => 1]);
+
+        $categoria = Categoria::factory()->create(['restaurante_id' => $restaurante->id]);
+        CategoriaTraduccion::factory()->create(['categoria_id' => $categoria->id, 'idioma' => 'es', 'nombre' => 'Hamburguesas']);
+        CategoriaTraduccion::factory()->create(['categoria_id' => $categoria->id, 'idioma' => 'en', 'nombre' => 'Burgers']);
+
+        $this->withHeader('Accept-Language', 'es-MX,es;q=0.9')
+            ->get(route('menu.publico', ['slug' => $restaurante->slug]))
+            ->assertOk()
+            ->assertSee('Burgers')
+            ->assertDontSee('Hamburguesas');
+
+        $this->withHeader('Accept-Language', 'es-MX,es;q=0.9')
+            ->get(route('menu.publico', ['slug' => $restaurante->slug, 'lang' => 'es']))
+            ->assertSee('Hamburguesas');
+    }
+
+    public function test_the_same_address_without_lang_gives_the_same_menu_to_every_visitor(): void
+    {
+        $restaurante = Restaurante::factory()->create(['idioma_default' => 'es']);
+        RestauranteIdioma::factory()->create(['restaurante_id' => $restaurante->id, 'idioma' => 'en', 'orden' => 1]);
+        $categoria = Categoria::factory()->create(['restaurante_id' => $restaurante->id]);
+        CategoriaTraduccion::factory()->create(['categoria_id' => $categoria->id, 'idioma' => 'es', 'nombre' => 'Hamburguesas']);
+        CategoriaTraduccion::factory()->create(['categoria_id' => $categoria->id, 'idioma' => 'en', 'nombre' => 'Burgers']);
+
+        $url = route('menu.publico', ['slug' => $restaurante->slug]);
+        $ingles = $this->withHeader('Accept-Language', 'en-US,en;q=0.9')->get($url);
+        $espanol = $this->withHeader('Accept-Language', 'es-MX,es;q=0.9')->get($url);
+        $sinCabecera = $this->get($url);
+
+        $this->assertSame($ingles->viewData('idioma'), $espanol->viewData('idioma'));
+        $this->assertSame($ingles->viewData('idioma'), $sinCabecera->viewData('idioma'));
+        $this->assertFalse($ingles->headers->has('Vary'));
     }
 
     public function test_language_fallback_to_default_when_unsupported_language_requested(): void

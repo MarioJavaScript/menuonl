@@ -30,7 +30,7 @@ Objetivo: tener 3 a 5 restaurantes reales usando el sistema lo antes posible y c
 
 ## Fase 3: Funcionalidades avanzadas v1.0
 
-- [x] Multi-idioma y traducciones en BD, panel y menú público (`?lang=`, `Accept-Language`, default)
+- [x] Multi-idioma y traducciones en BD, panel y menú público (`?lang=` y, si no, el idioma principal; `Accept-Language` ya no se usa)
 - [x] Variantes con precio propio en BD, panel, menú público y carrito
 - [x] Etiquetas (`vegano`, `vegetariano`, `picante`, `sin_gluten`, `sin_lactosa`, `nuevo`, `recomendado`) en BD, seeder, panel y menú público
 - [x] Invitaciones por email (`InvitacionService`, `InvitacionAceptarController`) e historial de cambios (`Auditable`, `HistorialCambioResource`)

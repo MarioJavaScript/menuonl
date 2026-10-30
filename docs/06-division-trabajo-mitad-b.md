@@ -84,8 +84,8 @@ La **Mitad A** invalida automáticamente la caché cada vez que un propietario o
 - [x] Ruta `GET /{slug}/menu` (`name('menu.publico')`).
 - [x] Resolver el idioma activo:
   1. Parámetro query `?lang=xx` si está en `restaurante_idiomas`.
-  2. Idioma del header `Accept-Language` del navegador si está en `restaurante_idiomas`.
-  3. Fallback a `$restaurante->idioma_default`.
+  2. ~~Idioma del header `Accept-Language`~~: ya no se usa (pre-piloto); la misma dirección debe dar el mismo idioma a todos porque Cloudflare la guarda por URL.
+  3. Si no, el idioma principal del restaurante (`$restaurante->idioma_default`).
 - [x] Mostrar cabecera del restaurante: `nombre`, `descripcion`, `logo`, `portada`, selector de idiomas activos y badge dinámico **Abierto / Cerrado** calculado con `$restaurante->estaAbiertoAhora()`.
 - [x] Mostrar sección de "Recomendados" (`Producto::visible()->destacado()->ordenado()`) y listado de `Categoria::visible()->ordenado()`.
 - [x] Para cada platillo (`visible = true`, ordenado por `orden`):

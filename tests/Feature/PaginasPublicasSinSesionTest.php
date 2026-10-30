@@ -174,13 +174,14 @@ class PaginasPublicasSinSesionTest extends TestCase
             ->assertDontSee('Hamburguesa Clásica');
     }
 
-    public function test_el_idioma_se_toma_de_accept_language_sin_sesion(): void
+    public function test_accept_language_no_cambia_el_idioma_sin_sesion(): void
     {
         $restaurante = $this->restauranteBilingue();
 
         $this->withHeader('Accept-Language', 'en-US,en;q=0.9')
             ->get(route('menu.publico', ['slug' => $restaurante->slug]))
-            ->assertSee('Classic Burger');
+            ->assertSee('Hamburguesa Clásica')
+            ->assertDontSee('Classic Burger');
     }
 
     public function test_cada_visita_decide_su_idioma_sin_recordar_la_anterior(): void

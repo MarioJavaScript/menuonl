@@ -340,7 +340,7 @@ class PublicMenuApiTest extends TestCase
         $response->assertJsonPath('data.categorias.0.platillos.0.nombre', 'Classic Burger');
     }
 
-    public function test_public_menu_api_supports_multilingual_via_accept_language_header(): void
+    public function test_public_menu_api_ignores_accept_language_and_uses_the_default_language(): void
     {
         $restaurante = Restaurante::factory()->create(['idioma_default' => 'es']);
         RestauranteIdioma::factory()->create(['restaurante_id' => $restaurante->id, 'idioma' => 'en']);
@@ -353,8 +353,13 @@ class PublicMenuApiTest extends TestCase
             ->getJson(route('api.v1.menu.show', ['slug' => $restaurante->slug]));
 
         $response->assertOk();
-        $response->assertJsonPath('data.idioma', 'en');
-        $response->assertJsonPath('data.categorias.0.nombre', 'Pizzas EN');
+        $response->assertJsonPath('data.idioma', 'es');
+        $response->assertJsonPath('data.categorias.0.nombre', 'Pizzas');
+
+        $this->withHeader('Accept-Language', 'es')
+            ->getJson(route('api.v1.menu.show', ['slug' => $restaurante->slug, 'lang' => 'en']))
+            ->assertJsonPath('data.idioma', 'en')
+            ->assertJsonPath('data.categorias.0.nombre', 'Pizzas EN');
     }
 
     public function test_public_menu_api_falls_back_to_default_language_for_unsupported_language(): void

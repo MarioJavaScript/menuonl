@@ -8,11 +8,14 @@ use App\Models\Categoria;
 use App\Models\Producto;
 use App\Models\Restaurante;
 use App\Models\Scopes\RestauranteScope;
+use App\Services\IdiomaDelMenu;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class MenuApiController extends Controller
 {
+    public function __construct(protected IdiomaDelMenu $idiomaDelMenu) {}
+
     /**
      * Display the public REST API menu for a restaurant.
      */
@@ -37,24 +40,9 @@ class MenuApiController extends Controller
             // Eager-load child relation safely under the established tenant scope
             $restaurante->load('idiomas');
 
-            // Language resolution: query ?lang= > Accept-Language > idioma_default
-            $idiomasConfigurados = $restaurante->idiomas->pluck('idioma')->all();
-            $idiomasDisponibles = array_values(array_unique(array_filter([
-                $restaurante->idioma_default,
-                ...$idiomasConfigurados,
-            ])));
-
-            $langQuery = $request->query('lang');
-            if (is_string($langQuery) && in_array($langQuery, $idiomasDisponibles, true)) {
-                $idioma = $langQuery;
-            } else {
-                $preferred = $request->getPreferredLanguage($idiomasDisponibles);
-                if (is_string($preferred) && in_array($preferred, $idiomasDisponibles, true)) {
-                    $idioma = $preferred;
-                } else {
-                    $idioma = $restaurante->idioma_default ?: 'es';
-                }
-            }
+            // Language resolution: query ?lang= (if the restaurant has it) > idioma_default. Never Accept-Language.
+            $idiomasDisponibles = $this->idiomaDelMenu->disponibles($restaurante);
+            $idioma = $this->idiomaDelMenu->resolver($restaurante, $request->query('lang'));
 
             app()->setLocale($idioma);
 
