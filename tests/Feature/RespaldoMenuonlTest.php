@@ -226,7 +226,7 @@ class RespaldoMenuonlTest extends TestCase
     public function test_el_scheduler_registra_el_respaldo_diario(): void
     {
         $eventos = collect($this->app->make(Schedule::class)->events())
-            ->filter(fn ($evento): bool => str_contains((string) $evento->command, 'menuonl:backup'));
+            ->filter(fn ($evento): bool => preg_match('/menuonl:backup(?!-)/', (string) $evento->command) === 1);
 
         $this->assertCount(1, $eventos);
         $this->assertSame('0 4 * * *', $eventos->first()->expression);

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Mail\InvitacionMail;
+use App\Mail\RespaldoVencidoMail;
 use App\Models\Invitacion;
 use App\Models\Restaurante;
 use App\Services\TextoMarkdown;
@@ -180,14 +181,28 @@ class CorreoInvitacionMarkdownSeguroTest extends TestCase
         }
     }
 
+    /**
+     * El nombre de la app es configuración del operador, no datos de usuario; aun así el cuerpo del correo lo escapa.
+     * (El pie estándar de Laravel lo interpreta como Markdown, igual que en InvitacionMail: no es parte de nuestra plantilla.)
+     */
+    public function test_el_correo_del_respaldo_escapa_el_nombre_de_la_app_en_su_cuerpo(): void
+    {
+        config(['app.name' => '[Confirma aquí](https://sitio-malo.example) <b>x</b>']);
+
+        $html = (new RespaldoVencidoMail('vencido', 40, 36))->render();
+
+        $this->assertStringNotContainsString('<b>x</b>', $html);
+        $this->assertSame(1, preg_match('/Gracias,<br>\s*\[Confirma aquí\]\(https:\/\/sitio-malo\.example\)/u', $html), 'La firma del cuerpo debe mostrar el nombre como texto, no como enlace.');
+    }
+
     public function test_no_hay_otras_plantillas_de_correo_ni_notificaciones_con_datos_de_usuario_sin_revisar(): void
     {
         $mailables = collect(glob(app_path('Mail/*.php')))->map(fn (string $ruta): string => basename($ruta, '.php'))->sort()->values()->all();
         $plantillas = collect(glob(resource_path('views/emails/*.blade.php')))->map(fn (string $ruta): string => basename($ruta))->sort()->values()->all();
 
         // Una plantilla o notificación nueva con datos de usuario debe usar TextoMarkdown::escapar() y tener su prueba aquí.
-        $this->assertSame(['InvitacionMail'], $mailables);
-        $this->assertSame(['invitacion.blade.php'], $plantillas);
+        $this->assertSame(['InvitacionMail', 'RespaldoVencidoMail'], $mailables);
+        $this->assertSame(['invitacion.blade.php', 'respaldo-vencido.blade.php'], $plantillas);
         $this->assertSame([], glob(app_path('Notifications/*.php')) ?: []);
     }
 }
