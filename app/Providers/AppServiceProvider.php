@@ -14,8 +14,10 @@ use App\Observers\AuditableObserver;
 use App\Rules\SubidaRecibida;
 use Filament\Auth\Http\Responses\Contracts\LoginResponse;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Contracts\Validation\Validator as ValidatorContract;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -33,8 +35,20 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Subida temporal de Livewire/Filament: explica por qué falló (límite del servidor, subida incompleta, archivo temporal).
-        config(['livewire.temporary_file_upload.rules' => [new SubidaRecibida]]);
+        // Subida temporal de Livewire/Filament (config/livewire.php): explica por qué falló (límite del servidor, subida incompleta, archivo temporal).
+        Validator::extend('subida_recibida', function (string $attribute, mixed $value, array $parameters, ValidatorContract $validator): bool {
+            $motivo = null;
+
+            (new SubidaRecibida)->validate($attribute, $value, function (string $mensaje) use (&$motivo): void {
+                $motivo ??= $mensaje;
+            });
+
+            if ($motivo !== null) {
+                $validator->errors()->add($attribute, $motivo);
+            }
+
+            return true;
+        });
 
         RateLimiter::for('invitaciones', fn (Request $request): Limit => Limit::perMinute(10)->by($request->ip()));
         RateLimiter::for('menu-publico', fn (Request $request): Limit => Limit::perMinute(300)->by($request->ip()));

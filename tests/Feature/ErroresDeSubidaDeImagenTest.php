@@ -6,7 +6,6 @@ use App\Filament\Components\ImagenRestauranteUpload;
 use App\Filament\Pages\Apariencia;
 use App\Models\Restaurante;
 use App\Models\Scopes\RestauranteScope;
-use App\Rules\SubidaRecibida;
 use App\Services\WebpImageService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -108,8 +107,7 @@ class ErroresDeSubidaDeImagenTest extends TestCase
     {
         $reglas = FileUploadConfiguration::rules();
 
-        $this->assertCount(1, $reglas);
-        $this->assertInstanceOf(SubidaRecibida::class, $reglas[0]);
+        $this->assertSame(['subida_recibida'], $reglas);
     }
 
     #[DataProvider('erroresDePhp')]
