@@ -123,7 +123,7 @@ Orden recomendado para un despliegue (la primera vez y las siguientes). Idealmen
 9. [ ] Datos base: `php artisan db:seed --force`. En producción `DatabaseSeeder` solo carga `EtiquetaSeeder` (idempotente: `updateOrCreate`). **No** ejecutar `DemoRestauranteSeeder` (H2).
 10. [ ] `php artisan storage:link` (crea `public/storage` → `storage/app/public`; es un enlace simbólico local, no se versiona). Comprobar que `https://dominio/storage/restaurantes/...` sirve una imagen subida.
 11. [ ] Permisos: el usuario de PHP-FPM escribe en `storage/` (incluyendo `storage/app/private/livewire-tmp`, donde Livewire guarda subidas temporales) y `bootstrap/cache/`. El código y `vendor/` no deben ser escribibles por PHP.
-12. [ ] Cachés de producción: `php artisan optimize` (config, rutas, vistas, eventos) y `php artisan filament:optimize` (componentes e íconos de Filament). **Verificado:** `php artisan route:cache` funciona con las rutas actuales (la ruta `/panel` usa un closure y se serializa sin problema); se limpió después.
+12. [ ] Cachés de producción: `php artisan optimize` (config, rutas, vistas, eventos) y `php artisan filament:optimize` (componentes e íconos de Filament). **Verificado:** `php artisan config:cache`, `route:cache`, `view:cache`, `event:cache` y `optimize` terminan bien (la ruta `/panel` usa un closure y se serializa sin problema); se limpió después con `optimize:clear`. `optimize` falló mientras la regla de subida de Livewire iba como objeto en la configuración; ya está corregido y lo vigila `ConfiguracionCacheableTest`.
 13. [ ] Procesos: worker de colas con Supervisor o systemd (`deploy/supervisor/menuonl-worker.conf` o `deploy/systemd/menuonl-worker@.service`, ver `deploy/README.md`) y cron `* * * * * cd /ruta && php artisan schedule:run >> /dev/null 2>&1` (sin el cron no corre el respaldo).
 14. [ ] Crear el primer superadmin y los primeros restaurantes (punto 7).
 15. [ ] Prueba de humo (punto "Verificación final" más abajo).
@@ -352,7 +352,7 @@ Antes, cualquier archivo inválido en la API de `/panel` se reportaba como "dema
 | Imagen ilegible o dañada | "No pudimos leer esa imagen. Prueba con otra en JPG, PNG o WebP." | sin cambios |
 
 - Nunca se muestran rutas ni códigos de PHP: el código (`codigo_php`) se registra con `Log::error` (`Subida de imagen fallida antes de procesarla.` / `Subida temporal de imagen fallida.`).
-- La subida temporal de Livewire/Filament usa `App\Rules\SubidaRecibida` (configurada en `AppServiceProvider`) en lugar de `required|file|max:12288`: Laravel marca cualquier subida inválida con un "uploaded" genérico cuando el campo lleva reglas de archivo, y esa regla es la que sí distingue el motivo.
+- La subida temporal de Livewire/Filament usa `App\Rules\SubidaRecibida` (registrada con el nombre `subida_recibida` en `AppServiceProvider` y referenciada como texto en `config/livewire.php`, para que `config:cache` pueda serializarla) en lugar de `required|file|max:12288`: Laravel marca cualquier subida inválida con un "uploaded" genérico cuando el campo lleva reglas de archivo, y esa regla es la que sí distingue el motivo.
 - Pruebas: `tests/Feature/ErroresDeSubidaDeImagenTest.php` (cada código de PHP, 413, tipo no permitido, límite propio, sin rutas en los mensajes) y `ImagenesSeguridadTest.php`.
 - **Falta (operativo):** `upload_max_filesize`/`post_max_size` y `client_max_body_size` de Nginx deben ser ≥ 12 MB (punto 2); si Nginx corta antes que PHP responde su propia página 413 y la persona verá el error genérico del navegador.
 
@@ -463,5 +463,5 @@ Orden sugerido: 1 → 2 → 3 → 4 → 5 (quitan lo que hoy bloquea), luego 6�
 - **Correo:** no se probó ningún proveedor SMTP.
 - **Subidas de fotos:** los mensajes de 413 y de errores de archivo temporal se probaron con códigos de error simulados; no se forzó un fallo real de PHP/Nginx ni se vio cómo los muestra FilePond en Filament.
 - **Rendimiento y límites:** no se midieron subidas de 10–12 MB con el `php.ini` y Nginx propuestos, ni un respaldo con miles de imágenes.
-- **`route:cache` y `config:cache`:** `route:cache` se probó en desarrollo y funciona (se limpió después); `config:cache` se dedujo de que todo `env()` está dentro de `config/`.
+- **`route:cache` y `config:cache`:** ambos se probaron en desarrollo y funcionan (se limpiaron después). `config:cache` solo falló por la regla de subida de Livewire guardada como objeto, ya corregido; que todo `env()` esté dentro de `config/` no bastaba.
 - **Versión de producción de librerías** (libzip para AES-256, Livewire, Filament): se asume la del `composer.lock`.
