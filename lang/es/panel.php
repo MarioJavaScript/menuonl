@@ -561,6 +561,18 @@ return [
         'invitacion_omitida' => 'El restaurante se creó fuera de servicio, así que no se envió la invitación. Reactívalo y envía la invitación desde Usuarios.',
     ],
 
+    'respaldo_alerta' => [
+        'asunto' => 'El respaldo de :app no se completó',
+        'titulo' => 'El respaldo no se completó',
+        'problemas' => [
+            'sin_respaldos' => 'No hay ningún respaldo guardado.',
+            'vencido' => 'El último respaldo guardado tiene :horas horas (el máximo es :maximo).',
+            'disco_ilegible' => 'No se pudo consultar el lugar donde se guardan los respaldos.',
+        ],
+        'que_hacer' => 'Revisa que las tareas programadas del servidor estén corriendo y el registro de la aplicación, y ejecuta el respaldo a mano con el comando menuonl:backup.',
+        'una_vez_al_dia' => 'Este aviso se envía una sola vez al día mientras el problema siga.',
+    ],
+
     'planes' => [
         'completo' => [
             'nombre' => 'Completo',

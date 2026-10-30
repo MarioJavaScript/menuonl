@@ -16,6 +16,12 @@ Schedule::command('menuonl:backup')
     ->withoutOverlapping()
     ->onFailure(fn () => Log::error('menuonl:backup - El scheduler registró un respaldo fallido (RNF-06).'));
 
+// Revisa más tarde que el respaldo de arriba exista: también avisa si el cron dejó de correr (un respaldo que nunca arrancó no falla).
+Schedule::command('menuonl:backup-alerta')
+    ->dailyAt(RespaldoService::horaDeAlerta())
+    ->timezone(RespaldoService::zonaHorariaProgramada())
+    ->withoutOverlapping();
+
 Schedule::command('menuonl:purgar-escaneos')
     ->dailyAt('04:30')
     ->timezone(RespaldoService::zonaHorariaProgramada())

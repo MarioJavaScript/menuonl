@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Filesystem\Filesystem;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
 use PDO;
@@ -191,6 +192,42 @@ class RespaldoService
         $hora = (string) config('menuonl.respaldos.hora');
 
         return preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $hora) === 1 ? $hora : '04:00';
+    }
+
+    /**
+     * Hora (HH:MM) en que se revisa que el respaldo diario exista. Un valor mal escrito cae a las 06:00.
+     */
+    public static function horaDeAlerta(): string
+    {
+        $hora = (string) config('menuonl.respaldos.alerta_hora');
+
+        return preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $hora) === 1 ? $hora : '06:00';
+    }
+
+    /**
+     * Si el respaldo más reciente es demasiado viejo, no existe o el disco no se pudo leer. Nunca incluye rutas ni mensajes de error.
+     *
+     * @return array{problema: string|null, horas: int|null, maximo: int} problema: null (todo bien), 'sin_respaldos', 'vencido' o 'disco_ilegible'
+     */
+    public function diagnosticarAntiguedad(): array
+    {
+        $maximo = max(1, (int) config('menuonl.respaldos.horas_maximas_sin_respaldo'));
+
+        try {
+            $fecha = $this->fechaDelUltimoRespaldo();
+        } catch (\Throwable $e) {
+            Log::warning('RespaldoService - No se pudo consultar el disco de respaldos.', ['excepcion' => $e::class]);
+
+            return ['problema' => 'disco_ilegible', 'horas' => null, 'maximo' => $maximo];
+        }
+
+        if ($fecha === null) {
+            return ['problema' => 'sin_respaldos', 'horas' => null, 'maximo' => $maximo];
+        }
+
+        $horas = (int) floor(abs($fecha->diffInHours(CarbonImmutable::now('UTC'))));
+
+        return ['problema' => $horas > $maximo ? 'vencido' : null, 'horas' => $horas, 'maximo' => $maximo];
     }
 
     /**

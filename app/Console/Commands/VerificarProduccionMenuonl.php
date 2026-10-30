@@ -51,6 +51,7 @@ class VerificarProduccionMenuonl extends Command
         $this->avisarDeMarcadoresPendientes();
         $this->avisarDeReservasSinAvisoDePrivacidad();
         $this->avisarDelUltimoRespaldo($respaldos);
+        $this->avisarDeAlertaDeRespaldo();
 
         $fallas = array_filter($this->resultados, fn (array $r): bool => ! $r['ok']);
 
@@ -133,6 +134,22 @@ class VerificarProduccionMenuonl extends Command
         $horas > $maximo
             ? $this->line("  <comment>[AVISO]</comment>  El último respaldo exitoso tiene {$horas} horas (máximo {$maximo}). Revisa storage/logs/laravel.log y el cron de schedule:run.")
             : $this->line("  <info>[OK]</info>     Último respaldo hace {$horas} horas");
+    }
+
+    /**
+     * Warns when nobody would be told about a failed backup. Never prints the address and never changes the exit code.
+     */
+    private function avisarDeAlertaDeRespaldo(): void
+    {
+        $correo = trim((string) config('menuonl.respaldos.alerta_correo'));
+
+        if ($correo === '' || filter_var($correo, FILTER_VALIDATE_EMAIL) === false) {
+            $this->line('  <comment>[AVISO]</comment>  BACKUP_ALERT_EMAIL falta o no es un correo válido: si el respaldo falla, nadie recibe el aviso (solo queda en el log).');
+
+            return;
+        }
+
+        $this->line('  <info>[OK]</info>     BACKUP_ALERT_EMAIL está definida');
     }
 
     /**
