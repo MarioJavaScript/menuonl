@@ -198,6 +198,44 @@ class PortadaTest extends TestCase
         }
     }
 
+    public function test_cada_seccion_sale_una_sola_vez_en_orden_y_sin_ids_repetidos(): void
+    {
+        $html = (string) $this->get('/')->assertOk()->getContent();
+
+        preg_match_all('#<h2 id="([^"]+)"#', $html, $titulos);
+        $this->assertSame(
+            ['titulo-pasos', 'titulo-incluye', 'titulo-planes', 'titulo-panel', 'titulo-preguntas', 'titulo-cierre'],
+            $titulos[1],
+        );
+
+        preg_match_all('#\sid="([^"]+)"#', $html, $ids);
+        $repetidos = array_keys(array_filter(array_count_values($ids[1]), fn (int $veces): bool => $veces > 1));
+        $this->assertSame([], $repetidos, 'IDs repetidos en la portada.');
+
+        $this->assertSame(1, substr_count($html, 'class="stage"'), 'El celular de la portada solo va en la portada.');
+    }
+
+    public function test_los_tres_planes_tienen_su_lista_y_su_boton(): void
+    {
+        $html = (string) $this->get('/')->assertOk()->getContent();
+
+        preg_match_all('#<article class="plan"[^>]*>(.*?)</article>#s', $html, $planes);
+        $this->assertCount(3, $planes[1]);
+
+        $esperados = [
+            'Completo' => 'Métricas de escaneos por mesa y de reservas',
+            'Sitio y menú' => 'Para cambiar tu menú, escríbenos por WhatsApp',
+            'Solo menú' => 'No incluye panel: los cambios se piden por WhatsApp',
+        ];
+
+        foreach (array_keys($esperados) as $i => $nombre) {
+            $plan = $planes[1][$i];
+            $this->assertStringContainsString(">{$nombre}</h3>", $plan);
+            $this->assertStringContainsString($esperados[$nombre], $plan);
+            $this->assertStringContainsString("<span class=\"sr-only\">: {$nombre}</span>", $plan);
+        }
+    }
+
     public function test_el_logo_de_la_cabecera_es_un_img_directo_sin_hidden_ni_lazy(): void
     {
         $html = (string) $this->get('/')->assertOk()->getContent();

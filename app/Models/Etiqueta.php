@@ -41,6 +41,6 @@ class Etiqueta extends Model
      */
     public function productos(): BelongsToMany
     {
-        return $this->belongsToMany(Producto::class, 'producto_etiqueta');
+        return $this->belongsToMany(Producto::class, 'producto_etiqueta')->using(ProductoEtiqueta::class);
     }
 }

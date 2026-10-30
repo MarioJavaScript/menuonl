@@ -113,7 +113,7 @@ class Producto extends Model
      */
     public function etiquetas(): BelongsToMany
     {
-        return $this->belongsToMany(Etiqueta::class, 'producto_etiqueta');
+        return $this->belongsToMany(Etiqueta::class, 'producto_etiqueta')->using(ProductoEtiqueta::class);
     }
 
     /**
