@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use App\Enums\Capacidad;
 use App\Filament\Components\ImagenRestauranteUpload;
 use App\Filament\Concerns\EditaAjustesDelRestaurante;
+use App\Models\Restaurante;
 use App\Services\AparienciaSitio;
 use App\Services\Catalogos;
 use App\Services\WebpImageService;
@@ -42,6 +43,19 @@ class Apariencia extends Page
         return Capacidad::EditarDiseno;
     }
 
+    /**
+     * Un valor guardado que ya no está en el catálogo se muestra como la plantilla con la que hoy se ve el sitio.
+     *
+     * @return array<string, mixed>
+     */
+    protected function datosIniciales(Restaurante $restaurante): array
+    {
+        $datos = $restaurante->attributesToArray();
+        $datos['sitio_plantilla'] = AparienciaSitio::plantillaVigente($restaurante->sitio_plantilla);
+
+        return $datos;
+    }
+
     public static function getNavigationGroup(): string|UnitEnum|null
     {
         return __('panel.grupos.apariencia');
@@ -76,7 +90,7 @@ class Apariencia extends Page
                         ->view('filament.forms.selector-plantilla')
                         ->viewData(['fichas' => $fichas])
                         ->in(array_keys(Catalogos::plantillasSitio()))
-                        ->default('a')
+                        ->default(AparienciaSitio::PLANTILLA_POR_DEFECTO)
                         ->live()
                         ->required(),
                 ]),

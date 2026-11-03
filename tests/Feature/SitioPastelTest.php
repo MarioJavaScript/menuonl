@@ -115,7 +115,7 @@ class SitioPastelTest extends TestCase
 
     public function test_el_catalogo_registra_la_plantilla_g_cafepastel(): void
     {
-        $this->assertSame(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'], array_keys(Catalogos::plantillasSitio()));
+        $this->assertSame(['b', 'd', 'e', 'f', 'g', 'h'], array_keys(Catalogos::plantillasSitio()));
         $this->assertSame('Café pastel', Catalogos::plantillasSitio()['g']['nombre']);
     }
 
@@ -215,7 +215,7 @@ class SitioPastelTest extends TestCase
 
     public function test_las_otras_plantillas_siguen_usando_las_mismas_vistas(): void
     {
-        foreach (['a', 'b', 'c', 'd', 'e', 'f'] as $clave) {
+        foreach (['b', 'd', 'e', 'f'] as $clave) {
             $restaurante = $this->completo(['sitio_plantilla' => $clave, 'slug' => 'otro-'.$clave]);
 
             $sitio = $this->sitio('otro-'.$clave)->assertOk()->assertViewIs('sitio.'.$clave);

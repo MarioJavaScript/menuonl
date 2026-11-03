@@ -345,7 +345,7 @@ class PedidoWhatsappCafeteriaTest extends TestCase
 
     public function test_las_otras_plantillas_no_cargan_nada_de_e(): void
     {
-        foreach (['a', 'b', 'c', 'd'] as $clave) {
+        foreach (['b', 'd'] as $clave) {
             $restaurante = $this->restaurante(['sitio_plantilla' => $clave, 'slug' => 'otro-'.$clave]);
             $this->platillo($restaurante, 'Latte', ['precio' => 55]);
 

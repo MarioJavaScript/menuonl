@@ -12,11 +12,16 @@ namespace App\Services;
 class AparienciaSitio
 {
     /**
+     * Plantilla de un restaurante nuevo y de cualquier valor guardado que ya no existe (vacío, desconocido o retirado).
+     */
+    public const string PLANTILLA_POR_DEFECTO = 'b';
+
+    /**
      * Plantillas cuyo menú usa el estilo visual (Catalogos::temas()). Las demás traen sus propios colores.
      *
      * @var list<string>
      */
-    public const array PLANTILLAS_CON_ESTILO = ['a', 'b', 'c', 'd'];
+    public const array PLANTILLAS_CON_ESTILO = ['b', 'd'];
 
     /**
      * Plantillas cuyo sitio público muestra la sección Galería. Única fuente de este dato; una prueba la compara
@@ -24,7 +29,7 @@ class AparienciaSitio
      *
      * @var list<string>
      */
-    public const array PLANTILLAS_CON_GALERIA = ['a', 'b', 'c'];
+    public const array PLANTILLAS_CON_GALERIA = ['b'];
 
     /**
      * Contraste mínimo entre el color principal y su texto para que las plantillas e, f, g y h lo usen.
@@ -42,15 +47,22 @@ class AparienciaSitio
     public static function fichas(): array
     {
         return [
-            'a' => ['nombre' => 'Claro y sencillo', 'descripcion' => 'Mucho espacio en blanco y letras grandes. Deja que tus fotos y tu nombre destaquen.', 'para' => 'Casi cualquier restaurante', 'fondo' => '#ffffff', 'texto' => '#1a1a1a', 'acento' => '#8a8a8a', 'bloque' => '#e6e6e6'],
             'b' => ['nombre' => 'Oscuro elegante', 'descripcion' => 'Fondo negro y fotos con mucho contraste. Se ve sobrio y moderno.', 'para' => 'Restaurantes con buenas fotos de sus platillos', 'fondo' => '#0b0b0b', 'texto' => '#f2f2f2', 'acento' => '#9a9a9a', 'bloque' => '#2c2c2c'],
-            'c' => ['nombre' => 'Clásico y cálido', 'descripcion' => 'Tonos arena y platillos ordenados por categoría, como una revista.', 'para' => 'Fondas, cocinas tradicionales y familiares', 'fondo' => '#efe3cc', 'texto' => '#3b2f1e', 'acento' => '#b8863b', 'bloque' => '#d9c3a0'],
             'd' => ['nombre' => 'Oscuro con detalles dorados', 'descripcion' => 'Fondo oscuro, detalles dorados y mucho aire. Se siente de autor.', 'para' => 'Cocina de autor, vinos y bares', 'fondo' => '#14120f', 'texto' => '#e8dfcf', 'acento' => '#c9a24a', 'bloque' => '#2a251c'],
             'e' => ['nombre' => 'Cafetería', 'descripcion' => 'Colores tierra y rosa, letras grandes y un menú que se desliza de lado.', 'para' => 'Cafeterías y bebidas', 'fondo' => '#f3e6d8', 'texto' => '#4a2f22', 'acento' => '#c0714f', 'bloque' => '#e8b7b0'],
             'f' => ['nombre' => 'Bar y coctelería', 'descripcion' => 'Fondo oscuro con luz de neón magenta y un menú con líneas punteadas.', 'para' => 'Bares y coctelerías', 'fondo' => '#120b17', 'texto' => '#f3e8ff', 'acento' => '#e11d9c', 'bloque' => '#2b1838'],
             'g' => ['nombre' => 'Cafetería pastel', 'descripcion' => 'Tonos pastel, bordes rasgados y letra cursiva. Dulce y alegre.', 'para' => 'Postres, repostería y cafeterías', 'fondo' => '#fdf0f4', 'texto' => '#7a4a5a', 'acento' => '#f4a8c0', 'bloque' => '#f7d4e0'],
             'h' => ['nombre' => 'Pizzería', 'descripcion' => 'Papel crema, rojo tomate y detalles verde albahaca, con fotos redondas como platos.', 'para' => 'Pizzerías y trattorias', 'fondo' => '#f6efe2', 'texto' => '#2a1a14', 'acento' => '#c4351f', 'bloque' => '#cfdcc4'],
         ];
+    }
+
+    /**
+     * Plantilla con la que se dibuja el restaurante: la guardada si sigue en el catálogo, si no la plantilla por defecto.
+     * Única regla de lectura del sitio, del menú y del panel, para que un valor viejo nunca llegue a una vista que no existe.
+     */
+    public static function plantillaVigente(?string $plantilla): string
+    {
+        return array_key_exists((string) $plantilla, Catalogos::plantillasSitio()) ? (string) $plantilla : self::PLANTILLA_POR_DEFECTO;
     }
 
     /**
@@ -95,7 +107,7 @@ class AparienciaSitio
             return ['aplica' => false, 'mensaje' => __('panel.apariencia.color.sin_color')];
         }
 
-        if (in_array($plantilla, ['a', 'b', 'c'], true)) {
+        if ($plantilla === 'b') {
             return ['aplica' => true, 'mensaje' => __('panel.apariencia.color.solo_menu')];
         }
 

@@ -51,7 +51,7 @@ class SitioPublicoTest extends TestCase
      */
     public static function plantillas(): array
     {
-        return ['A minimal' => ['a', 'sitio-a'], 'B oscuro' => ['b', 'sitio-b'], 'C cálido' => ['c', 'sitio-c']];
+        return ['B oscuro' => ['b', 'sitio-b']];
     }
 
     #[DataProvider('plantillas')]
@@ -87,14 +87,42 @@ class SitioPublicoTest extends TestCase
 
     public function test_the_restaurants_chosen_template_is_the_one_shown_and_a_change_applies(): void
     {
-        $r = $this->restaurante(['sitio_plantilla' => 'a']);
-        $this->get('/mesa-larga')->assertSee('data-plantilla="a"', false);
+        $r = $this->restaurante(['sitio_plantilla' => 'b']);
+        $this->get('/mesa-larga')->assertSee('data-plantilla="b"', false);
 
-        $r->update(['sitio_plantilla' => 'c']);
-        $this->get('/mesa-larga')->assertSee('data-plantilla="c"', false)->assertDontSee('data-plantilla="a"', false);
+        $r->update(['sitio_plantilla' => 'd']);
+        $this->get('/mesa-larga')->assertSee('data-plantilla="d"', false)->assertDontSee('data-plantilla="b"', false);
 
         $r->forceFill(['sitio_plantilla' => 'z'])->saveQuietly();
-        $this->get('/mesa-larga')->assertOk()->assertSee('data-plantilla="a"', false);
+        $this->get('/mesa-larga')->assertOk()->assertSee('data-plantilla="b"', false);
+    }
+
+    public function test_a_new_restaurant_uses_the_default_template(): void
+    {
+        $this->restaurante();
+
+        $this->get('/mesa-larga')->assertOk()->assertViewIs('sitio.b')->assertSee('data-plantilla="b"', false);
+        $this->get('/mesa-larga/menu')->assertOk()->assertViewIs('menu.publico');
+    }
+
+    /**
+     * @return array<string, array{0: string}>
+     */
+    public static function plantillasQueYaNoExisten(): array
+    {
+        return ['vacía' => [''], 'a retirada' => ['a'], 'c retirada' => ['c'], 'desconocida' => ['z']];
+    }
+
+    #[DataProvider('plantillasQueYaNoExisten')]
+    public function test_a_stored_template_that_no_longer_exists_falls_back_to_the_default_on_site_and_menu(string $guardada): void
+    {
+        $r = $this->restaurante();
+        $r->forceFill(['sitio_plantilla' => $guardada])->saveQuietly();
+        $this->platillo($r, 'Risotto de hongos', ['precio' => 280]);
+
+        $this->get('/mesa-larga')->assertOk()->assertViewIs('sitio.b')->assertSee('data-plantilla="b"', false)
+            ->assertSee('sitio-b', false)->assertDontSee('sitio-'.$guardada.'"', false);
+        $this->get('/mesa-larga/menu')->assertOk()->assertViewIs('menu.publico')->assertSee('Risotto de hongos');
     }
 
     public function test_hidden_dishes_never_appear_and_sold_out_ones_are_flagged_or_removed(): void
