@@ -166,7 +166,7 @@ Revisa la configuración de producción y dice con claridad qué está mal. Term
 
 Opciones: `--espera=30` (segundos de espera al worker) y `--sin-worker` (omite esa comprobación; no recomendado). Además avisa (`[AVISO]`, sin afectar el código de salida) si hay trabajos en `failed_jobs` y si el **último respaldo tiene más de 36 horas** (`BACKUP_MAX_AGE_HOURS`), no hay ninguno o no se puede leer el disco de respaldos. Es un aviso y no una falla porque en un servidor recién instalado todavía no hay respaldo; revísalo igual antes del primer cliente. Pruebas: `tests/Feature/VerificarProduccionTest.php`.
 
-También avisa (`[AVISO]`, sin fallar) si `/`, `/privacidad` o `/terminos` aún muestran texto pendiente: `[PRECIO]`, `[CONFIRMAR]`, `[CAPTURA DEL MENÚ]`, `[CAPTURA DEL PANEL]`, `[TESTIMONIO]`, `[NOMBRE Y RESTAURANTE]` o `[PÁGINA POR ESCRIBIR]` (lista en `App\Services\MarcadoresPendientes`). No publiques la landing mientras el comando los siga listando.
+También avisa (`[AVISO]`, sin fallar) si `/`, `/privacidad` o `/terminos` aún muestran texto pendiente: `[PRECIO]`, `[CONFIRMAR]`, `[CAPTURA DEL MENÚ]`, `[CAPTURA DEL PANEL]`, `[TESTIMONIO]`, `[NOMBRE Y RESTAURANTE]` o `[PÁGINA POR ESCRIBIR]` (lista en `App\Services\MarcadoresPendientes`). No publiques la landing mientras el comando los siga listando. Los precios de los planes (Lite y Aura) y su nota de impuestos se cambian solo en `config/menuonl.php`, clave `precios`; después del cambio corre `php artisan config:cache` y purga `/`.
 
 El comando lee la configuración **tal como la ve la aplicación**: si usas `config:cache`, corre `php artisan optimize` antes de verificar.
 

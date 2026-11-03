@@ -180,22 +180,56 @@ class PortadaTest extends TestCase
         $this->get('/privacidad')->assertOk()->assertSee('Aviso de privacidad');
     }
 
-    public function test_la_lista_de_marcadores_visibles_esta_completa_y_se_detectan_en_la_portada(): void
+    public function test_la_portada_ya_no_muestra_marcadores_y_solo_quedan_las_paginas_legales(): void
     {
-        $this->assertSame(
-            ['[PRECIO]', '[CONFIRMAR]', '[CAPTURA DEL MENÚ]', '[CAPTURA DEL PANEL]', '[TESTIMONIO]', '[NOMBRE Y RESTAURANTE]', '[PÁGINA POR ESCRIBIR]'],
-            MarcadoresPendientes::LISTA,
-        );
-
         $pendientes = (new MarcadoresPendientes)->enPaginasPublicas();
 
-        $this->assertSame(['/', '/privacidad', '/terminos'], array_keys($pendientes));
+        $this->assertSame(['/privacidad', '/terminos'], array_keys($pendientes));
         $this->assertSame(['[PÁGINA POR ESCRIBIR]'], $pendientes['/privacidad']);
+        $this->assertSame(['[PÁGINA POR ESCRIBIR]'], $pendientes['/terminos']);
+        $this->get('/')->assertOk()->assertDontSee('class="mark"', false);
+    }
 
-        $html = (string) $this->get('/')->getContent();
-        foreach (array_diff(MarcadoresPendientes::LISTA, ['[PÁGINA POR ESCRIBIR]']) as $marcador) {
-            $this->assertStringContainsString($marcador, $html, "La portada ya no muestra {$marcador}: quítalo de la lista si se resolvió.");
+    public function test_un_marcador_que_vuelva_a_la_portada_se_detecta(): void
+    {
+        foreach (MarcadoresPendientes::LISTA as $marcador) {
+            $this->assertSame([$marcador], (new MarcadoresPendientes)->enHtml("<p><span class=\"mark\">{$marcador}</span></p>"));
         }
+    }
+
+    public function test_la_portada_tiene_cada_seccion_una_sola_vez_y_sin_ids_repetidos(): void
+    {
+        $html = (string) $this->get('/')->assertOk()->getContent();
+
+        preg_match_all('/\sid="([^"]+)"/', $html, $ids);
+        $this->assertSame([], array_keys(array_filter(array_count_values($ids[1]), fn (int $veces): bool => $veces > 1)), 'Ids repetidos en la portada.');
+
+        foreach (['como-funciona', 'incluye', 'planes', 'preguntas'] as $seccion) {
+            $this->assertSame(1, substr_count($html, 'id="'.$seccion.'"'), "La sección {$seccion} debe aparecer una vez.");
+        }
+    }
+
+    public function test_los_planes_son_lite_y_aura_con_los_precios_de_la_configuracion(): void
+    {
+        config(['menuonl.precios' => ['lite' => 249, 'aura' => 1499, 'nota' => 'Más IVA.']]);
+
+        $respuesta = $this->get('/')->assertOk();
+
+        $respuesta->assertSee('<h3 id="plan-lite">Lite</h3>', false)
+            ->assertSee('<h3 id="plan-aura">Aura</h3>', false)
+            ->assertSeeInOrder(['$249 al mes', '$1,499 al mes', 'Más IVA.'])
+            ->assertSee('Lite cuesta $249 al mes y Aura $1,499 al mes.')
+            ->assertDontSee('$199')
+            ->assertDontSee('Completo')
+            ->assertDontSee('Solo menú')
+            ->assertDontSee('Sitio y menú');
+    }
+
+    public function test_sin_nota_de_precios_no_queda_un_parrafo_vacio(): void
+    {
+        config(['menuonl.precios.nota' => null]);
+
+        $this->get('/')->assertOk()->assertDontSee('plans__nota', false);
     }
 
     public function test_el_logo_de_la_cabecera_es_un_img_directo_sin_hidden_ni_lazy(): void

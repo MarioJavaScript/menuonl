@@ -232,7 +232,7 @@ class VerificarProduccionTest extends TestCase
         [$codigo, $salida] = $this->ejecutar();
 
         $this->assertSame(0, $codigo);
-        $this->assertMatchesRegularExpression('/\[AVISO\]\s+\/ aún muestra texto pendiente: .*\[PRECIO\]/', $salida);
+        $this->assertDoesNotMatchRegularExpression('/\[AVISO\]\s+\/ aún muestra texto pendiente/', $salida);
         $this->assertMatchesRegularExpression('/\[AVISO\]\s+\/privacidad aún muestra texto pendiente: \[PÁGINA POR ESCRIBIR\]/', $salida);
         $this->assertMatchesRegularExpression('/\[AVISO\]\s+\/terminos aún muestra texto pendiente/', $salida);
     }

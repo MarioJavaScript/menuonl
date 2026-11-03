@@ -123,6 +123,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Precios de la portada
+    |--------------------------------------------------------------------------
+    |
+    | Único lugar de los precios que muestra la portada (tarjetas de planes y preguntas frecuentes), en pesos por mes.
+    | La nota va debajo de los precios: aquí se escribe el aviso de IVA cuando esté confirmado.
+    |
+    */
+
+    'precios' => [
+        'lite' => 199,
+        'aura' => 399,
+        'nota' => 'Precios mensuales en pesos mexicanos.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Cabeceras de seguridad
     |--------------------------------------------------------------------------
     |
