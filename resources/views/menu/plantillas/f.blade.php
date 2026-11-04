@@ -12,7 +12,7 @@
     $nombreCategoria = fn ($categoria): string => (string) ($categoria->traduccion($idioma)?->nombre ?? '');
 
     $numeroPedidos = $restaurante->whatsappPedidosDigitos();
-    $pedidosHabilitados = $restaurante->pedidos_activos && $numeroPedidos !== null;
+    $pedidosHabilitados = $restaurante->pedidosHabilitados();
     $puedePedir = $pedidosHabilitados && $estaAbierto;
     $agregar = function ($producto, string $nombre, ?object $variante = null, string $nombreVariante = '') use ($puedePedir): ?array {
         $disponible = $producto->disponible && ($variante === null || $variante->disponible);
@@ -43,7 +43,7 @@
         </div>
 
         @if ($puedePedir)
-            <p class="bar-lead">{{ filled($mesa) ? 'Mesa '.$mesa.': agrega lo que se te antoje y envía el pedido por WhatsApp.' : 'Agrega lo que se te antoje y envía el pedido por WhatsApp.' }}</p>
+            <p class="bar-lead">Agrega lo que se te antoje y envía el pedido por WhatsApp.</p>
             <a class="bar-boton" href="https://wa.me/{{ $numeroPedidos }}" rel="noopener" data-bar-sin-js>Pedir por WhatsApp</a>
         @elseif ($pedidosHabilitados)
             <p class="bar-aviso" role="status">Estamos cerrados ahora. Puedes ver el menú; los pedidos se activan al abrir.</p>
@@ -132,7 +132,7 @@
 </main>
 
 @if ($puedePedir)
-    <x-sitio.bar.pedido :restaurante="$restaurante" :numero="$numeroPedidos" :idioma="$idioma" :mesa="$mesa" />
+    <x-sitio.bar.pedido :restaurante="$restaurante" :numero="$numeroPedidos" :idioma="$idioma" />
 @endif
 
 <x-sitio.bar.contacto :d="$d" />

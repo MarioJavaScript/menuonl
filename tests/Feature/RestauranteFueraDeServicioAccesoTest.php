@@ -113,13 +113,13 @@ class RestauranteFueraDeServicioAccesoTest extends TestCase
         $this->actingAs($superadmin)->get('/admin/'.$restaurante->slug.'/categorias')->assertOk();
     }
 
-    public function test_un_restaurante_suspendido_no_cuenta_como_plan_sin_panel(): void
+    public function test_un_restaurante_lite_suspendido_cierra_el_panel_igual_que_uno_aura(): void
     {
-        $restaurante = $this->suspendido();
+        $restaurante = Restaurante::factory()->soloMenu()->suspendido()->create();
         $usuario = $this->crearUsuario('propietario', $restaurante);
 
-        $this->assertTrue($usuario->restaurantesSinPanelPorPlan()->isEmpty());
-        $this->assertFalse($usuario->debeVerElAvisoDePlanSinPanel());
+        $this->assertFalse($usuario->canAccessTenant($restaurante));
+        $this->assertTrue($usuario->debeVerElAvisoDeCuentaPausada());
     }
 
     #[DataProvider('rolesDelEquipo')]

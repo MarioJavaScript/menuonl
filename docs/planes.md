@@ -1,5 +1,18 @@
 # Planes de venta de Menubly: análisis y propuesta (Fase 1)
 
+> **Actualización (planes Aura y Lite):** ya no hay tres planes, hay dos. Este documento es el análisis original (con Completo, Sitio y menú y Solo menú) y sus tablas son históricas. Lo vigente:
+>
+> | Plan (en pantalla) | Valor guardado | Qué incluye para el propietario |
+> |---|---|---|
+> | **Aura** | `sitio_menu` | Todo: sitio y menú editables, reservas, pedidos por WhatsApp, apariencia, fotos, datos, contactos, horario, QR, equipo y métricas. Es lo que antes era Completo. |
+> | **Lite** | `solo_menu` | Panel con todo lo del menú: apariencia (plantilla del menú, estilo, color, logotipo y portada), platillos y categorías, datos, contactos, horario, QR, equipo y métricas, y pedidos por WhatsApp (domicilio o para recoger). **Sin** sitio (`/{slug}` redirige 302 al menú), **sin** reservas y **sin** Fotos del restaurante (la galería solo se ve en el sitio). |
+>
+> - La única tabla plan → capacidades sigue en `PlanRestaurante::incluye()`; `PermisosPanel` sigue siendo roles ∩ plan (Lite: todos los módulos menos `reservas`). Equipo: se siguen ofreciendo solo los roles propietario y superadmin (`PermisosPanel::ROLES_OFRECIDOS`).
+> - El plan **Completo** se retiró: la migración `2026_11_04_201124_planes_aura_y_lite` pasó sus restaurantes a `sitio_menu` con una fila "Sistema" en el historial, y `PlanRestaurante::desde('completo')` lo sigue leyendo como Aura. Su `down()` es irreversible.
+> - Como los dos planes incluyen el panel, se borró la pantalla "Tu plan no incluye el panel" (`PlanSinPanelController`, `plan/sin-panel.blade.php`) y su lógica en `AutenticaPanelAdmin`, `Login` y `User`. D10 ya no aplica. El propietario de Lite entra con verificación en dos pasos, como el de Aura.
+> - D2, D3 y D4 ya no aplican: en Aura el propietario configura todo; la pantalla "Ajustes de reservas y pedidos" ahora también tiene modalidades de entrega (domicilio y para recoger) y un mensaje opcional al final del pedido, en los dos planes. En Lite esa pantalla no tiene sección de reservas.
+> - Pedidos: ya no hay pedidos de mesa. El formulario pide "Domicilio / Para recoger" y el mensaje de WhatsApp dice "Entrega"; `?mesa=` ya no llega al formulario (ver `docs/pedido-compartido.md`).
+
 Estado: **solo análisis. No hay código ni migraciones escritas.** Espera tu aprobación. No se hizo `git add`, `commit` ni `push`, y no se tocó `frontend/`, el diseño de las plantillas ni `/panel`.
 
 Todo sale de leer el código en la rama `planes-restaurante`. No ejecuté las pruebas. Lo que no pude confirmar leyendo está marcado como "por confirmar".

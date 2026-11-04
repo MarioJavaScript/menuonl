@@ -10,34 +10,33 @@ use PHPUnit\Framework\TestCase;
 class PlanRestauranteTest extends TestCase
 {
     /**
-     * Una fila por capacidad: la tabla de docs/planes.md (2.2) con D2, D4 y D5 resueltas.
+     * Una fila por capacidad: Aura (sitio_menu) incluye todo; Lite (solo_menu) todo menos el sitio y las reservas.
      *
-     * @return array<string, array{0: Capacidad, 1: bool, 2: bool, 3: bool}>
+     * @return array<string, array{0: Capacidad, 1: bool, 2: bool}>
      */
     public static function tablaDeCapacidades(): array
     {
         return [
-            'sitio' => [Capacidad::Sitio, true, true, false],
-            'reservas' => [Capacidad::Reservas, true, true, false],
-            'panel' => [Capacidad::Panel, true, true, false],
-            'editar_diseno' => [Capacidad::EditarDiseno, true, false, false],
-            'editar_menu' => [Capacidad::EditarMenu, true, false, false],
-            'editar_datos' => [Capacidad::EditarDatos, true, false, false],
-            'editar_telefonos' => [Capacidad::EditarTelefonos, true, true, false],
-            'editar_horario' => [Capacidad::EditarHorario, true, true, false],
-            'qr' => [Capacidad::Qr, true, false, false],
-            'equipo' => [Capacidad::Equipo, true, false, false],
-            'servicio' => [Capacidad::Servicio, true, true, false],
-            'metricas' => [Capacidad::Metricas, true, false, false],
+            'sitio' => [Capacidad::Sitio, true, false],
+            'reservas' => [Capacidad::Reservas, true, false],
+            'panel' => [Capacidad::Panel, true, true],
+            'editar_diseno' => [Capacidad::EditarDiseno, true, true],
+            'editar_menu' => [Capacidad::EditarMenu, true, true],
+            'editar_datos' => [Capacidad::EditarDatos, true, true],
+            'editar_telefonos' => [Capacidad::EditarTelefonos, true, true],
+            'editar_horario' => [Capacidad::EditarHorario, true, true],
+            'qr' => [Capacidad::Qr, true, true],
+            'equipo' => [Capacidad::Equipo, true, true],
+            'servicio' => [Capacidad::Servicio, true, true],
+            'metricas' => [Capacidad::Metricas, true, true],
         ];
     }
 
     #[DataProvider('tablaDeCapacidades')]
-    public function test_cada_plan_incluye_solo_lo_que_dice_la_tabla(Capacidad $capacidad, bool $completo, bool $sitioMenu, bool $soloMenu): void
+    public function test_cada_plan_incluye_solo_lo_que_dice_la_tabla(Capacidad $capacidad, bool $aura, bool $lite): void
     {
-        $this->assertSame($completo, PlanRestaurante::Completo->incluye($capacidad));
-        $this->assertSame($sitioMenu, PlanRestaurante::SitioMenu->incluye($capacidad));
-        $this->assertSame($soloMenu, PlanRestaurante::SoloMenu->incluye($capacidad));
+        $this->assertSame($aura, PlanRestaurante::SitioMenu->incluye($capacidad));
+        $this->assertSame($lite, PlanRestaurante::SoloMenu->incluye($capacidad));
     }
 
     public function test_la_tabla_cubre_todas_las_capacidades(): void
@@ -50,7 +49,7 @@ class PlanRestauranteTest extends TestCase
 
     public function test_los_valores_guardados_caben_en_la_columna(): void
     {
-        $this->assertSame(['completo', 'sitio_menu', 'solo_menu'], array_map(fn (PlanRestaurante $p): string => $p->value, PlanRestaurante::cases()));
+        $this->assertSame(['sitio_menu', 'solo_menu'], array_map(fn (PlanRestaurante $p): string => $p->value, PlanRestaurante::cases()));
 
         foreach (PlanRestaurante::cases() as $plan) {
             $this->assertLessThanOrEqual(20, strlen($plan->value));
@@ -62,6 +61,21 @@ class PlanRestauranteTest extends TestCase
         $this->assertSame(PlanRestaurante::SoloMenu, PlanRestaurante::desde('premium'));
         $this->assertSame(PlanRestaurante::SoloMenu, PlanRestaurante::desde(''));
         $this->assertSame(PlanRestaurante::SoloMenu, PlanRestaurante::desde(null));
-        $this->assertSame(PlanRestaurante::Completo, PlanRestaurante::desde('completo'));
+        $this->assertSame(PlanRestaurante::SitioMenu, PlanRestaurante::desde('sitio_menu'));
+        $this->assertSame(PlanRestaurante::SoloMenu, PlanRestaurante::desde('solo_menu'));
+    }
+
+    public function test_el_plan_retirado_completo_se_lee_como_aura(): void
+    {
+        $this->assertSame('completo', PlanRestaurante::VALOR_RETIRADO_COMPLETO);
+        $this->assertNull(PlanRestaurante::tryFrom('completo'));
+        $this->assertSame(PlanRestaurante::SitioMenu, PlanRestaurante::desde('completo'));
+    }
+
+    public function test_un_formulario_no_puede_elegir_el_plan_retirado(): void
+    {
+        $this->assertNull(PlanRestaurante::deFormulario('completo'));
+        $this->assertSame(PlanRestaurante::SitioMenu, PlanRestaurante::deFormulario('sitio_menu'));
+        $this->assertSame(PlanRestaurante::SoloMenu, PlanRestaurante::deFormulario(PlanRestaurante::SoloMenu));
     }
 }

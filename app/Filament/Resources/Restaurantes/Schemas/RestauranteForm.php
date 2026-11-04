@@ -33,7 +33,7 @@ class RestauranteForm
                     ->label(__('panel.planes.cambiar.campo'))
                     ->options(PlanRestaurante::class)
                     ->selectablePlaceholder(false)
-                    ->default(PlanRestaurante::Completo->value)
+                    ->default(PlanRestaurante::SitioMenu->value)
                     ->required()
                     ->rule(Rule::enum(PlanRestaurante::class))
                     ->helperText(__('panel.planes.cambiar.ayuda_crear'))

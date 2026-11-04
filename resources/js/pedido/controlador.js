@@ -1,7 +1,7 @@
 // Pedido por WhatsApp del menú de las plantillas E, F, G y H. Sin dependencias.
 //
-// - Nombres, precios, número, moneda y mesa salen de atributos de datos que escribe el servidor; nada de lo que escribe el cliente
-//   define un precio o un nombre.
+// - Nombres, precios, número, moneda, modalidades de entrega y mensaje del restaurante salen de atributos de datos que escribe el
+//   servidor; nada de lo que escribe el cliente define un precio o un nombre. No hay pedidos de mesa: ?mesa= no llega aquí.
 // - localStorage guarda solo identificadores, cantidades y notas. Cada carga se vuelve a contrastar con los platillos de la página:
 //   lo que ya no existe o está agotado se descarta.
 // - Todo el contenido se inserta con textContent y nodos del DOM; no hay HTML armado con texto ni manejadores en línea.
@@ -10,7 +10,7 @@
 //   de localStorage que usa por defecto.
 // - Tercer parámetro opcional (menu.publico lo usa; E, F, G y H no): `presentacion` (fábrica de abrir, cerrar, estaAbierto y mostrarToast
 //   para un cajón que no es un <dialog>) y `textoAgregado` (texto del aviso al agregar). Sin él, el comportamiento es el de siempre.
-import { LIMITES, armarEnlace, centavos, crearFormateador, limpiarMesa, limpiarTexto, totalizar } from './mensaje.js';
+import { LIMITES, armarEnlace, centavos, crearFormateador, limpiarTexto, totalizar } from './mensaje.js';
 
 /**
  * @param {string} prefijo Prefijo de los atributos de datos de la plantilla (cal, bar, pas, piz, mo).
@@ -32,7 +32,7 @@ export function iniciarPedido(prefijo, claveDefecto, opciones = {}) {
     const lista = consultar(selector('lineas'));
     const plantilla = consultar(`template${selector('plantilla-linea')}`);
     const vacio = consultar(selector('vacio'));
-    const campoMesa = consultar(selector('mesa'));
+    const grupoEntrega = consultar(selector('entrega'));
     const campoCocina = consultar(selector('cocina'));
     const botonEnviar = consultar(selector('enviar'));
     const botonVaciar = consultar(selector('vaciar'));
@@ -270,8 +270,25 @@ export function iniciarPedido(prefijo, claveDefecto, opciones = {}) {
             return;
         }
 
-        campoMesa.value = limpiarMesa(campoMesa.value);
-        const resultado = armarEnlace({ numero, restaurante: raiz.dataset.restaurante ?? '', mesa: campoMesa.value, notaCocina: campoCocina.value, lineas: detalle, formatear });
+        const opcionesDeEntrega = grupoEntrega ? Array.from(grupoEntrega.querySelectorAll(selector('modalidad'))) : [];
+        const entrega = opcionesDeEntrega.find((opcion) => opcion.checked)?.value ?? '';
+
+        if (entrega === '') {
+            mostrarToast('Elige si tu pedido es a domicilio o para recoger.');
+            opcionesDeEntrega[0]?.focus();
+
+            return;
+        }
+
+        const resultado = armarEnlace({
+            numero,
+            restaurante: raiz.dataset.restaurante ?? '',
+            entrega,
+            notaCocina: campoCocina.value,
+            mensaje: raiz.dataset.mensaje ?? '',
+            lineas: detalle,
+            formatear,
+        });
 
         if (resultado === null) {
             mostrarToast('No pudimos armar el pedido. Escríbenos por WhatsApp desde el contacto.');
@@ -367,8 +384,6 @@ export function iniciarPedido(prefijo, claveDefecto, opciones = {}) {
         }
     });
 
-    campoMesa.value = limpiarMesa(raiz.dataset.mesa ?? '');
-    campoMesa.maxLength = LIMITES.mesa;
     campoCocina.maxLength = LIMITES.notaCocina;
 
     lineas = cargar();

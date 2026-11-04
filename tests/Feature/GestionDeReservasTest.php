@@ -288,7 +288,7 @@ class GestionDeReservasTest extends TestCase
         foreach ([$propietarioSoloMenu, $superadmin] as $actor) {
             try {
                 $this->gestion->crear($actor, $soloMenu, $this->datos());
-                $this->fail('Solo menú no incluye reservas.');
+                $this->fail('Lite no incluye reservas.');
             } catch (AuthorizationException) {
                 $this->assertSame(0, Reserva::withoutGlobalScopes()->count());
             }

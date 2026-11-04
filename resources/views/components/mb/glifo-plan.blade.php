@@ -2,11 +2,12 @@
 @php
     $plan = $plan instanceof \App\Enums\PlanRestaurante ? $plan : \App\Enums\PlanRestaurante::desde(is_string($plan) ? $plan : null);
     $nivel = $plan->nivel();
+    $barras = range(1, count(\App\Enums\PlanRestaurante::cases()));
 @endphp
-{{-- Glifo de plan: tres barras (altura creciente, las del nivel llenas) y el nombre; el nivel nunca se transmite solo con color. --}}
+{{-- Glifo de plan: una barra por plan (altura creciente, las del nivel llenas) y el nombre; el nivel nunca se transmite solo con color. --}}
 <span {{ $attributes->class(['mb-plan']) }} data-nivel="{{ $nivel }}">
     <span class="mb-plan__glifo" aria-hidden="true">
-        @foreach ([1, 2, 3] as $barra)
+        @foreach ($barras as $barra)
             <i @class(['mb-plan__llena' => $barra <= $nivel])></i>
         @endforeach
     </span>

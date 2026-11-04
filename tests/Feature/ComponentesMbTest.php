@@ -20,7 +20,6 @@ class ComponentesMbTest extends TestCase
     {
         $this->assertSame(1, PlanRestaurante::SoloMenu->nivel());
         $this->assertSame(2, PlanRestaurante::SitioMenu->nivel());
-        $this->assertSame(3, PlanRestaurante::Completo->nivel());
     }
 
     /**
@@ -29,9 +28,8 @@ class ComponentesMbTest extends TestCase
     public static function planes(): array
     {
         return [
-            'completo' => [PlanRestaurante::Completo, 3],
-            'sitio y menú' => [PlanRestaurante::SitioMenu, 2],
-            'solo menú' => [PlanRestaurante::SoloMenu, 1],
+            'aura' => [PlanRestaurante::SitioMenu, 2],
+            'lite' => [PlanRestaurante::SoloMenu, 1],
         ];
     }
 
@@ -41,7 +39,7 @@ class ComponentesMbTest extends TestCase
         $html = Blade::render('<x-mb.glifo-plan :plan="$plan" />', ['plan' => $plan]);
 
         $this->assertSame($nivel, substr_count($html, 'mb-plan__llena'));
-        $this->assertSame(3, substr_count($html, '<i'));
+        $this->assertSame(2, substr_count($html, '<i'));
         $this->assertStringContainsString('data-nivel="'.$nivel.'"', $html);
         $this->assertStringContainsString('<span>'.$plan->getLabel().'</span>', $html);
         $this->assertStringContainsString('class="mb-plan__glifo" aria-hidden="true"', $html);
@@ -61,7 +59,8 @@ class ComponentesMbTest extends TestCase
 
     public function test_el_glifo_acepta_el_texto_del_plan_y_un_valor_desconocido_es_el_mas_restrictivo(): void
     {
-        $this->assertStringContainsString('data-nivel="3"', Blade::render('<x-mb.glifo-plan plan="completo" />'));
+        $this->assertStringContainsString('data-nivel="2"', Blade::render('<x-mb.glifo-plan plan="sitio_menu" />'));
+        $this->assertStringContainsString('data-nivel="2"', Blade::render('<x-mb.glifo-plan plan="completo" />'));
         $this->assertStringContainsString('data-nivel="1"', Blade::render('<x-mb.glifo-plan plan="inventado" />'));
         $this->assertStringContainsString('data-nivel="1"', Blade::render('<x-mb.glifo-plan />'));
     }
@@ -202,7 +201,7 @@ Contenido</x-mb.hoja>');
     {
         $html = View::make('filament.pages.componentes-mb')->render();
 
-        $this->assertSame(3 + 3 + 1, substr_count($html, 'data-nivel="'), 'Tres glifos con texto, tres sin texto y uno en el banner.');
+        $this->assertSame(2 + 2 + 1, substr_count($html, 'data-nivel="'), 'Dos glifos con texto (Aura y Lite), dos sin texto y uno en el banner.');
         foreach (['mb-plan', 'mb-aviso', 'mb-vacio', 'mb-hoja', 'mb-banner'] as $clase) {
             $this->assertStringContainsString('class="'.$clase, $html);
         }

@@ -1,6 +1,6 @@
 @php
     $numeroPedidos = $restaurante->whatsappPedidosDigitos();
-    $puedePedir = $restaurante->pedidos_activos && $estaAbierto && $numeroPedidos !== null;
+    $puedePedir = $restaurante->pedidosHabilitados() && $estaAbierto;
 @endphp
 <x-layout.publico
     :pedido-js="$puedePedir ? 'resources/js/menu-pedido.js' : null"
@@ -138,7 +138,7 @@
                                 Para ordenar, pídele a tu mesero.
                             @elseif (! $estaAbierto)
                                 Estamos cerrados.@if ($proximaApertura) Abrimos {{ $proximaApertura }}.@endif Puedes ver el menú; los pedidos se activan al abrir.
-                            @elseif ($numeroPedidos === null)
+                            @else
                                 Por ahora no recibimos pedidos aquí. Pídele a tu mesero.
                             @endif
                         </span>
@@ -346,7 +346,7 @@
                 data-restaurante="{{ $restaurante->nombre }}"
                 data-moneda="{{ strtoupper($restaurante->moneda) }}"
                 data-locale="{{ \App\Services\FormatoMoneda::locale($idioma, $restaurante->moneda) }}"
-                data-mesa="{{ $mesa }}"
+                data-mensaje="{{ $restaurante->mensajeDePedido() }}"
                 data-clave="{{ 'menuonl_cart_m_'.$restaurante->slug }}"
                 data-clave-antigua="{{ 'menuonl_cart_'.$restaurante->slug }}"
             >
@@ -471,21 +471,9 @@
                         </template>
                     </div>
 
-                    <!-- Table & Notes Form -->
+                    <!-- Delivery & Notes Form (no table orders: ?mesa= never reaches this form) -->
                     <div class="space-y-3 pt-3">
-                        <div>
-                            <label class="etiqueta-campo" for="inputMesa">
-                                Mesa
-                            </label>
-                            <input
-                                type="text"
-                                id="inputMesa"
-                                data-mo-mesa
-                                value="{{ $mesa ?? '' }}"
-                                placeholder='Ej. 4, o escribe "Para llevar"'
-                                class="campo"
-                            />
-                        </div>
+                        <x-sitio.entrega :restaurante="$restaurante" prefijo="mo" clase-campo="" clase-etiqueta="etiqueta-campo" />
 
                         <div>
                             <label class="etiqueta-campo" for="inputNotasGenerales">
@@ -506,7 +494,7 @@
                             <span id="modalCartTotal" data-mo-total>{{ \App\Services\FormatoMoneda::formatear(0, $restaurante->moneda, $idioma) }}</span>
                         </div>
 
-                        <p class="text-xs text-texto-suave" data-mo-tipo-de-pedido>Pedidos para domicilio o para recoger.</p>
+                        <p class="text-xs text-texto-suave" data-mo-tipo-de-pedido>{{ $restaurante->textoDeModalidadesDePedido() }}</p>
 
                         <!-- WhatsApp Submit Button -->
                         <button

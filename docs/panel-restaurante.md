@@ -2,6 +2,8 @@
 
 > **Actualización:** el panel de servicio `/panel` y su API `/api/v1/panel` ya se retiraron; `/panel` redirige (302) a `/admin` y la API responde 410. Las referencias a `/panel` de este documento son históricas (ver `docs/integracion-dashboard.md`, sección 22).
 
+> **Actualización (planes Aura y Lite):** los planes son **Aura** (`sitio_menu`, todo) y **Lite** (`solo_menu`, panel del menú sin sitio, reservas ni Fotos). El propietario de Lite ya entra al panel (con verificación en dos pasos) y edita Apariencia, Platillos, Categorías, Datos, Horario, Contactos, QR, Equipo y Métricas. "Ajustes de reservas y pedidos" tiene en los dos planes los pedidos por WhatsApp completos (activar, número, modalidades Domicilio y Para recoger, mensaje opcional); la sección de reservas solo existe en Aura. Detalle en `docs/planes.md` (nota inicial) y `docs/despliegue.md` ("Despliegue de los planes Aura y Lite").
+
 > **Actualización (plantillas):** se retiraron las plantillas del sitio "a" (Claro y sencillo, antes "Minimal editorial") y "c" (Clásico y cálido). Quedan b, d, e, f, g y h. La plantilla por defecto es "b" (Oscuro elegante), en `App\Services\AparienciaSitio::PLANTILLA_POR_DEFECTO`, y la galería de fotos solo se ve en "b". La migración `retirar_plantillas_a_y_c_del_sitio` pasó a "b" los restaurantes que las usaban y dejó una fila sin usuario ("Sistema") en `historial_cambios` con la plantilla anterior; es irreversible. Cualquier valor guardado que no esté en el catálogo (vacío, desconocido, "a" o "c") se lee como "b" con `AparienciaSitio::plantillaVigente()`, nunca como error. Las menciones de "a–h" y "A–H" de este documento son históricas.
 
 Estado: propuesta para aprobación. No se escribió código de producción. No se hizo `git add`, `commit` ni `push`.

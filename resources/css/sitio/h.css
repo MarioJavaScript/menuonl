@@ -439,6 +439,9 @@ html {
 .piz-reserva__trampa { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 .piz-campo { display: grid; gap: var(--piz-e1); }
 .piz-campo__etiqueta { font-weight: 700; }
+.piz-entrega { border: 0; padding: 0; }
+.piz-entrega__opciones { display: flex; flex-wrap: wrap; gap: 0 var(--piz-e4); }
+.piz-entrega__opcion { display: inline-flex; align-items: center; gap: var(--piz-e2); min-height: var(--piz-toque); cursor: pointer; }
 .piz-campo__entrada {
   width: 100%;
   min-height: var(--piz-toque);

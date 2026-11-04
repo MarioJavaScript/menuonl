@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\Capacidad;
 use Filament\Auth\MultiFactor\App\Concerns\InteractsWithAppAuthentication;
 use Filament\Auth\MultiFactor\App\Concerns\InteractsWithAppAuthenticationRecovery;
 use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthentication;
@@ -66,22 +65,9 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     }
 
     /**
-     * Whether this user should be shown the "your plan has no panel" screen instead of a bare 403: an active,
-     * non-superadmin account whose only active memberships are restaurants whose plan leaves the panel closed.
-     * Someone with at least one restaurant that does have the panel goes straight in, and never sees the screen.
-     */
-    public function debeVerElAvisoDePlanSinPanel(): bool
-    {
-        return $this->activo
-            && ! $this->isSuperadmin()
-            && $this->restaurantesConPanel()->isEmpty()
-            && $this->restaurantesSinPanelPorPlan()->isNotEmpty();
-    }
-
-    /**
      * Whether this user should be shown the "account out of service" screen: an active, non-superadmin account with
-     * no restaurant it can enter and at least one active membership in a paused restaurant. It wins over the
-     * "your plan has no panel" screen. Someone who can still enter another restaurant goes straight in.
+     * no restaurant it can enter and at least one active membership in a paused restaurant. Someone who can still
+     * enter another restaurant goes straight in.
      */
     public function debeVerElAvisoDeCuentaPausada(): bool
     {
@@ -105,20 +91,7 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     }
 
     /**
-     * Active memberships in restaurants whose plan does not include the panel, by name for the notice.
-     *
-     * @return Collection<int, Restaurante>
-     */
-    public function restaurantesSinPanelPorPlan(): Collection
-    {
-        return $this->restaurantes()->wherePivot('activo', true)->get()
-            ->reject(fn (Restaurante $restaurante): bool => $restaurante->estaPausado() || $restaurante->incluye(Capacidad::Panel))
-            ->sortBy('nombre')
-            ->values();
-    }
-
-    /**
-     * Active memberships in restaurants whose team can use the panel: the plan includes it (Solo menú does not) and the
+     * Active memberships in restaurants whose team can use the panel: the plan includes it (Aura and Lite both do) and the
      * restaurant is not paused (see Restaurante::permiteElPanelAlEquipo()).
      *
      * @return Collection<int, Restaurante>

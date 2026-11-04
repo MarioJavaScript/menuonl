@@ -127,14 +127,14 @@ class MenuPublicoContextoJsTest extends TestCase
 
         // Estructura aprobada en ecf3c15; ahora la arma pedido/mensaje.js y la fija tests/Js/menu-publico-pedido.test.mjs contra la referencia.
         $this->assertStringContainsString('Hola, quiero pedir en *${restaurante}*:\n\n', $mensaje);
-        $this->assertStringContainsString('*Mesa:* ${mesaTexto}\n\n', $mensaje);
+        $this->assertStringContainsString('*Entrega:* ${entregaTexto}\n\n', $mensaje);
         $this->assertStringContainsString('*Pedido:*\n${items}\n', $mensaje);
         $this->assertStringContainsString('*Nota para la cocina:* ${cocina}\n\n', $mensaje);
         $this->assertStringContainsString('*Total:* ${formatear(total)}', $mensaje);
-        $this->assertStringContainsString("|| 'Para llevar'", $mensaje);
+        $this->assertStringContainsString('mensaje += `\n\n${despedida}`;', $mensaje);
 
         // Textos anteriores obsoletos no deben existir
-        foreach (['¡Hola! Quiero hacer el siguiente pedido', '*Ubicación/Mesa:*', '*Detalle del pedido:*', '*Indicaciones:*', '*Total estimado:*', 'Para llevar / Sin mesa'] as $obsoleto) {
+        foreach (['¡Hola! Quiero hacer el siguiente pedido', '*Ubicación/Mesa:*', '*Detalle del pedido:*', '*Indicaciones:*', '*Total estimado:*', 'Para llevar / Sin mesa', '*Mesa:*', 'Para llevar'] as $obsoleto) {
             $this->assertStringNotContainsString($obsoleto, $mensaje);
         }
     }

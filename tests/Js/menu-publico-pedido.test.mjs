@@ -4,12 +4,14 @@ import { test } from 'node:test';
 import { Nodo, montarPagina } from './ayudas/dom-falso.mjs';
 
 // Referencia generada con el script en línea de menu.publico ANTES del PR 3 (ver el campo "origen" del JSON).
+// Desde los planes Aura y Lite ya no hay pedidos de mesa: la línea "*Mesa:* …" de la referencia se compara como
+// "*Entrega:* …" (conEntrega) y todo lo demás del enlace debe seguir idéntico.
 const referencia = JSON.parse(readFileSync(new URL('./fixtures/menu-publico-referencia.json', import.meta.url), 'utf8'));
 
 const { iniciarPedido } = await import('../../resources/js/pedido/controlador.js');
 const { migrarCarritoAntiguo } = await import('../../resources/js/pedido/migracion.js');
 const { crearPresentacionHoja } = await import('../../resources/js/pedido/presentacion-hoja.js');
-const { LIMITES } = await import('../../resources/js/pedido/mensaje.js');
+const { ENTREGAS, LIMITES } = await import('../../resources/js/pedido/mensaje.js');
 
 const el = (etiqueta, atributos, hijos) => new Nodo(etiqueta, atributos, hijos);
 const SLUG = 'cafe-mezquite';
@@ -19,9 +21,9 @@ const CLAVE_ANTIGUA = `menuonl_cart_${SLUG}`;
 /**
  * Página con el mismo conjunto de data-mo-* que escribe menu.publico.blade.php y dish-card.blade.php.
  *
- * @param {{moneda?: string, locale?: string, numero?: string, restaurante?: string, mesa?: string, platillos: Array<{producto: number, variante?: number, nombre: string, nombreVariante?: string, precio: string}>}} datos
+ * @param {{moneda?: string, locale?: string, numero?: string, restaurante?: string, modalidades?: string[], marcada?: string|null, mensaje?: string, extra?: Record<string, string>, platillos: Array<{producto: number, variante?: number, nombre: string, nombreVariante?: string, precio: string}>}} datos
  */
-function pagina({ moneda = 'MXN', locale = 'es-MX', numero = '525512345678', restaurante = 'Cafe Mezquite', mesa = '', platillos }, almacenamiento = {}) {
+function pagina({ moneda = 'MXN', locale = 'es-MX', numero = '525512345678', restaurante = 'Cafe Mezquite', modalidades = ['domicilio', 'recoger'], marcada = 'recoger', mensaje = '', extra = {}, platillos }, almacenamiento = {}) {
     const botones = platillos.map((platillo) => el('button', {
         'data-mo-agregar': '', 'data-producto': platillo.producto, 'data-variante': platillo.variante ?? '', 'data-nombre': platillo.nombre,
         'data-nombre-variante': platillo.nombreVariante ?? '', 'data-precio': platillo.precio, class: 'btn-cart-add',
@@ -41,7 +43,9 @@ function pagina({ moneda = 'MXN', locale = 'es-MX', numero = '525512345678', res
         el('div', { 'data-mo-enviado': '', hidden: '' }, [el('button', { 'data-mo-listo': '' }), el('button', { 'data-mo-aun-no': '' })]),
         el('p', { 'data-mo-aviso-envio': '', hidden: '' }),
         el('div', { id: 'cartItemsContainer' }, [el('p', { 'data-mo-vacio': '' }), el('div', { 'data-mo-lineas': '' }), fila]),
-        el('input', { id: 'inputMesa', 'data-mo-mesa': '', value: mesa }),
+        el('fieldset', { 'data-mo-entrega': '' }, modalidades.map((modalidad) => el('input', {
+            type: 'radio', name: 'mo-pedido-entrega', value: modalidad, 'data-mo-modalidad': '', ...(modalidad === marcada ? { checked: '' } : {}),
+        }))),
         el('textarea', { id: 'inputNotasGenerales', 'data-mo-cocina': '' }),
         el('span', { id: 'modalCartTotal', 'data-mo-total': '' }),
         el('button', { id: 'btnEnviarWhatsApp', 'data-mo-enviar': '' }),
@@ -49,7 +53,7 @@ function pagina({ moneda = 'MXN', locale = 'es-MX', numero = '525512345678', res
     const barra = el('button', { id: 'floatingCartBar', 'data-mo-barra': '', hidden: '' }, [el('span', { 'data-mo-cuenta': '' }), el('span', { 'data-mo-barra-total': '' })]);
     const raiz = el('div', {
         'data-mo-pedido': '', 'data-numero': numero, 'data-restaurante': restaurante, 'data-moneda': moneda, 'data-locale': locale,
-        'data-mesa': mesa, 'data-clave': CLAVE, 'data-clave-antigua': CLAVE_ANTIGUA,
+        'data-mensaje': mensaje, 'data-clave': CLAVE, 'data-clave-antigua': CLAVE_ANTIGUA, ...extra,
     }, [barra, dialogo]);
     const toast = el('div', { id: 'cartToast' }, [el('span', { id: 'cartToastMessage' })]);
     const entorno = montarPagina([toast, ...botones, raiz], { almacenamiento });
@@ -64,6 +68,20 @@ function iniciar(entorno) {
 }
 
 const mensajeDe = (url) => decodeURIComponent(url.split('text=')[1]);
+
+/**
+ * Entrega que se elige en cada caso de la referencia: sin mesa (antes "Para llevar") es para recoger; con mesa, a domicilio.
+ */
+const entregaDe = (caso) => (String(caso.mesa ?? '').trim() === '' ? 'recoger' : 'domicilio');
+
+/**
+ * El enlace de la referencia con su línea "*Mesa:* …" cambiada por la de entrega; nada más del enlace cambia.
+ */
+function conEntrega(url, entrega) {
+    const [base, texto] = url.split('?text=');
+
+    return `${base}?text=${encodeURIComponent(decodeURIComponent(texto).replace(/\*Mesa:\* [^\n]*\n/, `*Entrega:* ${ENTREGAS[entrega]}\n`))}`;
+}
 const guardado = (entorno) => JSON.parse(entorno.memoria.get(CLAVE) ?? 'null');
 
 function platillosDe(carrito) {
@@ -78,9 +96,8 @@ function platillosDe(carrito) {
 
 function enviarCaso(caso, { precioActual } = {}) {
     const platillos = platillosDe(caso.carritoAntiguo).map((p) => (precioActual ? { ...p, precio: precioActual } : p));
-    const entorno = pagina({ moneda: caso.moneda, locale: caso.locale, numero: caso.numero, restaurante: caso.restaurante, platillos }, { [CLAVE_ANTIGUA]: JSON.stringify(caso.carritoAntiguo) });
+    const entorno = pagina({ moneda: caso.moneda, locale: caso.locale, numero: caso.numero, restaurante: caso.restaurante, marcada: entregaDe(caso), platillos }, { [CLAVE_ANTIGUA]: JSON.stringify(caso.carritoAntiguo) });
     iniciar(entorno);
-    entorno.campo('mesa').value = caso.mesa;
     entorno.campo('cocina').value = caso.notaCocina;
     entorno.campo('enviar').clic();
 
@@ -88,22 +105,24 @@ function enviarCaso(caso, { precioActual } = {}) {
 }
 
 for (const caso of referencia.casos.filter((c) => !c.cambiaAPropósito)) {
-    test(`un pedido normal llega igual que antes (carrito en formato antiguo -> mensaje): ${caso.id}`, () => {
+    test(`un pedido normal llega igual que antes, con la entrega en lugar de la mesa (carrito en formato antiguo -> mensaje): ${caso.id}`, () => {
         const entorno = enviarCaso(caso);
 
         assert.equal(entorno.abiertas.length, 1);
-        assert.equal(entorno.abiertas[0][0], caso.urlAntes);
+        assert.equal(entorno.abiertas[0][0], conEntrega(caso.urlAntes, entregaDe(caso)));
+        assert.doesNotMatch(mensajeDe(entorno.abiertas[0][0]), /Mesa/);
         assert.equal(entorno.campo('total').textContent, caso.totalAntes);
     });
 }
 
-test('entradas raras: solo cambian la mesa, las marcas y saltos de las notas y la cantidad máxima', () => {
+test('entradas raras: solo cambian la entrega (en lugar de la mesa), las marcas y saltos de las notas y la cantidad máxima', () => {
     const por = (id) => referencia.casos.find((c) => c.id === id);
     const mensaje = (id) => mensajeDe(enviarCaso(por(id)).abiertas[0][0]);
-    const antes = (id) => mensajeDe(por(id).urlAntes);
+    const antes = (id) => mensajeDe(conEntrega(por(id).urlAntes, entregaDe(por(id))));
 
-    assert.equal(mensaje('rara-mesa-simbolos'), antes('rara-mesa-simbolos').replace('*Mesa:* Barra/2', '*Mesa:* Barra 2'));
-    assert.equal(mensaje('rara-mesa-numeral'), antes('rara-mesa-numeral').replace('*Mesa:* Mesa #3', '*Mesa:* Mesa 3'));
+    assert.equal(mensaje('rara-mesa-simbolos'), antes('rara-mesa-simbolos'));
+    assert.equal(mensaje('rara-mesa-numeral'), antes('rara-mesa-numeral'));
+    assert.doesNotMatch(mensaje('rara-mesa-simbolos'), /Mesa|Barra/);
     assert.equal(
         mensaje('rara-notas-con-marcas'),
         antes('rara-notas-con-marcas').replace('_Nota: con _leche_ *extra*_', '_Nota: con leche extra_').replace('sin *hielo*\ny ~nada~', 'sin hielo y nada'),
@@ -219,17 +238,50 @@ test('la nota de cada línea se limpia y se guarda al escribir; las marcas de Wh
     assert.equal(guardado(entorno)[0].n, 'sin hielo y poco');
 });
 
-test('mesa de ?mesa= se limpia con la regla del módulo; vacía sale "Para llevar"', () => {
-    const entorno = pagina({ mesa: 'Barra/2', platillos: [{ producto: 1, nombre: 'Latte', precio: '55.00' }] });
+test('entrega: sin elegir Domicilio o Para recoger no se abre WhatsApp, se avisa y se enfoca la primera opción', () => {
+    const entorno = pagina({ marcada: null, platillos: [{ producto: 1, nombre: 'Latte', precio: '55.00' }] });
     iniciar(entorno);
-
-    assert.equal(entorno.campo('mesa').value, 'Barra 2');
-    assert.equal(entorno.campo('mesa').maxLength, LIMITES.mesa);
-
     entorno.botones[0].clic();
-    entorno.campo('mesa').value = '   ';
     entorno.campo('enviar').clic();
-    assert.match(mensajeDe(entorno.abiertas[0][0]), /\*Mesa:\* Para llevar\n/);
+
+    assert.equal(entorno.abiertas.length, 0);
+    assert.equal(entorno.toast.querySelector('#cartToastMessage').textContent, 'Elige si tu pedido es a domicilio o para recoger.');
+    assert.equal(entorno.documento.activeElement, entorno.raiz.querySelectorAll('[data-mo-modalidad]')[0]);
+
+    entorno.raiz.querySelectorAll('[data-mo-modalidad]')[0].checked = true;
+    entorno.campo('enviar').clic();
+    assert.equal(entorno.abiertas.length, 1);
+    assert.match(mensajeDe(entorno.abiertas[0][0]), /\n\*Entrega:\* Domicilio\n/);
+});
+
+test('entrega: con una sola modalidad ya marcada el mensaje la lleva; un ?mesa= viejo del servidor no llega al mensaje', () => {
+    const entorno = pagina({ modalidades: ['recoger'], marcada: 'recoger', extra: { 'data-mesa': '4' }, platillos: [{ producto: 1, nombre: 'Latte', precio: '55.00' }] });
+    iniciar(entorno);
+    entorno.botones[0].clic();
+    entorno.campo('enviar').clic();
+
+    const texto = mensajeDe(entorno.abiertas[0][0]);
+    assert.match(texto, /\n\*Entrega:\* Para recoger\n/);
+    assert.doesNotMatch(texto, /Mesa|\b4\b/);
+});
+
+test('entrega: un valor que no es Domicilio ni Para recoger no arma el pedido', () => {
+    const entorno = pagina({ modalidades: ['mesa'], marcada: 'mesa', platillos: [{ producto: 1, nombre: 'Latte', precio: '55.00' }] });
+    iniciar(entorno);
+    entorno.botones[0].clic();
+    entorno.campo('enviar').clic();
+
+    assert.equal(entorno.abiertas.length, 0);
+    assert.match(entorno.toast.querySelector('#cartToastMessage').textContent, /No pudimos armar el pedido/);
+});
+
+test('el mensaje del restaurante (data-mensaje) va al final del pedido, limpio', () => {
+    const entorno = pagina({ mensaje: 'Te confirmamos *pronto*', platillos: [{ producto: 1, nombre: 'Latte', precio: '55.00' }] });
+    iniciar(entorno);
+    entorno.botones[0].clic();
+    entorno.campo('enviar').clic();
+
+    assert.ok(mensajeDe(entorno.abiertas[0][0]).endsWith('*Total:* $55.00\n\nTe confirmamos pronto'));
 });
 
 test('número inválido: no se abre WhatsApp, se avisa y el cajón sigue usable', () => {

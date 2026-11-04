@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { LIMITES, armarEnlace, centavos, crearFormateador, limpiarMesa, limpiarTexto, totalizar } from '../../resources/js/sitio-bar-pedido-mensaje.js';
+import { ENTREGAS, LIMITES, armarEnlace, centavos, crearFormateador, limpiarTexto, totalizar } from '../../resources/js/sitio-bar-pedido-mensaje.js';
 
 const formatear = crearFormateador('MXN', 'es-MX');
 const texto = (enlace) => decodeURIComponent(enlace.url.split('?text=')[1]);
-const base = { numero: '525512345678', restaurante: 'Cafe Mezquite', mesa: '3', notaCocina: '', formatear };
+const base = { numero: '525512345678', restaurante: 'Cafe Mezquite', entrega: 'recoger', notaCocina: '', formatear };
 
 test('centavos solo acepta decimales del servidor', () => {
     assert.equal(centavos('78.00'), 7800);
@@ -20,12 +20,15 @@ test('limpiarTexto quita control, marcas de formato y recorta', () => {
     assert.equal(limpiarTexto(null, 10), '');
 });
 
-test('limpiarMesa deja letras, numeros, espacio, guion y guion bajo hasta 20', () => {
-    assert.equal(limpiarMesa('<b>Mesa 3</b>'), 'b Mesa 3 b');
-    assert.equal(limpiarMesa('Barra/2'), 'Barra 2');
-    assert.equal(limpiarMesa('a'.repeat(40)).length, 20);
-    assert.equal(limpiarMesa('3'), '3');
-    assert.equal(limpiarMesa('***'), '');
+test('la entrega solo puede ser Domicilio o Para recoger: no hay pedidos de mesa', () => {
+    assert.deepEqual({ ...ENTREGAS }, { domicilio: 'Domicilio', recoger: 'Para recoger' });
+    assert.ok(Object.isFrozen(ENTREGAS));
+
+    const lineas = [{ cantidad: 1, nombre: 'Latte', variante: '', nota: '', precio: 5500 }];
+
+    for (const entrega of ['', '   ', '3', 'mesa', 'Mesa 3', 'Domicilio', 'toString', '__proto__', 'constructor', undefined, null]) {
+        assert.equal(armarEnlace({ ...base, entrega, lineas }), null, String(entrega));
+    }
 });
 
 test('el mensaje conserva el formato de menu.publico', () => {
@@ -41,7 +44,7 @@ test('el mensaje conserva el formato de menu.publico', () => {
     assert.equal(texto(resultado), [
         'Hola, quiero pedir en *Cafe Mezquite*:',
         '',
-        '*Mesa:* 3',
+        '*Entrega:* Para recoger',
         '',
         '*Pedido:*',
         '• 2x Latte (Grande) - $110.00',
@@ -56,10 +59,20 @@ test('el mensaje conserva el formato de menu.publico', () => {
     assert.equal(resultado.omitidas, 0);
 });
 
-test('sin mesa dice Para llevar y sin nota de cocina no deja hueco', () => {
-    const resultado = armarEnlace({ ...base, mesa: '   ', lineas: [{ cantidad: 1, nombre: 'Latte', variante: '', nota: '', precio: 5500 }] });
+test('a domicilio dice Domicilio y sin nota de cocina no deja hueco', () => {
+    const resultado = armarEnlace({ ...base, entrega: 'domicilio', lineas: [{ cantidad: 1, nombre: 'Latte', variante: '', nota: '', precio: 5500 }] });
 
-    assert.equal(texto(resultado), 'Hola, quiero pedir en *Cafe Mezquite*:\n\n*Mesa:* Para llevar\n\n*Pedido:*\n• 1x Latte - $55.00\n\n*Total:* $55.00');
+    assert.equal(texto(resultado), 'Hola, quiero pedir en *Cafe Mezquite*:\n\n*Entrega:* Domicilio\n\n*Pedido:*\n• 1x Latte - $55.00\n\n*Total:* $55.00');
+    assert.doesNotMatch(texto(resultado), /Mesa/);
+});
+
+test('el mensaje del restaurante va al final, limpio y con su largo máximo', () => {
+    const lineas = [{ cantidad: 1, nombre: 'Latte', variante: '', nota: '', precio: 5500 }];
+    const resultado = armarEnlace({ ...base, mensaje: '  Te confirmamos *pronto*\n_gracias_  ', lineas });
+
+    assert.ok(texto(resultado).endsWith('*Total:* $55.00\n\nTe confirmamos pronto gracias'));
+    assert.ok(texto(armarEnlace({ ...base, mensaje: 'x'.repeat(500), lineas })).endsWith(`\n\n${'x'.repeat(LIMITES.mensaje)}`));
+    assert.ok(texto(armarEnlace({ ...base, mensaje: '   ', lineas })).endsWith('*Total:* $55.00'));
 });
 
 test('nombres y notas hostiles solo viajan codificados', () => {

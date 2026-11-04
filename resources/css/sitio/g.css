@@ -413,6 +413,9 @@ html {
 .pas-reserva__trampa { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 .pas-campo { display: grid; gap: var(--pas-e1); }
 .pas-campo__etiqueta { font-size: var(--pas-texto-s); font-weight: 700; }
+.pas-entrega { border: 0; padding: 0; }
+.pas-entrega__opciones { display: flex; flex-wrap: wrap; gap: 0 var(--pas-e4); }
+.pas-entrega__opcion { display: inline-flex; align-items: center; gap: var(--pas-e2); min-height: var(--pas-tactil); cursor: pointer; }
 .pas-campo__entrada {
   width: 100%;
   min-height: var(--pas-tactil);

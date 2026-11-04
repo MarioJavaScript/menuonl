@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\PlanRestaurante;
 use App\Filament\Pages\Apariencia;
+use App\Filament\Pages\FotosDelRestaurante;
 use App\Filament\Pages\Reservas;
 use App\Models\CodigoQr;
 use App\Models\Restaurante;
@@ -16,13 +17,12 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
- * El plan es un techo sobre el rol (docs/planes.md, paso 3): los módulos de PermisosPanel y las pantallas de /admin se recortan en el servidor (el /panel viejo ya no existe).
+ * El plan es un techo sobre el rol (docs/planes.md): los módulos de PermisosPanel y las pantallas de /admin se recortan en
+ * el servidor. Aura (`sitio_menu`) no recorta nada; Lite (`solo_menu`) tiene panel pero quita las reservas y el sitio.
  */
 class PanelPlanAccesoTest extends TestCase
 {
     use RefreshDatabase;
-
-    private const array ROLES = ['propietario', 'gerente', 'editor', 'recepcion'];
 
     protected function tearDown(): void
     {
@@ -38,35 +38,32 @@ class PanelPlanAccesoTest extends TestCase
         return $usuario;
     }
 
-    private function bajarDePlan(Restaurante $restaurante, PlanRestaurante $plan): void
+    private function cambiarDePlan(Restaurante $restaurante, PlanRestaurante $plan): void
     {
         $restaurante->forceFill(['plan' => $plan])->save();
     }
 
     /**
-     * @return array<string, array{0: string, 1: list<string>, 2: list<string>, 3: list<string>}>
+     * @return array<string, array{0: string, 1: list<string>, 2: list<string>}>
      */
     public static function modulosPorRolYPlan(): array
     {
-        $todos = PermisosPanel::MODULOS;
-
         return [
-            'propietario' => ['propietario', $todos, ['reservas'], []],
-            'gerente' => ['gerente', $todos, ['reservas'], []],
-            'editor' => ['editor', ['inicio', 'reservas', 'menu'], ['reservas'], []],
-            'recepcion' => ['recepcion', ['inicio', 'reservas'], ['reservas'], []],
+            'propietario' => ['propietario', PermisosPanel::MODULOS, ['inicio', 'menu', 'ajustes']],
+            'gerente' => ['gerente', PermisosPanel::MODULOS, ['inicio', 'menu', 'ajustes']],
+            'editor' => ['editor', ['inicio', 'reservas', 'menu'], ['inicio', 'menu']],
+            'recepcion' => ['recepcion', ['inicio', 'reservas'], ['inicio']],
         ];
     }
 
     /**
-     * @param  list<string>  $enCompleto
-     * @param  list<string>  $enSitioMenu
-     * @param  list<string>  $enSoloMenu
+     * @param  list<string>  $enAura
+     * @param  list<string>  $enLite
      */
     #[DataProvider('modulosPorRolYPlan')]
-    public function test_los_modulos_de_cada_rol_se_recortan_con_el_techo_del_plan(string $rol, array $enCompleto, array $enSitioMenu, array $enSoloMenu): void
+    public function test_los_modulos_de_cada_rol_se_recortan_con_el_techo_del_plan(string $rol, array $enAura, array $enLite): void
     {
-        foreach ([[Restaurante::factory(), $enCompleto], [Restaurante::factory()->sitioMenu(), $enSitioMenu], [Restaurante::factory()->soloMenu(), $enSoloMenu]] as [$fabrica, $esperados]) {
+        foreach ([[Restaurante::factory()->sitioMenu(), $enAura], [Restaurante::factory()->soloMenu(), $enLite]] as [$fabrica, $esperados]) {
             $restaurante = $fabrica->create();
             $usuario = $this->miembro($restaurante, $rol);
 
@@ -74,60 +71,59 @@ class PanelPlanAccesoTest extends TestCase
         }
     }
 
-    public function test_el_superadmin_conserva_todo_salvo_las_reservas_donde_el_plan_no_las_tiene(): void
+    public function test_el_superadmin_conserva_todo_salvo_las_reservas_en_lite(): void
     {
         $superadmin = User::factory()->superadmin()->create();
-        $sinReservas = array_values(array_diff(PermisosPanel::MODULOS, ['reservas']));
 
-        $this->assertSame(PermisosPanel::MODULOS, PermisosPanel::modulosDe($superadmin, Restaurante::factory()->create()->id));
         $this->assertSame(PermisosPanel::MODULOS, PermisosPanel::modulosDe($superadmin, Restaurante::factory()->sitioMenu()->create()->id));
-        $this->assertSame($sinReservas, PermisosPanel::modulosDe($superadmin, Restaurante::factory()->soloMenu()->create()->id));
+        $this->assertSame(['inicio', 'menu', 'ajustes'], PermisosPanel::modulosDe($superadmin, Restaurante::factory()->soloMenu()->create()->id));
     }
 
-    public function test_un_propietario_de_solo_menu_no_entra_a_admin_y_uno_de_sitio_y_menu_si_es_miembro(): void
+    public function test_el_propietario_entra_a_admin_en_los_dos_planes_y_solo_a_sus_restaurantes(): void
     {
-        $soloMenu = Restaurante::factory()->soloMenu()->create();
-        $sitioMenu = Restaurante::factory()->sitioMenu()->create();
-        $propietarioSolo = $this->miembro($soloMenu);
-        $propietarioSitio = $this->miembro($sitioMenu);
+        $lite = Restaurante::factory()->soloMenu()->create();
+        $aura = Restaurante::factory()->sitioMenu()->create();
+        $propietarioLite = $this->miembro($lite);
+        $propietarioAura = $this->miembro($aura);
         $panel = Filament::getPanel('admin');
 
-        $this->assertFalse($propietarioSolo->canAccessPanel($panel));
-        $this->assertFalse($propietarioSolo->canAccessTenant($soloMenu));
-        $this->assertCount(0, $propietarioSolo->getTenants($panel));
-        $this->actingAs($propietarioSolo)->get('/admin')->assertForbidden();
-        $this->actingAs($propietarioSolo)->get('/admin/'.$soloMenu->slug)->assertForbidden();
+        $this->assertTrue($propietarioLite->canAccessPanel($panel));
+        $this->assertTrue($propietarioLite->canAccessTenant($lite));
+        $this->assertSame([$lite->id], $propietarioLite->getTenants($panel)->pluck('id')->all());
+        $this->assertFalse($propietarioLite->canAccessTenant($aura));
+        $this->actingAs($propietarioLite)->get('/admin')->assertRedirect(url('/admin/'.$lite->slug));
+        $this->actingAs($propietarioLite)->get('/admin/'.$lite->slug)->assertOk();
+        $this->actingAs($propietarioLite)->get('/admin/'.$aura->slug)->assertNotFound();
 
-        $this->assertTrue($propietarioSitio->canAccessPanel($panel));
-        $this->assertTrue($propietarioSitio->canAccessTenant($sitioMenu));
-        $this->assertSame([$sitioMenu->id], $propietarioSitio->getTenants($panel)->pluck('id')->all());
-        $this->assertFalse($propietarioSitio->canAccessTenant($soloMenu));
+        $this->assertTrue($propietarioAura->canAccessPanel($panel));
+        $this->assertTrue($propietarioAura->canAccessTenant($aura));
+        $this->assertSame([$aura->id], $propietarioAura->getTenants($panel)->pluck('id')->all());
+        $this->assertFalse($propietarioAura->canAccessTenant($lite));
     }
 
-    public function test_quien_tiene_un_restaurante_completo_y_otro_solo_menu_ve_solo_el_primero(): void
+    public function test_quien_tiene_un_restaurante_aura_y_otro_lite_ve_los_dos_y_reservas_solo_en_aura(): void
     {
-        $completo = Restaurante::factory()->create();
-        $soloMenu = Restaurante::factory()->soloMenu()->create();
+        $aura = Restaurante::factory()->sitioMenu()->create(['nombre' => 'Aaa Aura']);
+        $lite = Restaurante::factory()->soloMenu()->create(['nombre' => 'Bbb Lite']);
         $usuario = User::factory()->create();
-        $completo->usuarios()->attach($usuario, ['rol' => 'propietario']);
-        $soloMenu->usuarios()->attach($usuario, ['rol' => 'propietario']);
+        $aura->usuarios()->attach($usuario, ['rol' => 'propietario']);
+        $lite->usuarios()->attach($usuario, ['rol' => 'propietario']);
         $panel = Filament::getPanel('admin');
 
         $this->assertTrue($usuario->canAccessPanel($panel));
-        $this->assertSame([$completo->id], $usuario->getTenants($panel)->pluck('id')->all());
-        $this->assertTrue($usuario->canAccessTenant($completo));
-        $this->assertFalse($usuario->canAccessTenant($soloMenu));
-        $this->actingAs($usuario)->get(Reservas::getUrl(tenant: $soloMenu))->assertNotFound();
+        $this->assertEqualsCanonicalizing([$aura->id, $lite->id], $usuario->getTenants($panel)->pluck('id')->all());
+        $this->actingAs($usuario)->get(Reservas::getUrl(tenant: $aura))->assertOk();
+        $this->actingAs($usuario)->get(Reservas::getUrl(tenant: $lite))->assertNotFound();
     }
 
-    public function test_el_superadmin_entra_a_los_tres_planes(): void
+    public function test_el_superadmin_entra_a_los_dos_planes(): void
     {
         $superadmin = User::factory()->superadmin()->create();
         $panel = Filament::getPanel('admin');
 
         $this->assertTrue($superadmin->canAccessPanel($panel));
 
-        foreach ([Restaurante::factory(), Restaurante::factory()->sitioMenu(), Restaurante::factory()->soloMenu()] as $fabrica) {
+        foreach ([Restaurante::factory()->sitioMenu(), Restaurante::factory()->soloMenu()] as $fabrica) {
             $restaurante = $fabrica->create();
 
             $this->assertTrue($superadmin->canAccessTenant($restaurante), $restaurante->plan->value);
@@ -135,48 +131,62 @@ class PanelPlanAccesoTest extends TestCase
             $this->actingAs($superadmin)->get(Apariencia::getUrl(tenant: $restaurante))->assertOk();
         }
 
-        $soloMenu = Restaurante::factory()->soloMenu()->create();
-        $this->actingAs($superadmin)->get(Reservas::getUrl(tenant: $soloMenu))->assertNotFound();
+        $lite = Restaurante::factory()->soloMenu()->create();
+        $this->actingAs($superadmin)->get(Reservas::getUrl(tenant: $lite))->assertNotFound();
     }
 
-    public function test_una_sesion_abierta_pierde_el_acceso_en_cuanto_se_baja_el_plan(): void
+    public function test_una_sesion_abierta_pierde_reservas_y_fotos_en_cuanto_pasa_a_lite_y_las_recupera_al_volver(): void
     {
-        $restaurante = Restaurante::factory()->create();
+        $restaurante = Restaurante::factory()->sitioMenu()->create();
         $propietario = $this->miembro($restaurante);
         $apariencia = Apariencia::getUrl(tenant: $restaurante);
+        $fotos = FotosDelRestaurante::getUrl(tenant: $restaurante);
         $reservas = Reservas::getUrl(tenant: $restaurante);
 
         $this->actingAs($propietario)->get($apariencia)->assertOk();
-
-        $this->bajarDePlan($restaurante, PlanRestaurante::SitioMenu);
-        $this->actingAs($propietario)->get($apariencia)->assertForbidden();
+        $this->actingAs($propietario)->get($fotos)->assertOk();
         $this->actingAs($propietario)->get($reservas)->assertOk();
 
-        $this->bajarDePlan($restaurante, PlanRestaurante::SoloMenu);
-        $this->actingAs($propietario)->get($reservas)->assertForbidden();
-
-        $this->bajarDePlan($restaurante, PlanRestaurante::Completo);
+        $this->cambiarDePlan($restaurante, PlanRestaurante::SoloMenu);
         $this->actingAs($propietario)->get($apariencia)->assertOk();
+        $this->actingAs($propietario)->get($fotos)->assertForbidden();
+        $this->actingAs($propietario)->get($reservas)->assertNotFound();
+
+        $this->cambiarDePlan($restaurante, PlanRestaurante::SitioMenu);
+        $this->actingAs($propietario)->get($fotos)->assertOk();
+        $this->actingAs($propietario)->get($reservas)->assertOk();
     }
 
-    public function test_un_plan_raro_en_la_base_cierra_el_acceso(): void
+    public function test_un_plan_raro_en_la_base_se_trata_como_lite_el_plan_mas_restrictivo(): void
     {
-        $restaurante = Restaurante::factory()->create();
+        $restaurante = Restaurante::factory()->sitioMenu()->create();
         $propietario = $this->miembro($restaurante);
 
         Restaurante::whereKey($restaurante->id)->toBase()->update(['plan' => 'premium']);
 
-        $this->assertSame([], PermisosPanel::modulosDe($propietario, $restaurante->id));
-        $this->assertFalse($propietario->fresh()->canAccessTenant($restaurante->fresh()));
-        $this->actingAs($propietario)->get(Reservas::getUrl(tenant: $restaurante))->assertForbidden();
+        $this->assertSame(['inicio', 'menu', 'ajustes'], PermisosPanel::modulosDe($propietario, $restaurante->id));
+        $this->assertFalse($restaurante->fresh()->tieneSitio());
+        $this->actingAs($propietario)->get(Reservas::getUrl(tenant: $restaurante))->assertNotFound();
     }
 
-    public function test_la_descarga_de_qr_se_cierra_para_el_equipo_de_solo_menu(): void
+    public function test_un_plan_completo_que_quedo_en_la_base_se_trata_como_aura(): void
+    {
+        $restaurante = Restaurante::factory()->sitioMenu()->create();
+        $propietario = $this->miembro($restaurante);
+
+        Restaurante::whereKey($restaurante->id)->toBase()->update(['plan' => 'completo']);
+
+        $this->assertSame(PermisosPanel::MODULOS, PermisosPanel::modulosDe($propietario, $restaurante->id));
+        $this->actingAs($propietario)->get(Reservas::getUrl(tenant: $restaurante))->assertOk();
+        $this->actingAs($propietario)->get(FotosDelRestaurante::getUrl(tenant: $restaurante))->assertOk();
+    }
+
+    public function test_el_propietario_de_lite_descarga_sus_qr(): void
     {
         $restaurante = Restaurante::factory()->soloMenu()->create();
         $propietario = $this->miembro($restaurante);
         $qr = CodigoQr::factory()->create(['restaurante_id' => $restaurante->id]);
 
-        $this->actingAs($propietario)->get(route('codigos-qr.descargar', ['codigoQr' => $qr->id, 'formato' => 'svg']))->assertForbidden();
+        $this->actingAs($propietario)->get(route('codigos-qr.descargar', ['codigoQr' => $qr->id, 'formato' => 'svg']))->assertOk();
     }
 }

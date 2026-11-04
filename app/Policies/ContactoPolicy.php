@@ -8,7 +8,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Contacts: the editor manages them too (RF-18). Under a plan that only edits phones (Sitio y menú), the
+ * Contacts: the editor manages them too (RF-18). Under a plan that only edits phones (none today: Aura and Lite both edit all data), the
  * restaurant's team works with call and WhatsApp contacts only; the other types need the data capability.
  */
 class ContactoPolicy extends MatrizPolicy

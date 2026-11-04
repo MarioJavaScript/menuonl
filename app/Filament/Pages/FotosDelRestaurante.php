@@ -87,10 +87,17 @@ class FotosDelRestaurante extends Page implements HasTable
     public function content(Schema $schema): Schema
     {
         return $schema->components([
+            Section::make(__('panel.fotos.sin_sitio.titulo'))
+                ->icon(Heroicon::OutlinedExclamationTriangle)
+                ->iconColor('warning')
+                ->visible(fn (): bool => ! (Filament::getTenant()?->tieneSitio() ?? false))
+                ->schema([
+                    Text::make(fn (): string => __('panel.fotos.sin_sitio.descripcion', ['plan' => Filament::getTenant()?->plan->getLabel()])),
+                ]),
             Section::make(__('panel.fotos.sin_galeria.titulo'))
                 ->icon(Heroicon::OutlinedExclamationTriangle)
                 ->iconColor('warning')
-                ->visible(fn (): bool => ! AparienciaSitio::muestraGaleria(AparienciaSitio::plantillaVigente(Filament::getTenant()?->sitio_plantilla)))
+                ->visible(fn (): bool => (Filament::getTenant()?->tieneSitio() ?? false) && ! AparienciaSitio::muestraGaleria(AparienciaSitio::plantillaVigente(Filament::getTenant()?->sitio_plantilla)))
                 ->schema([
                     Text::make(fn (): string => trans_choice('panel.fotos.sin_galeria.descripcion', count(AparienciaSitio::nombresConGaleria()), [
                         'actual' => AparienciaSitio::nombre(AparienciaSitio::plantillaVigente(Filament::getTenant()?->sitio_plantilla)),

@@ -13,7 +13,7 @@ use InvalidArgumentException;
 /**
  * Lectura de los escaneos por mesa y por día de UN restaurante (para las pantallas de métricas).
  *
- * Quién puede ver las métricas lo decide EscaneoDiarioPolicy (propietario y superadmin, plan Completo); aquí solo se
+ * Quién puede ver las métricas lo decide EscaneoDiarioPolicy (propietario y superadmin, en Aura y en Lite); aquí solo se
  * garantiza el aislamiento: siempre se filtra por el restaurante recibido, el scope global del tenant sigue activo y,
  * dentro del panel de otro restaurante, la consulta se rechaza.
  *

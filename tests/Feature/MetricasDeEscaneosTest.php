@@ -126,17 +126,17 @@ class MetricasDeEscaneosTest extends TestCase
         $this->metricas->totalesPorMesa($restaurante, $desde, $hasta);
     }
 
-    public function test_la_politica_permite_solo_a_superadmin_y_propietario_con_plan_completo(): void
+    public function test_la_politica_permite_solo_a_superadmin_y_propietario_en_aura_y_en_lite(): void
     {
         $completo = $this->crearRestaurante('con-metricas');
-        $sitio = Restaurante::factory()->sitioMenu()->create();
+        $lite = Restaurante::factory()->soloMenu()->create();
         $codigo = CodigoQr::factory()->deMesa('1')->create(['restaurante_id' => $completo->id]);
         $fila = $this->conteo($codigo, '2026-10-20', 1);
 
         $propietario = $this->crearUsuario('propietario', $completo);
         $gerente = $this->crearUsuario('gerente', $completo);
         $editor = $this->crearUsuario('editor', $completo);
-        $propietarioSitio = $this->crearUsuario('propietario', $sitio);
+        $propietarioLite = $this->crearUsuario('propietario', $lite);
         $superadmin = $this->crearUsuario('superadmin');
 
         RestauranteScope::setRestauranteId($completo->id);
@@ -149,8 +149,9 @@ class MetricasDeEscaneosTest extends TestCase
         $this->assertFalse($propietario->can('update', $fila));
         $this->assertFalse($propietario->can('delete', $fila));
 
-        RestauranteScope::setRestauranteId($sitio->id);
-        $this->assertFalse($propietarioSitio->can('viewAny', EscaneoDiario::class), 'El plan Sitio y menú no incluye métricas.');
+        RestauranteScope::setRestauranteId($lite->id);
+        $this->assertTrue($propietarioLite->can('viewAny', EscaneoDiario::class), 'El plan Lite incluye métricas.');
+        $this->assertFalse($propietario->can('viewAny', EscaneoDiario::class), 'El propietario de otro restaurante no ve estas métricas.');
     }
 
     public function test_un_propietario_no_ve_los_conteos_de_otro_restaurante(): void

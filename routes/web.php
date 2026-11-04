@@ -59,7 +59,7 @@ Route::middleware('throttle:menu-publico')->withoutMiddleware($middlewareDeSesio
 
 // The old service panel is gone: /panel and everything under it send people to /admin (docs/integracion-dashboard.md, sección 22).
 // No session, cookies or CSRF here, so a stale form POST gets the redirect instead of a 419, and nobody sees a login first:
-// /admin decides (login, "sin panel" notice or the dashboard). 302 and no-store: the door must never be cached for good.
+// /admin decides (login, "cuenta pausada" notice or the dashboard). 302 and no-store: the door must never be cached for good.
 Route::withoutMiddleware($middlewareDeSesion)
     ->match(['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], '/panel/{ruta?}', fn () => redirect('/admin', 302)->header('Cache-Control', 'no-store'))
     ->where('ruta', '.*')

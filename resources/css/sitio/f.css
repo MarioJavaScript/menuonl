@@ -746,6 +746,9 @@ html {
   font-weight: 500;
   font-size: var(--bar-t-s);
 }
+.bar-entrega { border: 0; padding: 0; }
+.bar-entrega__opciones { display: flex; flex-wrap: wrap; gap: 0 var(--bar-e4); }
+.bar-entrega__opcion { display: inline-flex; align-items: center; gap: var(--bar-e2); min-height: var(--bar-toque); cursor: pointer; }
 .bar-campo__entrada {
   width: 100%;
   min-height: var(--bar-toque);
