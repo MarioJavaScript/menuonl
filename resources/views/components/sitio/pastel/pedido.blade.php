@@ -1,8 +1,9 @@
-@props(['restaurante', 'numero', 'idioma', 'mesa' => null])
+@props(['restaurante', 'numero', 'idioma'])
 @php
     /*
      * Cajón del pedido por WhatsApp (plantilla G). Todo lo que lee el script sale de estos atributos, escritos por el servidor:
-     * número ya validado (8 a 20 dígitos), nombre del restaurante, moneda, idioma y mesa de ?mesa= ya filtrada.
+     * número ya validado (8 a 20 dígitos), nombre del restaurante, moneda, idioma y el mensaje del restaurante ya limpio.
+     * El cliente elige la entrega (Domicilio o Para recoger); no hay pedidos de mesa y ?mesa= no llega aquí.
      * Sin JavaScript no se dibuja nada útil: el dialog queda cerrado y el menú conserva su enlace a WhatsApp.
      */
 @endphp
@@ -11,7 +12,7 @@
      data-restaurante="{{ $restaurante->nombre }}"
      data-moneda="{{ strtoupper($restaurante->moneda) }}"
      data-locale="{{ \App\Services\FormatoMoneda::locale($idioma, $restaurante->moneda) }}"
-     data-mesa="{{ $mesa }}"
+     data-mensaje="{{ $restaurante->mensajeDePedido() }}"
      data-clave="{{ 'menuonl_cart_g_'.$restaurante->slug }}">
     <button class="pas-barra" type="button" hidden data-pas-barra aria-haspopup="dialog" aria-expanded="false">
         <span class="pas-barra__cuenta" data-pas-cuenta>0</span>
@@ -49,10 +50,7 @@
                 </li>
             </template>
 
-            <div class="pas-campo">
-                <label class="pas-campo__etiqueta" for="pedido-mesa">Mesa</label>
-                <input class="pas-campo__entrada" id="pedido-mesa" type="text" autocomplete="off" placeholder='Ej. 4, o escribe "Para llevar"' data-pas-mesa>
-            </div>
+            <x-sitio.entrega :restaurante="$restaurante" prefijo="pas" clase-campo="pas-campo" clase-etiqueta="pas-campo__etiqueta" />
             <div class="pas-campo">
                 <label class="pas-campo__etiqueta" for="pedido-cocina">Nota para la cocina (opcional)</label>
                 <textarea class="pas-campo__entrada pas-campo__area" id="pedido-cocina" rows="2" placeholder="Ej. Sin cubiertos" data-pas-cocina></textarea>
@@ -61,7 +59,7 @@
 
         <div class="pas-pedido__pie">
             <p class="pas-pedido__total"><span>Total</span> <span data-pas-total></span></p>
-            <p class="pas-pedido__nota">Pedidos para domicilio o para recoger. El total es informativo. El restaurante confirma tu pedido por WhatsApp.</p>
+            <p class="pas-pedido__nota">{{ $restaurante->textoDeModalidadesDePedido() }} El total es informativo. El restaurante confirma tu pedido por WhatsApp.</p>
             <p class="pas-aviso" role="status" hidden data-pas-aviso-envio></p>
 
             <div class="pas-aviso pas-aviso--exito" role="status" tabindex="-1" hidden data-pas-enviado>

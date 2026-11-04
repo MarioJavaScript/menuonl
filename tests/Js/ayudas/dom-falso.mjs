@@ -1,6 +1,6 @@
 // DOM mínimo para probar pedido/controlador.js con Node (sin dependencias nuevas). Solo implementa lo que el controlador usa:
 // selectores de atributo, clase, id y etiqueta (con descendientes por espacio), closest, dataset, eventos con burbujeo,
-// <template>, replaceChildren, cloneNode y un localStorage de memoria.
+// <template>, replaceChildren, cloneNode, la propiedad checked de un radio y un localStorage de memoria.
 
 const aKebab = (texto) => texto.replace(/[A-Z]/g, (letra) => `-${letra.toLowerCase()}`);
 
@@ -31,6 +31,7 @@ export class Nodo {
         this.listeners = new Map();
         this.texto = '';
         this.value = this.attrs.get('value') ?? '';
+        this.checked = this.attrs.has('checked');
         this.disabled = false;
         this.maxLength = -1;
         this.style = {};
@@ -139,6 +140,7 @@ export class Nodo {
         const copia = new Nodo(this.tagName, Object.fromEntries(this.attrs));
         copia.texto = this.texto;
         copia.value = this.value;
+        copia.checked = this.checked;
         copia.disabled = this.disabled;
 
         if (profundo) {

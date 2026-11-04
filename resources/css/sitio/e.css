@@ -994,6 +994,9 @@ body:has(.cal-pedido[open]) { overflow: hidden; }
 
 .cal-campo { display: grid; gap: 6px; margin-bottom: var(--cal-esp-2); min-width: 0; }
 .cal-campo__etiqueta { font-weight: 700; }
+.cal-entrega { border: 0; padding: 0; }
+.cal-entrega__opciones { display: flex; flex-wrap: wrap; gap: 0 var(--cal-esp-3); }
+.cal-entrega__opcion { display: inline-flex; align-items: center; gap: 8px; min-height: var(--cal-tactil); cursor: pointer; }
 .cal-campo__entrada {
   width: 100%;
   min-height: var(--cal-tactil);

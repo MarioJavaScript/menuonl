@@ -36,9 +36,11 @@ class Restaurante extends Model implements HasName
         'idioma_default' => 'es',
         'zona_horaria' => 'America/Mexico_City',
         'pedidos_activos' => false,
+        'pedidos_domicilio' => true,
+        'pedidos_recoger' => true,
         'mostrar_agotados' => true,
         'estado' => 'activo',
-        'plan' => 'completo',
+        'plan' => 'sitio_menu',
         'tema' => 'calido',
         'sitio_plantilla' => AparienciaSitio::PLANTILLA_POR_DEFECTO,
         'reservas_activas' => true,
@@ -66,6 +68,9 @@ class Restaurante extends Model implements HasName
         'zona_horaria',
         'whatsapp_pedidos',
         'pedidos_activos',
+        'pedidos_domicilio',
+        'pedidos_recoger',
+        'pedidos_mensaje',
         'mostrar_agotados',
         'estado',
     ];
@@ -89,6 +94,8 @@ class Restaurante extends Model implements HasName
     {
         return [
             'pedidos_activos' => 'boolean',
+            'pedidos_domicilio' => 'boolean',
+            'pedidos_recoger' => 'boolean',
             'mostrar_agotados' => 'boolean',
             'reservas_activas' => 'boolean',
             'reservas_cupo' => 'integer',
@@ -99,8 +106,9 @@ class Restaurante extends Model implements HasName
     }
 
     /**
-     * Plan de venta. Al leer, un valor raro de la base cae al plan más restrictivo (D12); al guardar,
-     * solo se aceptan los valores del enum. No está en $fillable: se cambia con forceFill desde Plataforma.
+     * Plan de venta. Al leer, el valor retirado `completo` es Aura y un valor raro de la base cae al plan más restrictivo
+     * (D12); al guardar, solo se aceptan los valores del enum (`completo` se guarda como Aura). No está en $fillable: se
+     * cambia con forceFill desde Plataforma.
      *
      * @return Attribute<PlanRestaurante, PlanRestaurante|string>
      */
@@ -108,7 +116,11 @@ class Restaurante extends Model implements HasName
     {
         return Attribute::make(
             get: fn (?string $valor): PlanRestaurante => PlanRestaurante::desde($valor),
-            set: fn (PlanRestaurante|string $valor): string => ($valor instanceof PlanRestaurante ? $valor : PlanRestaurante::from($valor))->value,
+            set: fn (PlanRestaurante|string $valor): string => (match (true) {
+                $valor instanceof PlanRestaurante => $valor,
+                $valor === PlanRestaurante::VALOR_RETIRADO_COMPLETO => PlanRestaurante::SitioMenu,
+                default => PlanRestaurante::from($valor),
+            })->value,
         );
     }
 
@@ -168,7 +180,7 @@ class Restaurante extends Model implements HasName
 
     /**
      * Si el equipo (todo el que no es superadmin) puede usar el panel de este restaurante: el plan incluye el panel
-     * y el restaurante no está pausado. Regla única del panel, de la lista de restaurantes y de la descarga de QR.
+     * (Aura y Lite lo incluyen) y el restaurante no está pausado. Regla única del panel, de la lista de restaurantes y de la descarga de QR.
      */
     public function permiteElPanelAlEquipo(): bool
     {
@@ -191,6 +203,60 @@ class Restaurante extends Model implements HasName
     public function reservasDisponibles(): bool
     {
         return (bool) $this->reservas_activas && $this->incluye(Capacidad::Reservas);
+    }
+
+    /**
+     * Modalidades de entrega del pedido por WhatsApp y su nombre para el cliente. No hay pedidos de mesa.
+     *
+     * @var array<'domicilio'|'recoger', string>
+     */
+    public const array MODALIDADES_DE_PEDIDO = [
+        'domicilio' => 'Domicilio',
+        'recoger' => 'Para recoger',
+    ];
+
+    /**
+     * Modalidades de entrega que el cliente puede elegir en el pedido por WhatsApp, en el orden en que se ofrecen.
+     *
+     * @return list<'domicilio'|'recoger'>
+     */
+    public function modalidadesDePedido(): array
+    {
+        return array_values(array_keys(array_filter([
+            'domicilio' => (bool) $this->pedidos_domicilio,
+            'recoger' => (bool) $this->pedidos_recoger,
+        ])));
+    }
+
+    /**
+     * Frase para el cliente con las modalidades que ofrece el restaurante, por ejemplo "Pedidos para domicilio o para recoger.".
+     */
+    public function textoDeModalidadesDePedido(): string
+    {
+        return match ($this->modalidadesDePedido()) {
+            ['domicilio'] => 'Pedidos para domicilio.',
+            ['recoger'] => 'Pedidos para recoger.',
+            default => 'Pedidos para domicilio o para recoger.',
+        };
+    }
+
+    /**
+     * Si el restaurante recibe pedidos por WhatsApp (sin contar si está abierto): pedidos encendidos, número válido y
+     * al menos una modalidad de entrega. Vale igual en Aura y en Lite.
+     */
+    public function pedidosHabilitados(): bool
+    {
+        return $this->pedidos_activos && $this->whatsappPedidosDigitos() !== null && $this->modalidadesDePedido() !== [];
+    }
+
+    /**
+     * Mensaje opcional del restaurante que va al final del pedido por WhatsApp, limpio de controles y marcas de formato.
+     */
+    public function mensajeDePedido(): string
+    {
+        $limpio = preg_replace(['/[\p{Cc}\p{Zl}\p{Zp}]/u', '/[*_~`]/', '/\s+/u'], [' ', '', ' '], (string) $this->pedidos_mensaje);
+
+        return mb_substr(trim((string) $limpio), 0, 200);
     }
 
     /**

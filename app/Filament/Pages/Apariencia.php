@@ -11,6 +11,7 @@ use App\Services\Catalogos;
 use App\Services\WebpImageService;
 use BackedEnum;
 use Filament\Actions\Action;
+use Filament\Facades\Filament;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\ViewField;
@@ -85,6 +86,8 @@ class Apariencia extends Page
             Section::make(__('panel.apariencia.diseno.titulo'))
                 ->description(__('panel.apariencia.diseno.descripcion'))
                 ->schema([
+                    Text::make(__('panel.apariencia.diseno.sin_sitio'))
+                        ->visible(fn (): bool => ! (Filament::getTenant()?->tieneSitio() ?? false)),
                     ViewField::make('sitio_plantilla')
                         ->label(__('panel.apariencia.diseno.campo'))
                         ->view('filament.forms.selector-plantilla')

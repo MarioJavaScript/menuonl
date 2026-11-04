@@ -12,7 +12,7 @@
     $nombreCategoria = fn ($categoria): string => (string) ($categoria->traduccion($idioma)?->nombre ?? '');
 
     $numeroPedidos = $restaurante->whatsappPedidosDigitos();
-    $pedidosHabilitados = $restaurante->pedidos_activos && $numeroPedidos !== null;
+    $pedidosHabilitados = $restaurante->pedidosHabilitados();
     $puedePedir = $pedidosHabilitados && $estaAbierto;
     $agregar = function ($producto, string $nombre, ?object $variante = null, string $nombreVariante = '') use ($puedePedir): ?array {
         $disponible = $producto->disponible && ($variante === null || $variante->disponible);
@@ -41,7 +41,7 @@
 
     <div class="piz-contenedor piz-seccion piz-seccion--menu">
         @if ($puedePedir)
-            <p class="piz-lead">{{ filled($mesa) ? 'Mesa '.$mesa.': agrega lo que se te antoje y envía el pedido por WhatsApp.' : 'Agrega lo que se te antoje y envía el pedido por WhatsApp.' }}</p>
+            <p class="piz-lead">Agrega lo que se te antoje y envía el pedido por WhatsApp.</p>
             <p><a class="piz-boton" href="https://wa.me/{{ $numeroPedidos }}" rel="noopener" data-piz-sin-js>Pedir por WhatsApp</a></p>
         @elseif ($pedidosHabilitados)
             <p class="piz-aviso" role="status">Estamos cerrados ahora. Puedes ver el menú; los pedidos se activan al abrir.</p>
@@ -124,7 +124,7 @@
 </main>
 
 @if ($puedePedir)
-    <x-sitio.pizzeria.pedido :restaurante="$restaurante" :numero="$numeroPedidos" :idioma="$idioma" :mesa="$mesa" />
+    <x-sitio.pizzeria.pedido :restaurante="$restaurante" :numero="$numeroPedidos" :idioma="$idioma" />
 @endif
 
 <x-sitio.pizzeria.contacto :d="$d" />

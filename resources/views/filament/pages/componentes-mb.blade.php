@@ -57,7 +57,7 @@
         <div style="display: grid; gap: 0.75rem">
             <x-mb.banner :etiqueta="__('panel.componentes_mb.banner.etiqueta_contexto')">
                 {{ __('panel.componentes_mb.banner.contexto') }}
-                <x-mb.glifo-plan :plan="\App\Enums\PlanRestaurante::Completo" />
+                <x-mb.glifo-plan :plan="\App\Enums\PlanRestaurante::SitioMenu" />
                 <x-slot:accion><a href="#">{{ __('panel.componentes_mb.banner.accion_contexto') }}</a></x-slot:accion>
             </x-mb.banner>
             <x-mb.banner tono="atencion" :etiqueta="__('panel.componentes_mb.banner.etiqueta_atencion')">

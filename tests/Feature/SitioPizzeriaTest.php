@@ -208,7 +208,7 @@ class SitioPizzeriaTest extends TestCase
         $this->travelTo('2026-10-22 02:00:00'); // miércoles 20:00 en Ciudad de México: abierto
         $this->completo();
 
-        $this->menu('ocaso', ['mesa' => '3'])->assertOk()->assertSee('<span class="piz-mesa">Mesa 3</span>', false)->assertSee('Mesa 3: agrega lo que se te antoje', false);
+        $this->menu('ocaso', ['mesa' => '3'])->assertOk()->assertSee('<span class="piz-mesa">Mesa 3</span>', false)->assertDontSee('Mesa 3: agrega', false)->assertSee('<p class="piz-lead">Agrega lo que se te antoje y envía el pedido por WhatsApp.</p>', false)->assertDontSee('data-mesa', false);
         $this->menu('ocaso', ['mesa' => '<b>x</b>'])->assertOk()->assertDontSee('class="piz-mesa"', false);
         $this->sitio()->assertOk()->assertDontSee('class="piz-mesa"', false);
     }

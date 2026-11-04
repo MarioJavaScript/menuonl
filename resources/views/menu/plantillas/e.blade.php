@@ -17,7 +17,7 @@
     $nombreDestacado = $destacado?->traduccion($idioma)?->nombre;
 
     $numeroPedidos = $restaurante->whatsappPedidosDigitos();
-    $pedidosHabilitados = $restaurante->pedidos_activos && $numeroPedidos !== null;
+    $pedidosHabilitados = $restaurante->pedidosHabilitados();
     $puedePedir = $pedidosHabilitados && $estaAbierto;
     $agregar = function ($producto, string $nombre, ?object $variante = null, string $nombreVariante = '') use ($puedePedir): ?array {
         $disponible = $producto->disponible && ($variante === null || $variante->disponible);
@@ -171,7 +171,7 @@
 </main>
 
 @if ($puedePedir)
-    <x-sitio.cafeteria.pedido :restaurante="$restaurante" :numero="$numeroPedidos" :idioma="$idioma" :mesa="$mesa" />
+    <x-sitio.cafeteria.pedido :restaurante="$restaurante" :numero="$numeroPedidos" :idioma="$idioma" />
 @endif
 
 <x-sitio.cafeteria.contacto :d="$d" />

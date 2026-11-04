@@ -27,17 +27,17 @@ class PermisosPanel
     ];
 
     /**
-     * Modules each plan leaves open to anyone but the superadmin. Sitio y menú keeps only the reservations (D2).
+     * Modules each plan leaves open to anyone but the superadmin: Aura, all of them; Lite, all but the reservations
+     * (it has no reservations).
      *
      * @return list<string>
      */
     public static function modulosDelPlan(PlanRestaurante $plan): array
     {
-        return match ($plan) {
-            PlanRestaurante::Completo => self::MODULOS,
-            PlanRestaurante::SitioMenu => ['reservas'],
-            PlanRestaurante::SoloMenu => [],
-        };
+        return array_values(array_filter(
+            self::MODULOS,
+            fn (string $modulo): bool => $modulo !== 'reservas' || $plan->incluye(Capacidad::Reservas),
+        ));
     }
 
     /**
@@ -92,7 +92,7 @@ class PermisosPanel
 
         if ($usuario->isSuperadmin()) {
             // Edits above the ceiling, but a plan without reservations has no reservations section for anyone.
-            return $plan->incluye(Capacidad::Reservas) ? self::MODULOS : array_values(array_diff(self::MODULOS, ['reservas']));
+            return self::modulosDelPlan($plan);
         }
 
         $delRol = self::MODULOS_POR_ROL[(string) $usuario->rolEn($restauranteId)] ?? [];

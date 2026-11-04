@@ -23,8 +23,9 @@ use Tests\Concerns\ArmaEscenarioDePanel;
 use Tests\TestCase;
 
 /**
- * Selector de plan en Plataforma (docs/planes.md, paso 5): solo el superadmin lo ve y lo cambia, con confirmación,
- * historial y sin valores viejos en el siguiente request.
+ * Selector de plan en Plataforma (docs/planes.md, paso 5): solo el superadmin lo ve y lo cambia entre Aura (`sitio_menu`)
+ * y Lite (`solo_menu`), con confirmación, historial y sin valores viejos en el siguiente request. El valor retirado
+ * `completo` ya no se ofrece ni se acepta.
  */
 class PlataformaPlanTest extends TestCase
 {
@@ -50,9 +51,8 @@ class PlataformaPlanTest extends TestCase
     public static function planesDelEnum(): array
     {
         return [
-            'completo' => ['completo'],
-            'sitio y menú' => ['sitio_menu'],
-            'solo menú' => ['solo_menu'],
+            'aura' => ['sitio_menu'],
+            'lite' => ['solo_menu'],
         ];
     }
 
@@ -64,8 +64,9 @@ class PlataformaPlanTest extends TestCase
         return [
             'inventado' => ['premium'],
             'vacío' => [''],
-            'mayúsculas' => ['COMPLETO'],
-            'con espacios' => [' completo '],
+            'completo retirado' => ['completo'],
+            'mayúsculas' => ['SITIO_MENU'],
+            'con espacios' => [' sitio_menu '],
         ];
     }
 
@@ -103,7 +104,7 @@ class PlataformaPlanTest extends TestCase
             // Esperado.
         }
 
-        $this->assertSame(PlanRestaurante::Completo, $restaurante->fresh()->plan);
+        $this->assertSame(PlanRestaurante::SitioMenu, $restaurante->fresh()->plan);
         $this->assertSame(0, HistorialCambio::withoutGlobalScopes()->where('restaurante_id', $restaurante->id)->count());
     }
 
@@ -112,9 +113,9 @@ class PlataformaPlanTest extends TestCase
         $restaurante = Restaurante::factory()->create();
         $superadmin = $this->crearUsuario('superadmin');
 
-        $this->assertTrue($restaurante->cambiarPlan(PlanRestaurante::SitioMenu, $superadmin));
+        $this->assertTrue($restaurante->cambiarPlan(PlanRestaurante::SoloMenu, $superadmin));
 
-        $this->assertSame(PlanRestaurante::SitioMenu, $restaurante->fresh()->plan);
+        $this->assertSame(PlanRestaurante::SoloMenu, $restaurante->fresh()->plan);
 
         $registros = HistorialCambio::withoutGlobalScopes()->where('restaurante_id', $restaurante->id)->get();
         $this->assertCount(1, $registros);
@@ -124,7 +125,7 @@ class PlataformaPlanTest extends TestCase
         $this->assertSame('restaurante', $registro->entidad);
         $this->assertSame($restaurante->id, $registro->entidad_id);
         $this->assertSame('actualizar', $registro->accion);
-        $this->assertSame(['plan' => ['antes' => 'completo', 'despues' => 'sitio_menu']], $registro->cambios);
+        $this->assertSame(['plan' => ['antes' => 'sitio_menu', 'despues' => 'solo_menu']], $registro->cambios);
         $this->assertTrue($registro->created_at->equalTo(Carbon::now()));
     }
 
@@ -144,7 +145,7 @@ class PlataformaPlanTest extends TestCase
 
         $restaurante->cambiarPlan(PlanRestaurante::SoloMenu, $superadmin);
         Carbon::setTestNow(Carbon::now()->addMinute());
-        $restaurante->cambiarPlan(PlanRestaurante::Completo, $superadmin);
+        $restaurante->cambiarPlan(PlanRestaurante::SitioMenu, $superadmin);
 
         $cambios = HistorialCambio::withoutGlobalScopes()
             ->where('restaurante_id', $restaurante->id)
@@ -154,8 +155,8 @@ class PlataformaPlanTest extends TestCase
             ->all();
 
         $this->assertSame([
-            ['antes' => 'completo', 'despues' => 'solo_menu'],
-            ['antes' => 'solo_menu', 'despues' => 'completo'],
+            ['antes' => 'sitio_menu', 'despues' => 'solo_menu'],
+            ['antes' => 'solo_menu', 'despues' => 'sitio_menu'],
         ], $cambios);
     }
 
@@ -185,16 +186,16 @@ class PlataformaPlanTest extends TestCase
     }
 
     #[DataProvider('planesFueraDelEnum')]
-    public function test_la_accion_rechaza_cualquier_valor_fuera_de_los_tres_planes(string $plan): void
+    public function test_la_accion_rechaza_cualquier_valor_fuera_de_aura_y_lite(string $plan): void
     {
-        $restaurante = Restaurante::factory()->create();
+        $restaurante = Restaurante::factory()->soloMenu()->create();
         $this->entrarComoSuperadmin();
 
         Livewire::test(ListRestaurantes::class)
             ->callAction(TestAction::make('cambiarPlan')->table($restaurante), ['plan' => $plan])
             ->assertHasFormErrors(['plan']);
 
-        $this->assertSame(PlanRestaurante::Completo, $restaurante->fresh()->plan);
+        $this->assertSame(PlanRestaurante::SoloMenu, $restaurante->fresh()->plan);
         $this->assertSame(0, HistorialCambio::withoutGlobalScopes()->where('restaurante_id', $restaurante->id)->count());
     }
 
@@ -221,14 +222,17 @@ class PlataformaPlanTest extends TestCase
         $vista->assertForbidden();
     }
 
-    public function test_la_ventana_explica_que_pierde_el_restaurante_al_pasar_a_solo_menu(): void
+    public function test_la_ventana_explica_que_pierde_el_restaurante_al_pasar_a_lite(): void
     {
-        $restaurante = Restaurante::factory()->create();
+        $restaurante = Restaurante::factory()->sitioMenu()->create();
 
         $texto = CambiarPlanAction::explicacion($restaurante, PlanRestaurante::SoloMenu)->toHtml();
 
-        foreach (['panel', 'sitio', 'editar_menu', 'qr', 'equipo'] as $capacidad) {
+        foreach (['sitio', 'reservas'] as $capacidad) {
             $this->assertStringContainsString(e(__("panel.planes.capacidades.{$capacidad}.pierde")), $texto, $capacidad);
+        }
+        foreach (['panel', 'editar_diseno', 'editar_menu', 'editar_datos', 'editar_horario', 'qr', 'equipo', 'metricas'] as $capacidad) {
+            $this->assertStringNotContainsString(e(__("panel.planes.capacidades.{$capacidad}.pierde")), $texto, $capacidad.' sigue en Lite');
         }
         $this->assertStringContainsString(e(__('panel.planes.cambiar.pierde')), $texto);
         $this->assertStringNotContainsString(e(__('panel.planes.cambiar.gana')), $texto);
@@ -236,14 +240,15 @@ class PlataformaPlanTest extends TestCase
         $this->assertStringContainsString(e(__('panel.planes.cambiar.superadmin')), $texto);
     }
 
-    public function test_la_ventana_explica_que_gana_el_restaurante_al_subir_de_plan(): void
+    public function test_la_ventana_explica_que_gana_el_restaurante_al_pasar_a_aura(): void
     {
         $restaurante = Restaurante::factory()->soloMenu()->create();
 
-        $texto = CambiarPlanAction::explicacion($restaurante, PlanRestaurante::Completo)->toHtml();
+        $texto = CambiarPlanAction::explicacion($restaurante, PlanRestaurante::SitioMenu)->toHtml();
 
         $this->assertStringContainsString(e(__('panel.planes.capacidades.sitio.gana')), $texto);
-        $this->assertStringContainsString(e(__('panel.planes.capacidades.panel.gana')), $texto);
+        $this->assertStringContainsString(e(__('panel.planes.capacidades.reservas.gana')), $texto);
+        $this->assertStringNotContainsString(e(__('panel.planes.capacidades.panel.gana')), $texto);
         $this->assertStringNotContainsString(e(__('panel.planes.cambiar.pierde')), $texto);
     }
 
@@ -269,7 +274,11 @@ class PlataformaPlanTest extends TestCase
         Reserva::factory()->create(['restaurante_id' => $otro->id, 'estado' => 'pendiente']);
 
         $this->assertStringContainsString('Hay 2 reservas por confirmar', CambiarPlanAction::explicacion($restaurante, PlanRestaurante::SoloMenu)->toHtml());
-        $this->assertStringNotContainsString('por confirmar', CambiarPlanAction::explicacion($restaurante, PlanRestaurante::SitioMenu)->toHtml());
+        $this->assertStringNotContainsString('por confirmar', CambiarPlanAction::explicacion($restaurante, null)->toHtml());
+
+        $lite = Restaurante::factory()->soloMenu()->create();
+        Reserva::factory()->create(['restaurante_id' => $lite->id, 'estado' => 'pendiente']);
+        $this->assertStringNotContainsString('por confirmar', CambiarPlanAction::explicacion($lite, PlanRestaurante::SitioMenu)->toHtml());
     }
 
     public function test_el_modal_de_la_lista_se_abre_y_responde_a_la_eleccion_del_plan(): void
@@ -280,11 +289,11 @@ class PlataformaPlanTest extends TestCase
         Livewire::test(ListRestaurantes::class)
             ->mountAction(TestAction::make('cambiarPlan')->table($restaurante))
             ->assertActionMounted(TestAction::make('cambiarPlan')->table($restaurante))
-            ->assertSchemaStateSet(['plan' => PlanRestaurante::Completo])
+            ->assertSchemaStateSet(['plan' => PlanRestaurante::SitioMenu])
             ->fillForm(['plan' => 'solo_menu'])
             ->assertSchemaStateSet(['plan' => PlanRestaurante::SoloMenu]);
 
-        $this->assertSame(PlanRestaurante::Completo, $restaurante->fresh()->plan);
+        $this->assertSame(PlanRestaurante::SitioMenu, $restaurante->fresh()->plan);
     }
 
     public function test_el_cambio_de_plan_no_borra_reservas_equipo_ni_plantilla(): void
@@ -326,9 +335,10 @@ class PlataformaPlanTest extends TestCase
 
         $this->get(route('sitio.publico', ['slug' => $restaurante->slug]))
             ->assertRedirect(route('menu.publico', ['slug' => $restaurante->slug]));
-        $this->actingAs($propietario)->get("/admin/{$restaurante->slug}")->assertForbidden();
+        $this->actingAs($propietario)->get("/admin/{$restaurante->slug}")->assertOk();
+        $this->actingAs($propietario)->get("/admin/{$restaurante->slug}/reservas")->assertNotFound();
 
-        $restaurante->cambiarPlan(PlanRestaurante::Completo, $superadmin);
+        $restaurante->cambiarPlan(PlanRestaurante::SitioMenu, $superadmin);
 
         $this->get(route('sitio.publico', ['slug' => $restaurante->slug]))->assertOk();
         $this->actingAs($propietario)->get("/admin/{$restaurante->slug}")->assertOk();
@@ -342,39 +352,41 @@ class PlataformaPlanTest extends TestCase
         $uno->cambiarPlan(PlanRestaurante::SoloMenu, $this->crearUsuario('superadmin'));
 
         $this->assertSame(PlanRestaurante::SoloMenu, $uno->fresh()->plan);
-        $this->assertSame(PlanRestaurante::Completo, $otro->fresh()->plan);
+        $this->assertSame(PlanRestaurante::SitioMenu, $otro->fresh()->plan);
     }
 
     public function test_la_lista_muestra_la_columna_del_plan_y_filtra_por_plan(): void
     {
-        $completo = Restaurante::factory()->create();
         $sitioMenu = Restaurante::factory()->sitioMenu()->create();
         $soloMenu = Restaurante::factory()->soloMenu()->create();
-        $this->entrarComoSuperadmin();
+        $panel = $this->entrarComoSuperadmin();
 
         Livewire::test(ListRestaurantes::class)
             ->assertTableColumnExists('plan')
-            ->assertSee(PlanRestaurante::SitioMenu->getLabel())
-            ->assertSee(PlanRestaurante::SoloMenu->getLabel())
+            ->assertSee('Aura')
+            ->assertSee('Lite')
+            ->assertDontSee('Completo')
+            ->assertDontSee('Sitio y menú')
+            ->assertDontSee('Solo menú')
             ->filterTable('plan', 'solo_menu')
             ->assertCanSeeTableRecords([$soloMenu])
-            ->assertCanNotSeeTableRecords([$completo, $sitioMenu])
+            ->assertCanNotSeeTableRecords([$panel, $sitioMenu])
             ->filterTable('plan', 'sitio_menu')
-            ->assertCanSeeTableRecords([$sitioMenu])
-            ->assertCanNotSeeTableRecords([$completo, $soloMenu]);
+            ->assertCanSeeTableRecords([$panel, $sitioMenu])
+            ->assertCanNotSeeTableRecords([$soloMenu]);
     }
 
-    public function test_al_crear_un_restaurante_el_plan_por_defecto_es_completo(): void
+    public function test_al_crear_un_restaurante_el_plan_por_defecto_es_aura(): void
     {
         $this->entrarComoSuperadmin();
 
         Livewire::test(CreateRestaurante::class)
-            ->assertFormSet(['plan' => PlanRestaurante::Completo])
+            ->assertFormSet(['plan' => PlanRestaurante::SitioMenu])
             ->fillForm($this->datosDeAlta('con-plan-por-defecto'))
             ->call('create')
             ->assertHasNoFormErrors();
 
-        $this->assertSame(PlanRestaurante::Completo, Restaurante::where('slug', 'con-plan-por-defecto')->firstOrFail()->plan);
+        $this->assertSame(PlanRestaurante::SitioMenu, Restaurante::where('slug', 'con-plan-por-defecto')->firstOrFail()->plan);
     }
 
     #[DataProvider('planesDelEnum')]
@@ -415,7 +427,7 @@ class PlataformaPlanTest extends TestCase
             ->assertHasNoFormErrors();
 
         $this->assertSame('Nombre nuevo', $restaurante->fresh()->nombre);
-        $this->assertSame(PlanRestaurante::Completo, $restaurante->fresh()->plan);
+        $this->assertSame(PlanRestaurante::SitioMenu, $restaurante->fresh()->plan);
     }
 
     public function test_el_plan_no_se_asigna_en_masa_ni_se_guarda_un_valor_fuera_del_enum(): void
@@ -423,7 +435,7 @@ class PlataformaPlanTest extends TestCase
         $restaurante = Restaurante::factory()->create();
 
         $restaurante->update(['plan' => 'solo_menu', 'nombre' => 'Otro nombre']);
-        $this->assertSame(PlanRestaurante::Completo, $restaurante->fresh()->plan);
+        $this->assertSame(PlanRestaurante::SitioMenu, $restaurante->fresh()->plan);
 
         $this->expectException(\ValueError::class);
         $restaurante->forceFill(['plan' => 'premium'])->save();
@@ -445,15 +457,15 @@ class PlataformaPlanTest extends TestCase
 
     public function test_los_cambios_entre_planes_salen_de_la_tabla_de_capacidades(): void
     {
-        $perdidas = PlanRestaurante::Completo->cambiosHacia(PlanRestaurante::SoloMenu);
+        $perdidas = PlanRestaurante::SitioMenu->cambiosHacia(PlanRestaurante::SoloMenu);
 
         $this->assertSame([], $perdidas['gana']);
-        $this->assertContains(__('panel.planes.capacidades.panel.pierde'), $perdidas['pierde']);
-        $this->assertContains(__('panel.planes.capacidades.sitio.pierde'), $perdidas['pierde']);
-
-        $intermedio = PlanRestaurante::Completo->cambiosHacia(PlanRestaurante::SitioMenu);
-        $this->assertContains(__('panel.planes.capacidades.editar_menu.pierde'), $intermedio['pierde']);
-        $this->assertNotContains(__('panel.planes.capacidades.sitio.pierde'), $intermedio['pierde']);
+        $this->assertSame([
+            __('panel.planes.capacidades.sitio.pierde'),
+            __('panel.planes.capacidades.reservas.pierde'),
+        ], $perdidas['pierde']);
+        $this->assertNotContains(__('panel.planes.capacidades.panel.pierde'), $perdidas['pierde']);
+        $this->assertNotContains(__('panel.planes.capacidades.editar_menu.pierde'), $perdidas['pierde']);
 
         $this->assertSame(['gana' => [], 'pierde' => []], PlanRestaurante::SitioMenu->cambiosHacia(PlanRestaurante::SitioMenu));
 

@@ -108,6 +108,7 @@ return [
             'campo' => 'Diseño de tu sitio',
             'elegido' => 'Elegido',
             'ideal_para' => 'Ideal para: :para',
+            'sin_sitio' => 'Tu plan no incluye página de sitio: el diseño que elijas cambia cómo se ve tu menú.',
         ],
         'estilo' => [
             'titulo' => 'Estilo del menú',
@@ -143,6 +144,10 @@ return [
             'titulo' => 'Estas fotos no se ven en tu sitio',
             'descripcion' => '{1} Tu diseño actual (:actual) no muestra estas fotos en tu sitio. Se ven en el diseño :disenos.|[2,*] Tu diseño actual (:actual) no muestra estas fotos en tu sitio. Se ven en los diseños :disenos.',
             'accion' => 'Cambiar el diseño en Apariencia',
+        ],
+        'sin_sitio' => [
+            'titulo' => 'Estas fotos no se muestran',
+            'descripcion' => 'Este restaurante tiene el plan :plan: no tiene página de sitio, así que estas fotos no se muestran. Se conservan por si cambia de plan.',
         ],
         'contador' => 'Tienes :n de :max fotos.',
         'ayuda_orden' => 'Para cambiar el orden, toca "Ordenar arrastrando" y mueve las fotos.',
@@ -219,6 +224,7 @@ return [
         'nav' => 'Ajustes de reservas y pedidos',
         'titulo' => 'Ajustes de reservas y pedidos',
         'subtitulo' => 'Decide cómo te hacen pedidos y reservas tus clientes desde tu sitio y tu menú. Para atender las reservas, ve a Reservas.',
+        'subtitulo_sin_reservas' => 'Decide cómo te hacen pedidos tus clientes desde tu menú.',
         'whatsapp' => [
             'titulo' => 'Pedidos por WhatsApp',
             'descripcion' => 'Tus clientes arman su pedido en el menú y te llega listo a tu WhatsApp. Pedidos para domicilio o para recoger.',
@@ -228,6 +234,14 @@ return [
             'numero_ayuda' => 'Con código de país y solo números, sin espacios ni signos. En México: 52 y tu número, por ejemplo 5215512345678.',
             'numero_invalido' => 'Escribe de 8 a 20 números, sin espacios ni signos.',
             'numero_requerido' => 'Escribe el número de WhatsApp para poder recibir pedidos.',
+            'domicilio' => 'Pedidos a domicilio',
+            'domicilio_ayuda' => 'Tu cliente puede pedir que se lo lleves. La dirección te la da por WhatsApp.',
+            'recoger' => 'Pedidos para recoger',
+            'recoger_ayuda' => 'Tu cliente puede pedir y pasar por su pedido.',
+            'sin_modalidad' => 'Elige al menos una forma de entrega: a domicilio o para recoger.',
+            'mensaje' => 'Mensaje al final del pedido (opcional)',
+            'mensaje_ayuda' => 'Se agrega al final del mensaje que te llega por WhatsApp. Hasta 200 caracteres, sin formato.',
+            'mensaje_ejemplo' => 'Ej. Te confirmamos el tiempo de entrega por aquí.',
         ],
         'reservas' => [
             'titulo' => 'Reservas',
@@ -534,17 +548,6 @@ return [
         ],
     ],
 
-    'plan_sin_panel' => [
-        'titulo' => 'Tu plan no incluye el panel',
-        'uno' => 'Hola. El plan de :restaurante no incluye el panel de administración.',
-        'varios' => 'Hola. El plan de estos restaurantes no incluye el panel de administración:',
-        'proveedor' => 'Los cambios en tu menú los gestiona tu proveedor.',
-        'con_whatsapp' => 'Si quieres cambiar algo, escríbenos por WhatsApp y con gusto te ayudamos.',
-        'sin_whatsapp' => 'Si quieres cambiar algo, contacta a tu proveedor.',
-        'boton_whatsapp' => 'Escribir por WhatsApp',
-        'cerrar_sesion' => 'Cerrar sesión',
-    ],
-
     'cuenta_pausada' => [
         'titulo' => 'Tu cuenta está fuera de servicio',
         'uno' => 'Hola. El acceso de :restaurante está fuera de servicio por ahora.',
@@ -574,17 +577,13 @@ return [
     ],
 
     'planes' => [
-        'completo' => [
-            'nombre' => 'Completo',
-            'descripcion' => 'Sitio, menú, reservas y panel completo para el propietario.',
-        ],
         'sitio_menu' => [
-            'nombre' => 'Sitio y menú',
-            'descripcion' => 'Sitio y menú públicos, con reservas. El propietario atiende las reservas, el horario y los teléfonos; lo demás lo cambia '.config('app.name').'.',
+            'nombre' => 'Aura',
+            'descripcion' => 'Sitio web y menú públicos, con reservas y pedidos por WhatsApp. El propietario edita su sitio y su menú desde el panel de '.config('app.name').'.',
         ],
         'solo_menu' => [
-            'nombre' => 'Solo menú',
-            'descripcion' => 'Solo el menú público, sin página de sitio ni reservas. Los cambios los hace '.config('app.name').'.',
+            'nombre' => 'Lite',
+            'descripcion' => 'Menú público con pedidos por WhatsApp, para domicilio o para recoger. Sin página de sitio ni reservas. El propietario edita su menú desde el panel de '.config('app.name').'.',
         ],
 
         'cambiar' => [
@@ -605,8 +604,8 @@ return [
 
         'capacidades' => [
             'sitio' => [
-                'gana' => 'La página del sitio vuelve a mostrarse en su dirección, con la plantilla que ya tiene guardada.',
-                'pierde' => 'La página del sitio deja de mostrarse: quien abra su dirección será llevado al menú.',
+                'gana' => 'La página del sitio vuelve a mostrarse en su dirección, con la plantilla y las fotos que ya tiene guardadas. El propietario vuelve a ver Fotos del restaurante.',
+                'pierde' => 'La página del sitio deja de mostrarse: quien abra su dirección será llevado al menú. Las fotos del restaurante se conservan, pero no se muestran y el propietario ya no ve esa pantalla.',
             ],
             'reservas' => [
                 'gana' => 'Vuelven las reservas en línea, con la configuración que ya tenía guardada.',
@@ -617,8 +616,8 @@ return [
                 'pierde' => 'El propietario y su equipo ya no pueden entrar al panel.',
             ],
             'editar_diseno' => [
-                'gana' => 'El propietario puede cambiar Apariencia (plantilla, estilo, color, logotipo y portada) y las fotos del restaurante.',
-                'pierde' => 'El propietario ya no puede cambiar Apariencia (plantilla, estilo, color, logotipo y portada) ni las fotos del restaurante.',
+                'gana' => 'El propietario puede cambiar Apariencia (plantilla, estilo, color, logotipo y portada).',
+                'pierde' => 'El propietario ya no puede cambiar Apariencia (plantilla, estilo, color, logotipo y portada).',
             ],
             'editar_menu' => [
                 'gana' => 'El propietario puede editar Platillos, Categorías y Recomendados.',

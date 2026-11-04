@@ -3,7 +3,7 @@
 namespace App\Services;
 
 /**
- * Contacto de soporte: botón de ayuda para el propietario de un restaurante en "Solo menú" y botones de WhatsApp de la portada.
+ * Contacto de soporte: botón de ayuda de la pantalla de cuenta pausada y botones de WhatsApp de la portada.
  * El número sale de config('menuonl.soporte_whatsapp'); nunca va escrito en el código.
  */
 class ContactoSoporte

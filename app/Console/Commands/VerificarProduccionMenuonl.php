@@ -43,7 +43,7 @@ class VerificarProduccionMenuonl extends Command
         $cola = (string) config('queue.default');
         $this->revisar('QUEUE_CONNECTION', ! in_array($cola, ['sync', 'null'], true), 'es "'.$cola.'"', 'es "'.$cola.'"; los trabajos no se procesarían en segundo plano');
 
-        $this->revisar('SOPORTE_WHATSAPP', app(ContactoSoporte::class)->numero() !== null, 'está definida', 'falta o no es válida (10 a 15 dígitos, con lada); la portada no mostraría sus botones de WhatsApp y los propietarios de "Solo menú" no verían el botón de soporte');
+        $this->revisar('SOPORTE_WHATSAPP', app(ContactoSoporte::class)->numero() !== null, 'está definida', 'falta o no es válida (10 a 15 dígitos, con lada); la portada no mostraría sus botones de WhatsApp y la pantalla de cuenta pausada no tendría el botón de soporte');
         $this->revisar('APP_LOCALE', config('app.locale') === 'es', 'es "es"', 'es "'.config('app.locale').'"; debe ser "es"');
 
         $this->revisarWorker($sonda, in_array($cola, ['sync', 'null'], true));

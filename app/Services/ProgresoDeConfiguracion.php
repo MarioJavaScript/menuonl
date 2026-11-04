@@ -76,7 +76,7 @@ class ProgresoDeConfiguracion
             ['horario', $usuario->can('viewAny', Horario::class), $tieneHorario, false, fn (): string => HorarioResource::getUrl('index')],
             ['contacto', $usuario->can('viewAny', Contacto::class), fn (): bool => $restaurante->contactos()->where('visible', true)->exists(), false, fn (): string => ContactoResource::getUrl('index')],
             ['descripcion', $puedeEditarDatos, fn (): bool => filled(trim((string) $restaurante->descripcion)), false, fn (): string => EditRestauranteProfile::getUrl()],
-            ['mapa', $puedeEditarDatos, fn (): bool => $restaurante->latitud !== null && $restaurante->longitud !== null, false, fn (): string => EditRestauranteProfile::getUrl()],
+            ['mapa', $puedeEditarDatos && $restaurante->tieneSitio(), fn (): bool => $restaurante->latitud !== null && $restaurante->longitud !== null, false, fn (): string => EditRestauranteProfile::getUrl()],
             ['logotipo', $puedeEditarDiseno, fn (): bool => filled($restaurante->logo), false, fn (): string => Apariencia::getUrl()],
             ['portada', $puedeEditarDiseno, fn (): bool => filled($restaurante->portada), false, fn (): string => Apariencia::getUrl()],
             ['whatsapp', $puedeEditarTelefonos && $restaurante->pedidos_activos, fn (): bool => filled($restaurante->whatsapp_pedidos), true, fn (): string => AjustesDeReservasYPedidos::getUrl()],

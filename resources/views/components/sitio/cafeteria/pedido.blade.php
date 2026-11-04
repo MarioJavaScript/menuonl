@@ -1,8 +1,9 @@
-@props(['restaurante', 'numero', 'idioma', 'mesa' => null])
+@props(['restaurante', 'numero', 'idioma'])
 @php
     /*
      * Cajón del pedido por WhatsApp (plantilla E). Todo lo que lee el script sale de estos atributos, escritos por el servidor:
-     * número ya validado (8 a 20 dígitos), nombre del restaurante, moneda, idioma y mesa de ?mesa= ya filtrada.
+     * número ya validado (8 a 20 dígitos), nombre del restaurante, moneda, idioma y el mensaje del restaurante ya limpio.
+     * El cliente elige la entrega (Domicilio o Para recoger); no hay pedidos de mesa y ?mesa= no llega aquí.
      * Sin JavaScript no se dibuja nada útil: el dialog queda cerrado y el menú conserva su enlace a WhatsApp.
      */
 @endphp
@@ -11,7 +12,7 @@
      data-restaurante="{{ $restaurante->nombre }}"
      data-moneda="{{ strtoupper($restaurante->moneda) }}"
      data-locale="{{ \App\Services\FormatoMoneda::locale($idioma, $restaurante->moneda) }}"
-     data-mesa="{{ $mesa }}"
+     data-mensaje="{{ $restaurante->mensajeDePedido() }}"
      data-clave="{{ 'menuonl_cart_e_'.$restaurante->slug }}">
     <button class="cal-barra" type="button" hidden data-cal-barra aria-haspopup="dialog" aria-expanded="false">
         <span class="cal-barra__cuenta" data-cal-cuenta>0</span>
@@ -49,10 +50,7 @@
                 </li>
             </template>
 
-            <div class="cal-campo">
-                <label class="cal-campo__etiqueta" for="pedido-mesa">Mesa</label>
-                <input class="cal-campo__entrada" id="pedido-mesa" type="text" autocomplete="off" placeholder='Ej. 4, o escribe "Para llevar"' data-cal-mesa>
-            </div>
+            <x-sitio.entrega :restaurante="$restaurante" prefijo="cal" clase-campo="cal-campo" clase-etiqueta="cal-campo__etiqueta" />
             <div class="cal-campo">
                 <label class="cal-campo__etiqueta" for="pedido-cocina">Nota para la cocina (opcional)</label>
                 <textarea class="cal-campo__entrada cal-campo__area" id="pedido-cocina" rows="2" placeholder="Ej. Sin cubiertos" data-cal-cocina></textarea>
@@ -61,7 +59,7 @@
 
         <div class="cal-pedido__pie">
             <p class="cal-pedido__total"><span>Total</span> <span data-cal-total></span></p>
-            <p class="cal-pedido__nota">Pedidos para domicilio o para recoger. El total es informativo. El restaurante confirma tu pedido por WhatsApp.</p>
+            <p class="cal-pedido__nota">{{ $restaurante->textoDeModalidadesDePedido() }} El total es informativo. El restaurante confirma tu pedido por WhatsApp.</p>
             <p class="cal-aviso" role="status" hidden data-cal-aviso-envio></p>
 
             <div class="cal-aviso cal-aviso--exito" role="status" tabindex="-1" hidden data-cal-enviado>
