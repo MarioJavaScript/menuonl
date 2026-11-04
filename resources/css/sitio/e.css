@@ -72,6 +72,11 @@
 
   /* Mensajes de error de formularios (7:1 sobre blanco) */
   --cal-error: #8a1c14;
+
+  /* Fondo claro del logo en la cabecera sobre el bloque arcilla */
+  --cal-logo-fondo: var(--cal-blanco);
+  --cal-logo-borde: rgb(46 14 6 / 0.15);
+  --cal-logo-contorno: rgb(46 14 6 / 0.6);
 }
 
 /* ---------- Base ---------- */
@@ -770,7 +775,25 @@ a { color: inherit; }
 /* Palabras largas de la portada y nombres que no caben */
 .cal-portada__palabra { overflow-wrap: break-word; min-width: 0; }
 .cal-portada__derecha:empty { display: none; }
-.cal-cabecera__marca { min-width: 0; overflow-wrap: anywhere; }
+.cal-cabecera__marca { min-width: 0; overflow-wrap: anywhere; gap: var(--cal-esp-2); }
+.cal-cabecera__nombre { min-width: 0; }
+
+/* Logo: la cabecera va sobre el bloque arcilla oscuro, así que el logo lleva un fondo claro redondeado para que un PNG
+   transparente oscuro no desaparezca; la sombra fina perfila un logo blanco sobre ese fondo. */
+.cal-pagina .cal-cabecera__logo {
+  flex: none;
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  padding: 5px;
+  background: var(--cal-logo-fondo);
+  border-radius: 12px;
+  box-shadow: 0 0 0 1px var(--cal-logo-borde);
+}
+.cal-pagina .cal-cabecera__logo .foto { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 0 0.6px var(--cal-logo-contorno)); }
+@media (max-width: 479px) {
+  .cal-pagina .cal-cabecera__logo { width: 36px; height: 36px; padding: 4px; border-radius: 10px; }
+}
 .cal-pie__marca > span { overflow-wrap: anywhere; }
 
 /* Menú: acciones, idiomas, estado vacío */

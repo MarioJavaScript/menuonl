@@ -1,6 +1,6 @@
 <x-sitio.layout :r="$r" plantilla="b" :descripcion="$r->descripcion">
 <header class="cab"><div class="wrap">
-    <a class="logo" href="#top">{{ $r->nombre }}</a>
+    <a class="logo" href="#top">@if (filled($r->logo))<span class="logo-sobre-claro"><x-sitio.imagen :ruta="$r->logo" alt="" :ancho="56" :alto="56" sizes="44px" :prioridad="true" /></span>@endif<span class="logo-nombre">{{ $r->nombre }}</span></a>
     <nav aria-label="Principal">
         @if ($r->descripcion)<a href="#nosotros">Nosotros</a>@endif
         @if ($destacados)<a href="#menu">Menú</a>@endif

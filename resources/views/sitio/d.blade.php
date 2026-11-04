@@ -38,7 +38,7 @@
 <a class="d-saltar" href="#contenido">Saltar al contenido</a>
 
 <header class="d-cab"><div class="d-wrap d-cab-fila">
-    <a class="d-logo" href="#inicio">{{ $nombre }}</a>
+    <a class="d-logo" href="#inicio">@if (filled($r->logo))<span class="logo-sobre-claro"><x-sitio.imagen :ruta="$r->logo" alt="" :ancho="56" :alto="56" sizes="44px" :prioridad="true" /></span>@endif<span class="d-logo-nombre">{{ $nombre }}</span></a>
     <nav class="d-nav" aria-label="Principal">
         @if ($hayHistoria)<a href="#historia">Historia</a>@endif
         <a href="{{ $menu_url }}">Menú</a>

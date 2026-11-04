@@ -19,6 +19,12 @@
 .sitio-b .cab{position:fixed;top:0;left:0;right:0;z-index:10;background:linear-gradient(#0B0B0Aee,#0B0B0A00)}
 .sitio-b .cab .wrap{display:flex;align-items:center;justify-content:space-between;min-height:72px;gap:12px}
 .sitio-b .logo{font:500 1.75rem var(--serif);text-decoration:none;letter-spacing:.04em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+/* Logo: va sobre un fondo claro redondeado para que un PNG transparente oscuro no desaparezca en el fondo negro;
+   la sombra fina deja ver el contorno de un logo blanco sobre ese mismo fondo. */
+.sitio-b .cab .logo{display:inline-flex;align-items:center;gap:12px}
+.sitio-b .logo-nombre{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.sitio-b .logo-sobre-claro{flex:none;display:inline-flex;width:44px;height:44px;padding:5px;background:var(--tinta);border-radius:10px;box-shadow:0 0 0 1px #0B0B0A26}
+.sitio-b .logo-sobre-claro .foto{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 0 .6px #0B0B0A99)}
 .sitio-b nav{display:none;gap:28px}
 .sitio-b nav a{font-size:.8125rem;letter-spacing:.14em;text-transform:uppercase;text-decoration:none;padding:12px 0}
 .sitio-b nav a:hover{color:var(--arena)}

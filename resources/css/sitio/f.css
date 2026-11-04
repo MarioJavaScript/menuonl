@@ -93,6 +93,11 @@
   --bar-linea-grosor: 1px;
   --bar-neon-grosor: 3px;
   --bar-transicion: 160ms ease;
+
+  /* Fondo claro del logo en la cabecera oscura */
+  --bar-logo-fondo: var(--bar-texto);
+  --bar-logo-borde: rgb(11 15 20 / 0.15);
+  --bar-logo-contorno: rgb(11 15 20 / 0.6);
 }
 
 /* ---------- base ---------- */
@@ -203,6 +208,23 @@ html {
   width: 1.75rem;
   height: 1.75rem;
   object-fit: contain;
+}
+/* Logo sobre fondo claro redondeado: un PNG transparente oscuro no desaparece en la cabecera oscura y la sombra fina
+   perfila un logo blanco sobre ese fondo. */
+.bar-pagina .bar-marca__fondo {
+  flex: none;
+  display: inline-flex;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0.25rem;
+  background: var(--bar-logo-fondo);
+  border-radius: 0.5rem;
+  box-shadow: 0 0 0 1px var(--bar-logo-borde);
+}
+.bar-pagina .bar-marca__fondo .bar-marca__logo {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 0.6px var(--bar-logo-contorno));
 }
 .bar-nav__lista {
   display: flex;

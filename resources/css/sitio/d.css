@@ -32,6 +32,11 @@
 .sitio-d .d-cab{position:sticky;top:0;z-index:20;background:var(--fondo);border-bottom:1px solid var(--borde)}
 .sitio-d .d-cab-fila{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;column-gap:16px;padding-top:8px;padding-bottom:4px;min-height:64px}
 .sitio-d .d-logo{font:500 1.5rem/1.1 var(--serif);text-decoration:none;letter-spacing:.02em;min-width:0;overflow-wrap:anywhere}
+/* Logo: fondo claro redondeado para que un PNG transparente oscuro no desaparezca; la sombra fina perfila un logo blanco. */
+.sitio-d .d-cab .d-logo{display:inline-flex;align-items:center;gap:12px}
+.sitio-d .d-logo-nombre{min-width:0}
+.sitio-d .logo-sobre-claro{flex:none;display:inline-flex;width:44px;height:44px;padding:5px;background:var(--tinta);border-radius:10px;box-shadow:0 0 0 1px #0c0b0a26}
+.sitio-d .logo-sobre-claro .foto{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 0 .6px #0c0b0a99)}
 .sitio-d .d-nav{order:3;flex:0 0 100%;display:flex;flex-wrap:wrap;gap:0 20px}
 .sitio-d .d-nav a{display:inline-flex;align-items:center;min-height:44px;font:600 .75rem/1 var(--sans);letter-spacing:.16em;text-transform:uppercase;text-decoration:none;color:var(--suave)}
 .sitio-d .d-nav a:hover{color:var(--tinta)}

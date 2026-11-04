@@ -28,6 +28,8 @@
             $turnosHoy = $horarios->where('dia_semana', $diaHoy)->where('cerrado', false)->sortBy('abre');
             $tienePortada = filled($restaurante->portada);
             $nombresDias = \App\Services\Catalogos::diasSemana();
+            // El logo sale del disco "public", con la misma URL absoluta (APP_URL) que usa el sitio.
+            $urlLogo = app(\App\Services\WebpImageService::class)->url($restaurante->logo);
 
             // Próxima apertura, solo para el aviso de "cerrado" (texto; no afecta si se puede pedir).
             $proximaApertura = null;
@@ -60,8 +62,8 @@
             @endif
 
             <div class="contenedor hero-contenido">
-                @if (filled($restaurante->logo))
-                    <img src="{{ Storage::url($restaurante->logo) }}" alt="" class="hero-logo" width="72" height="72" decoding="async">
+                @if ($urlLogo !== null)
+                    <span class="hero-logo hero-logo--imagen"><img src="{{ $urlLogo }}" alt="" width="72" height="72" decoding="async"></span>
                 @else
                     <div class="hero-logo hero-monograma" aria-hidden="true">{{ mb_strtoupper(mb_substr($restaurante->nombre, 0, 1)) }}</div>
                 @endif
@@ -150,8 +152,8 @@
         <!-- Barra compacta: aparece al salir el hero -->
         <div class="barra-compacta" aria-hidden="true">
             <div class="contenedor flex items-center gap-3">
-                @if (filled($restaurante->logo))
-                    <img src="{{ Storage::url($restaurante->logo) }}" alt="" class="barra-logo" width="28" height="28" decoding="async">
+                @if ($urlLogo !== null)
+                    <span class="barra-logo barra-logo--imagen"><img src="{{ $urlLogo }}" alt="" width="28" height="28" decoding="async"></span>
                 @else
                     <span class="barra-logo barra-monograma" aria-hidden="true">{{ mb_strtoupper(mb_substr($restaurante->nombre, 0, 1)) }}</span>
                 @endif
