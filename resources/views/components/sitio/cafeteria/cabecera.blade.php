@@ -9,7 +9,10 @@
     ];
 @endphp
 <header class="cal-cabecera">
-    <a class="cal-cabecera__marca" href="{{ $inicioUrl }}">{{ $d['r']->nombre }}</a>
+    <a class="cal-cabecera__marca" href="{{ $inicioUrl }}">
+        @if (filled($d['r']->logo))<span class="cal-cabecera__logo"><x-sitio.imagen :ruta="$d['r']->logo" alt="" :ancho="56" :alto="56" sizes="44px" :prioridad="true" /></span>@endif
+        <span class="cal-cabecera__nombre">{{ $d['r']->nombre }}</span>
+    </a>
     <nav class="cal-cabecera__nav" aria-label="Principal">
         <ul class="cal-cabecera__lista">
             <li><a class="cal-cabecera__enlace" href="{{ $inicioUrl }}" @if ($actual === 'inicio') aria-current="page" @endif>Inicio</a></li>

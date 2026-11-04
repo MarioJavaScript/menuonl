@@ -5,7 +5,7 @@
 <header class="bar-encabezado">
     <div class="bar-encabezado__interior">
         <a class="bar-marca" href="{{ $inicioUrl }}">
-            @if (filled($d['r']->logo))<x-sitio.imagen :ruta="$d['r']->logo" alt="" :ancho="56" :alto="56" sizes="28px" :prioridad="true" class="bar-marca__logo" />@endif
+            @if (filled($d['r']->logo))<span class="bar-marca__fondo"><x-sitio.imagen :ruta="$d['r']->logo" alt="" :ancho="56" :alto="56" sizes="36px" :prioridad="true" class="bar-marca__logo" /></span>@endif
             <span>{{ $d['r']->nombre }}</span>
         </a>
         @if (filled($mesa))<span class="bar-mesa">Mesa {{ $mesa }}</span>@endif
