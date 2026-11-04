@@ -249,37 +249,93 @@ class PedidoWhatsappPastelTest extends TestCase
     }
 
     /**
-     * @return array<string, array{0: string, 1: string}>
+     * @return array<string, array{0: string}>
      */
     public static function mesas(): array
     {
         return [
-            'número' => ['3', '3'],
-            'con espacios alrededor' => ['%203%20', '3'],
-            'letras, guion y guion bajo' => ['Terraza_2-A', 'Terraza_2-A'],
-            'veinte caracteres' => [str_repeat('a', 20), str_repeat('a', 20)],
-            'veintiún caracteres' => [str_repeat('a', 21), ''],
-            'con etiquetas' => ['%3Cb%3E3%3C%2Fb%3E', ''],
-            'con comillas' => ['3%22%20onfocus%3D%22x', ''],
-            'vacía' => ['', ''],
+            'número' => ['3'],
+            'letras, guion y guion bajo' => ['Terraza_2-A'],
+            'con etiquetas' => ['%3Cb%3E3%3C%2Fb%3E'],
+            'en forma de arreglo' => ['[]=3'],
         ];
     }
 
     #[DataProvider('mesas')]
-    public function test_la_mesa_valida_llega_al_script_y_la_invalida_se_ignora(string $consulta, string $esperada): void
+    public function test_la_mesa_de_la_consulta_no_llega_al_pedido(string $consulta): void
     {
         $restaurante = $this->restaurante();
         $this->platillo($restaurante, 'Latte', ['precio' => 55]);
 
-        $this->menu('?mesa='.$consulta)->assertOk()->assertSee('data-mesa="'.$esperada.'"', false);
+        $parametro = str_starts_with($consulta, '[]') ? '?mesa'.$consulta : '?mesa='.$consulta;
+        $respuesta = $this->menu($parametro)->assertOk();
+
+        $respuesta->assertDontSee('data-mesa', false)
+            ->assertDontSee('data-pas-mesa', false)
+            ->assertDontSee('id="pedido-mesa"', false)
+            ->assertDontSee('Para llevar')
+            ->assertSee('data-pas-entrega', false)
+            ->assertSee('<legend class="pas-campo__etiqueta">Entrega</legend>', false);
     }
 
-    public function test_una_mesa_en_forma_de_arreglo_se_ignora(): void
+    public function test_el_pedido_ofrece_domicilio_y_para_recoger_sin_marcar_ninguna(): void
     {
         $restaurante = $this->restaurante();
         $this->platillo($restaurante, 'Latte', ['precio' => 55]);
 
-        $this->menu('?mesa[]=3')->assertOk()->assertSee('data-mesa=""', false);
+        $this->menu()->assertOk()
+            ->assertSeeInOrder([
+                '<input type="radio" name="pas-pedido-entrega" value="domicilio" data-pas-modalidad >',
+                '<span>Domicilio</span>',
+                '<input type="radio" name="pas-pedido-entrega" value="recoger" data-pas-modalidad >',
+                '<span>Para recoger</span>',
+            ], false)
+            ->assertSee('Pedidos para domicilio o para recoger. El total es informativo.')
+            ->assertDontSee('data-pas-modalidad checked', false);
+    }
+
+    /**
+     * @return array<string, array{0: array<string, bool>, 1: string, 2: string, 3: string}>
+     */
+    public static function unaSolaModalidad(): array
+    {
+        return [
+            'solo domicilio' => [['pedidos_recoger' => false], 'domicilio', 'recoger', 'Pedidos para domicilio.'],
+            'solo para recoger' => [['pedidos_domicilio' => false], 'recoger', 'domicilio', 'Pedidos para recoger.'],
+        ];
+    }
+
+    /**
+     * @param  array<string, bool>  $apagada
+     */
+    #[DataProvider('unaSolaModalidad')]
+    public function test_con_una_sola_modalidad_solo_se_ofrece_esa_y_ya_va_marcada(array $apagada, string $ofrecida, string $ausente, string $nota): void
+    {
+        $restaurante = $this->restaurante($apagada);
+        $this->platillo($restaurante, 'Latte', ['precio' => 55]);
+
+        $this->menu()->assertOk()
+            ->assertSee('<input type="radio" name="pas-pedido-entrega" value="'.$ofrecida.'" data-pas-modalidad checked>', false)
+            ->assertDontSee('value="'.$ausente.'"', false)
+            ->assertSee($nota.' El total es informativo.');
+    }
+
+    public function test_sin_ninguna_modalidad_no_se_puede_pedir(): void
+    {
+        $restaurante = $this->restaurante(['pedidos_domicilio' => false, 'pedidos_recoger' => false]);
+        $this->platillo($restaurante, 'Latte', ['precio' => 55]);
+
+        $this->menu()->assertOk()
+            ->assertDontSee('data-pas-entrega', false)
+            ->assertDontSee('data-pas-modalidad', false);
+    }
+
+    public function test_el_mensaje_del_restaurante_llega_limpio_al_script(): void
+    {
+        $restaurante = $this->restaurante(['pedidos_mensaje' => "  *¡Gracias*   por\tpedir! _ven_ pronto~  "]);
+        $this->platillo($restaurante, 'Latte', ['precio' => 55]);
+
+        $this->menu()->assertOk()->assertSee('data-mensaje="¡Gracias por pedir! ven pronto"', false);
     }
 
     public function test_sin_javascript_el_menu_esta_completo_y_queda_el_enlace_a_whatsapp(): void

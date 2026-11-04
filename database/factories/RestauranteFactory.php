@@ -43,7 +43,7 @@ class RestauranteFactory extends Factory
     }
 
     /**
-     * Plan "Sitio y menú".
+     * Plan Aura (`sitio_menu`). Es también el plan por defecto.
      */
     public function sitioMenu(): static
     {
@@ -53,7 +53,7 @@ class RestauranteFactory extends Factory
     }
 
     /**
-     * Plan "Solo menú".
+     * Plan Lite (`solo_menu`).
      */
     public function soloMenu(): static
     {

@@ -1,5 +1,7 @@
 # Pedido por WhatsApp compartido: análisis y propuesta (Fase 1)
 
+> **Actualización (planes Aura y Lite): ya no hay pedidos de mesa.** El campo "Mesa" del cajón (menu.publico y E, F, G y H) se cambió por la elección **Entrega: Domicilio / Para recoger** (`x-sitio.entrega`, solo con las modalidades que el restaurante tiene encendidas en "Ajustes de reservas y pedidos"; si es una sola, va marcada). Sin elegir, no se abre WhatsApp y se avisa. El mensaje lleva `*Entrega:* Domicilio` o `*Entrega:* Para recoger` en lugar de `*Mesa:* …` y, si el restaurante lo escribió, su mensaje opcional al final (`data-mensaje`, limpio, hasta 200 caracteres). `?mesa=` del QR ya no llega al formulario ni al mensaje (los contenedores ya no tienen `data-mesa`). Se retiraron `limpiarMesa` y `LIMITES.mesa`, y se agregaron `ENTREGAS` y `LIMITES.mensaje`. La referencia `tests/Js/fixtures/pedido-mensaje-referencia.json` se regeneró comprobando caso por caso que solo cambió esa línea (el recorte por largo quedó igual en los 19 casos); la de menu.publico no se tocó y la prueba compara contra ella cambiando solo esa línea. Lo que sigue sobre la mesa es histórico.
+
 Estado: **solo análisis. No hay código escrito.** Espera aprobación.
 
 Plantillas: E = `cafeteria` (prefijo `cal`), F = `bar` (`bar`), G = `pastel` (`pas`), H = `pizzeria` (`piz`). `menu.publico` sirve las plantillas a-d.

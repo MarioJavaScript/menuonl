@@ -156,7 +156,7 @@ class LogoMenublyTest extends TestCase
             'login' => $this->get('/admin/login')->assertOk()->getContent(),
             'invitaciones' => $this->get('/invitaciones/token-que-no-existe')->getContent(),
             'menu publico' => $this->get(route('menu.publico', ['slug' => $restaurante->slug]))->assertOk()->getContent(),
-            'plan sin panel' => view('plan.sin-panel', ['restaurantes' => ['Fonda Uno'], 'enlaceWhatsapp' => null, 'urlCerrarSesion' => '/salir'])->render(),
+            'cuenta pausada' => view('cuenta.pausada', ['restaurantes' => ['Fonda Uno'], 'mensajes' => ['Pausado por pago pendiente.'], 'enlaceWhatsapp' => null, 'urlCerrarSesion' => '/salir'])->render(),
             // La barra superior y la lateral de /admin pintan esta misma vista (->brandLogo(fn () => view('filament.logo'))).
             'barra superior y lateral de /admin' => view('filament.logo')->render(),
         ];
@@ -170,7 +170,7 @@ class LogoMenublyTest extends TestCase
             }
         }
 
-        foreach (['login', 'invitaciones', 'plan sin panel', 'barra superior y lateral de /admin'] as $donde) {
+        foreach (['login', 'invitaciones', 'cuenta pausada', 'barra superior y lateral de /admin'] as $donde) {
             foreach ($this->imagenesDelLogo((string) $paginas[$donde]) as $imagen) {
                 $this->assertFalse($imagen->hasAttribute('loading'), "El logo de cabecera no debe ser lazy en: {$donde}");
             }
@@ -239,9 +239,9 @@ class LogoMenublyTest extends TestCase
         $this->get(route('menu.publico', ['slug' => $restaurante->slug]))->assertOk()->assertSee('brand/menubly-wordmark-color.svg', false);
     }
 
-    public function test_la_pantalla_sin_panel_lleva_el_logo_y_sus_reglas_de_oscuro(): void
+    public function test_la_pantalla_de_cuenta_pausada_lleva_el_logo_y_sus_reglas_de_oscuro(): void
     {
-        $html = view('plan.sin-panel', ['restaurantes' => ['Fonda Uno'], 'enlaceWhatsapp' => null, 'urlCerrarSesion' => '/salir'])->render();
+        $html = view('cuenta.pausada', ['restaurantes' => ['Fonda Uno'], 'mensajes' => ['Pausado por pago pendiente.'], 'enlaceWhatsapp' => null, 'urlCerrarSesion' => '/salir'])->render();
 
         $this->assertStringContainsString('brand/menubly-horizontal-color.svg', $html);
         $this->assertStringContainsString('brand/menubly-horizontal-negativo.svg', $html);

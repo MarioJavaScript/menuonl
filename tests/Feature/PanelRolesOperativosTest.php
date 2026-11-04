@@ -135,15 +135,17 @@ class PanelRolesOperativosTest extends TestCase
         $this->assertSame(Reservas::getUrl(tenant: $alfa), $this->destinoTrasIniciarSesion($usuario));
     }
 
-    public function test_si_no_tiene_ningun_restaurante_con_panel_va_a_admin_sin_bucles(): void
+    public function test_la_recepcion_de_un_restaurante_lite_llega_a_su_inicio_sin_reservas_ni_bucles(): void
     {
-        $solo = Restaurante::factory()->soloMenu()->create(['slug' => 'solo-menu']);
-        $usuario = $this->conRol($solo, 'recepcion');
+        $lite = Restaurante::factory()->soloMenu()->create(['slug' => 'solo-menu']);
+        $usuario = $this->conRol($lite, 'recepcion');
 
         $destino = $this->destinoTrasIniciarSesion($usuario);
 
-        $this->assertSame(url('/admin'), $destino);
-        $this->actingAs($usuario)->get($destino)->assertForbidden();
+        $this->assertSame(url('/admin/solo-menu'), $destino);
+        $this->assertSame(['inicio'], PermisosPanel::modulosDe($usuario, $lite));
+        $this->actingAs($usuario)->get($destino)->assertOk()->assertDontSee(Reservas::getUrl(tenant: $lite));
+        $this->actingAs($usuario)->get(Reservas::getUrl(tenant: $lite))->assertNotFound();
     }
 
     public function test_quien_tambien_tiene_otro_rol_sigue_el_destino_normal_de_filament(): void

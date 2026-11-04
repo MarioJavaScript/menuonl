@@ -6,8 +6,10 @@ use App\Enums\Capacidad;
 use App\Filament\Concerns\EditaAjustesDelRestaurante;
 use App\Models\Restaurante;
 use BackedEnum;
+use Closure;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Pages\Page;
@@ -19,10 +21,11 @@ use Filament\Support\Icons\Heroicon;
 use UnitEnum;
 
 /**
- * Ajustes de reservas y pedidos: pedidos por WhatsApp (activar y número) y reservas desde el sitio (activar, cupo y duración).
+ * Ajustes de reservas y pedidos: pedidos por WhatsApp (activar, número, modalidades de entrega y mensaje) y reservas
+ * desde el sitio (activar, cupo y duración).
  *
- * Con el plan Sitio y menú el propietario solo ve y cambia el número de WhatsApp de pedidos (D3): activar pedidos y las
- * reservas las maneja el superadmin. Esos campos se ocultan y además se descartan al guardar.
+ * Aura y Lite configuran sus pedidos por WhatsApp completos. La sección de reservas solo existe si el plan incluye
+ * reservas (Aura); en Lite no aparece para nadie y sus campos se descartan al guardar aunque lleguen en la petición.
  */
 class AjustesDeReservasYPedidos extends Page
 {
@@ -40,22 +43,17 @@ class AjustesDeReservasYPedidos extends Page
     }
 
     /**
-     * Quien no es superadmin y no tiene el plan completo solo toca el número de WhatsApp de pedidos.
-     */
-    private function soloElNumero(): bool
-    {
-        $restaurante = Filament::getTenant();
-        $usuario = auth()->user();
-
-        return ! ($restaurante instanceof Restaurante && $usuario !== null && $restaurante->permiteA($usuario, Capacidad::EditarDatos));
-    }
-
-    /**
+     * Los campos de reservas solo se guardan si el plan incluye reservas.
+     *
      * @return list<string>|null
      */
     protected function camposEditables(Restaurante $restaurante): ?array
     {
-        return $this->soloElNumero() ? ['whatsapp_pedidos'] : null;
+        $pedidos = ['pedidos_activos', 'whatsapp_pedidos', 'pedidos_domicilio', 'pedidos_recoger', 'pedidos_mensaje'];
+
+        return $restaurante->incluye(Capacidad::Reservas)
+            ? [...$pedidos, 'reservas_activas', 'reservas_cupo', 'reservas_franja_min']
+            : $pedidos;
     }
 
     /**
@@ -86,7 +84,9 @@ class AjustesDeReservasYPedidos extends Page
 
     public function getSubheading(): ?string
     {
-        return __('panel.pedidos.subtitulo');
+        return (Filament::getTenant()?->incluye(Capacidad::Reservas) ?? false)
+            ? __('panel.pedidos.subtitulo')
+            : __('panel.pedidos.subtitulo_sin_reservas');
     }
 
     public function form(Schema $schema): Schema
@@ -98,7 +98,6 @@ class AjustesDeReservasYPedidos extends Page
                     Toggle::make('pedidos_activos')
                         ->label(__('panel.pedidos.whatsapp.activar'))
                         ->helperText(__('panel.pedidos.whatsapp.activar_ayuda'))
-                        ->visible(fn (): bool => ! $this->soloElNumero())
                         ->live(),
                     TextInput::make('whatsapp_pedidos')
                         ->label(__('panel.pedidos.whatsapp.numero'))
@@ -109,12 +108,34 @@ class AjustesDeReservasYPedidos extends Page
                             'regex' => __('panel.pedidos.whatsapp.numero_invalido'),
                             'required' => __('panel.pedidos.whatsapp.numero_requerido'),
                         ])
-                        ->required(fn (Get $get): bool => $this->soloElNumero() ? (bool) Filament::getTenant()?->pedidos_activos : (bool) $get('pedidos_activos'))
+                        ->required(fn (Get $get): bool => (bool) $get('pedidos_activos'))
                         ->maxLength(20),
+                    Toggle::make('pedidos_domicilio')
+                        ->label(__('panel.pedidos.whatsapp.domicilio'))
+                        ->helperText(__('panel.pedidos.whatsapp.domicilio_ayuda'))
+                        ->live(),
+                    Toggle::make('pedidos_recoger')
+                        ->label(__('panel.pedidos.whatsapp.recoger'))
+                        ->helperText(__('panel.pedidos.whatsapp.recoger_ayuda'))
+                        ->live()
+                        ->rules([
+                            fn (Get $get): Closure => function (string $attribute, mixed $value, Closure $fail) use ($get): void {
+                                if ($get('pedidos_activos') && ! $value && ! $get('pedidos_domicilio')) {
+                                    $fail(__('panel.pedidos.whatsapp.sin_modalidad'));
+                                }
+                            },
+                        ]),
+                    Textarea::make('pedidos_mensaje')
+                        ->label(__('panel.pedidos.whatsapp.mensaje'))
+                        ->helperText(__('panel.pedidos.whatsapp.mensaje_ayuda'))
+                        ->placeholder(__('panel.pedidos.whatsapp.mensaje_ejemplo'))
+                        ->rows(2)
+                        ->maxLength(200)
+                        ->dehydrateStateUsing(fn (?string $state): ?string => filled($state) ? trim($state) : null),
                 ]),
             Section::make(__('panel.pedidos.reservas.titulo'))
                 ->description(__('panel.pedidos.reservas.descripcion'))
-                ->visible(fn (): bool => ! $this->soloElNumero() && (Filament::getTenant()?->incluye(Capacidad::Reservas) ?? false))
+                ->visible(fn (): bool => Filament::getTenant()?->incluye(Capacidad::Reservas) ?? false)
                 ->schema([
                     Toggle::make('reservas_activas')
                         ->label(__('panel.pedidos.reservas.activar'))

@@ -88,7 +88,7 @@ Se parte de `.env.example`. La columna "Producción" es el valor esperado; las m
 | `BCRYPT_ROUNDS` | 12 | Solo aplica si se vuelve a bcrypt. |
 | `TRUSTED_PROXIES` | rangos de Cloudflare (vienen en el ejemplo) | Vacía si **no** hay Cloudflare delante. Nunca `*` (se descarta). Revisar contra `cloudflare.com/ips-v4` e `ips-v6`. |
 | `CLOUDFLARE_ZONE_ID`, `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_DOMAIN` | reales | Token con permiso solo de "Purgar caché" en esa zona. Si faltan, la purga se omite con un `Log::info` (no falla). `CLOUDFLARE_DOMAIN` por defecto es `menuonl.com`. |
-| `SOPORTE_WHATSAPP` | solo dígitos con lada, p. ej. `5215512345678` | **Obligatoria en producción.** Entre 10 y 15 dígitos (con lada). Vacía o inválida = la portada no pinta sus botones de WhatsApp (ni el principal) y la pantalla de "Tu plan no incluye el panel" no muestra el botón de soporte; `menuonl:verificar-produccion` falla. El número real va solo en el `.env` del servidor (H9), nunca en el repositorio. |
+| `SOPORTE_WHATSAPP` | solo dígitos con lada, p. ej. `5215512345678` | **Obligatoria en producción.** Entre 10 y 15 dígitos (con lada). Vacía o inválida = la portada no pinta sus botones de WhatsApp (ni el principal) y la pantalla de "Tu cuenta está fuera de servicio" no muestra el botón de soporte; `menuonl:verificar-produccion` falla. El número real va solo en el `.env` del servidor (H9), nunca en el repositorio. |
 | `MENU_DEMO_URL` | ruta relativa (`/la-esquina/menu`) o URL de tu propio dominio | Menú que enseña el botón "Ver un menú de ejemplo" de la portada. Cualquier otra cosa (otro dominio, usuario en la URL, espacios) se ignora. Vacía = el primer restaurante activo (el de muestra `la-esquina` si existe); sin ninguno, el botón no sale. |
 | `BACKUP_DISK`, `BACKUP_ACCESS_KEY_ID`, `BACKUP_SECRET_ACCESS_KEY`, `BACKUP_BUCKET`, `BACKUP_ENDPOINT`, `BACKUP_REGION`, `BACKUP_USE_PATH_STYLE_ENDPOINT` | bucket **privado** R2/B2 | Credenciales limitadas a ese bucket. |
 | `BACKUP_ARCHIVE_PASSWORD` | contraseña larga y aleatoria | Guardada **fuera** del servidor. Vacía = el respaldo se niega a correr. |
@@ -340,13 +340,13 @@ Nota: `/panel` ya no tiene pantalla: es una redirección 302 a `/admin` y recibe
 
 ### 6.2 Límite de intentos de login
 
-- **Ya está:** `app/Filament/Pages/Auth/Login.php`: intentos fallidos por correo+IP (5) y por IP (20), bloqueo de 900 s (`config/menuonl.php`, `login.*`), mensaje genérico; sobre el límite propio de Filament (`rateLimit(5)`). El bloqueo usa la IP de la petición, por eso depende de `TRUSTED_PROXIES` (punto 5). Pruebas en `tests/Feature/LimiteLoginTest.php` y `PlanSinPanelDosFactoresTest.php`.
+- **Ya está:** `app/Filament/Pages/Auth/Login.php`: intentos fallidos por correo+IP (5) y por IP (20), bloqueo de 900 s (`config/menuonl.php`, `login.*`), mensaje genérico; sobre el límite propio de Filament (`rateLimit(5)`). El bloqueo usa la IP de la petición, por eso depende de `TRUSTED_PROXIES` (punto 5). Pruebas en `tests/Feature/LimiteLoginTest.php` y `PlanLiteDosFactoresTest.php`.
 - **Falta:** regla equivalente en Cloudflare (punto 5); el contador vive en la caché: si la caché es `database` y se limpia, se reinician los intentos; alerta ante picos de fallos.
 
 ### 6.3 2FA obligatoria para superadmin
 
-- **Ya está:** `User::requiereDosFactores()` (superadmin y propietarios) + `ExigeDosFactores` (middleware persistente, también en actualizaciones de Livewire) + `menuonl.requerir_2fa` (encendida por defecto aunque falte la variable). Códigos de recuperación activados. Pruebas: `tests/Feature/DosFactoresTest.php`, `PlanSinPanelDosFactoresTest.php`.
-- **Falta (operativo):** documentar qué hacer si el superadmin pierde el segundo factor y los códigos de recuperación (hoy: restablecerlo por `tinker`, con otro superadmin como respaldo); tener **dos** superadmins; no apagar `REQUIRE_2FA`. Un propietario de "Solo menú" no necesita 2FA (no tiene panel): comportamiento decidido y con prueba.
+- **Ya está:** `User::requiereDosFactores()` (superadmin y propietarios) + `ExigeDosFactores` (middleware persistente, también en actualizaciones de Livewire) + `menuonl.requerir_2fa` (encendida por defecto aunque falte la variable). Códigos de recuperación activados. Pruebas: `tests/Feature/DosFactoresTest.php`, `PlanLiteDosFactoresTest.php`.
+- **Falta (operativo):** documentar qué hacer si el superadmin pierde el segundo factor y los códigos de recuperación (hoy: restablecerlo por `tinker`, con otro superadmin como respaldo); tener **dos** superadmins; no apagar `REQUIRE_2FA`. Los dos planes (Aura y Lite) tienen panel, así que todo propietario usa 2FA, también el de Lite: comportamiento decidido y con prueba (`PlanLiteDosFactoresTest`).
 
 ### 6.4 Cookies, sesiones y CSRF
 
@@ -399,10 +399,20 @@ Antes, cualquier archivo inválido en la API de `/panel` se reportaba como "dema
    - **Historial:** no se escribe ahí. Las filas de `historial_cambios` pertenecen a un restaurante (`restaurante_id` obligatorio) y un superadmin no tiene ninguno. Queda una línea en el registro de la aplicación (`storage/logs`): `menuonl:crear-superadmin - Superadmin creado.` con el id y el correo, sin contraseña.
    - Entrar a `/admin/login`: el sistema exige configurar la app de autenticación (2FA) antes de cualquier otra pantalla; guardar los códigos de recuperación.
 3. **Segundo superadmin** (respaldo) con el mismo comando y `--confirmo-otro-superadmin`.
-4. **Primer restaurante real:** Plataforma → Restaurantes → Crear: nombre, dirección corta (no reservada: `Catalogos::slugsReservados()`), moneda, idioma, zona horaria, **plan** (por defecto Completo), estado y correo del propietario. La aplicación crea el restaurante, siembra su idioma y encola una **invitación por correo** (`CreateRestaurante::afterCreate()`, `InvitacionService`), válida 7 días, de un solo uso. Requiere correo real configurado (H5). Si el correo falla, el restaurante queda creado, la invitación queda guardada y marcada, y en Restaurantes aparece "Correo no enviado" con la acción "Reenviar invitación" (genera un enlace nuevo; el anterior deja de funcionar).
+4. **Primer restaurante real:** Plataforma → Restaurantes → Crear: nombre, dirección corta (no reservada: `Catalogos::slugsReservados()`), moneda, idioma, zona horaria, **plan** (Aura o Lite; por defecto Aura), estado y correo del propietario. La aplicación crea el restaurante, siembra su idioma y encola una **invitación por correo** (`CreateRestaurante::afterCreate()`, `InvitacionService`), válida 7 días, de un solo uso. Requiere correo real configurado (H5). Si el correo falla, el restaurante queda creado, la invitación queda guardada y marcada, y en Restaurantes aparece "Correo no enviado" con la acción "Reenviar invitación" (genera un enlace nuevo; el anterior deja de funcionar).
 5. **El propietario** abre el enlace, define su contraseña, configura 2FA en su primer ingreso, y empieza a cargar su menú.
 6. **QR:** generarlos solo con `APP_URL` definitivo (los QR impresos codifican la URL de `APP_URL`).
-7. **Cambios de plan:** solo el superadmin, con ventana de confirmación y registro en el historial (`Restaurante::cambiarPlan()`).
+7. **Cambios de plan:** solo el superadmin, con ventana de confirmación y registro en el historial (`Restaurante::cambiarPlan()`). Planes: **Aura** (`sitio_menu`: sitio y menú editables, reservas y pedidos por WhatsApp) y **Lite** (`solo_menu`: menú editable con panel y pedidos por WhatsApp a domicilio o para recoger; sin sitio ni reservas). El plan retirado **Completo** lo pasa a Aura la migración `2026_11_04_201124_planes_aura_y_lite` (ver "Despliegue de los planes Aura y Lite" abajo).
+
+#### Despliegue de los planes Aura y Lite
+
+- **Orden:** sube el código y corre `php artisan migrate --force` en el mismo despliegue. Dos migraciones: `2026_11_04_201124_planes_aura_y_lite` y `2026_11_04_201126_add_modalidades_y_mensaje_de_pedido_to_restaurantes_table`.
+- **Qué hace la primera:** en una transacción, cada restaurante en `completo` (también los borrados con soft delete) pasa a `sitio_menu` y deja una fila en `historial_cambios` sin usuario, que el historial muestra como "Sistema" (`cambios.plan.antes = completo`). Después, fuera de la transacción (en MariaDB un `ALTER` la cerraría), el valor por defecto de `restaurantes.plan` pasa a `sitio_menu`. Lo hace `App\Services\RetiraElPlanCompleto`.
+- **Sin corte:** mientras el código nuevo convive con filas que aún dicen `completo` (antes de migrar, o al restaurar un respaldo viejo), `PlanRestaurante::desde()` las lee como Aura. Ningún restaurante pierde su sitio durante el despliegue.
+- **Quién cambia:** los restaurantes que estaban en "Sitio y menú" ahora son Aura y su propietario gana todo el panel. Los que estaban en "Solo menú" ahora son Lite: su propietario **ya puede entrar al panel** y se le pedirá configurar la verificación en dos pasos la primera vez. Avísales antes.
+- **Pedidos:** la segunda migración agrega `pedidos_domicilio` y `pedidos_recoger` (las dos encendidas) y `pedidos_mensaje` (vacío). El formulario de pedido ya no pide mesa: pide Domicilio o Para recoger, y el mensaje de WhatsApp dice "Entrega" en lugar de "Mesa".
+- **Reversa:** `down()` de la primera es irreversible a propósito (el plan Completo ya no existe en el código); solo devuelve el valor por defecto de la columna. El plan anterior de cada restaurante queda en `historial_cambios`.
+- **Después:** purga la caché de borde de `/{slug}` y `/{slug}/menu` (o espera los 30 s de `max-age`; el menú tiene `stale-while-revalidate`, ver la limitación de variantes con `?lang` y `?mesa`) y vuelve a construir los recursos (`npm run build`), porque cambiaron el JavaScript y las hojas de estilo del pedido.
 
 ### Limpieza previa
 

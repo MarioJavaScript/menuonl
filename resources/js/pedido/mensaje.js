@@ -9,9 +9,18 @@ export const LIMITES = {
     lineas: 30,
     notaLinea: 80,
     notaCocina: 200,
-    mesa: 20,
+    mensaje: 200,
     enlace: 2000,
 };
+
+/**
+ * Modalidades de entrega del pedido y cómo se escriben en el mensaje. No hay pedidos de mesa.
+ * Mismos valores que Restaurante::MODALIDADES_DE_PEDIDO en el servidor.
+ */
+export const ENTREGAS = Object.freeze({
+    domicilio: 'Domicilio',
+    recoger: 'Para recoger',
+});
 
 const MARCAS_DE_FORMATO = /[*_~`]/g;
 const CONTROL = /\p{Cc}|\p{Zl}|\p{Zp}/gu;
@@ -27,16 +36,6 @@ export function limpiarTexto(texto, maximo) {
         .trim();
 
     return Array.from(limpio).slice(0, maximo).join('').trim();
-}
-
-/**
- * Mesa: letras, números, espacio, guion y guion bajo, hasta 20 (la misma idea que valida el servidor con ?mesa=).
- * Lo demás se cambia por un espacio (no se borra): "Barra/2" queda "Barra 2".
- */
-export function limpiarMesa(texto) {
-    const limpio = String(texto ?? '').replace(/[^\p{L}\p{N} _-]/gu, ' ').replace(/\s+/g, ' ').trim();
-
-    return Array.from(limpio).slice(0, LIMITES.mesa).join('').trim();
 }
 
 /**
@@ -88,18 +87,20 @@ export function totalizar(lineas) {
  * Arma el mensaje y el enlace de wa.me.
  *
  * Si el enlace supera LIMITES.enlace se omiten platillos del final (se avisa con una línea en el mensaje) y, como último recurso,
- * la nota de cocina; el total siempre va completo. Devuelve { url, omitidas, sinNotaCocina }.
+ * la nota de cocina; el total siempre va completo. El mensaje opcional del restaurante va al final. Devuelve
+ * { url, omitidas, sinNotaCocina }, o null si el número o la entrega no son válidos.
  *
- * @param {{numero: string, restaurante: string, mesa: string, notaCocina: string, lineas: Array<{cantidad: number, nombre: string, variante: string, nota: string, precio: number}>, formatear: (c: number) => string}} datos
+ * @param {{numero: string, restaurante: string, entrega: string, notaCocina: string, mensaje?: string, lineas: Array<{cantidad: number, nombre: string, variante: string, nota: string, precio: number}>, formatear: (c: number) => string}} datos
  */
-export function armarEnlace({ numero, restaurante, mesa, notaCocina, lineas, formatear }) {
-    if (!/^[0-9]{8,20}$/.test(String(numero))) {
+export function armarEnlace({ numero, restaurante, entrega, notaCocina, mensaje: mensajeDelRestaurante = '', lineas, formatear }) {
+    if (!/^[0-9]{8,20}$/.test(String(numero)) || !Object.hasOwn(ENTREGAS, String(entrega))) {
         return null;
     }
 
     const total = totalizar(lineas);
-    const mesaTexto = limpiarMesa(mesa) || 'Para llevar';
+    const entregaTexto = ENTREGAS[entrega];
     const cocina = limpiarTexto(notaCocina, LIMITES.notaCocina);
+    const despedida = limpiarTexto(mensajeDelRestaurante, LIMITES.mensaje);
 
     const textoLinea = (linea) => {
         const variante = linea.variante ? ` (${linea.variante})` : '';
@@ -117,7 +118,7 @@ export function armarEnlace({ numero, restaurante, mesa, notaCocina, lineas, for
         }
 
         let mensaje = `Hola, quiero pedir en *${restaurante}*:\n\n`;
-        mensaje += `*Mesa:* ${mesaTexto}\n\n`;
+        mensaje += `*Entrega:* ${entregaTexto}\n\n`;
         mensaje += `*Pedido:*\n${items}\n`;
 
         if (conCocina && cocina) {
@@ -125,6 +126,10 @@ export function armarEnlace({ numero, restaurante, mesa, notaCocina, lineas, for
         }
 
         mensaje += `*Total:* ${formatear(total)}`;
+
+        if (despedida) {
+            mensaje += `\n\n${despedida}`;
+        }
 
         return `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
     };

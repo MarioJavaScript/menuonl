@@ -33,7 +33,7 @@ class SitioPublicoController extends Controller
             return response()->view('menu.no-disponible', [], 404)->withHeaders(self::SECURITY_HEADERS);
         }
 
-        // Solo menú no tiene página de sitio: va al menú. 302 y no 301, para que el sitio pueda volver al subir de plan.
+        // Lite (solo_menu) no tiene página de sitio: va al menú. 302 y no 301, para que el sitio pueda volver al subir de plan.
         if (! $restaurante->tieneSitio()) {
             return redirect()
                 ->route('menu.publico', [...$request->query(), 'slug' => $slug], 302)

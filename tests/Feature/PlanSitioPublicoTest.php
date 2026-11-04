@@ -15,7 +15,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
- * Sitio público por plan (docs/planes.md, paso 2): Solo menú no tiene página de sitio ni reservas en línea.
+ * Sitio público por plan (docs/planes.md, paso 2): Lite (`solo_menu`) no tiene página de sitio ni reservas en línea; Aura (`sitio_menu`) sí.
  */
 class PlanSitioPublicoTest extends TestCase
 {
@@ -75,7 +75,7 @@ class PlanSitioPublicoTest extends TestCase
     }
 
     #[DataProvider('plantillasDelSitio')]
-    public function test_completo_y_sitio_y_menu_muestran_el_sitio_con_el_formulario_de_reservas(string $plantilla): void
+    public function test_aura_muestra_el_sitio_con_el_formulario_de_reservas(string $plantilla): void
     {
         foreach ([Restaurante::factory(), Restaurante::factory()->sitioMenu()] as $fabrica) {
             $restaurante = $fabrica->create(['sitio_plantilla' => $plantilla]);
@@ -87,7 +87,7 @@ class PlanSitioPublicoTest extends TestCase
     }
 
     #[DataProvider('plantillasDelSitio')]
-    public function test_solo_menu_redirige_el_sitio_al_menu_con_302(string $plantilla): void
+    public function test_lite_redirige_el_sitio_al_menu_con_302(string $plantilla): void
     {
         $restaurante = Restaurante::factory()->soloMenu()->create(['sitio_plantilla' => $plantilla]);
 
@@ -96,7 +96,7 @@ class PlanSitioPublicoTest extends TestCase
             ->assertRedirect(url('/'.$restaurante->slug.'/menu'));
     }
 
-    public function test_solo_menu_conserva_lang_y_mesa_al_redirigir(): void
+    public function test_lite_conserva_lang_y_mesa_al_redirigir(): void
     {
         $restaurante = Restaurante::factory()->soloMenu()->create();
 
@@ -105,7 +105,7 @@ class PlanSitioPublicoTest extends TestCase
             ->assertRedirect(url('/'.$restaurante->slug.'/menu?lang=en&mesa=5'));
     }
 
-    public function test_la_redireccion_de_solo_menu_lleva_cache_corta_y_nunca_301(): void
+    public function test_la_redireccion_de_lite_lleva_cache_corta_y_nunca_301(): void
     {
         $restaurante = Restaurante::factory()->soloMenu()->create();
 
@@ -114,14 +114,14 @@ class PlanSitioPublicoTest extends TestCase
         $this->assertStringContainsString('max-age=30', (string) $respuesta->headers->get('Cache-Control'));
     }
 
-    public function test_solo_menu_sigue_mostrando_el_menu(): void
+    public function test_lite_sigue_mostrando_el_menu(): void
     {
         $restaurante = Restaurante::factory()->soloMenu()->create();
 
         $this->get(route('menu.publico', ['slug' => $restaurante->slug]))->assertOk();
     }
 
-    public function test_el_qr_de_un_restaurante_en_solo_menu_sigue_yendo_al_menu(): void
+    public function test_el_qr_de_un_restaurante_en_lite_sigue_yendo_al_menu(): void
     {
         $restaurante = Restaurante::factory()->soloMenu()->create();
         $qr = CodigoQr::factory()->deMesa('7')->create(['restaurante_id' => $restaurante->id, 'activo' => true]);
@@ -131,7 +131,7 @@ class PlanSitioPublicoTest extends TestCase
             ->assertRedirect(url('/'.$restaurante->slug.'/menu?mesa=7'));
     }
 
-    public function test_la_ruta_anterior_del_sitio_termina_en_el_menu_en_solo_menu(): void
+    public function test_la_ruta_anterior_del_sitio_termina_en_el_menu_en_lite(): void
     {
         $restaurante = Restaurante::factory()->soloMenu()->create();
 
@@ -139,14 +139,14 @@ class PlanSitioPublicoTest extends TestCase
         $this->get('/'.$restaurante->slug)->assertStatus(302)->assertRedirect(url('/'.$restaurante->slug.'/menu'));
     }
 
-    public function test_un_restaurante_suspendido_en_solo_menu_sigue_dando_404_y_no_redireccion(): void
+    public function test_un_restaurante_suspendido_en_lite_sigue_dando_404_y_no_redireccion(): void
     {
         $restaurante = Restaurante::factory()->soloMenu()->suspendido()->create();
 
         $this->get('/'.$restaurante->slug)->assertNotFound();
     }
 
-    public function test_el_pedido_por_whatsapp_sigue_funcionando_en_solo_menu(): void
+    public function test_el_pedido_por_whatsapp_sigue_funcionando_en_lite(): void
     {
         $restaurante = Restaurante::factory()->soloMenu()->create([
             'pedidos_activos' => true,
@@ -166,7 +166,7 @@ class PlanSitioPublicoTest extends TestCase
             ->assertSee('id="floatingCartBar"', false);
     }
 
-    public function test_la_disponibilidad_se_ofrece_en_completo_y_sitio_y_menu_pero_no_en_solo_menu(): void
+    public function test_la_disponibilidad_se_ofrece_en_aura_pero_no_en_lite(): void
     {
         foreach ([[Restaurante::factory(), true], [Restaurante::factory()->sitioMenu(), true], [Restaurante::factory()->soloMenu(), false]] as [$fabrica, $ofrece]) {
             $restaurante = $fabrica->create(['reservas_cupo' => 10, 'reservas_franja_min' => 60]);
@@ -180,7 +180,7 @@ class PlanSitioPublicoTest extends TestCase
         }
     }
 
-    public function test_una_reserva_se_crea_en_completo_y_sitio_y_menu(): void
+    public function test_una_reserva_se_crea_en_aura(): void
     {
         foreach ([Restaurante::factory(), Restaurante::factory()->sitioMenu()] as $fabrica) {
             $restaurante = $fabrica->create(['reservas_cupo' => 10, 'reservas_franja_min' => 60]);
@@ -193,7 +193,7 @@ class PlanSitioPublicoTest extends TestCase
         $this->assertSame(2, Reserva::withoutGlobalScopes()->count());
     }
 
-    public function test_en_solo_menu_la_reserva_se_rechaza_y_no_se_guarda_nada(): void
+    public function test_en_lite_la_reserva_se_rechaza_y_no_se_guarda_nada(): void
     {
         $restaurante = Restaurante::factory()->soloMenu()->create(['reservas_activas' => true, 'reservas_cupo' => 10, 'reservas_franja_min' => 60]);
         $this->conHorarioDelMiercoles($restaurante);

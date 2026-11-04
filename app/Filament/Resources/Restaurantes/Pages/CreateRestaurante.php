@@ -20,7 +20,7 @@ class CreateRestaurante extends CreateRecord
 
     /**
      * El plan no está en $fillable: se asigna con forceFill, solo si el usuario puede crear restaurantes y
-     * únicamente con alguno de los tres valores del enum.
+     * únicamente con alguno de los dos valores del enum (Aura o Lite).
      *
      * @param  array<string, mixed>  $data
      */
@@ -28,7 +28,7 @@ class CreateRestaurante extends CreateRecord
     {
         Gate::authorize('create', Restaurante::class);
 
-        $plan = PlanRestaurante::deFormulario($data['plan'] ?? PlanRestaurante::Completo);
+        $plan = PlanRestaurante::deFormulario($data['plan'] ?? PlanRestaurante::SitioMenu);
         unset($data['plan']);
 
         if ($plan === null) {

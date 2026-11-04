@@ -1,5 +1,7 @@
 # Integración del dashboard nuevo (Fase 1: análisis, sin código)
 
+> **Actualización (planes Aura y Lite):** las referencias de este documento a los planes Completo, Sitio y menú y Solo menú, a la pantalla "sin panel" (`PlanSinPanelController`, `plan/sin-panel.blade.php`) y a `PlanSinPanelTest` / `PlanSinPanelDosFactoresTest` son históricas. Ahora hay dos planes, Aura (`sitio_menu`) y Lite (`solo_menu`), los dos con panel; la pantalla "sin panel" y esas pruebas se borraron (las sustituyen `PlanLiteDosFactoresTest` y `PlanesAuraYLiteTest`). Ver la nota inicial de `docs/planes.md`.
+
 Estado: análisis de la Fase 1 con las **decisiones aprobadas** (sección 9). El PR 0 (marca y modo claro por defecto) ya está hecho en código; el resto sigue siendo análisis.
 
 Antes: **solo análisis y documentación.** No se cambió código de la aplicación, no se escribió en la carpeta del prototipo, no se hizo `git add`, `commit` ni `push`.

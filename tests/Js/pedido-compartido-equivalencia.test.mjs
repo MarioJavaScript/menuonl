@@ -4,6 +4,8 @@ import { test } from 'node:test';
 
 // Datos de referencia generados con el código de E, F, G y H ANTES de moverlo al módulo compartido (los cuatro coincidían).
 // No se regeneran: si una prueba falla, el cambio alteró lo que recibe el restaurante.
+// Única excepción, a propósito (planes Aura y Lite): la línea "*Mesa:* …" pasó a "*Entrega:* Domicilio | Para recoger" y se
+// retiró limpiarMesa. Se regeneró comprobando caso por caso que nada más cambió, ni siquiera el recorte por largo.
 const referencia = JSON.parse(readFileSync(new URL('./fixtures/pedido-mensaje-referencia.json', import.meta.url), 'utf8'));
 
 const modulos = {
@@ -28,7 +30,7 @@ for (const [nombre, modulo] of Object.entries(modulos)) {
             const resultado = modulo.armarEnlace({
                 numero: caso.numero,
                 restaurante: caso.restaurante,
-                mesa: caso.mesa,
+                entrega: caso.entrega,
                 notaCocina: caso.notaCocina,
                 lineas: caso.lineas,
                 formatear,
@@ -42,14 +44,12 @@ for (const [nombre, modulo] of Object.entries(modulos)) {
         }
     });
 
-    test(`${nombre}: la limpieza de texto, mesa y precios es idéntica a la referencia`, () => {
+    test(`${nombre}: la limpieza de texto y precios es idéntica a la referencia`, () => {
         for (const x of referencia.limpiarTexto) {
             assert.equal(modulo.limpiarTexto(real(x.entrada), x.maximo), x.esperado, JSON.stringify(x));
         }
 
-        for (const x of referencia.limpiarMesa) {
-            assert.equal(modulo.limpiarMesa(real(x.entrada)), x.esperado, JSON.stringify(x));
-        }
+        assert.equal(modulo.limpiarMesa, undefined, 'ya no hay pedidos de mesa');
 
         for (const x of referencia.centavos) {
             const obtenido = modulo.centavos(real(x.entrada));

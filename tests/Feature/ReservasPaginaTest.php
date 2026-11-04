@@ -121,7 +121,7 @@ class ReservasPaginaTest extends TestCase
         $soloMenu = Restaurante::factory()->soloMenu()->create();
         $this->entrarAlPanel($this->crearUsuario('propietario', $soloMenu), $soloMenu);
 
-        $this->get(Reservas::getUrl())->assertForbidden();
+        $this->get(Reservas::getUrl())->assertNotFound();
     }
 
     /**

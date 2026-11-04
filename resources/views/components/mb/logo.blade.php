@@ -2,7 +2,7 @@
     Logo oficial de Menubly (public/brand). Alterna claro/oscuro solo con CSS: dos <img> sin el atributo `hidden` (el
     preflight de Tailwind lo fuerza con !important y ninguna regla de modo oscuro podría mostrarla). La de modo oscuro se
     oculta por omisión con `.mb-logo--oscuro { display: none }` y se muestra en oscuro; las reglas están en
-    public/css/menuonl.css para lo público, en el tema de Filament para /admin y en plan/sin-panel; sin JavaScript.
+    public/css/menuonl.css para lo público, en el tema de Filament para /admin y en el aviso de cuenta pausada; sin JavaScript.
     `lazy` solo para logos fuera de la primera pantalla (el pie del menú); los de cabecera cargan de inmediato.
     Siempre con width/height explícitos (los del SVG original son enormes). `decorativo` deja el alt vacío: úsalo cuando
     el nombre ya aparece como texto junto al logo.

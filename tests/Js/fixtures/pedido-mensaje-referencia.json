@@ -4,7 +4,7 @@
     "lineas": 30,
     "notaLinea": 80,
     "notaCocina": 200,
-    "mesa": 20,
+    "mensaje": 200,
     "enlace": 2000
   },
   "casos": [
@@ -14,7 +14,6 @@
       "locale": "es-MX",
       "numero": "525512345678",
       "restaurante": "Cafe Mezquite",
-      "mesa": "3",
       "notaCocina": "Sin cubiertos",
       "lineas": [
         {
@@ -32,9 +31,10 @@
           "precio": 5000
         }
       ],
+      "entrega": "domicilio",
       "esperado": {
         "resultado": {
-          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Cafe%20Mezquite*%3A%0A%0A*Mesa%3A*%203%0A%0A*Pedido%3A*%0A%E2%80%A2%202x%20Latte%20(Grande)%20-%20%24110.00%0A%20%20_Nota%3A%20sin%20azucar_%0A%E2%80%A2%201x%20Chai%20-%20%2450.00%0A%0A*Nota%20para%20la%20cocina%3A*%20Sin%20cubiertos%0A%0A*Total%3A*%20%24160.00",
+          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Cafe%20Mezquite*%3A%0A%0A*Entrega%3A*%20Domicilio%0A%0A*Pedido%3A*%0A%E2%80%A2%202x%20Latte%20(Grande)%20-%20%24110.00%0A%20%20_Nota%3A%20sin%20azucar_%0A%E2%80%A2%201x%20Chai%20-%20%2450.00%0A%0A*Nota%20para%20la%20cocina%3A*%20Sin%20cubiertos%0A%0A*Total%3A*%20%24160.00",
           "omitidas": 0,
           "sinNotaCocina": false
         },
@@ -48,7 +48,6 @@
       "locale": "es-MX",
       "numero": "525512345678",
       "restaurante": "Cafe Mezquite",
-      "mesa": "   ",
       "notaCocina": "",
       "lineas": [
         {
@@ -59,9 +58,10 @@
           "precio": 5500
         }
       ],
+      "entrega": "recoger",
       "esperado": {
         "resultado": {
-          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Cafe%20Mezquite*%3A%0A%0A*Mesa%3A*%20Para%20llevar%0A%0A*Pedido%3A*%0A%E2%80%A2%201x%20Latte%20-%20%2455.00%0A%0A*Total%3A*%20%2455.00",
+          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Cafe%20Mezquite*%3A%0A%0A*Entrega%3A*%20Para%20recoger%0A%0A*Pedido%3A*%0A%E2%80%A2%201x%20Latte%20-%20%2455.00%0A%0A*Total%3A*%20%2455.00",
           "omitidas": 0,
           "sinNotaCocina": false
         },
@@ -75,7 +75,6 @@
       "locale": "es-MX",
       "numero": "525512345678",
       "restaurante": "Taquería Ñandú",
-      "mesa": "Terraza 2",
       "notaCocina": "Sin cebolla, con limón.",
       "lineas": [
         {
@@ -93,9 +92,10 @@
           "precio": 8950
         }
       ],
+      "entrega": "domicilio",
       "esperado": {
         "resultado": {
-          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Taquer%C3%ADa%20%C3%91and%C3%BA*%3A%0A%0A*Mesa%3A*%20Terraza%202%0A%0A*Pedido%3A*%0A%E2%80%A2%203x%20Mar%20de%20Cort%C3%A9s%20(Doble)%20-%20%24870.00%0A%20%20_Nota%3A%20bien%20cocido%20%F0%9F%99%82_%0A%E2%80%A2%201x%20Cr%C3%A8me%20br%C3%BBl%C3%A9e%20-%20%2489.50%0A%0A*Nota%20para%20la%20cocina%3A*%20Sin%20cebolla%2C%20con%20lim%C3%B3n.%0A%0A*Total%3A*%20%24959.50",
+          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Taquer%C3%ADa%20%C3%91and%C3%BA*%3A%0A%0A*Entrega%3A*%20Domicilio%0A%0A*Pedido%3A*%0A%E2%80%A2%203x%20Mar%20de%20Cort%C3%A9s%20(Doble)%20-%20%24870.00%0A%20%20_Nota%3A%20bien%20cocido%20%F0%9F%99%82_%0A%E2%80%A2%201x%20Cr%C3%A8me%20br%C3%BBl%C3%A9e%20-%20%2489.50%0A%0A*Nota%20para%20la%20cocina%3A*%20Sin%20cebolla%2C%20con%20lim%C3%B3n.%0A%0A*Total%3A*%20%24959.50",
           "omitidas": 0,
           "sinNotaCocina": false
         },
@@ -109,7 +109,6 @@
       "locale": "es-MX",
       "numero": "525512345678",
       "restaurante": "Pizzería H",
-      "mesa": "A-1",
       "notaCocina": "",
       "lineas": [
         {
@@ -127,9 +126,10 @@
           "precio": 1
         }
       ],
+      "entrega": "domicilio",
       "esperado": {
         "resultado": {
-          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Pizzer%C3%ADa%20H*%3A%0A%0A*Mesa%3A*%20A-1%0A%0A*Pedido%3A*%0A%E2%80%A2%2020x%20Pizza%20(Familiar)%20-%20%242%2C599.80%0A%E2%80%A2%207x%20Refresco%20-%20%240.07%0A%0A*Total%3A*%20%242%2C599.87",
+          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Pizzer%C3%ADa%20H*%3A%0A%0A*Entrega%3A*%20Domicilio%0A%0A*Pedido%3A*%0A%E2%80%A2%2020x%20Pizza%20(Familiar)%20-%20%242%2C599.80%0A%E2%80%A2%207x%20Refresco%20-%20%240.07%0A%0A*Total%3A*%20%242%2C599.87",
           "omitidas": 0,
           "sinNotaCocina": false
         },
@@ -143,7 +143,6 @@
       "locale": "es-US",
       "numero": "15551234567",
       "restaurante": "Bar Uno",
-      "mesa": "12",
       "notaCocina": "Extra hielo",
       "lineas": [
         {
@@ -154,9 +153,10 @@
           "precio": 1050
         }
       ],
+      "entrega": "domicilio",
       "esperado": {
         "resultado": {
-          "url": "https://wa.me/15551234567?text=Hola%2C%20quiero%20pedir%20en%20*Bar%20Uno*%3A%0A%0A*Mesa%3A*%2012%0A%0A*Pedido%3A*%0A%E2%80%A2%202x%20Negroni%20(Doble)%20-%20%2421.00%20USD%0A%0A*Nota%20para%20la%20cocina%3A*%20Extra%20hielo%0A%0A*Total%3A*%20%2421.00%20USD",
+          "url": "https://wa.me/15551234567?text=Hola%2C%20quiero%20pedir%20en%20*Bar%20Uno*%3A%0A%0A*Entrega%3A*%20Domicilio%0A%0A*Pedido%3A*%0A%E2%80%A2%202x%20Negroni%20(Doble)%20-%20%2421.00%20USD%0A%0A*Nota%20para%20la%20cocina%3A*%20Extra%20hielo%0A%0A*Total%3A*%20%2421.00%20USD",
           "omitidas": 0,
           "sinNotaCocina": false
         },
@@ -170,7 +170,6 @@
       "locale": "es-MX",
       "numero": "525512345678",
       "restaurante": "Rest </script><img src=x onerror=alert(1)>\"'&`${alert(1)}",
-      "mesa": "<b>Mesa 3</b> *x* \u0000\n</script><img src=x onerror=alert(1)>\"'&`${alert(1)}",
       "notaCocina": "*sin* _nada_ ~x~ `y`\n\n\t</script><img src=x onerror=alert(1)>\"'&`${alert(1)} fin",
       "lineas": [
         {
@@ -181,9 +180,10 @@
           "precio": 5000
         }
       ],
+      "entrega": "domicilio",
       "esperado": {
         "resultado": {
-          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Rest%20%3C%2Fscript%3E%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E%22'%26%60%24%7Balert(1)%7D*%3A%0A%0A*Mesa%3A*%20b%20Mesa%203%20b%20x%20script%0A%0A*Pedido%3A*%0A%E2%80%A2%201x%20Plato%20%3C%2Fscript%3E%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E%22'%26%60%24%7Balert(1)%7D%20(Var%20%3C%2Fscript%3E%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E%22'%26%60%24%7Balert(1)%7D)%20-%20%2450.00%0A%20%20_Nota%3A%20nota%20x%20%3C%2Fscript%3E%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E%22'%26%24%7Balert(1)%7D%20doble%20espacio_%0A%0A*Nota%20para%20la%20cocina%3A*%20sin%20nada%20x%20y%20%3C%2Fscript%3E%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E%22'%26%24%7Balert(1)%7D%20fin%0A%0A*Total%3A*%20%2450.00",
+          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Rest%20%3C%2Fscript%3E%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E%22'%26%60%24%7Balert(1)%7D*%3A%0A%0A*Entrega%3A*%20Domicilio%0A%0A*Pedido%3A*%0A%E2%80%A2%201x%20Plato%20%3C%2Fscript%3E%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E%22'%26%60%24%7Balert(1)%7D%20(Var%20%3C%2Fscript%3E%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E%22'%26%60%24%7Balert(1)%7D)%20-%20%2450.00%0A%20%20_Nota%3A%20nota%20x%20%3C%2Fscript%3E%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E%22'%26%24%7Balert(1)%7D%20doble%20espacio_%0A%0A*Nota%20para%20la%20cocina%3A*%20sin%20nada%20x%20y%20%3C%2Fscript%3E%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E%22'%26%24%7Balert(1)%7D%20fin%0A%0A*Total%3A*%20%2450.00",
           "omitidas": 0,
           "sinNotaCocina": false
         },
@@ -197,7 +197,6 @@
       "locale": "es-MX",
       "numero": "525512345678",
       "restaurante": "A&B=C?d#e%20",
-      "mesa": "a%0Ab&c=d",
       "notaCocina": "https://x.test/?a=1&b=2#h",
       "lineas": [
         {
@@ -208,9 +207,10 @@
           "precio": 100
         }
       ],
+      "entrega": "domicilio",
       "esperado": {
         "resultado": {
-          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*A%26B%3DC%3Fd%23e%2520*%3A%0A%0A*Mesa%3A*%20a%200Ab%20c%20d%0A%0A*Pedido%3A*%0A%E2%80%A2%201x%20Plato%20%26%20m%C3%A1s%20(50%25%20%2F%20100%25)%20-%20%241.00%0A%20%20_Nota%3A%20%3F%3F%23%26%3D_%0A%0A*Nota%20para%20la%20cocina%3A*%20https%3A%2F%2Fx.test%2F%3Fa%3D1%26b%3D2%23h%0A%0A*Total%3A*%20%241.00",
+          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*A%26B%3DC%3Fd%23e%2520*%3A%0A%0A*Entrega%3A*%20Domicilio%0A%0A*Pedido%3A*%0A%E2%80%A2%201x%20Plato%20%26%20m%C3%A1s%20(50%25%20%2F%20100%25)%20-%20%241.00%0A%20%20_Nota%3A%20%3F%3F%23%26%3D_%0A%0A*Nota%20para%20la%20cocina%3A*%20https%3A%2F%2Fx.test%2F%3Fa%3D1%26b%3D2%23h%0A%0A*Total%3A*%20%241.00",
           "omitidas": 0,
           "sinNotaCocina": false
         },
@@ -224,7 +224,6 @@
       "locale": "es-MX",
       "numero": "525512345678",
       "restaurante": "Largo",
-      "mesa": "mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm",
       "notaCocina": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
       "lineas": [
         {
@@ -235,9 +234,10 @@
           "precio": 100
         }
       ],
+      "entrega": "domicilio",
       "esperado": {
         "resultado": {
-          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Largo*%3A%0A%0A*Mesa%3A*%20mmmmmmmmmmmmmmmmmmmm%0A%0A*Pedido%3A*%0A%E2%80%A2%201x%20Plato%20-%20%241.00%0A%20%20_Nota%3A%20nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn_%0A%0A*Nota%20para%20la%20cocina%3A*%20cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc%0A%0A*Total%3A*%20%241.00",
+          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Largo*%3A%0A%0A*Entrega%3A*%20Domicilio%0A%0A*Pedido%3A*%0A%E2%80%A2%201x%20Plato%20-%20%241.00%0A%20%20_Nota%3A%20nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn_%0A%0A*Nota%20para%20la%20cocina%3A*%20cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc%0A%0A*Total%3A*%20%241.00",
           "omitidas": 0,
           "sinNotaCocina": false
         },
@@ -251,7 +251,6 @@
       "locale": "es-MX",
       "numero": "525512345678",
       "restaurante": "Cafe Mezquite",
-      "mesa": "3",
       "notaCocina": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       "lineas": [
         {
@@ -465,9 +464,10 @@
           "precio": 12345
         }
       ],
+      "entrega": "domicilio",
       "esperado": {
         "resultado": {
-          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Cafe%20Mezquite*%3A%0A%0A*Mesa%3A*%203%0A%0A*Pedido%3A*%0A%E2%80%A2%203x%20Platillo%20numero%200%20con%20nombre%20bastante%20largo%20%C3%B1and%C3%BA%20(Grande)%20-%20%24370.35%0A%20%20_Nota%3A%20nota%20larga%20para%20ocupar%20espacio%200_%0A%E2%80%A2%203x%20Platillo%20numero%201%20con%20nombre%20bastante%20largo%20%C3%B1and%C3%BA%20(Grande)%20-%20%24370.35%0A%20%20_Nota%3A%20nota%20larga%20para%20ocupar%20espacio%201_%0A%E2%80%A2%203x%20Platillo%20numero%202%20con%20nombre%20bastante%20largo%20%C3%B1and%C3%BA%20(Grande)%20-%20%24370.35%0A%20%20_Nota%3A%20nota%20larga%20para%20ocupar%20espacio%202_%0A%E2%80%A2%203x%20Platillo%20numero%203%20con%20nombre%20bastante%20largo%20%C3%B1and%C3%BA%20(Grande)%20-%20%24370.35%0A%20%20_Nota%3A%20nota%20larga%20para%20ocupar%20espacio%203_%0A%E2%80%A2%203x%20Platillo%20numero%204%20con%20nombre%20bastante%20largo%20%C3%B1and%C3%BA%20(Grande)%20-%20%24370.35%0A%20%20_Nota%3A%20nota%20larga%20para%20ocupar%20espacio%204_%0A%E2%80%A2%203x%20Platillo%20numero%205%20con%20nombre%20bastante%20largo%20%C3%B1and%C3%BA%20(Grande)%20-%20%24370.35%0A%20%20_Nota%3A%20nota%20larga%20para%20ocupar%20espacio%205_%0A%E2%80%A2%203x%20Platillo%20numero%206%20con%20nombre%20bastante%20largo%20%C3%B1and%C3%BA%20(Grande)%20-%20%24370.35%0A%20%20_Nota%3A%20nota%20larga%20para%20ocupar%20espacio%206_%0A%E2%80%A2%203x%20Platillo%20numero%207%20con%20nombre%20bastante%20largo%20%C3%B1and%C3%BA%20(Grande)%20-%20%24370.35%0A%20%20_Nota%3A%20nota%20larga%20para%20ocupar%20espacio%207_%0A%E2%80%A2%20%E2%80%A6%20y%2022%20platillos%20m%C3%A1s%20(te%20los%20confirmamos%20por%20aqu%C3%AD)%0A%0A*Nota%20para%20la%20cocina%3A*%20aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%0A%0A*Total%3A*%20%2411%2C110.50",
+          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Cafe%20Mezquite*%3A%0A%0A*Entrega%3A*%20Domicilio%0A%0A*Pedido%3A*%0A%E2%80%A2%203x%20Platillo%20numero%200%20con%20nombre%20bastante%20largo%20%C3%B1and%C3%BA%20(Grande)%20-%20%24370.35%0A%20%20_Nota%3A%20nota%20larga%20para%20ocupar%20espacio%200_%0A%E2%80%A2%203x%20Platillo%20numero%201%20con%20nombre%20bastante%20largo%20%C3%B1and%C3%BA%20(Grande)%20-%20%24370.35%0A%20%20_Nota%3A%20nota%20larga%20para%20ocupar%20espacio%201_%0A%E2%80%A2%203x%20Platillo%20numero%202%20con%20nombre%20bastante%20largo%20%C3%B1and%C3%BA%20(Grande)%20-%20%24370.35%0A%20%20_Nota%3A%20nota%20larga%20para%20ocupar%20espacio%202_%0A%E2%80%A2%203x%20Platillo%20numero%203%20con%20nombre%20bastante%20largo%20%C3%B1and%C3%BA%20(Grande)%20-%20%24370.35%0A%20%20_Nota%3A%20nota%20larga%20para%20ocupar%20espacio%203_%0A%E2%80%A2%203x%20Platillo%20numero%204%20con%20nombre%20bastante%20largo%20%C3%B1and%C3%BA%20(Grande)%20-%20%24370.35%0A%20%20_Nota%3A%20nota%20larga%20para%20ocupar%20espacio%204_%0A%E2%80%A2%203x%20Platillo%20numero%205%20con%20nombre%20bastante%20largo%20%C3%B1and%C3%BA%20(Grande)%20-%20%24370.35%0A%20%20_Nota%3A%20nota%20larga%20para%20ocupar%20espacio%205_%0A%E2%80%A2%203x%20Platillo%20numero%206%20con%20nombre%20bastante%20largo%20%C3%B1and%C3%BA%20(Grande)%20-%20%24370.35%0A%20%20_Nota%3A%20nota%20larga%20para%20ocupar%20espacio%206_%0A%E2%80%A2%203x%20Platillo%20numero%207%20con%20nombre%20bastante%20largo%20%C3%B1and%C3%BA%20(Grande)%20-%20%24370.35%0A%20%20_Nota%3A%20nota%20larga%20para%20ocupar%20espacio%207_%0A%E2%80%A2%20%E2%80%A6%20y%2022%20platillos%20m%C3%A1s%20(te%20los%20confirmamos%20por%20aqu%C3%AD)%0A%0A*Nota%20para%20la%20cocina%3A*%20aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%0A%0A*Total%3A*%20%2411%2C110.50",
           "omitidas": 22,
           "sinNotaCocina": false
         },
@@ -481,7 +481,6 @@
       "locale": "es-MX",
       "numero": "525512345678",
       "restaurante": "Cafe",
-      "mesa": "1",
       "notaCocina": "",
       "lineas": [
         {
@@ -695,9 +694,10 @@
           "precio": 100
         }
       ],
+      "entrega": "domicilio",
       "esperado": {
         "resultado": {
-          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Cafe*%3A%0A%0A*Mesa%3A*%201%0A%0A*Pedido%3A*%0A%E2%80%A2%201x%20%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B10%20(Grande)%20-%20%241.00%0A%20%20_Nota%3A%20%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1_%0A%E2%80%A2%201x%20%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B11%20(Grande)%20-%20%241.00%0A%20%20_Nota%3A%20%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1_%0A%E2%80%A2%201x%20%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B12%20(Grande)%20-%20%241.00%0A%20%20_Nota%3A%20%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1_%0A%E2%80%A2%201x%20%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B13%20(Grande)%20-%20%241.00%0A%20%20_Nota%3A%20%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1_%0A%E2%80%A2%20%E2%80%A6%20y%2026%20platillos%20m%C3%A1s%20(te%20los%20confirmamos%20por%20aqu%C3%AD)%0A%0A*Total%3A*%20%2430.00",
+          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Cafe*%3A%0A%0A*Entrega%3A*%20Domicilio%0A%0A*Pedido%3A*%0A%E2%80%A2%201x%20%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B10%20(Grande)%20-%20%241.00%0A%20%20_Nota%3A%20%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1_%0A%E2%80%A2%201x%20%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B11%20(Grande)%20-%20%241.00%0A%20%20_Nota%3A%20%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1_%0A%E2%80%A2%201x%20%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B12%20(Grande)%20-%20%241.00%0A%20%20_Nota%3A%20%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1_%0A%E2%80%A2%201x%20%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B13%20(Grande)%20-%20%241.00%0A%20%20_Nota%3A%20%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1_%0A%E2%80%A2%20%E2%80%A6%20y%2026%20platillos%20m%C3%A1s%20(te%20los%20confirmamos%20por%20aqu%C3%AD)%0A%0A*Total%3A*%20%2430.00",
           "omitidas": 26,
           "sinNotaCocina": false
         },
@@ -711,7 +711,6 @@
       "locale": "es-MX",
       "numero": "525512345678",
       "restaurante": "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR",
-      "mesa": "3",
       "notaCocina": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
       "lineas": [
         {
@@ -799,9 +798,10 @@
           "precio": 111
         }
       ],
+      "entrega": "domicilio",
       "esperado": {
         "resultado": {
-          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR*%3A%0A%0A*Mesa%3A*%203%0A%0A*Pedido%3A*%0A%E2%80%A2%201x%20Plato%200%20zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz%20-%20%241.00%0A%20%20_Nota%3A%20nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn_%0A%E2%80%A2%201x%20Plato%201%20zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz%20-%20%241.01%0A%20%20_Nota%3A%20nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn_%0A%E2%80%A2%201x%20Plato%202%20zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz%20-%20%241.02%0A%20%20_Nota%3A%20nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn_%0A%E2%80%A2%201x%20Plato%203%20zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz%20-%20%241.03%0A%20%20_Nota%3A%20nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn_%0A%E2%80%A2%201x%20Plato%204%20zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz%20-%20%241.04%0A%20%20_Nota%3A%20nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn_%0A%E2%80%A2%201x%20Plato%205%20zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz%20-%20%241.05%0A%20%20_Nota%3A%20nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn_%0A%E2%80%A2%201x%20Plato%206%20zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz%20-%20%241.06%0A%20%20_Nota%3A%20nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn_%0A%E2%80%A2%201x%20Plato%207%20zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz%20-%20%241.07%0A%20%20_Nota%3A%20nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn_%0A%E2%80%A2%201x%20Plato%208%20zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz%20-%20%241.08%0A%20%20_Nota%3A%20nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn_%0A%E2%80%A2%20%E2%80%A6%20y%203%20platillos%20m%C3%A1s%20(te%20los%20confirmamos%20por%20aqu%C3%AD)%0A%0A*Nota%20para%20la%20cocina%3A*%20xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx%0A%0A*Total%3A*%20%2412.66",
+          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR*%3A%0A%0A*Entrega%3A*%20Domicilio%0A%0A*Pedido%3A*%0A%E2%80%A2%201x%20Plato%200%20zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz%20-%20%241.00%0A%20%20_Nota%3A%20nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn_%0A%E2%80%A2%201x%20Plato%201%20zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz%20-%20%241.01%0A%20%20_Nota%3A%20nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn_%0A%E2%80%A2%201x%20Plato%202%20zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz%20-%20%241.02%0A%20%20_Nota%3A%20nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn_%0A%E2%80%A2%201x%20Plato%203%20zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz%20-%20%241.03%0A%20%20_Nota%3A%20nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn_%0A%E2%80%A2%201x%20Plato%204%20zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz%20-%20%241.04%0A%20%20_Nota%3A%20nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn_%0A%E2%80%A2%201x%20Plato%205%20zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz%20-%20%241.05%0A%20%20_Nota%3A%20nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn_%0A%E2%80%A2%201x%20Plato%206%20zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz%20-%20%241.06%0A%20%20_Nota%3A%20nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn_%0A%E2%80%A2%201x%20Plato%207%20zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz%20-%20%241.07%0A%20%20_Nota%3A%20nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn_%0A%E2%80%A2%201x%20Plato%208%20zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz%20-%20%241.08%0A%20%20_Nota%3A%20nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn_%0A%E2%80%A2%20%E2%80%A6%20y%203%20platillos%20m%C3%A1s%20(te%20los%20confirmamos%20por%20aqu%C3%AD)%0A%0A*Nota%20para%20la%20cocina%3A*%20xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx%0A%0A*Total%3A*%20%2412.66",
           "omitidas": 3,
           "sinNotaCocina": false
         },
@@ -815,7 +815,6 @@
       "locale": "es-MX",
       "numero": "525512345678",
       "restaurante": "ññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññññ",
-      "mesa": "3",
       "notaCocina": "hola",
       "lineas": [
         {
@@ -826,9 +825,10 @@
           "precio": 100
         }
       ],
+      "entrega": "domicilio",
       "esperado": {
         "resultado": {
-          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1*%3A%0A%0A*Mesa%3A*%203%0A%0A*Pedido%3A*%0A%E2%80%A2%20%E2%80%A6%20y%201%20platillo%20m%C3%A1s%20(te%20los%20confirmamos%20por%20aqu%C3%AD)%0A%0A*Total%3A*%20%241.00",
+          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1%C3%B1*%3A%0A%0A*Entrega%3A*%20Domicilio%0A%0A*Pedido%3A*%0A%E2%80%A2%20%E2%80%A6%20y%201%20platillo%20m%C3%A1s%20(te%20los%20confirmamos%20por%20aqu%C3%AD)%0A%0A*Total%3A*%20%241.00",
           "omitidas": 1,
           "sinNotaCocina": true
         },
@@ -842,7 +842,6 @@
       "locale": "es-MX",
       "numero": "1234567",
       "restaurante": "R",
-      "mesa": "1",
       "notaCocina": "",
       "lineas": [
         {
@@ -853,6 +852,7 @@
           "precio": 100
         }
       ],
+      "entrega": "domicilio",
       "esperado": {
         "resultado": null,
         "total": 100,
@@ -865,7 +865,6 @@
       "locale": "es-MX",
       "numero": "52551234abc",
       "restaurante": "R",
-      "mesa": "1",
       "notaCocina": "",
       "lineas": [
         {
@@ -876,6 +875,7 @@
           "precio": 100
         }
       ],
+      "entrega": "domicilio",
       "esperado": {
         "resultado": null,
         "total": 100,
@@ -888,7 +888,6 @@
       "locale": "es-MX",
       "numero": "12345678901234567890",
       "restaurante": "R",
-      "mesa": "1",
       "notaCocina": "",
       "lineas": [
         {
@@ -899,9 +898,10 @@
           "precio": 100
         }
       ],
+      "entrega": "domicilio",
       "esperado": {
         "resultado": {
-          "url": "https://wa.me/12345678901234567890?text=Hola%2C%20quiero%20pedir%20en%20*R*%3A%0A%0A*Mesa%3A*%201%0A%0A*Pedido%3A*%0A%E2%80%A2%201x%20P%20-%20%241.00%0A%0A*Total%3A*%20%241.00",
+          "url": "https://wa.me/12345678901234567890?text=Hola%2C%20quiero%20pedir%20en%20*R*%3A%0A%0A*Entrega%3A*%20Domicilio%0A%0A*Pedido%3A*%0A%E2%80%A2%201x%20P%20-%20%241.00%0A%0A*Total%3A*%20%241.00",
           "omitidas": 0,
           "sinNotaCocina": false
         },
@@ -915,7 +915,6 @@
       "locale": "es",
       "numero": "525512345678",
       "restaurante": "R",
-      "mesa": "1",
       "notaCocina": "",
       "lineas": [
         {
@@ -926,9 +925,10 @@
           "precio": 1050
         }
       ],
+      "entrega": "domicilio",
       "esperado": {
         "resultado": {
-          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*R*%3A%0A%0A*Mesa%3A*%201%0A%0A*Pedido%3A*%0A%E2%80%A2%202x%20P%20-%2021.00%20XXX_MALA%0A%0A*Total%3A*%2021.00%20XXX_MALA",
+          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*R*%3A%0A%0A*Entrega%3A*%20Domicilio%0A%0A*Pedido%3A*%0A%E2%80%A2%202x%20P%20-%2021.00%20XXX_MALA%0A%0A*Total%3A*%2021.00%20XXX_MALA",
           "omitidas": 0,
           "sinNotaCocina": false
         },
@@ -942,7 +942,6 @@
       "locale": "es-MX",
       "numero": "525512345678",
       "restaurante": "Cafe Mezquite",
-      "mesa": "Barra/2",
       "notaCocina": "Sin cubiertos",
       "lineas": [
         {
@@ -960,9 +959,10 @@
           "precio": 5000
         }
       ],
+      "entrega": "domicilio",
       "esperado": {
         "resultado": {
-          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Cafe%20Mezquite*%3A%0A%0A*Mesa%3A*%20Barra%202%0A%0A*Pedido%3A*%0A%E2%80%A2%202x%20Latte%20(Grande)%20-%20%24110.00%0A%20%20_Nota%3A%20sin%20azucar_%0A%E2%80%A2%201x%20Chai%20-%20%2450.00%0A%0A*Nota%20para%20la%20cocina%3A*%20Sin%20cubiertos%0A%0A*Total%3A*%20%24160.00",
+          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Cafe%20Mezquite*%3A%0A%0A*Entrega%3A*%20Domicilio%0A%0A*Pedido%3A*%0A%E2%80%A2%202x%20Latte%20(Grande)%20-%20%24110.00%0A%20%20_Nota%3A%20sin%20azucar_%0A%E2%80%A2%201x%20Chai%20-%20%2450.00%0A%0A*Nota%20para%20la%20cocina%3A*%20Sin%20cubiertos%0A%0A*Total%3A*%20%24160.00",
           "omitidas": 0,
           "sinNotaCocina": false
         },
@@ -976,7 +976,6 @@
       "locale": "es-MX",
       "numero": "525512345678",
       "restaurante": "Cafe Mezquite",
-      "mesa": "Mesa #3",
       "notaCocina": "Sin cubiertos",
       "lineas": [
         {
@@ -994,9 +993,10 @@
           "precio": 5000
         }
       ],
+      "entrega": "domicilio",
       "esperado": {
         "resultado": {
-          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Cafe%20Mezquite*%3A%0A%0A*Mesa%3A*%20Mesa%203%0A%0A*Pedido%3A*%0A%E2%80%A2%202x%20Latte%20(Grande)%20-%20%24110.00%0A%20%20_Nota%3A%20sin%20azucar_%0A%E2%80%A2%201x%20Chai%20-%20%2450.00%0A%0A*Nota%20para%20la%20cocina%3A*%20Sin%20cubiertos%0A%0A*Total%3A*%20%24160.00",
+          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Cafe%20Mezquite*%3A%0A%0A*Entrega%3A*%20Domicilio%0A%0A*Pedido%3A*%0A%E2%80%A2%202x%20Latte%20(Grande)%20-%20%24110.00%0A%20%20_Nota%3A%20sin%20azucar_%0A%E2%80%A2%201x%20Chai%20-%20%2450.00%0A%0A*Nota%20para%20la%20cocina%3A*%20Sin%20cubiertos%0A%0A*Total%3A*%20%24160.00",
           "omitidas": 0,
           "sinNotaCocina": false
         },
@@ -1010,7 +1010,6 @@
       "locale": "es-MX",
       "numero": "525512345678",
       "restaurante": "Cafe Mezquite",
-      "mesa": "Terraza (2)",
       "notaCocina": "Sin cubiertos",
       "lineas": [
         {
@@ -1028,9 +1027,10 @@
           "precio": 5000
         }
       ],
+      "entrega": "domicilio",
       "esperado": {
         "resultado": {
-          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Cafe%20Mezquite*%3A%0A%0A*Mesa%3A*%20Terraza%202%0A%0A*Pedido%3A*%0A%E2%80%A2%202x%20Latte%20(Grande)%20-%20%24110.00%0A%20%20_Nota%3A%20sin%20azucar_%0A%E2%80%A2%201x%20Chai%20-%20%2450.00%0A%0A*Nota%20para%20la%20cocina%3A*%20Sin%20cubiertos%0A%0A*Total%3A*%20%24160.00",
+          "url": "https://wa.me/525512345678?text=Hola%2C%20quiero%20pedir%20en%20*Cafe%20Mezquite*%3A%0A%0A*Entrega%3A*%20Domicilio%0A%0A*Pedido%3A*%0A%E2%80%A2%202x%20Latte%20(Grande)%20-%20%24110.00%0A%20%20_Nota%3A%20sin%20azucar_%0A%E2%80%A2%201x%20Chai%20-%20%2450.00%0A%0A*Nota%20para%20la%20cocina%3A*%20Sin%20cubiertos%0A%0A*Total%3A*%20%24160.00",
           "omitidas": 0,
           "sinNotaCocina": false
         },
@@ -1259,104 +1259,6 @@
       "entrada": "*_~`",
       "maximo": 0,
       "esperado": ""
-    }
-  ],
-  "limpiarMesa": [
-    {
-      "entrada": "<b>Mesa 3</b>",
-      "esperado": "b Mesa 3 b"
-    },
-    {
-      "entrada": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-      "esperado": "aaaaaaaaaaaaaaaaaaaa"
-    },
-    {
-      "entrada": "3",
-      "esperado": "3"
-    },
-    {
-      "entrada": "***",
-      "esperado": ""
-    },
-    {
-      "entrada": "  Terraza   2 ",
-      "esperado": "Terraza 2"
-    },
-    {
-      "entrada": "Mesa #3",
-      "esperado": "Mesa 3"
-    },
-    {
-      "entrada": "Barra/2",
-      "esperado": "Barra 2"
-    },
-    {
-      "entrada": "Terraza (2)",
-      "esperado": "Terraza 2"
-    },
-    {
-      "entrada": "Ñandú_1-b",
-      "esperado": "Ñandú_1-b"
-    },
-    {
-      "entrada": null,
-      "esperado": ""
-    },
-    {
-      "entrada": "__undefined__",
-      "esperado": ""
-    },
-    {
-      "entrada": "🙂 1",
-      "esperado": "1"
-    },
-    {
-      "entrada": "\n3\n",
-      "esperado": "3"
-    },
-    {
-      "entrada": "a\nb",
-      "esperado": "a b"
-    },
-    {
-      "entrada": "Mesa(3)",
-      "esperado": "Mesa 3"
-    },
-    {
-      "entrada": "  (2)  ",
-      "esperado": "2"
-    },
-    {
-      "entrada": "A.B",
-      "esperado": "A B"
-    },
-    {
-      "entrada": "xxxxxxxxxxxxxxxxxxx/y",
-      "esperado": "xxxxxxxxxxxxxxxxxxx"
-    },
-    {
-      "entrada": "Ñandú/1",
-      "esperado": "Ñandú 1"
-    },
-    {
-      "entrada": "5°piso",
-      "esperado": "5 piso"
-    },
-    {
-      "entrada": "a - b",
-      "esperado": "a - b"
-    },
-    {
-      "entrada": "/",
-      "esperado": ""
-    },
-    {
-      "entrada": "🙂/1",
-      "esperado": "1"
-    },
-    {
-      "entrada": "Mesa\t4",
-      "esperado": "Mesa 4"
     }
   ],
   "centavos": [

@@ -49,13 +49,13 @@ class BarraInferiorDelPanelTest extends TestCase
     public static function accesosPorRolYPlan(): array
     {
         return [
-            'propietario completo' => ['completo', 'propietario', ['inicio', 'platillos', 'reservas', 'apariencia']],
-            'superadmin completo' => ['completo', 'superadmin', ['inicio', 'platillos', 'reservas', 'apariencia']],
-            'propietario sitio y menú' => ['sitio_menu', 'propietario', ['inicio', 'reservas', 'horario', 'contactos']],
-            'superadmin sitio y menú' => ['sitio_menu', 'superadmin', ['inicio', 'platillos', 'reservas', 'apariencia']],
-            'editor' => ['completo', 'editor', ['inicio', 'platillos', 'reservas', 'categorias']],
-            'gerente' => ['completo', 'gerente', ['inicio', 'platillos', 'reservas']],
-            'recepción' => ['completo', 'recepcion', ['inicio', 'reservas']],
+            'propietario aura' => ['sitio_menu', 'propietario', ['inicio', 'platillos', 'reservas', 'apariencia']],
+            'superadmin aura' => ['sitio_menu', 'superadmin', ['inicio', 'platillos', 'reservas', 'apariencia']],
+            'propietario lite' => ['solo_menu', 'propietario', ['inicio', 'platillos', 'apariencia', 'categorias']],
+            'superadmin lite' => ['solo_menu', 'superadmin', ['inicio', 'platillos', 'apariencia', 'categorias']],
+            'editor' => ['sitio_menu', 'editor', ['inicio', 'platillos', 'reservas', 'categorias']],
+            'gerente' => ['sitio_menu', 'gerente', ['inicio', 'platillos', 'reservas']],
+            'recepción' => ['sitio_menu', 'recepcion', ['inicio', 'reservas']],
         ];
     }
 
@@ -91,7 +91,7 @@ class BarraInferiorDelPanelTest extends TestCase
 
     public function test_la_barra_se_dibuja_con_su_nombre_los_accesos_y_mas(): void
     {
-        $this->entrar('completo', 'propietario');
+        $this->entrar('sitio_menu', 'propietario');
 
         $html = (string) FilamentView::renderHook(PanelsRenderHook::BODY_END);
 
@@ -106,7 +106,7 @@ class BarraInferiorDelPanelTest extends TestCase
 
     public function test_reservas_apunta_a_la_pagina_de_reservas_y_no_a_los_ajustes_ni_a_panel(): void
     {
-        $this->entrar('completo', 'propietario');
+        $this->entrar('sitio_menu', 'propietario');
 
         $html = (string) FilamentView::renderHook(PanelsRenderHook::BODY_END);
 
@@ -119,7 +119,7 @@ class BarraInferiorDelPanelTest extends TestCase
 
     public function test_la_pagina_de_reservas_es_la_activa_solo_estando_en_ella(): void
     {
-        $this->entrar('completo', 'propietario');
+        $this->entrar('sitio_menu', 'propietario');
         $acceso = collect(app(BarraInferiorDelPanel::class)->accesos())->firstWhere('clave', 'reservas');
 
         $this->assertFalse($acceso['activa']);
@@ -130,7 +130,7 @@ class BarraInferiorDelPanelTest extends TestCase
     public function test_ningun_rol_tiene_un_acceso_al_panel_anterior_ni_a_pedidos(): void
     {
         foreach (['propietario', 'gerente', 'editor', 'recepcion', 'superadmin'] as $rol) {
-            $this->entrar('completo', $rol);
+            $this->entrar('sitio_menu', $rol);
 
             $html = (string) FilamentView::renderHook(PanelsRenderHook::BODY_END);
 
@@ -144,7 +144,7 @@ class BarraInferiorDelPanelTest extends TestCase
      */
     public static function rolesConReservas(): array
     {
-        return ['propietario' => ['completo', 'propietario'], 'superadmin' => ['completo', 'superadmin'], 'gerente' => ['completo', 'gerente'], 'recepción' => ['completo', 'recepcion'], 'propietario sitio y menú' => ['sitio_menu', 'propietario']];
+        return ['propietario' => ['sitio_menu', 'propietario'], 'superadmin' => ['sitio_menu', 'superadmin'], 'gerente' => ['sitio_menu', 'gerente'], 'recepción' => ['sitio_menu', 'recepcion']];
     }
 
     #[DataProvider('rolesConReservas')]
@@ -170,7 +170,7 @@ class BarraInferiorDelPanelTest extends TestCase
     public function test_la_insignia_de_reservas_cuenta_las_por_confirmar_y_se_limita_a_99(int $cuantas, ?string $texto): void
     {
         Carbon::setTestNow(Carbon::parse('2026-10-21 18:00:00', 'UTC'));
-        $restaurante = $this->entrar('completo', 'propietario');
+        $restaurante = $this->entrar('sitio_menu', 'propietario');
         Reserva::factory()->count($cuantas)->create(['restaurante_id' => $restaurante->id, 'fecha' => '2026-10-22', 'estado' => 'pendiente']);
         Reserva::factory()->create(['restaurante_id' => $restaurante->id, 'fecha' => '2026-10-21', 'estado' => 'confirmada']);
         Reserva::factory()->create(['restaurante_id' => $restaurante->id, 'fecha' => '2026-10-20', 'estado' => 'pendiente']);
@@ -217,7 +217,7 @@ class BarraInferiorDelPanelTest extends TestCase
 
     public function test_sin_restaurante_activo_no_hay_barra(): void
     {
-        $this->entrar('completo', 'propietario');
+        $this->entrar('sitio_menu', 'propietario');
         Filament::setTenant(null);
 
         $this->assertSame('', trim((string) FilamentView::renderHook(PanelsRenderHook::BODY_END)));
@@ -225,7 +225,7 @@ class BarraInferiorDelPanelTest extends TestCase
 
     public function test_solo_el_acceso_de_la_pantalla_abierta_lleva_aria_current(): void
     {
-        $this->entrar('completo', 'propietario');
+        $this->entrar('sitio_menu', 'propietario');
 
         $html = $this->get(Inicio::getUrl())->assertOk()->getContent();
         preg_match('/<nav class="mo-barra-inferior".*?<\/nav>/s', (string) $html, $barra);
@@ -237,7 +237,7 @@ class BarraInferiorDelPanelTest extends TestCase
 
     public function test_los_enlaces_publicos_estan_tambien_en_el_menu_lateral_y_el_sitio_se_oculta_en_la_barra_superior_del_celular(): void
     {
-        $restaurante = $this->entrar('completo', 'propietario');
+        $restaurante = $this->entrar('sitio_menu', 'propietario');
 
         $lateral = (string) FilamentView::renderHook(PanelsRenderHook::SIDEBAR_FOOTER);
         $superior = (string) FilamentView::renderHook(PanelsRenderHook::USER_MENU_BEFORE);

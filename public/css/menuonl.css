@@ -1014,6 +1014,9 @@
     .campo::placeholder { color: var(--mo-texto-suave); }
     .campo:focus { outline: 2px solid var(--mo-foco); outline-offset: 1px; }
     .etiqueta-campo { display: block; margin-bottom: 0.25rem; font-size: 0.8125rem; font-weight: 700; color: var(--mo-texto-medio); }
+    .mo-entrega { margin: 0; padding: 0; border: 0; min-width: 0; }
+    .mo-entrega__opciones { display: flex; flex-wrap: wrap; gap: 0 1rem; }
+    .mo-entrega__opcion { display: inline-flex; align-items: center; gap: 0.5rem; min-height: 44px; font-size: 0.875rem; color: var(--mo-texto-fuerte); cursor: pointer; }
     .btn-cant {
         display: inline-flex;
         align-items: center;

@@ -163,24 +163,35 @@ class PedidoMenuPublicoTest extends TestCase
         $respuesta->assertSee('Agotado');
     }
 
-    public function test_mesa_de_la_url_llega_filtrada_y_vacia_cuando_no_hay_o_es_hostil(): void
+    public function test_la_mesa_de_la_url_no_llega_al_pedido_y_el_cliente_elige_la_entrega(): void
     {
         $restaurante = $this->restaurante();
         $this->platillo($restaurante, 'Latte');
         $ruta = route('menu.publico', ['slug' => $restaurante->slug]);
 
-        $conMesa = $this->get($ruta.'?mesa=Terraza%202')->assertOk();
-        $this->assertSame('Terraza 2', $this->atributosDelContenedorDePedido($conMesa->getContent())['mesa']);
-        $conMesa->assertSee('value="Terraza 2"', false)->assertSee('Mesa Terraza 2');
+        foreach (['Terraza 2', '<script>alert(1)</script>', str_repeat('a', 21), ''] as $mesa) {
+            $html = $this->get($ruta.'?mesa='.rawurlencode($mesa))->assertOk()->getContent();
+            $contenedor = $this->nodosDelMenu($html, '//*[@data-mo-pedido]');
 
-        foreach (['', '<script>alert(1)</script>', str_repeat('a', 21), 'Barra/2'] as $hostil) {
-            $html = $this->get($ruta.'?mesa='.rawurlencode($hostil))->assertOk()->getContent();
-
-            $this->assertSame('', $this->atributosDelContenedorDePedido($html)['mesa'], "Mesa '$hostil' no debe llegar al módulo.");
+            $this->assertCount(1, $contenedor);
+            $this->assertFalse($contenedor[0]->hasAttribute('data-mesa'), "Mesa '$mesa' no debe llegar al módulo.");
+            $this->assertSame([], $this->nodosDelMenu($html, '//*[@data-mo-pedido]//input[@type="text" and @value]'), 'El pedido no trae ningún campo de mesa prellenado.');
+            $this->assertSame(['domicilio', 'recoger'], array_map(
+                fn (\DOMElement $opcion): string => $opcion->getAttribute('value'),
+                $this->nodosDelMenu($html, '//*[@data-mo-entrega]//input[@type="radio" and @data-mo-modalidad]'),
+            ));
             $this->assertStringNotContainsString('<script>alert(1)</script>', $html);
         }
+    }
 
-        $this->assertSame('', $this->atributosDelContenedorDePedido($this->get($ruta)->getContent())['mesa'], 'Sin ?mesa= el módulo usa "Para llevar".');
+    public function test_el_mensaje_del_restaurante_llega_limpio_al_modulo(): void
+    {
+        $restaurante = $this->restaurante(['pedidos_mensaje' => "*Gracias*\u{0007} por   pedir"]);
+        $this->platillo($restaurante, 'Latte');
+
+        $html = $this->get(route('menu.publico', ['slug' => $restaurante->slug]))->assertOk()->getContent();
+
+        $this->assertSame('Gracias por pedir', $this->atributosDelContenedorDePedido($html)['mensaje']);
     }
 
     public function test_los_cuatro_estilos_renderizan_el_mismo_marcado_base_del_pedido(): void

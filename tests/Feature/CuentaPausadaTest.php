@@ -162,19 +162,31 @@ class CuentaPausadaTest extends TestCase
             ->assertSee(__('panel.cuenta_pausada.varios'));
     }
 
-    public function test_con_un_restaurante_suspendido_y_otro_sin_panel_por_plan_gana_el_aviso_de_pausa(): void
+    public function test_con_un_restaurante_suspendido_y_otro_lite_activo_entra_al_lite_sin_aviso(): void
     {
         $pausado = Restaurante::factory()->suspendido()->create();
-        $soloMenu = Restaurante::factory()->soloMenu()->create();
+        $lite = Restaurante::factory()->soloMenu()->create();
         $usuario = $this->miembro($pausado);
-        $soloMenu->usuarios()->attach($usuario, ['rol' => 'propietario']);
+        $lite->usuarios()->attach($usuario, ['rol' => 'propietario']);
+
+        $this->assertFalse($usuario->debeVerElAvisoDeCuentaPausada());
+
+        $this->actingAs($usuario)->get('/admin')->assertRedirect(url('/admin/'.$lite->slug));
+        $this->actingAs($usuario)->get('/admin/'.$lite->slug)
+            ->assertOk()
+            ->assertDontSee(__('panel.cuenta_pausada.titulo'));
+    }
+
+    public function test_un_restaurante_lite_suspendido_muestra_el_aviso_de_pausa(): void
+    {
+        $lite = Restaurante::factory()->soloMenu()->suspendido()->create();
+        $usuario = $this->miembro($lite);
 
         $this->assertTrue($usuario->debeVerElAvisoDeCuentaPausada());
 
         $this->actingAs($usuario)->get('/admin')
             ->assertForbidden()
-            ->assertSee(__('panel.cuenta_pausada.titulo'))
-            ->assertDontSee(__('panel.plan_sin_panel.titulo'));
+            ->assertSee(__('panel.cuenta_pausada.titulo'));
     }
 
     public function test_quien_tiene_un_restaurante_activo_entra_sin_ver_el_aviso(): void
@@ -253,14 +265,15 @@ class CuentaPausadaTest extends TestCase
         $this->assertGuest();
     }
 
-    public function test_el_aviso_de_plan_sin_panel_sigue_igual_para_un_restaurante_activo(): void
+    public function test_el_propietario_de_un_restaurante_lite_activo_entra_al_panel_sin_aviso(): void
     {
         $restaurante = Restaurante::factory()->soloMenu()->create();
+        $usuario = $this->miembro($restaurante);
 
-        $this->actingAs($this->miembro($restaurante))->get('/admin')
-            ->assertForbidden()
-            ->assertDontSee(__('panel.cuenta_pausada.titulo'))
-            ->assertSee(__('panel.plan_sin_panel.titulo'));
+        $this->actingAs($usuario)->get('/admin')->assertRedirect(url('/admin/'.$restaurante->slug));
+        $this->actingAs($usuario)->get('/admin/'.$restaurante->slug)
+            ->assertOk()
+            ->assertDontSee(__('panel.cuenta_pausada.titulo'));
     }
 
     public function test_plataforma_no_invita_ni_reenvia_en_un_restaurante_suspendido(): void

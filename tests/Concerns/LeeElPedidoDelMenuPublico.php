@@ -13,7 +13,7 @@ use DOMXPath;
 trait LeeElPedidoDelMenuPublico
 {
     /**
-     * @return array<string, string> Atributos del contenedor [data-mo-pedido]: numero, restaurante, moneda, locale, mesa, clave, clave-antigua.
+     * @return array<string, string> Atributos del contenedor [data-mo-pedido]: numero, restaurante, moneda, locale, mensaje, clave, clave-antigua.
      */
     private function atributosDelContenedorDePedido(string $html): array
     {
@@ -21,7 +21,7 @@ trait LeeElPedidoDelMenuPublico
         $this->assertCount(1, $nodos, 'Debe haber exactamente un contenedor [data-mo-pedido].');
 
         $atributos = [];
-        foreach (['numero', 'restaurante', 'moneda', 'locale', 'mesa', 'clave', 'clave-antigua'] as $nombre) {
+        foreach (['numero', 'restaurante', 'moneda', 'locale', 'mensaje', 'clave', 'clave-antigua'] as $nombre) {
             $atributos[$nombre] = $nodos[0]->getAttribute('data-'.$nombre);
         }
 

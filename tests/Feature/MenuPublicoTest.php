@@ -703,9 +703,11 @@ class MenuPublicoTest extends TestCase
         $response->assertSee("data-clave=\"menuonl_cart_m_{$restaurante->slug}\"", false);
         $response->assertSee("data-clave-antigua=\"menuonl_cart_{$restaurante->slug}\"", false);
         $response->assertSee('data-numero="525512345678"', false);
-        $response->assertSee('data-mesa="7"', false);
         $this->assertStringContainsString('https://wa.me/${numero}?text=', (string) file_get_contents(resource_path('js/pedido/mensaje.js')));
-        $response->assertSee('value="7"', false);
+        $response->assertDontSee('data-mesa', false);
+        $response->assertDontSee('value="7"', false);
+        $response->assertSee('data-mo-entrega', false);
+        $response->assertSeeInOrder(['value="domicilio" data-mo-modalidad', 'value="recoger" data-mo-modalidad'], false);
     }
 
     public function test_xss_prevention_special_characters_in_product_and_category_escaped(): void

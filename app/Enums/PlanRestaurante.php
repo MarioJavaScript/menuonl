@@ -8,21 +8,36 @@ use Illuminate\Support\Facades\Lang;
 
 enum PlanRestaurante: string implements HasColor, HasLabel
 {
-    case Completo = 'completo';
+    /** Aura: sitio y menú, los dos editables por el propietario, con reservas y pedidos por WhatsApp. */
     case SitioMenu = 'sitio_menu';
+
+    /** Lite: solo el menú, editable por el propietario, con pedidos por WhatsApp; sin sitio ni reservas. */
     case SoloMenu = 'solo_menu';
 
     /**
-     * Un valor desconocido o vacío en la base se trata como el plan más restrictivo (D12).
+     * Valor del plan retirado "Completo". La migración 2026_11_04_201124_planes_aura_y_lite lo pasa a `sitio_menu`; mientras tanto (por
+     * ejemplo, durante el despliegue o en un respaldo viejo) se sigue leyendo como Aura, para que ningún restaurante
+     * pierda su sitio.
+     */
+    public const string VALOR_RETIRADO_COMPLETO = 'completo';
+
+    /**
+     * Valor guardado en la base a plan. El valor retirado `completo` se lee como Aura; un valor desconocido o vacío,
+     * como el plan más restrictivo (D12).
      */
     public static function desde(?string $valor): self
     {
+        if ($valor === self::VALOR_RETIRADO_COMPLETO) {
+            return self::SitioMenu;
+        }
+
         return self::tryFrom((string) $valor) ?? self::SoloMenu;
     }
 
     /**
      * El valor que entrega un campo de formulario: Filament devuelve el enum ya construido, otras vías un texto.
-     * Cualquier otra cosa (incluido un texto fuera de los tres valores) da null, nunca un plan por defecto.
+     * Cualquier otra cosa (incluido un texto fuera de los dos valores, y el retirado `completo`) da null, nunca un plan
+     * por defecto.
      */
     public static function deFormulario(mixed $valor): ?self
     {
@@ -34,27 +49,19 @@ enum PlanRestaurante: string implements HasColor, HasLabel
     }
 
     /**
-     * Capacidades del plan para quien no es superadmin. Sitio y menú: "servicio" se limita
-     * al módulo de reservas (D2); QR y equipo los gestiona solo el superadmin (D3, D4).
+     * Capacidades del plan para quien no es superadmin. Aura incluye todo. Lite incluye el panel completo del menú
+     * (apariencia, menú, datos, contactos, horario, QR, equipo y métricas), pero no el sitio ni las reservas.
      */
     public function incluye(Capacidad $capacidad): bool
     {
         return match ($this) {
-            self::Completo => true,
-            self::SitioMenu => in_array($capacidad, [
-                Capacidad::Sitio,
-                Capacidad::Reservas,
-                Capacidad::Panel,
-                Capacidad::EditarTelefonos,
-                Capacidad::EditarHorario,
-                Capacidad::Servicio,
-            ], true),
-            self::SoloMenu => false,
+            self::SitioMenu => true,
+            self::SoloMenu => ! in_array($capacidad, [Capacidad::Sitio, Capacidad::Reservas], true),
         };
     }
 
     /**
-     * Nivel del plan de 1 (el que menos incluye) a 3 (el que más), para el glifo de tres barras. Sale de la misma tabla
+     * Nivel del plan de 1 (el que menos incluye) a la cantidad de planes (el que más), para el glifo de barras. Sale de la misma tabla
      * de incluye(): un plan sube un nivel por cada plan que incluye estrictamente menos capacidades que él.
      */
     public function nivel(): int
@@ -107,9 +114,8 @@ enum PlanRestaurante: string implements HasColor, HasLabel
     public function getColor(): string
     {
         return match ($this) {
-            self::Completo => 'success',
-            self::SitioMenu => 'info',
-            self::SoloMenu => 'gray',
+            self::SitioMenu => 'success',
+            self::SoloMenu => 'info',
         };
     }
 }
