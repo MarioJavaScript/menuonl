@@ -311,8 +311,8 @@ class PanelFotosDelRestauranteTest extends TestCase
         }
 
         $this->assertSame($conGaleria, AparienciaSitio::PLANTILLAS_CON_GALERIA, 'La lista de plantillas con galería no coincide con las vistas del sitio.');
-        $this->assertSame(['a', 'b', 'c'], AparienciaSitio::PLANTILLAS_CON_GALERIA);
-        $this->assertSame(['Claro y sencillo', 'Oscuro elegante', 'Clásico y cálido'], AparienciaSitio::nombresConGaleria());
+        $this->assertSame(['b'], AparienciaSitio::PLANTILLAS_CON_GALERIA);
+        $this->assertSame(['Oscuro elegante'], AparienciaSitio::nombresConGaleria());
     }
 
     #[DataProvider('plantillasConGaleria')]
@@ -342,7 +342,7 @@ class PanelFotosDelRestauranteTest extends TestCase
 
         $this->get(FotosDelRestaurante::getUrl())
             ->assertOk()
-            ->assertSee('Tu diseño actual ('.AparienciaSitio::nombre($plantilla).') no muestra estas fotos en tu sitio. Se ven en los diseños Claro y sencillo, Oscuro elegante y Clásico y cálido.')
+            ->assertSee('Tu diseño actual ('.AparienciaSitio::nombre($plantilla).') no muestra estas fotos en tu sitio. Se ven en el diseño Oscuro elegante.')
             ->assertSee('Cambiar el diseño en Apariencia')
             ->assertSee(Apariencia::getUrl());
     }

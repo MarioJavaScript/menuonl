@@ -2,6 +2,8 @@
 
 > **Actualización:** el panel de servicio `/panel` y su API `/api/v1/panel` ya se retiraron; `/panel` redirige (302) a `/admin` y la API responde 410. Las referencias a `/panel` de este documento son históricas (ver `docs/integracion-dashboard.md`, sección 22).
 
+> **Actualización (plantillas):** se retiraron las plantillas del sitio "a" (Claro y sencillo, antes "Minimal editorial") y "c" (Clásico y cálido). Quedan b, d, e, f, g y h. La plantilla por defecto es "b" (Oscuro elegante), en `App\Services\AparienciaSitio::PLANTILLA_POR_DEFECTO`, y la galería de fotos solo se ve en "b". La migración `retirar_plantillas_a_y_c_del_sitio` pasó a "b" los restaurantes que las usaban y dejó una fila sin usuario ("Sistema") en `historial_cambios` con la plantilla anterior; es irreversible. Cualquier valor guardado que no esté en el catálogo (vacío, desconocido, "a" o "c") se lee como "b" con `AparienciaSitio::plantillaVigente()`, nunca como error. Las menciones de "a–h" y "A–H" de este documento son históricas.
+
 Estado: propuesta para aprobación. No se escribió código de producción. No se hizo `git add`, `commit` ni `push`.
 Alcance: panel del dueño en `/admin/{restaurante}` (Filament 5) y el panel de servicio `/panel`. Quedan fuera el sitio público, las plantillas a–h y la sección de Plataforma (Plataforma, Restaurantes, Cuentas).
 
@@ -330,7 +332,7 @@ Color principal         [selector]  [Usar el original]
 | Logotipo | Logotipo | "Opcional. Mejor con fondo transparente (PNG)." | ninguno | JPG/PNG/WebP, máx. 10 MB (D5) | Se muestra el nombre con letra grande |
 | Portada | Portada | "Una foto horizontal de tu comida o tu local." | ninguna | igual | El sitio usa un fondo de color; aviso en Inicio |
 | Fotos | Fotos del local | "Hasta 12. Se muestran en la galería." | ninguna | igual, máx. 12 | Se oculta la galería |
-| Diseño | Diseño del sitio | "Cambia cómo se ve; tus platillos y fotos no se pierden." | el actual (por defecto "Minimal editorial") | Lista cerrada | |
+| Diseño | Diseño del sitio | "Cambia cómo se ve; tus platillos y fotos no se pierden." | el actual (por defecto "Oscuro elegante") | Lista cerrada | |
 | Diseño | Estilo del menú | "Colores y letras de tu menú." | Cálido | Lista cerrada | |
 | Diseño | Color principal | "Se usa en botones y detalles. Vacío = color original." | vacío | Hex de 6 dígitos | Color del estilo |
 | Horario | Abierto / apertura / cierre | "Si cierras después de medianoche, pon la hora del día siguiente." | Cerrado | Hora HH:MM; abierto exige ambas horas | Sin horario no se muestra "Abierto ahora" y se avisa en Inicio |

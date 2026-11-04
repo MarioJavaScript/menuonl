@@ -88,16 +88,18 @@ class SitioEditorialOscuroTest extends TestCase
 
     public function test_el_catalogo_acepta_d_y_rechaza_otros_valores(): void
     {
-        $this->assertSame(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'], array_keys(Catalogos::plantillasSitio()));
+        $this->assertSame(['b', 'd', 'e', 'f', 'g', 'h'], array_keys(Catalogos::plantillasSitio()));
         $this->assertSame('Editorial oscuro', Catalogos::plantillasSitio()['d']['nombre']);
         $this->assertArrayNotHasKey('z', Catalogos::plantillasSitio());
+        $this->assertArrayNotHasKey('a', Catalogos::plantillasSitio());
+        $this->assertArrayNotHasKey('c', Catalogos::plantillasSitio());
     }
 
-    public function test_un_valor_de_plantilla_desconocido_sigue_cayendo_a_la_plantilla_a(): void
+    public function test_un_valor_de_plantilla_desconocido_cae_a_la_plantilla_por_defecto(): void
     {
         $this->restaurante()->forceFill(['sitio_plantilla' => 'z'])->saveQuietly();
 
-        $this->sitio()->assertOk()->assertSee('data-plantilla="a"', false);
+        $this->sitio()->assertOk()->assertViewIs('sitio.b')->assertSee('data-plantilla="b"', false);
     }
 
     public function test_la_plantilla_d_se_renderiza_con_un_restaurante_completo(): void
@@ -307,13 +309,10 @@ class SitioEditorialOscuroTest extends TestCase
         $this->assertStringContainsString("'resources/css/sitio/d.css'", (string) file_get_contents(base_path('vite.config.js')));
     }
 
-    public function test_las_plantillas_a_b_y_c_siguen_funcionando(): void
+    public function test_la_plantilla_b_sigue_funcionando(): void
     {
-        $r = $this->restaurante();
+        $this->restaurante()->forceFill(['sitio_plantilla' => 'b'])->saveQuietly();
 
-        foreach (['a', 'b', 'c'] as $clave) {
-            $r->forceFill(['sitio_plantilla' => $clave])->saveQuietly();
-            $this->sitio()->assertOk()->assertSee('data-plantilla="'.$clave.'"', false)->assertSee('La Casa Negra');
-        }
+        $this->sitio()->assertOk()->assertViewIs('sitio.b')->assertSee('data-plantilla="b"', false)->assertSee('La Casa Negra');
     }
 }

@@ -90,10 +90,10 @@ class FotosDelRestaurante extends Page implements HasTable
             Section::make(__('panel.fotos.sin_galeria.titulo'))
                 ->icon(Heroicon::OutlinedExclamationTriangle)
                 ->iconColor('warning')
-                ->visible(fn (): bool => ! AparienciaSitio::muestraGaleria(Filament::getTenant()?->sitio_plantilla))
+                ->visible(fn (): bool => ! AparienciaSitio::muestraGaleria(AparienciaSitio::plantillaVigente(Filament::getTenant()?->sitio_plantilla)))
                 ->schema([
-                    Text::make(fn (): string => __('panel.fotos.sin_galeria.descripcion', [
-                        'actual' => AparienciaSitio::nombre((string) Filament::getTenant()?->sitio_plantilla),
+                    Text::make(fn (): string => trans_choice('panel.fotos.sin_galeria.descripcion', count(AparienciaSitio::nombresConGaleria()), [
+                        'actual' => AparienciaSitio::nombre(AparienciaSitio::plantillaVigente(Filament::getTenant()?->sitio_plantilla)),
                         'disenos' => Arr::join(AparienciaSitio::nombresConGaleria(), ', ', ' y '),
                     ])),
                     Actions::make([

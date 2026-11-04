@@ -100,7 +100,7 @@ class PanelAparienciaTest extends TestCase
             ->assertSee('Estilo del menú')
             ->set('data.sitio_plantilla', 'f')
             ->assertDontSee('Estilo del menú')
-            ->set('data.sitio_plantilla', 'c')
+            ->set('data.sitio_plantilla', 'd')
             ->assertSee('Estilo del menú');
     }
 
@@ -261,7 +261,7 @@ class PanelAparienciaTest extends TestCase
             ->call('save');
 
         $this->assertSame('f', $a->fresh()->sitio_plantilla);
-        $this->assertSame('a', $b->fresh()->sitio_plantilla);
+        $this->assertSame('b', $b->fresh()->sitio_plantilla);
     }
 
     #[DataProvider('rolesSinAcceso')]

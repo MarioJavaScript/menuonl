@@ -141,7 +141,7 @@ return [
         'subtitulo' => 'Son las fotos de la sección Galería de tu sitio. Se muestran en el orden que elijas aquí.',
         'sin_galeria' => [
             'titulo' => 'Estas fotos no se ven en tu sitio',
-            'descripcion' => 'Tu diseño actual (:actual) no muestra estas fotos en tu sitio. Se ven en los diseños :disenos.',
+            'descripcion' => '{1} Tu diseño actual (:actual) no muestra estas fotos en tu sitio. Se ven en el diseño :disenos.|[2,*] Tu diseño actual (:actual) no muestra estas fotos en tu sitio. Se ven en los diseños :disenos.',
             'accion' => 'Cambiar el diseño en Apariencia',
         ],
         'contador' => 'Tienes :n de :max fotos.',

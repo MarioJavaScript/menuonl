@@ -39,7 +39,7 @@ class SitioPublicoDatos
 
         return [
             'r' => $restaurante,
-            'plantilla' => array_key_exists($restaurante->sitio_plantilla, Catalogos::plantillasSitio()) ? $restaurante->sitio_plantilla : 'a',
+            'plantilla' => AparienciaSitio::plantillaVigente($restaurante->sitio_plantilla),
             'idioma' => $idioma,
             'hero' => $restaurante->portada,
             'destacados' => $this->destacados($restaurante, $idioma),

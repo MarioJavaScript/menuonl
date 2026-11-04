@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\Capacidad;
 use App\Enums\MotivoDePausa;
 use App\Enums\PlanRestaurante;
+use App\Services\AparienciaSitio;
 use App\Services\Catalogos;
 use App\Traits\Auditable;
 use App\Traits\ProtegeImagenesDelRestaurante;
@@ -39,7 +40,7 @@ class Restaurante extends Model implements HasName
         'estado' => 'activo',
         'plan' => 'completo',
         'tema' => 'calido',
-        'sitio_plantilla' => 'a',
+        'sitio_plantilla' => AparienciaSitio::PLANTILLA_POR_DEFECTO,
         'reservas_activas' => true,
         'reservas_cupo' => 30,
         'reservas_franja_min' => 60,
