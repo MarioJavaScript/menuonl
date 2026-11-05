@@ -165,6 +165,7 @@ class Catalogos
             'f' => ['nombre' => 'Bar', 'descripcion' => 'Fondo oscuro, neón magenta y menú con líneas punteadas. Para bares y coctelerías.'],
             'g' => ['nombre' => 'Café pastel', 'descripcion' => 'Tonos pastel, bordes rasgados y letra cursiva. Para cafeterías de postres y repostería.'],
             'h' => ['nombre' => 'Pizzería', 'descripcion' => 'Papel crema, rojo tomate y mantel de cuadros; fotos redondas como platos. Para pizzerías y trattorias.'],
+            'i' => ['nombre' => 'Japonés', 'descripcion' => 'Papel claro, tinta y rojo, con kanji decorativos y fotos redondas. Para cocina japonesa y sushi.'],
         ];
     }
 

@@ -60,8 +60,8 @@ class TextosPrePilotoTest extends TestCase
     public static function plantillasDelSitio(): array
     {
         return array_combine(
-            array_map(fn (string $clave): string => 'plantilla '.strtoupper($clave), range('a', 'h')),
-            array_map(fn (string $clave): array => [$clave], range('a', 'h')),
+            array_map(fn (string $clave): string => 'plantilla '.strtoupper($clave), range('a', 'i')),
+            array_map(fn (string $clave): array => [$clave], range('a', 'i')),
         );
     }
 
@@ -217,7 +217,7 @@ class TextosPrePilotoTest extends TestCase
      */
     public static function plantillasConCajon(): array
     {
-        return ['plantilla E' => ['e'], 'plantilla F' => ['f'], 'plantilla G' => ['g'], 'plantilla H' => ['h']];
+        return ['plantilla E' => ['e'], 'plantilla F' => ['f'], 'plantilla G' => ['g'], 'plantilla H' => ['h'], 'plantilla I' => ['i']];
     }
 
     public function test_los_ajustes_del_panel_aclaran_que_los_pedidos_son_para_domicilio_o_recoger(): void

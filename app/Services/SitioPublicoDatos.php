@@ -7,6 +7,7 @@ use App\Models\GaleriaImagen;
 use App\Models\Horario;
 use App\Models\Producto;
 use App\Models\Restaurante;
+use Illuminate\Support\Collection;
 
 /**
  * Everything the public site templates (A, B and C) need for one restaurant.
@@ -36,6 +37,7 @@ class SitioPublicoDatos
         $contactos = Contacto::where('visible', true)->orderBy('orden')->orderBy('id')->get()->groupBy('tipo');
         $valor = fn (string $tipo): ?string => $contactos->get($tipo)?->first()?->valor;
         $whatsapp = $restaurante->whatsapp_pedidos ?: $valor('whatsapp');
+        $fotosGaleria = GaleriaImagen::orderBy('orden')->orderBy('id')->get();
 
         return [
             'r' => $restaurante,
@@ -43,7 +45,8 @@ class SitioPublicoDatos
             'idioma' => $idioma,
             'hero' => $restaurante->portada,
             'destacados' => $this->destacados($restaurante, $idioma),
-            'galeria' => GaleriaImagen::orderBy('orden')->orderBy('id')->get()->pluck('imagen')->all(),
+            'galeria' => $fotosGaleria->pluck('imagen')->all(),
+            'galeria_fotos' => $this->galeriaFotos($fotosGaleria),
             'horarios' => $this->horarios(),
             'direccion' => $valor('direccion'),
             'telefono' => $valor('telefono'),
@@ -99,6 +102,20 @@ class SitioPublicoDatos
                 'agotado' => ! $p->disponible,
             ];
         })->filter(fn (array $p): bool => $p['nombre'] !== '')->values()->all();
+    }
+
+    /**
+     * Gallery photos with their optional description, in the same order as 'galeria' (used as alt text by templates that show it).
+     *
+     * @param  Collection<int, GaleriaImagen>  $fotos
+     * @return list<array{imagen: string, descripcion: ?string}>
+     */
+    private function galeriaFotos(Collection $fotos): array
+    {
+        return $fotos->map(fn (GaleriaImagen $foto): array => [
+            'imagen' => (string) $foto->imagen,
+            'descripcion' => filled($foto->descripcion) ? trim((string) $foto->descripcion) : null,
+        ])->values()->all();
     }
 
     /**
