@@ -1,0 +1,4 @@
+// Pedido por WhatsApp del menú de la plantilla J (Mariscos). La lógica compartida vive en pedido/controlador.js (ver docs/pedido-compartido.md).
+import { iniciarPedido } from './pedido/controlador.js';
+
+iniciarPedido('mar', 'menuonl_cart_j');
