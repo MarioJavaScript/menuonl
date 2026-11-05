@@ -27,6 +27,7 @@ class PlanSitioPublicoTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->withoutVite();
         Carbon::setTestNow(Carbon::parse(self::AHORA, 'America/Mexico_City'));
         Cache::flush();
         RateLimiter::clear('reserva:min:127.0.0.1');
@@ -71,7 +72,7 @@ class PlanSitioPublicoTest extends TestCase
      */
     public static function plantillasDelSitio(): array
     {
-        return ['a' => ['a'], 'b' => ['b'], 'c' => ['c'], 'd' => ['d'], 'e' => ['e'], 'f' => ['f'], 'g' => ['g'], 'h' => ['h']];
+        return ['a' => ['a'], 'b' => ['b'], 'c' => ['c'], 'd' => ['d'], 'e' => ['e'], 'f' => ['f'], 'g' => ['g'], 'h' => ['h'], 'i' => ['i']];
     }
 
     #[DataProvider('plantillasDelSitio')]

@@ -29,10 +29,10 @@ class AparienciaSitio
      *
      * @var list<string>
      */
-    public const array PLANTILLAS_CON_GALERIA = ['b'];
+    public const array PLANTILLAS_CON_GALERIA = ['b', 'i'];
 
     /**
-     * Contraste mínimo entre el color principal y su texto para que las plantillas e, f, g y h lo usen.
+     * Contraste mínimo entre el color principal y su texto para que las plantillas e, f, g, h e i lo usen.
      */
     private const float CONTRASTE_MINIMO = 4.5;
 
@@ -53,6 +53,7 @@ class AparienciaSitio
             'f' => ['nombre' => 'Bar y coctelería', 'descripcion' => 'Fondo oscuro con luz de neón magenta y un menú con líneas punteadas.', 'para' => 'Bares y coctelerías', 'fondo' => '#120b17', 'texto' => '#f3e8ff', 'acento' => '#e11d9c', 'bloque' => '#2b1838'],
             'g' => ['nombre' => 'Cafetería pastel', 'descripcion' => 'Tonos pastel, bordes rasgados y letra cursiva. Dulce y alegre.', 'para' => 'Postres, repostería y cafeterías', 'fondo' => '#fdf0f4', 'texto' => '#7a4a5a', 'acento' => '#f4a8c0', 'bloque' => '#f7d4e0'],
             'h' => ['nombre' => 'Pizzería', 'descripcion' => 'Papel crema, rojo tomate y detalles verde albahaca, con fotos redondas como platos.', 'para' => 'Pizzerías y trattorias', 'fondo' => '#f6efe2', 'texto' => '#2a1a14', 'acento' => '#c4351f', 'bloque' => '#cfdcc4'],
+            'i' => ['nombre' => 'Japonés', 'descripcion' => 'Papel claro, tinta negra y rojo japonés, con letras de pincel y fotos redondas.', 'para' => 'Restaurantes japoneses, de sushi y de ramen', 'fondo' => '#f6f5f1', 'texto' => '#151515', 'acento' => '#c8281e', 'bloque' => '#e4e1d8'],
         ];
     }
 

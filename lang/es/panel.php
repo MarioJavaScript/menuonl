@@ -112,7 +112,7 @@ return [
         ],
         'estilo' => [
             'titulo' => 'Estilo del menú',
-            'descripcion' => 'Colores y letras de tu menú. Solo aplica a este diseño; los diseños Cafetería, Bar, Cafetería pastel y Pizzería traen sus propios colores.',
+            'descripcion' => 'Colores y letras de tu menú. Solo aplica a este diseño; los diseños Cafetería, Bar, Cafetería pastel, Pizzería y Japonés traen sus propios colores.',
             'campo' => 'Estilo del menú',
         ],
         'color' => [

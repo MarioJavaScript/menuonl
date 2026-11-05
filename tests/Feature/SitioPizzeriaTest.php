@@ -115,7 +115,7 @@ class SitioPizzeriaTest extends TestCase
 
     public function test_el_catalogo_registra_la_plantilla_h_pizzeria(): void
     {
-        $this->assertSame(['b', 'd', 'e', 'f', 'g', 'h'], array_keys(Catalogos::plantillasSitio()));
+        $this->assertSame(['b', 'd', 'e', 'f', 'g', 'h', 'i'], array_keys(Catalogos::plantillasSitio()));
         $this->assertSame('Pizzería', Catalogos::plantillasSitio()['h']['nombre']);
     }
 
@@ -246,6 +246,7 @@ class SitioPizzeriaTest extends TestCase
 
     public function test_el_mantel_es_solo_css_y_las_variantes_no_llevan_selector_de_precio(): void
     {
+        $this->travelTo('2026-10-22 18:00:00'); // jueves 12:00 en Ciudad de México: cerrado (el horario de completo() es de miércoles)
         $this->completo();
 
         foreach ([$this->sitio(), $this->menu()] as $respuesta) {
