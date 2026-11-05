@@ -115,7 +115,7 @@ class SitioCafeteriaTest extends TestCase
 
     public function test_el_catalogo_registra_la_plantilla_e_cafeteria(): void
     {
-        $this->assertSame(['b', 'd', 'e', 'f', 'g', 'h', 'i'], array_keys(Catalogos::plantillasSitio()));
+        $this->assertSame(['b', 'd', 'e', 'f', 'g', 'h', 'i', 'j'], array_keys(Catalogos::plantillasSitio()));
         $this->assertSame('Cafetería', Catalogos::plantillasSitio()['e']['nombre']);
     }
 

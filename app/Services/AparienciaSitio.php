@@ -29,7 +29,7 @@ class AparienciaSitio
      *
      * @var list<string>
      */
-    public const array PLANTILLAS_CON_GALERIA = ['b', 'i'];
+    public const array PLANTILLAS_CON_GALERIA = ['b', 'i', 'j'];
 
     /**
      * Contraste mínimo entre el color principal y su texto para que las plantillas e, f, g, h e i lo usen.
@@ -54,6 +54,7 @@ class AparienciaSitio
             'g' => ['nombre' => 'Cafetería pastel', 'descripcion' => 'Tonos pastel, bordes rasgados y letra cursiva. Dulce y alegre.', 'para' => 'Postres, repostería y cafeterías', 'fondo' => '#fdf0f4', 'texto' => '#7a4a5a', 'acento' => '#f4a8c0', 'bloque' => '#f7d4e0'],
             'h' => ['nombre' => 'Pizzería', 'descripcion' => 'Papel crema, rojo tomate y detalles verde albahaca, con fotos redondas como platos.', 'para' => 'Pizzerías y trattorias', 'fondo' => '#f6efe2', 'texto' => '#2a1a14', 'acento' => '#c4351f', 'bloque' => '#cfdcc4'],
             'i' => ['nombre' => 'Japonés', 'descripcion' => 'Papel claro, tinta negra y rojo japonés, con letras de pincel y fotos redondas.', 'para' => 'Restaurantes japoneses, de sushi y de ramen', 'fondo' => '#f6f5f1', 'texto' => '#151515', 'acento' => '#c8281e', 'bloque' => '#e4e1d8'],
+            'j' => ['nombre' => 'Mariscos', 'descripcion' => 'Fondo marino, papel claro y rojo coral, con olas y foto de portada redonda.', 'para' => 'Marisquerías y cocina de mar', 'fondo' => '#0e2a3b', 'texto' => '#f7f4ee', 'acento' => '#c2492c', 'bloque' => '#dce6ea'],
         ];
     }
 

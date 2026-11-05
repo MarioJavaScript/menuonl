@@ -166,6 +166,7 @@ class Catalogos
             'g' => ['nombre' => 'Café pastel', 'descripcion' => 'Tonos pastel, bordes rasgados y letra cursiva. Para cafeterías de postres y repostería.'],
             'h' => ['nombre' => 'Pizzería', 'descripcion' => 'Papel crema, rojo tomate y mantel de cuadros; fotos redondas como platos. Para pizzerías y trattorias.'],
             'i' => ['nombre' => 'Japonés', 'descripcion' => 'Papel claro, tinta y rojo, con kanji decorativos y fotos redondas. Para cocina japonesa y sushi.'],
+            'j' => ['nombre' => 'Mariscos', 'descripcion' => 'Fondo marino, papel claro y rojo coral, con olas y foto de portada redonda. Para marisquerías y cocina de mar.'],
         ];
     }
 
