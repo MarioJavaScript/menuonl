@@ -136,7 +136,7 @@ class SitioMariscosTest extends TestCase
 
     public function test_el_catalogo_registra_la_plantilla_j_mariscos(): void
     {
-        $this->assertSame(['b', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k'], array_keys(Catalogos::plantillasSitio()));
+        $this->assertSame(['b', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l'], array_keys(Catalogos::plantillasSitio()));
         $this->assertSame('Mariscos', Catalogos::plantillasSitio()['j']['nombre']);
         $this->assertSame('j', AparienciaSitio::plantillaVigente('j'));
     }
