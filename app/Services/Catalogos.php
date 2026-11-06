@@ -167,6 +167,7 @@ class Catalogos
             'h' => ['nombre' => 'Pizzería', 'descripcion' => 'Papel crema, rojo tomate y mantel de cuadros; fotos redondas como platos. Para pizzerías y trattorias.'],
             'i' => ['nombre' => 'Japonés', 'descripcion' => 'Papel claro, tinta y rojo, con kanji decorativos y fotos redondas. Para cocina japonesa y sushi.'],
             'j' => ['nombre' => 'Mariscos', 'descripcion' => 'Fondo marino, papel claro y rojo coral, con olas y foto de portada redonda. Para marisquerías y cocina de mar.'],
+            'k' => ['nombre' => 'Cortes premium', 'descripcion' => 'Papel cálido, tinta oscura, burdeos y dorado, con tipografía clásica. Para asadores y cortes premium.'],
         ];
     }
 
