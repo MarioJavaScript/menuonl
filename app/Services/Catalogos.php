@@ -172,6 +172,7 @@ class Catalogos
             'm' => ['nombre' => 'Hamburguesas', 'descripcion' => 'Fondo casi negro con amarillo mostaza y rojo, y títulos condensados en mayúsculas. Para hamburgueserías, papas y malteadas.'],
             'n' => ['nombre' => 'Mexicana colorida', 'descripcion' => 'Café oscuro con crema, terracota, verde y dorado, y títulos de letra gruesa con remates. Para taquerías, asaderos y cocina mexicana.'],
             'o' => ['nombre' => 'Negro y cobre', 'descripcion' => 'Fondo casi negro con acento cobre y tipografía clásica de alto contraste. Para parrillas, mezcalerías y cocina al fuego.'],
+            'p' => ['nombre' => 'Cafetería fresca', 'descripcion' => 'Fondo blanco con superficies crema, café oscuro y verde salvia, con títulos de serif suave. Para cafeterías, panaderías y desayunos.'],
         ];
     }
 

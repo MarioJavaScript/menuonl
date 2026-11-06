@@ -112,7 +112,7 @@ return [
         ],
         'estilo' => [
             'titulo' => 'Estilo del menú',
-            'descripcion' => 'Colores y letras de tu menú. Solo aplica a este diseño; los diseños Cafetería, Bar, Cafetería pastel, Pizzería, Japonés, Mariscos, Cortes premium, Negro y esmeralda, Hamburguesas, Mexicana colorida y Negro y cobre traen sus propios colores.',
+            'descripcion' => 'Colores y letras de tu menú. Solo aplica a este diseño; los diseños Cafetería, Bar, Cafetería pastel, Pizzería, Japonés, Mariscos, Cortes premium, Negro y esmeralda, Hamburguesas, Mexicana colorida, Negro y cobre y Cafetería fresca traen sus propios colores.',
             'campo' => 'Estilo del menú',
         ],
         'color' => [

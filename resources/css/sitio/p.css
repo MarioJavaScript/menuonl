@@ -1,0 +1,691 @@
+/* ==========================================================================
+   Plantilla P · Cafetería (sitio y menú)
+   Autónoma: no usa menuonl.css, ni el estilo (tema) del restaurante, ni fuentes de otras plantillas.
+   Fondo blanco con superficies crema, café oscuro y verde salvia; títulos en Young Serif y texto en DM Sans.
+   Todos los colores viven en :root. El acento del restaurante (color_acento) lo inyecta la vista en <body>
+   (--caf-acento, --caf-acento-hover y --caf-texto-acento) solo como fondo de botones, marcas y del bloque de reserva,
+   con texto de contraste medido. Los textos (precios, enlaces) usan siempre los colores base de la hoja.
+   Reglas de uso (las verifica una prueba): texto 4.5:1; bordes de campos y controles 3:1; el hover cambia por superficie
+   (--caf-enlace-hover) y ningún botón deja el texto igual al fondo. Clases con caf-. Young Serif solo existe en peso 400:
+   todo título lleva font-weight: 400 para evitar la negrita falsa.
+   ========================================================================== */
+
+@font-face {
+  font-family: "Young Serif Cafe";
+  src: url("/fonts/sitio/young-serif-cafe-latin-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "DM Sans Cafe";
+  src: url("/fonts/sitio/dm-sans-cafe-latin-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "DM Sans Cafe";
+  src: url("/fonts/sitio/dm-sans-cafe-latin-500.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "DM Sans Cafe";
+  src: url("/fonts/sitio/dm-sans-cafe-latin-700.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* Colores base (del prototipo aprobado; bordes, hover, "Cerrado" y errores se ajustaron para el contraste) */
+  --caf-cafe: #2b211c;
+  --caf-blanco: #ffffff;
+  --caf-crema: #efe9e0;
+  --caf-linea: #e6ded2;
+  --caf-tinta: #5a4e46;
+  --caf-verde: #4e6b53;
+  --caf-verde-hover: #3f5744;
+  --caf-borde: #85766a;
+  --caf-marcador: #dcd2c4;
+  --caf-abierto: #3e8c55;
+  --caf-error: #8f2a1c;
+  --caf-placeholder: #6b5d52;
+  --caf-transparente: transparent;
+
+  /* Acento de botones, marcas y bloque de reserva: el verde, o el del restaurante cuando la vista lo inyecta con texto legible */
+  --caf-acento: var(--caf-verde);
+  --caf-acento-hover: var(--caf-verde-hover);
+  --caf-texto-acento: var(--caf-blanco);
+
+  /* Superficie actual: la crema y el bloque de reserva las cambian */
+  --caf-sup-texto: var(--caf-cafe);
+  --caf-sup-fondo: var(--caf-blanco);
+  --caf-foco: var(--caf-cafe);
+  --caf-enlace-hover: var(--caf-verde);
+  --caf-campo-borde: var(--caf-cafe);
+
+  /* Tipografías */
+  --caf-fuente-titulo: "Young Serif Cafe", Georgia, "Times New Roman", serif;
+  --caf-fuente-texto: "DM Sans Cafe", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --caf-t-xs: 0.8125rem;
+  --caf-t-s: 0.9375rem;
+  --caf-t-base: 1rem;
+  --caf-t-m: 1.125rem;
+  --caf-t-l: 1.5rem;
+  --caf-t-xl: clamp(1.75rem, 1.1rem + 2.6vw, 2.875rem);
+  --caf-t-h1: clamp(2.25rem, 1.2rem + 4.6vw, 4.25rem);
+  --caf-interlinea: 1.6;
+  --caf-interlinea-titulo: 1.05;
+
+  /* Espacios */
+  --caf-e1: 0.25rem;
+  --caf-e2: 0.5rem;
+  --caf-e3: 0.75rem;
+  --caf-e4: 1rem;
+  --caf-e5: 1.5rem;
+  --caf-e6: 2.5rem;
+  --caf-e7: clamp(3rem, 2rem + 4vw, 5rem);
+  --caf-lateral: clamp(1rem, 0.6rem + 2vw, 1.5rem);
+  --caf-ancho: 75rem;
+  --caf-ancho-menu: 46rem;
+  --caf-toque: 2.75rem;
+  --caf-boton-alto: 3rem;
+  --caf-r: 0.875rem;
+  --caf-r-tarjeta: 1.5rem;
+  --caf-r-grande: 2rem;
+  --caf-pildora: 999px;
+}
+
+.caf-pagina {
+  --caf-capa: color-mix(in srgb, var(--caf-cafe) 60%, var(--caf-transparente));
+  --caf-sombra: color-mix(in srgb, var(--caf-cafe) 12%, var(--caf-transparente));
+}
+
+/* Superficie crema: portada, galería, cabecera del menú, píldoras de estado */
+.caf-portada__tarjeta,
+.caf-galeria-banda,
+.caf-menu-cabeza {
+  --caf-sup-fondo: var(--caf-crema);
+}
+/* Bloque de reserva: el color del restaurante, con su texto medido */
+.caf-reservar__bloque {
+  --caf-sup-texto: var(--caf-texto-acento);
+  --caf-sup-fondo: var(--caf-acento);
+  --caf-foco: var(--caf-texto-acento);
+  --caf-enlace-hover: var(--caf-texto-acento);
+  --caf-campo-borde: var(--caf-texto-acento);
+}
+
+/* ---------- Base ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-padding-top: 1rem;
+  background: var(--caf-blanco);
+}
+
+.caf-pagina {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--caf-blanco);
+  color: var(--caf-cafe);
+  font-family: var(--caf-fuente-texto);
+  font-size: var(--caf-t-base);
+  font-weight: 400;
+  line-height: var(--caf-interlinea);
+  overflow-x: clip;
+}
+.caf-pagina [hidden] { display: none !important; }
+.caf-pagina:has(.caf-barra:not([hidden])) { padding-bottom: 6.5rem; }
+:where(.caf-pagina) img { max-width: 100%; height: auto; display: block; }
+.caf-pagina .foto { display: block; max-width: 100%; }
+.caf-pagina .foto-vacia { background: var(--caf-marcador); }
+/* Young Serif: un solo peso (400); sin esto el navegador fabricaría una negrita falsa en h1 y h2 */
+:where(.caf-pagina) h1,
+:where(.caf-pagina) h2 {
+  font-family: var(--caf-fuente-titulo);
+  font-weight: 400;
+  line-height: var(--caf-interlinea-titulo);
+  margin: 0 0 var(--caf-e3);
+  overflow-wrap: anywhere;
+}
+:where(.caf-pagina) h3 {
+  font-family: var(--caf-fuente-texto);
+  font-size: var(--caf-t-m);
+  font-weight: 700;
+  line-height: 1.25;
+  margin: 0 0 var(--caf-e2);
+  overflow-wrap: anywhere;
+}
+:where(.caf-pagina) h1 { font-size: var(--caf-t-h1); }
+:where(.caf-pagina) h2 { font-size: var(--caf-t-xl); }
+:where(.caf-pagina) p { margin: 0 0 var(--caf-e4); }
+:where(.caf-pagina) ul,
+:where(.caf-pagina) dl { margin: 0; padding: 0; list-style: none; }
+:where(.caf-pagina) a { color: inherit; }
+:where(.caf-pagina) a:hover { color: var(--caf-enlace-hover); text-decoration: underline; text-underline-offset: 0.2em; }
+:where(.caf-pagina) :focus-visible { outline: 3px solid var(--caf-foco); outline-offset: 3px; }
+:where(.caf-pagina) address { font-style: normal; margin: 0 0 var(--caf-e4); }
+
+.caf-saltar {
+  position: absolute;
+  left: var(--caf-e4);
+  top: -4rem;
+  z-index: 60;
+  padding: var(--caf-e3) var(--caf-e4);
+  border-radius: var(--caf-r);
+  background: var(--caf-cafe);
+  color: var(--caf-blanco);
+  font-weight: 700;
+}
+.caf-saltar:focus { top: var(--caf-e3); }
+.caf-solo-lectores {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.caf-contenedor { width: 100%; max-width: calc(var(--caf-ancho) + var(--caf-lateral) * 2); margin-inline: auto; padding-inline: var(--caf-lateral); }
+.caf-seccion { padding-block: 0 var(--caf-e7); }
+.caf-seccion--menu { padding-block: var(--caf-e4) var(--caf-e7); max-width: calc(var(--caf-ancho-menu) + var(--caf-lateral) * 2); }
+.caf-titulo { font-size: clamp(1.75rem, 1.2rem + 2vw, 2.5rem); }
+
+/* ---------- Encabezado ---------- */
+.caf-encabezado__interior {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--caf-e3) var(--caf-e5);
+  width: 100%;
+  max-width: calc(var(--caf-ancho) + var(--caf-lateral) * 2);
+  margin-inline: auto;
+  padding: var(--caf-e4) var(--caf-lateral);
+}
+.caf-marca {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--caf-e3);
+  min-width: 0;
+  min-height: var(--caf-toque);
+  font-family: var(--caf-fuente-titulo);
+  font-size: clamp(1.25rem, 1.05rem + 0.9vw, 1.5rem);
+  font-weight: 400;
+  line-height: 1.2;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.caf-pagina .caf-marca__logo { flex: none; width: 2.875rem; height: 2.875rem; padding: 4px; border-radius: 50%; background: var(--caf-crema); object-fit: contain; }
+.caf-nav__lista { display: flex; flex-wrap: wrap; align-items: center; gap: var(--caf-e1) var(--caf-e5); }
+.caf-nav__enlace {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--caf-toque);
+  padding-inline: var(--caf-e1);
+  font-size: var(--caf-t-s);
+  font-weight: 500;
+  text-decoration: none;
+}
+.caf-nav__enlace[aria-current="page"] { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 0.45em; }
+.caf-pagina .caf-nav__pedir { padding-inline: var(--caf-e5); border-radius: var(--caf-pildora); background: var(--caf-acento); color: var(--caf-texto-acento); font-weight: 700; }
+.caf-pagina .caf-nav__pedir:hover { background: var(--caf-acento-hover); color: var(--caf-texto-acento); text-decoration: underline; text-underline-offset: 0.3em; }
+.caf-estado {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: var(--caf-e2);
+  margin: 0;
+  padding: var(--caf-e2) var(--caf-e3);
+  border-radius: var(--caf-pildora);
+  background: var(--caf-blanco);
+  color: var(--caf-cafe);
+  font-size: var(--caf-t-s);
+  font-weight: 500;
+  line-height: 1.2;
+}
+/* Cerrado: punto hueco con el color del texto; Abierto: punto lleno verde (3:1 contra la píldora blanca) */
+.caf-estado::before { content: ""; flex: none; width: 0.4375rem; height: 0.4375rem; border: 2px solid currentColor; border-radius: 50%; box-sizing: content-box; }
+.caf-estado--abierto::before { border-color: var(--caf-abierto); background: var(--caf-abierto); }
+
+/* ---------- Botones ---------- */
+/* Base: café con texto blanco. Todos llevan borde de 2 px para tener el mismo alto. */
+.caf-boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--caf-e2);
+  min-height: var(--caf-boton-alto);
+  min-width: var(--caf-toque);
+  padding: var(--caf-e2) 1.75rem;
+  border: 2px solid var(--caf-cafe);
+  border-radius: var(--caf-pildora);
+  background: var(--caf-cafe);
+  color: var(--caf-blanco);
+  font: 700 var(--caf-t-base)/1.2 var(--caf-fuente-texto);
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+.caf-pagina .caf-boton:hover { background: var(--caf-acento); border-color: var(--caf-acento); color: var(--caf-texto-acento); text-decoration: underline; text-underline-offset: 0.3em; }
+/* Contorno del color de la superficie; al pasar se rellena con el color invertido */
+.caf-boton--borde { background: var(--caf-transparente); border-color: var(--caf-sup-texto); color: var(--caf-sup-texto); }
+.caf-pagina .caf-boton--borde:hover { background: var(--caf-sup-texto); border-color: var(--caf-sup-texto); color: var(--caf-sup-fondo); text-decoration: none; }
+.caf-boton:disabled { opacity: 0.55; cursor: not-allowed; }
+.caf-icono { width: 1.25rem; height: 1.25rem; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.caf-botones,
+.caf-acciones { display: flex; flex-wrap: wrap; align-items: stretch; align-content: flex-start; gap: var(--caf-e3); }
+.caf-acciones > .caf-boton { flex: 0 0 auto; height: var(--caf-boton-alto); padding-block: 0; white-space: nowrap; }
+
+/* ---------- Portada ---------- */
+.caf-portada { padding-block: var(--caf-e4) var(--caf-e7); }
+.caf-portada__tarjeta {
+  display: grid;
+  gap: var(--caf-e6);
+  align-items: center;
+  padding: clamp(1.5rem, 0.5rem + 4.4vw, 3.5rem);
+  border-radius: var(--caf-r-grande);
+  background: var(--caf-crema);
+}
+.caf-portada__tarjeta > * { min-width: 0; max-width: 100%; }
+.caf-portada__cuerpo { display: grid; gap: var(--caf-e5); justify-items: start; }
+.caf-portada__cuerpo > * { margin: 0; }
+.caf-portada__titulo { max-width: 100%; }
+.caf-portada__descripcion { max-width: 30rem; color: var(--caf-tinta); font-size: var(--caf-t-m); line-height: 1.7; }
+.caf-portada__foto { width: 100%; max-width: 30rem; }
+.caf-pagina .caf-portada__imagen { width: 100%; aspect-ratio: 4 / 5; max-height: 31.25rem; object-fit: cover; border-radius: var(--caf-r-tarjeta); background: var(--caf-marcador); }
+
+/* ---------- Favoritos ---------- */
+.caf-favoritos { display: grid; gap: var(--caf-e5); }
+.caf-favoritos > * { min-width: 0; }
+.caf-favoritos__cabeza { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--caf-e3) var(--caf-e5); }
+.caf-favoritos__cabeza > * { margin: 0; }
+.caf-enlace { display: inline-flex; align-items: center; min-height: var(--caf-toque); color: var(--caf-verde); font-weight: 700; }
+.caf-pagina .caf-enlace:hover { color: var(--caf-verde-hover); }
+.caf-platos { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 14.375rem), 1fr)); gap: var(--caf-e5); }
+.caf-platos > li { min-width: 0; display: flex; }
+.caf-plato { display: flex; flex: 1; flex-direction: column; gap: var(--caf-e3); min-width: 0; }
+.caf-plato > * { margin: 0; }
+.caf-pagina .caf-plato__foto { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: var(--caf-r-tarjeta); background: var(--caf-crema); }
+.caf-plato__linea { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--caf-e1) var(--caf-e3); }
+.caf-plato__linea > * { margin: 0; }
+.caf-pagina .caf-plato__nombre { flex: 1 1 8rem; min-width: 0; }
+.caf-plato__desc { font-size: var(--caf-t-s); line-height: 1.5; color: var(--caf-tinta); }
+
+/* ---------- Etiquetas y precios ---------- */
+.caf-etiquetas { display: flex; flex-wrap: wrap; gap: var(--caf-e2); }
+.caf-etiqueta {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.5rem;
+  padding-inline: var(--caf-e3);
+  border-radius: var(--caf-pildora);
+  background: var(--caf-crema);
+  color: var(--caf-cafe);
+  font-size: var(--caf-t-xs);
+  font-weight: 500;
+  line-height: 1.2;
+}
+.caf-pagina .caf-etiqueta--agotado { background: var(--caf-cafe); color: var(--caf-blanco); }
+.caf-precio { margin: 0; font-family: var(--caf-fuente-titulo); font-size: var(--caf-t-m); font-weight: 400; color: var(--caf-verde); white-space: nowrap; }
+.caf-precio__antes { margin-left: var(--caf-e2); font-family: var(--caf-fuente-texto); font-size: var(--caf-t-xs); font-weight: 400; color: var(--caf-tinta); text-decoration: line-through; }
+
+/* ---------- Galería ---------- */
+.caf-galeria-banda { padding-block: var(--caf-e7); background: var(--caf-crema); }
+.caf-galeria-cuerpo { display: grid; gap: var(--caf-e5); }
+.caf-galeria-cuerpo > h2 { margin: 0; }
+.caf-galeria { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 22rem)); justify-content: start; gap: var(--caf-e4); }
+.caf-galeria > li { min-width: 0; }
+.caf-pagina .caf-galeria__foto { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--caf-r-tarjeta); background: var(--caf-marcador); }
+
+/* ---------- Horario y visita ---------- */
+.caf-visita { padding-block: var(--caf-e7); }
+.caf-dos { display: grid; gap: var(--caf-e6); }
+.caf-dos > * { min-width: 0; }
+.caf-horario { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--caf-e3) var(--caf-e5); max-width: 32rem; }
+.caf-horario dt { font-weight: 700; }
+.caf-horario dd { margin: 0; color: var(--caf-tinta); }
+.caf-horario .caf-horario__hoy { color: var(--caf-cafe); font-weight: 700; text-decoration: underline; text-decoration-color: var(--caf-verde); text-decoration-thickness: 2px; text-underline-offset: 0.3em; }
+.caf-direccion { max-width: 30rem; color: var(--caf-tinta); line-height: 1.7; }
+
+/* ---------- Reservas ---------- */
+#reservar { scroll-margin-top: 1rem; }
+.caf-reservar__bloque { padding: clamp(1.25rem, 0.4rem + 3.6vw, 2.75rem); border-radius: var(--caf-r-grande); background: var(--caf-acento); color: var(--caf-texto-acento); }
+.caf-reservar__rejilla { display: grid; gap: var(--caf-e5); }
+.caf-reservar__rejilla > * { min-width: 0; }
+.caf-reservar .caf-titulo { margin: 0; }
+.caf-reserva { display: grid; gap: var(--caf-e4); }
+.caf-reserva__trampa { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.caf-campo { display: grid; gap: var(--caf-e1); min-width: 0; }
+.caf-campo__etiqueta { font-size: var(--caf-t-s); font-weight: 700; }
+.caf-campo__entrada {
+  width: 100%;
+  min-height: var(--caf-toque);
+  padding: var(--caf-e3);
+  border: 2px solid var(--caf-campo-borde);
+  border-radius: var(--caf-r);
+  background: var(--caf-blanco);
+  color: var(--caf-cafe);
+  font: 400 var(--caf-t-base)/1.3 var(--caf-fuente-texto);
+}
+.caf-campo__entrada::placeholder { color: var(--caf-placeholder); opacity: 1; }
+.caf-campo__area { min-height: 5rem; resize: vertical; }
+/* El envío del formulario: café con borde del color del texto del bloque; al pasar, se invierte */
+.caf-pagina .caf-reserva > .caf-boton { background: var(--caf-cafe); border-color: var(--caf-texto-acento); color: var(--caf-blanco); }
+.caf-pagina .caf-reserva > .caf-boton:hover { background: var(--caf-texto-acento); border-color: var(--caf-texto-acento); color: var(--caf-acento); text-decoration: none; }
+.caf-reserva__mensaje { padding: var(--caf-e4) var(--caf-e5); border: 2px solid var(--caf-cafe); border-radius: var(--caf-r); background: var(--caf-blanco); color: var(--caf-cafe); }
+.caf-reserva__mensaje[class~="error"] { border-color: var(--caf-error); color: var(--caf-error); font-weight: 700; }
+.caf-reserva__mensaje a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--caf-toque);
+  margin-top: var(--caf-e2);
+  padding: 0 var(--caf-e4);
+  border-radius: var(--caf-pildora);
+  background: var(--caf-cafe);
+  color: var(--caf-blanco);
+  font-weight: 700;
+  text-decoration: none;
+}
+.caf-pagina .caf-reserva__mensaje a:hover { background: var(--caf-acento); color: var(--caf-texto-acento); }
+.caf-reservar__alterno { margin-top: var(--caf-e5); }
+.caf-reservar__alterno > p { font-weight: 700; }
+.caf-reserva small, .caf-reserva small a { color: var(--caf-sup-texto); }
+.caf-reserva small a { text-decoration: underline; }
+
+/* ---------- Menú ---------- */
+.caf-menu-cabeza {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--caf-e3) var(--caf-e5);
+  max-width: var(--caf-ancho-menu);
+  margin: var(--caf-e2) auto var(--caf-e4);
+  padding: var(--caf-e5);
+  border-radius: var(--caf-r-tarjeta);
+  background: var(--caf-crema);
+}
+.caf-menu-cabeza > * { margin: 0; }
+.caf-pagina .caf-menu-cabeza h1 { flex: 1 1 auto; min-width: 0; font-size: clamp(2.25rem, 1.8rem + 2vw, 3rem); line-height: 1; }
+.caf-idiomas { display: flex; flex-wrap: wrap; gap: var(--caf-e2); }
+.caf-idiomas__enlace {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--caf-toque);
+  min-height: var(--caf-toque);
+  padding-inline: var(--caf-e3);
+  border: 1.5px solid var(--caf-borde);
+  border-radius: var(--caf-pildora);
+  font-weight: 700;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+.caf-idiomas__enlace[aria-current="page"] { background: var(--caf-acento); border-color: var(--caf-acento); color: var(--caf-texto-acento); }
+.caf-pagina .caf-idiomas__enlace[aria-current="page"]:hover { color: var(--caf-texto-acento); }
+.caf-pagina .caf-idiomas__enlace:not([aria-current="page"]):hover { background: var(--caf-cafe); border-color: var(--caf-cafe); color: var(--caf-blanco); text-decoration: none; }
+.caf-aviso { margin: 0 0 var(--caf-e5); padding: var(--caf-e3) var(--caf-e4); border: 2px solid var(--caf-cafe); border-radius: var(--caf-r); background: var(--caf-blanco); color: var(--caf-cafe); }
+.caf-estado-menu { padding: var(--caf-e6) 0; }
+.caf-categorias { position: sticky; top: 0; z-index: 10; background: var(--caf-blanco); border-bottom: 1px solid var(--caf-linea); }
+.caf-categorias__lista {
+  display: flex;
+  gap: var(--caf-e2);
+  width: 100%;
+  max-width: calc(var(--caf-ancho-menu) + var(--caf-lateral) * 2);
+  margin-inline: auto;
+  padding: var(--caf-e2) var(--caf-lateral);
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.caf-categorias__enlace {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  min-height: var(--caf-toque);
+  padding: 0 var(--caf-e4);
+  border: 1.5px solid var(--caf-borde);
+  border-radius: var(--caf-pildora);
+  background: var(--caf-crema);
+  color: var(--caf-cafe);
+  font-size: var(--caf-t-s);
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.caf-pagina .caf-categorias__enlace:hover { background: var(--caf-cafe); border-color: var(--caf-cafe); color: var(--caf-blanco); text-decoration: none; }
+.caf-categorias__enlace[aria-current="true"],
+.caf-pagina .caf-categorias__enlace[aria-current="true"]:hover { background: var(--caf-acento); border-color: var(--caf-acento); color: var(--caf-texto-acento); font-weight: 700; }
+.caf-grupo { padding-top: var(--caf-e5); }
+.caf-pagina .caf-grupo__titulo { margin-bottom: var(--caf-e3); font-size: var(--caf-t-l); }
+.caf-lista { display: grid; grid-template-columns: minmax(0, 1fr); }
+.caf-fila { display: flex; align-items: center; gap: var(--caf-e3); padding: var(--caf-e3) 0; border-bottom: 1px solid var(--caf-linea); }
+.caf-fila--variantes { align-items: flex-start; }
+.caf-pagina .caf-fila__foto { flex: none; width: 4.5rem; height: 4.5rem; border-radius: 1.125rem; object-fit: cover; background: var(--caf-crema); }
+.caf-fila--agotado .caf-fila__foto { filter: grayscale(0.85); }
+.caf-fila__cuerpo { flex: 1 1 auto; display: grid; gap: var(--caf-e1); min-width: 0; }
+.caf-fila__cuerpo > * { margin: 0; }
+.caf-fila__cabeza { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--caf-e1) var(--caf-e3); }
+.caf-fila__cabeza > * { margin: 0; }
+.caf-pagina .caf-fila__nombre { margin: 0; font-size: var(--caf-t-base); line-height: 1.2; }
+.caf-fila__desc { font-size: var(--caf-t-xs); line-height: 1.4; color: var(--caf-tinta); }
+.caf-variantes { display: grid; margin-top: var(--caf-e1); }
+.caf-variantes__fila { display: flex; align-items: center; gap: var(--caf-e3); min-height: 3.25rem; border-top: 1px solid var(--caf-linea); }
+.caf-variantes__nombre { flex: 1 1 auto; min-width: 0; font-size: var(--caf-t-s); font-weight: 500; overflow-wrap: anywhere; }
+/* "+": círculo café con signo blanco; al pasar toma el acento */
+.caf-mas {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: var(--caf-toque);
+  height: var(--caf-toque);
+  padding: 0;
+  border: 2px solid var(--caf-cafe);
+  border-radius: 50%;
+  background: var(--caf-cafe);
+  color: var(--caf-blanco);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.caf-mas:hover { background: var(--caf-acento); border-color: var(--caf-acento); color: var(--caf-texto-acento); }
+
+/* ---------- Pedido ---------- */
+.caf-barra {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 3.5rem;
+  margin: 0;
+  padding: var(--caf-e3) var(--caf-lateral) max(var(--caf-e5), env(safe-area-inset-bottom));
+  border: 0;
+  background: var(--caf-blanco);
+  box-shadow: 0 -6px 18px var(--caf-sombra);
+  color: var(--caf-texto-acento);
+  font: 700 var(--caf-t-base)/1.2 var(--caf-fuente-texto);
+  cursor: pointer;
+}
+.caf-barra__interior {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--caf-e3);
+  width: 100%;
+  max-width: var(--caf-ancho-menu);
+  margin-inline: auto;
+  padding: var(--caf-e4) var(--caf-e5);
+  border-radius: var(--caf-pildora);
+  background: var(--caf-acento);
+}
+.caf-barra:hover .caf-barra__interior { background: var(--caf-acento-hover); text-decoration: underline; text-underline-offset: 0.3em; }
+.caf-barra:focus-visible { outline: 3px solid var(--caf-cafe); outline-offset: -6px; }
+.caf-barra__texto { flex: 1; text-align: left; }
+.caf-barra__cuenta {
+  display: grid;
+  place-items: center;
+  min-width: 1.75rem;
+  height: 1.75rem;
+  padding: 0 6px;
+  border-radius: var(--caf-pildora);
+  background: var(--caf-texto-acento);
+  color: var(--caf-acento);
+}
+.caf-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 7rem;
+  z-index: 50;
+  max-width: calc(100vw - 2 * var(--caf-e4));
+  margin: 0;
+  padding: var(--caf-e2) var(--caf-e4);
+  transform: translateX(-50%);
+  border-radius: var(--caf-r);
+  background: var(--caf-cafe);
+  color: var(--caf-blanco);
+  font-weight: 500;
+  text-align: center;
+}
+.caf-pedido {
+  position: fixed;
+  inset: auto 0 0 0;
+  width: 100%;
+  max-width: none;
+  max-height: 92dvh;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--caf-r-tarjeta) var(--caf-r-tarjeta) 0 0;
+  background: var(--caf-blanco);
+  color: var(--caf-cafe);
+  overflow: hidden;
+}
+.caf-pedido[open] { display: flex; flex-direction: column; }
+.caf-pedido::backdrop { background: var(--caf-capa); }
+body:has(.caf-pedido[open]) { overflow: hidden; }
+.caf-pedido__cabecera { display: flex; align-items: center; justify-content: space-between; gap: var(--caf-e2); padding: var(--caf-e4) var(--caf-e5) var(--caf-e2); }
+.caf-pagina .caf-pedido__titulo { margin: 0; font-size: var(--caf-t-l); }
+.caf-pedido__cerrar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: var(--caf-toque);
+  height: var(--caf-toque);
+  border: 1.5px solid var(--caf-borde);
+  border-radius: 50%;
+  background: var(--caf-transparente);
+  color: var(--caf-cafe);
+  cursor: pointer;
+}
+.caf-pedido__cerrar:hover { background: var(--caf-cafe); border-color: var(--caf-cafe); color: var(--caf-blanco); }
+.caf-pedido__cuerpo { flex: 1 1 auto; overflow-y: auto; padding: var(--caf-e3) var(--caf-e5); }
+.caf-pedido__cuerpo .caf-campo { margin-top: var(--caf-e4); }
+.caf-pedido__vacio { color: var(--caf-tinta); }
+.caf-pedido__lista { display: grid; gap: var(--caf-e3); margin-bottom: var(--caf-e3); }
+.caf-linea { display: grid; gap: var(--caf-e2); padding-bottom: var(--caf-e3); border-bottom: 1px solid var(--caf-linea); list-style: none; }
+.caf-linea__fila { display: flex; align-items: center; justify-content: space-between; gap: var(--caf-e2); }
+.caf-pagina .caf-linea__nombre { min-width: 0; margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+.caf-pagina .caf-linea__subtotal { flex: none; margin: 0; font-weight: 700; }
+.caf-linea__nota { flex: 1 1 auto; min-width: 0; }
+.caf-linea__cantidad { display: flex; flex: none; align-items: center; gap: var(--caf-e1); }
+.caf-pagina .caf-linea__numero { min-width: 2ch; margin: 0; text-align: center; font-weight: 700; }
+.caf-cantidad {
+  display: grid;
+  place-items: center;
+  width: var(--caf-toque);
+  height: var(--caf-toque);
+  padding: 0;
+  border: 1.5px solid var(--caf-borde);
+  border-radius: 50%;
+  background: var(--caf-blanco);
+  color: var(--caf-cafe);
+  font-size: var(--caf-t-m);
+  line-height: 1;
+  cursor: pointer;
+}
+.caf-cantidad:hover { background: var(--caf-cafe); border-color: var(--caf-cafe); color: var(--caf-blanco); }
+.caf-cantidad:disabled { opacity: 0.45; cursor: not-allowed; }
+.caf-entrega { min-width: 0; margin: 0; padding: 0; border: 0; }
+.caf-entrega legend { margin-bottom: var(--caf-e2); padding: 0; }
+.caf-entrega__opciones { display: flex; flex-wrap: wrap; gap: var(--caf-e2); }
+.caf-entrega__opcion {
+  display: inline-flex;
+  flex: 1 1 8rem;
+  align-items: center;
+  justify-content: center;
+  gap: var(--caf-e2);
+  min-height: var(--caf-toque);
+  padding: var(--caf-e2) var(--caf-e3);
+  border: 1.5px solid var(--caf-borde);
+  border-radius: var(--caf-r);
+  background: var(--caf-blanco);
+  font-size: var(--caf-t-s);
+  font-weight: 500;
+  cursor: pointer;
+}
+.caf-entrega__opcion input { margin: 0; accent-color: var(--caf-cafe); }
+.caf-entrega__opcion:has(input:checked) { background: var(--caf-cafe); border-color: var(--caf-cafe); color: var(--caf-blanco); font-weight: 700; }
+.caf-entrega__opcion:has(input:checked) input { accent-color: var(--caf-blanco); }
+.caf-entrega__opcion:has(input:focus-visible) { outline: 3px solid var(--caf-cafe); outline-offset: 2px; }
+.caf-pedido__pie { display: grid; gap: var(--caf-e2); padding: var(--caf-e3) var(--caf-e5) max(var(--caf-e4), env(safe-area-inset-bottom)); overflow-y: auto; border-top: 1px solid var(--caf-linea); }
+.caf-pagina .caf-pedido__total { display: flex; align-items: baseline; justify-content: space-between; gap: var(--caf-e2); margin: 0; font-size: var(--caf-t-m); font-weight: 700; }
+.caf-pagina .caf-pedido__nota { margin: 0; font-size: var(--caf-t-xs); color: var(--caf-tinta); }
+.caf-pedido__pie .caf-aviso { margin-bottom: 0; }
+.caf-pedido__botones { display: flex; flex-wrap: wrap; gap: var(--caf-e2); }
+.caf-pedido__enviar { flex: 1 1 auto; }
+.caf-pagina .caf-pedido__enviar { background: var(--caf-acento); border-color: var(--caf-acento); color: var(--caf-texto-acento); }
+.caf-pagina .caf-pedido__enviar:hover { background: var(--caf-acento-hover); border-color: var(--caf-acento-hover); color: var(--caf-texto-acento); }
+
+/* ---------- Pie ---------- */
+.caf-pie { border-top: 1px solid var(--caf-linea); color: var(--caf-tinta); }
+.caf-pie__contenido { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--caf-e3) var(--caf-e5); padding-block: var(--caf-e5); font-size: var(--caf-t-s); }
+.caf-pie__contenido > * { margin: 0; }
+.caf-pie__nombre { font-family: var(--caf-fuente-titulo); font-size: 1.25rem; font-weight: 400; color: var(--caf-cafe); overflow-wrap: anywhere; }
+.caf-pie__lista { display: flex; flex-wrap: wrap; gap: 0 var(--caf-e4); }
+.caf-pie__lista a { display: inline-flex; align-items: center; min-height: var(--caf-toque); color: var(--caf-cafe); }
+
+/* ---------- Ancho ---------- */
+@media (min-width: 40rem) {
+  .caf-reserva { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .caf-campo--completo,
+  .caf-reserva__mensaje { grid-column: 1 / -1; }
+}
+@media (min-width: 48rem) {
+  .caf-dos { grid-template-columns: 1fr 1fr; gap: var(--caf-e7); }
+  .caf-reservar__rejilla { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: var(--caf-e6); }
+  .caf-pedido {
+    inset: 0;
+    width: min(34rem, calc(100vw - 2rem));
+    max-height: calc(100dvh - 2rem);
+    margin: auto;
+    border-radius: var(--caf-r-tarjeta);
+  }
+}
+@media (min-width: 60rem) {
+  .caf-portada__tarjeta--foto { grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); gap: var(--caf-e7); }
+  .caf-portada__tarjeta--foto .caf-portada__foto { justify-self: end; }
+}
+@media (max-width: 30rem) {
+  .caf-botones .caf-boton { flex: 1 1 100%; }
+  .caf-fila__foto { width: 3.75rem; height: 3.75rem; }
+}
+
+/* ---------- Movimiento ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+  .caf-boton,
+  .caf-mas,
+  .caf-cantidad,
+  .caf-barra__interior,
+  .caf-categorias__enlace { transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease; }
+}

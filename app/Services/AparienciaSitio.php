@@ -29,7 +29,7 @@ class AparienciaSitio
      *
      * @var list<string>
      */
-    public const array PLANTILLAS_CON_GALERIA = ['b', 'i', 'j', 'k', 'l', 'm', 'n', 'o'];
+    public const array PLANTILLAS_CON_GALERIA = ['b', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p'];
 
     /**
      * Contraste mínimo entre el color principal y su texto para que las plantillas e, f, g, h e i lo usen.
@@ -60,6 +60,7 @@ class AparienciaSitio
             'm' => ['nombre' => 'Hamburguesas', 'descripcion' => 'Fondo casi negro con amarillo mostaza y rojo, y títulos condensados en mayúsculas. Menú en tarjetas.', 'para' => 'Hamburgueserías, papas y malteadas', 'fondo' => '#141414', 'texto' => '#f7f1e3', 'acento' => '#b8322a', 'bloque' => '#e8b020'],
             'n' => ['nombre' => 'Mexicana colorida', 'descripcion' => 'Café oscuro con crema, terracota, verde y dorado, y títulos de letra gruesa con remates. Menú en tarjetas.', 'para' => 'Taquerías, asaderos y cocina mexicana', 'fondo' => '#2a1a12', 'texto' => '#f5e9d7', 'acento' => '#c2441b', 'bloque' => '#f2b33d'],
             'o' => ['nombre' => 'Negro y cobre', 'descripcion' => 'Fondo casi negro con acento cobre y tipografía clásica de alto contraste. Menú en tarjetas.', 'para' => 'Parrillas, mezcalerías y cocina al fuego', 'fondo' => '#0d0c0b', 'texto' => '#f1e9df', 'acento' => '#c77d4a', 'bloque' => '#e0a275'],
+            'p' => ['nombre' => 'Cafetería fresca', 'descripcion' => 'Fondo blanco con superficies crema, café oscuro y verde salvia, con títulos de serif suave. Menú en lista con fotos.', 'para' => 'Cafeterías, panaderías y desayunos', 'fondo' => '#ffffff', 'texto' => '#2b211c', 'acento' => '#4e6b53', 'bloque' => '#efe9e0'],
         ];
     }
 
