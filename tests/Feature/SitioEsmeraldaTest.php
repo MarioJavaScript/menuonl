@@ -136,7 +136,7 @@ class SitioEsmeraldaTest extends TestCase
 
     public function test_el_catalogo_registra_la_plantilla_l_esmeralda(): void
     {
-        $this->assertSame(['b', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm'], array_keys(Catalogos::plantillasSitio()));
+        $this->assertSame(['b', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'o'], array_keys(Catalogos::plantillasSitio()));
         $this->assertSame('Negro y esmeralda', Catalogos::plantillasSitio()['l']['nombre']);
         $this->assertSame('l', AparienciaSitio::plantillaVigente('l'));
     }
