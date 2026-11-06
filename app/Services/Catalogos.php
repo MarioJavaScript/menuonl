@@ -170,6 +170,7 @@ class Catalogos
             'k' => ['nombre' => 'Cortes premium', 'descripcion' => 'Papel cálido, tinta oscura, burdeos y dorado, con tipografía clásica. Para asadores y cortes premium.'],
             'l' => ['nombre' => 'Negro y esmeralda', 'descripcion' => 'Fondo negro con acento verde esmeralda y tipografía de alto contraste. Para cocina de autor, coctelería y cenas.'],
             'm' => ['nombre' => 'Hamburguesas', 'descripcion' => 'Fondo casi negro con amarillo mostaza y rojo, y títulos condensados en mayúsculas. Para hamburgueserías, papas y malteadas.'],
+            'n' => ['nombre' => 'Mexicana colorida', 'descripcion' => 'Café oscuro con crema, terracota, verde y dorado, y títulos de letra gruesa con remates. Para taquerías, asaderos y cocina mexicana.'],
         ];
     }
 
