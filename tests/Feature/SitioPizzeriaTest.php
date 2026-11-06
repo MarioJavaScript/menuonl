@@ -115,7 +115,7 @@ class SitioPizzeriaTest extends TestCase
 
     public function test_el_catalogo_registra_la_plantilla_h_pizzeria(): void
     {
-        $this->assertSame(['b', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'p'], array_keys(Catalogos::plantillasSitio()));
+        $this->assertSame(['b', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p'], array_keys(Catalogos::plantillasSitio()));
         $this->assertSame('Pizzería', Catalogos::plantillasSitio()['h']['nombre']);
     }
 

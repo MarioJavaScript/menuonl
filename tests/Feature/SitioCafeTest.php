@@ -136,7 +136,7 @@ class SitioCafeTest extends TestCase
 
     public function test_el_catalogo_registra_la_plantilla_p_cafeteria(): void
     {
-        $this->assertSame(['b', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'p'], array_keys(Catalogos::plantillasSitio()));
+        $this->assertSame(['b', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p'], array_keys(Catalogos::plantillasSitio()));
         $this->assertSame('Cafetería fresca', Catalogos::plantillasSitio()['p']['nombre']);
         $this->assertSame('p', AparienciaSitio::plantillaVigente('p'));
     }
@@ -334,11 +334,11 @@ class SitioCafeTest extends TestCase
 
     public function test_las_otras_plantillas_siguen_usando_las_mismas_vistas(): void
     {
-        foreach (['b', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm'] as $clave) {
+        foreach (['b', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o'] as $clave) {
             $restaurante = $this->completo(['sitio_plantilla' => $clave, 'slug' => 'otro-'.$clave]);
 
             $sitio = $this->sitio('otro-'.$clave)->assertOk()->assertViewIs('sitio.'.$clave);
-            $menu = $this->menu('otro-'.$clave)->assertOk()->assertViewIs(in_array($clave, ['e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm'], true) ? 'menu.plantillas.'.$clave : 'menu.publico');
+            $menu = $this->menu('otro-'.$clave)->assertOk()->assertViewIs(in_array($clave, ['e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o'], true) ? 'menu.plantillas.'.$clave : 'menu.publico');
             foreach ([$sitio, $menu] as $respuesta) {
                 $html = $this->contenido($respuesta);
                 $this->assertDoesNotMatchRegularExpression('/\bsitio-p\b/', $html, "La plantilla {$clave} lleva sitio-p.");
@@ -729,6 +729,8 @@ class SitioCafeTest extends TestCase
             'k' => ['cor-', 'data-cor-'],
             'l' => ['esm-', 'data-esm-'],
             'm' => ['ham-', 'data-ham-'],
+            'n' => ['mex-', 'data-mex-'],
+            'o' => ['cob-', 'data-cob-'],
         ];
 
         foreach ($prefijos as $clave => [$clase, $dato]) {
