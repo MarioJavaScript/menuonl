@@ -29,7 +29,7 @@ class AparienciaSitio
      *
      * @var list<string>
      */
-    public const array PLANTILLAS_CON_GALERIA = ['b', 'i', 'j', 'k'];
+    public const array PLANTILLAS_CON_GALERIA = ['b', 'i', 'j', 'k', 'l'];
 
     /**
      * Contraste mínimo entre el color principal y su texto para que las plantillas e, f, g, h e i lo usen.
@@ -56,6 +56,7 @@ class AparienciaSitio
             'i' => ['nombre' => 'Japonés', 'descripcion' => 'Papel claro, tinta negra y rojo japonés, con letras de pincel y fotos redondas.', 'para' => 'Restaurantes japoneses, de sushi y de ramen', 'fondo' => '#f6f5f1', 'texto' => '#151515', 'acento' => '#c8281e', 'bloque' => '#e4e1d8'],
             'j' => ['nombre' => 'Mariscos', 'descripcion' => 'Fondo marino, papel claro y rojo coral, con olas y foto de portada redonda.', 'para' => 'Marisquerías y cocina de mar', 'fondo' => '#0e2a3b', 'texto' => '#f7f4ee', 'acento' => '#c2492c', 'bloque' => '#dce6ea'],
             'k' => ['nombre' => 'Cortes premium', 'descripcion' => 'Papel cálido, tinta oscura, burdeos y dorado, con tipografía clásica. Menú en lista.', 'para' => 'Asadores y cortes premium', 'fondo' => '#1a1614', 'texto' => '#efeae2', 'acento' => '#7a1e1e', 'bloque' => '#c9a46e'],
+            'l' => ['nombre' => 'Negro y esmeralda', 'descripcion' => 'Fondo negro con acento verde esmeralda y tipografía de alto contraste. Menú en lista.', 'para' => 'Cocina de autor y cenas', 'fondo' => '#0a0a0a', 'texto' => '#ede8df', 'acento' => '#1f6b4a', 'bloque' => '#7fcfa8'],
         ];
     }
 

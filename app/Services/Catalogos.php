@@ -168,6 +168,7 @@ class Catalogos
             'i' => ['nombre' => 'Japonés', 'descripcion' => 'Papel claro, tinta y rojo, con kanji decorativos y fotos redondas. Para cocina japonesa y sushi.'],
             'j' => ['nombre' => 'Mariscos', 'descripcion' => 'Fondo marino, papel claro y rojo coral, con olas y foto de portada redonda. Para marisquerías y cocina de mar.'],
             'k' => ['nombre' => 'Cortes premium', 'descripcion' => 'Papel cálido, tinta oscura, burdeos y dorado, con tipografía clásica. Para asadores y cortes premium.'],
+            'l' => ['nombre' => 'Negro y esmeralda', 'descripcion' => 'Fondo negro con acento verde esmeralda y tipografía de alto contraste. Para cocina de autor, coctelería y cenas.'],
         ];
     }
 
