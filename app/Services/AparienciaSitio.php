@@ -29,7 +29,7 @@ class AparienciaSitio
      *
      * @var list<string>
      */
-    public const array PLANTILLAS_CON_GALERIA = ['b', 'i', 'j', 'k', 'l', 'm'];
+    public const array PLANTILLAS_CON_GALERIA = ['b', 'i', 'j', 'k', 'l', 'm', 'o'];
 
     /**
      * Contraste mínimo entre el color principal y su texto para que las plantillas e, f, g, h e i lo usen.
@@ -58,6 +58,7 @@ class AparienciaSitio
             'k' => ['nombre' => 'Cortes premium', 'descripcion' => 'Papel cálido, tinta oscura, burdeos y dorado, con tipografía clásica. Menú en lista.', 'para' => 'Asadores y cortes premium', 'fondo' => '#1a1614', 'texto' => '#efeae2', 'acento' => '#7a1e1e', 'bloque' => '#c9a46e'],
             'l' => ['nombre' => 'Negro y esmeralda', 'descripcion' => 'Fondo negro con acento verde esmeralda y tipografía de alto contraste. Menú en lista.', 'para' => 'Cocina de autor y cenas', 'fondo' => '#0a0a0a', 'texto' => '#ede8df', 'acento' => '#1f6b4a', 'bloque' => '#7fcfa8'],
             'm' => ['nombre' => 'Hamburguesas', 'descripcion' => 'Fondo casi negro con amarillo mostaza y rojo, y títulos condensados en mayúsculas. Menú en tarjetas.', 'para' => 'Hamburgueserías, papas y malteadas', 'fondo' => '#141414', 'texto' => '#f7f1e3', 'acento' => '#b8322a', 'bloque' => '#e8b020'],
+            'o' => ['nombre' => 'Negro y cobre', 'descripcion' => 'Fondo casi negro con acento cobre y tipografía clásica de alto contraste. Menú en tarjetas.', 'para' => 'Parrillas, mezcalerías y cocina al fuego', 'fondo' => '#0d0c0b', 'texto' => '#f1e9df', 'acento' => '#c77d4a', 'bloque' => '#e0a275'],
         ];
     }
 
