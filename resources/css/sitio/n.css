@@ -1,0 +1,710 @@
+/* ==========================================================================
+   Plantilla N · Mexicana colorida (sitio y menú)
+   Autónoma: no usa menuonl.css, ni el estilo (tema) del restaurante, ni fuentes de otras plantillas.
+   Café oscuro, crema, terracota, verde y dorado; títulos en Alfa Slab One y texto en Work Sans.
+   Todos los colores viven en :root. El acento del restaurante (color_acento) lo inyecta la vista en <body>
+   (--mex-acento, --mex-acento-hover y --mex-texto-acento) solo como fondo de botones y marcas, con texto de contraste medido.
+   Reglas de uso (las verifica una prueba): la terracota nunca es texto sobre café ni sobre verde; el dorado nunca es texto sobre
+   crema ni sobre blanco (solo fondo con texto café, o texto sobre café). Bordes de campos y botones de interfaz con 3:1 o más.
+   Ningún hover deja el texto igual al fondo. Clases con mex-. Alfa Slab One solo existe en peso 400: todo título lleva font-weight: 400.
+   ========================================================================== */
+
+@font-face {
+  font-family: "Alfa Slab One Mexicana";
+  src: url("/fonts/sitio/alfa-slab-one-mexicana-latin-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Work Sans Mexicana";
+  src: url("/fonts/sitio/work-sans-mexicana-latin-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Work Sans Mexicana";
+  src: url("/fonts/sitio/work-sans-mexicana-latin-600.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Work Sans Mexicana";
+  src: url("/fonts/sitio/work-sans-mexicana-latin-700.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* Colores base (del prototipo aprobado; hovers, bordes, "Cerrado" y errores se ajustaron para el contraste) */
+  --mex-cafe: #2a1a12;
+  --mex-crema: #f5e9d7;
+  --mex-dorado: #f2b33d;
+  --mex-dorado-hover: #f7c868;
+  --mex-terracota: #c2441b;
+  --mex-terracota-texto: #b13d15;
+  --mex-terracota-hover: #9a3411;
+  --mex-verde: #2f5d3a;
+  --mex-blanco: #ffffff;
+  --mex-arena: #e9d9c2;
+  --mex-menta: #dcebdf;
+  --mex-tinta: #5a4032;
+  --mex-papel: #e6cfae;
+  --mex-borde: #7a5a44;
+  --mex-pildora-cerrado: #4a2d20;
+  --mex-abierto: #9be3a8;
+  --mex-error: #8a1c10;
+  --mex-placeholder: #75685f;
+  --mex-transparente: transparent;
+
+  /* Acento de botones y marcas: la terracota, o el del restaurante cuando la vista lo inyecta con texto legible */
+  --mex-acento: var(--mex-terracota);
+  --mex-acento-hover: var(--mex-terracota-hover);
+  --mex-texto-acento: var(--mex-blanco);
+
+  /* Superficie actual: las zonas café y verde la invierten */
+  --mex-sup-texto: var(--mex-cafe);
+  --mex-sup-fondo: var(--mex-crema);
+  --mex-foco: var(--mex-cafe);
+  --mex-enlace-hover: var(--mex-terracota-texto);
+
+  /* Tipografías */
+  --mex-fuente-titulo: "Alfa Slab One Mexicana", Rockwell, "Rockwell Extra Bold", "Courier New", serif;
+  --mex-fuente-texto: "Work Sans Mexicana", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mex-t-xs: 0.8125rem;
+  --mex-t-s: 0.9375rem;
+  --mex-t-base: 1.0625rem;
+  --mex-t-m: 1.25rem;
+  --mex-t-l: 1.625rem;
+  --mex-t-xl: clamp(1.875rem, 1.2rem + 2.6vw, 2.75rem);
+  --mex-t-h1: clamp(2.125rem, 6.5vw + 0.4rem, 4rem);
+  --mex-interlinea: 1.6;
+  --mex-interlinea-titulo: 1.1;
+
+  /* Espacios */
+  --mex-e1: 0.25rem;
+  --mex-e2: 0.5rem;
+  --mex-e3: 0.75rem;
+  --mex-e4: 1rem;
+  --mex-e5: 1.5rem;
+  --mex-e6: 2.5rem;
+  --mex-e7: clamp(3rem, 2rem + 4vw, 4.5rem);
+  --mex-lateral: clamp(1rem, 0.6rem + 2vw, 1.5rem);
+  --mex-ancho: 75rem;
+  --mex-toque: 2.75rem;
+  --mex-boton-alto: 3.25rem;
+  --mex-r: 999px;
+  --mex-r-campo: 0.75rem;
+  --mex-r-tarjeta: 1.25rem;
+  --mex-borde-grueso: 3px;
+}
+
+.mex-pagina {
+  --mex-capa: color-mix(in srgb, var(--mex-cafe) 72%, var(--mex-transparente));
+}
+
+/* Zonas café: invierten texto, fondo, foco y hover */
+.mex-encabezado,
+.mex-banda,
+.mex-portada,
+.mex-pie {
+  --mex-sup-texto: var(--mex-crema);
+  --mex-sup-fondo: var(--mex-cafe);
+  --mex-foco: var(--mex-dorado);
+  --mex-enlace-hover: var(--mex-dorado);
+  background: var(--mex-cafe);
+  color: var(--mex-crema);
+}
+/* Horario y visita sobre verde */
+.mex-visita {
+  --mex-sup-texto: var(--mex-blanco);
+  --mex-sup-fondo: var(--mex-verde);
+  --mex-foco: var(--mex-dorado);
+  --mex-enlace-hover: var(--mex-blanco);
+  background: var(--mex-verde);
+  color: var(--mex-blanco);
+}
+/* Franja de categorías */
+.mex-categorias {
+  --mex-sup-texto: var(--mex-cafe);
+  --mex-sup-fondo: var(--mex-crema);
+}
+/* Tarjetas, cajón y bloque de reserva blancos */
+.mex-pedido,
+.mex-plato,
+.mex-fila,
+.mex-reservar__bloque,
+.mex-seccion--destacados {
+  --mex-sup-texto: var(--mex-cafe);
+  --mex-sup-fondo: var(--mex-blanco);
+}
+
+/* ---------- Base ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-padding-top: 1rem;
+  background: var(--mex-crema);
+}
+
+.mex-pagina {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--mex-crema);
+  color: var(--mex-cafe);
+  font-family: var(--mex-fuente-texto);
+  font-size: var(--mex-t-base);
+  font-weight: 400;
+  line-height: var(--mex-interlinea);
+  overflow-x: clip;
+}
+.mex-pagina [hidden] { display: none !important; }
+.mex-pagina:has(.mex-barra:not([hidden])) { padding-bottom: 6.5rem; }
+:where(.mex-pagina) img { max-width: 100%; height: auto; display: block; }
+.mex-pagina .foto { display: block; max-width: 100%; }
+.mex-pagina .foto-vacia { background: var(--mex-papel); }
+/* Alfa Slab One: un solo peso (400); sin esto el navegador fabricaría una negrita falsa en h1 a h3 */
+:where(.mex-pagina) h1,
+:where(.mex-pagina) h2,
+:where(.mex-pagina) h3 {
+  font-family: var(--mex-fuente-titulo);
+  font-weight: 400;
+  line-height: var(--mex-interlinea-titulo);
+  margin: 0 0 var(--mex-e3);
+  overflow-wrap: anywhere;
+}
+:where(.mex-pagina) h3 { font-size: 1.1875rem; line-height: 1.25; margin-bottom: var(--mex-e2); }
+:where(.mex-pagina) h1 { font-size: var(--mex-t-h1); }
+:where(.mex-pagina) h2 { font-size: var(--mex-t-xl); }
+:where(.mex-pagina) p { margin: 0 0 var(--mex-e4); }
+:where(.mex-pagina) ul,
+:where(.mex-pagina) dl { margin: 0; padding: 0; list-style: none; }
+:where(.mex-pagina) a { color: inherit; }
+:where(.mex-pagina) a:hover { color: var(--mex-enlace-hover); text-decoration: underline; text-underline-offset: 0.2em; }
+:where(.mex-pagina) :focus-visible { outline: 3px solid var(--mex-foco); outline-offset: 3px; }
+:where(.mex-pagina) address { font-style: normal; margin: 0 0 var(--mex-e4); }
+
+.mex-saltar {
+  position: absolute;
+  left: var(--mex-e4);
+  top: -4rem;
+  z-index: 60;
+  padding: var(--mex-e3) var(--mex-e4);
+  background: var(--mex-dorado);
+  color: var(--mex-cafe);
+  font-weight: 700;
+}
+.mex-saltar:focus { top: var(--mex-e3); }
+.mex-solo-lectores {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.mex-contenedor { width: 100%; max-width: calc(var(--mex-ancho) + var(--mex-lateral) * 2); margin-inline: auto; padding-inline: var(--mex-lateral); }
+.mex-seccion { padding-block: var(--mex-e7); }
+.mex-seccion--menu { padding-block: var(--mex-e5) var(--mex-e7); }
+.mex-seccion--destacados { background: var(--mex-blanco); }
+.mex-titulo { font-size: var(--mex-t-xl); }
+.mex-lead { max-width: 60ch; color: var(--mex-tinta); }
+.mex-banda { padding: 0; }
+
+/* ---------- Encabezado ---------- */
+.mex-encabezado__interior {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mex-e3) var(--mex-e5);
+  width: 100%;
+  max-width: calc(var(--mex-ancho) + var(--mex-lateral) * 2);
+  margin-inline: auto;
+  padding: var(--mex-e4) var(--mex-lateral);
+}
+.mex-encabezado__marca { display: flex; flex-wrap: wrap; align-items: center; gap: var(--mex-e2) var(--mex-e4); min-width: 0; }
+.mex-marca {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mex-e3);
+  min-width: 0;
+  min-height: var(--mex-toque);
+  font-family: var(--mex-fuente-titulo);
+  font-size: clamp(1.125rem, 0.95rem + 1vw, 1.375rem);
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.mex-pagina .mex-marca__logo { flex: none; width: 3rem; height: 3rem; padding: 3px; border-radius: 12px; background: var(--mex-crema); object-fit: contain; }
+.mex-nav__lista { display: flex; flex-wrap: wrap; align-items: center; gap: var(--mex-e1) var(--mex-e5); }
+.mex-nav__enlace {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--mex-toque);
+  padding-inline: var(--mex-e1);
+  font-size: var(--mex-t-s);
+  font-weight: 600;
+  text-decoration: none;
+}
+.mex-nav__enlace[aria-current="page"] { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 0.45em; }
+.mex-pagina .mex-nav__reservar { padding-inline: var(--mex-e5); border-radius: var(--mex-r); background: var(--mex-acento); color: var(--mex-texto-acento); }
+.mex-pagina .mex-nav__reservar:hover { background: var(--mex-acento-hover); color: var(--mex-texto-acento); text-decoration: underline; text-underline-offset: 0.3em; }
+.mex-estado {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: var(--mex-e2);
+  margin: 0;
+  padding: var(--mex-e2) var(--mex-e3);
+  border: 2px solid var(--mex-crema);
+  border-radius: var(--mex-r);
+  background: var(--mex-pildora-cerrado);
+  color: var(--mex-crema);
+  font-size: var(--mex-t-xs);
+  font-weight: 600;
+  line-height: 1.2;
+}
+.mex-estado::before { content: ""; flex: none; width: 0.4375rem; height: 0.4375rem; border: 2px solid currentColor; border-radius: 50%; box-sizing: content-box; }
+.mex-estado--abierto { border-color: var(--mex-verde); background: var(--mex-verde); color: var(--mex-blanco); }
+.mex-estado--abierto::before { border-color: var(--mex-abierto); background: var(--mex-abierto); }
+
+/* ---------- Botones ---------- */
+/* Base: acento (terracota o el del restaurante) con texto de contraste. Todos llevan borde de 2 px para tener el mismo alto. */
+.mex-boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mex-e2);
+  min-height: var(--mex-boton-alto);
+  min-width: var(--mex-toque);
+  padding: var(--mex-e2) var(--mex-e5);
+  border: 2px solid var(--mex-acento);
+  border-radius: var(--mex-r);
+  background: var(--mex-acento);
+  color: var(--mex-texto-acento);
+  font: 700 var(--mex-t-base)/1.2 var(--mex-fuente-texto);
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+.mex-pagina .mex-boton:hover { background: var(--mex-acento-hover); border-color: var(--mex-acento-hover); color: var(--mex-texto-acento); text-decoration: underline; text-underline-offset: 0.3em; }
+/* Dorado con texto café */
+.mex-boton--claro { background: var(--mex-dorado); border-color: var(--mex-dorado); color: var(--mex-cafe); }
+.mex-pagina .mex-boton--claro:hover { background: var(--mex-dorado-hover); border-color: var(--mex-dorado-hover); color: var(--mex-cafe); }
+/* Contorno del color de la superficie; al pasar se rellena con el color invertido */
+.mex-boton--borde { background: var(--mex-transparente); border-color: var(--mex-sup-texto); color: var(--mex-sup-texto); }
+.mex-pagina .mex-boton--borde:hover { background: var(--mex-sup-texto); border-color: var(--mex-sup-texto); color: var(--mex-sup-fondo); text-decoration: none; }
+/* Contorno dorado sobre café (portada) */
+.mex-portada .mex-boton--borde { border-color: var(--mex-dorado); color: var(--mex-dorado); }
+.mex-pagina .mex-portada .mex-boton--borde:hover { background: var(--mex-dorado); border-color: var(--mex-dorado); color: var(--mex-cafe); }
+.mex-boton:disabled { opacity: 0.55; cursor: not-allowed; }
+.mex-icono { width: 1.25rem; height: 1.25rem; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.mex-botones,
+.mex-acciones { display: flex; flex-wrap: wrap; align-items: stretch; align-content: flex-start; gap: var(--mex-e3); }
+.mex-acciones > .mex-boton { flex: 0 0 auto; height: var(--mex-boton-alto); padding-block: 0; white-space: nowrap; }
+
+/* ---------- Portada ---------- */
+.mex-portada { position: relative; overflow: hidden; padding-block: var(--mex-e6) calc(var(--mex-e7) + 5.5rem); }
+.mex-portada__rejilla { position: relative; display: grid; gap: var(--mex-e6); align-items: center; }
+.mex-portada__rejilla > * { min-width: 0; max-width: 100%; }
+.mex-portada__cuerpo { display: grid; gap: var(--mex-e5); justify-items: start; }
+.mex-portada__cuerpo > * { margin: 0; }
+.mex-portada__titulo { max-width: 100%; }
+.mex-portada__eslogan { max-width: 32rem; color: var(--mex-arena); font-size: 1.1875rem; line-height: 1.6; overflow-wrap: anywhere; }
+.mex-portada__hoy { display: inline-flex; align-items: center; gap: var(--mex-e2); font-weight: 600; }
+.mex-portada__foto { width: 100%; max-width: 26rem; }
+.mex-pagina .mex-portada__imagen { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border: 6px solid var(--mex-dorado); border-radius: 200px 200px 24px 24px; }
+.mex-portada__montes { position: absolute; left: 0; bottom: -1px; width: 100%; height: 7.5rem; display: block; }
+.mex-portada__monte-lejano { fill: var(--mex-terracota); opacity: 0.55; }
+.mex-portada__monte-cercano { fill: var(--mex-crema); }
+.mex-portada__cactus { fill: var(--mex-verde); }
+
+/* ---------- Nosotros ---------- */
+.mex-nosotros { display: grid; gap: var(--mex-e5); align-items: center; }
+.mex-nosotros > * { min-width: 0; margin: 0; }
+.mex-nosotros__texto { max-width: 42rem; color: var(--mex-tinta); font-size: 1.125rem; line-height: 1.7; overflow-wrap: anywhere; }
+
+/* ---------- Recomendados ---------- */
+.mex-recomendados { display: grid; gap: var(--mex-e5); }
+.mex-recomendados > * { min-width: 0; }
+.mex-recomendados__cabeza { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--mex-e3) var(--mex-e5); }
+.mex-recomendados__cabeza > * { margin: 0; }
+.mex-enlace-rojo { display: inline-flex; align-items: center; min-height: var(--mex-toque); color: var(--mex-terracota-texto); font-size: var(--mex-t-base); font-weight: 700; }
+.mex-platos { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: var(--mex-e5); }
+.mex-platos > li { min-width: 0; display: flex; }
+.mex-plato { display: flex; flex: 1; flex-direction: column; min-width: 0; overflow: hidden; border-radius: var(--mex-r-tarjeta); background: var(--mex-crema); color: var(--mex-cafe); }
+.mex-pagina .mex-plato__foto { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+.mex-plato__cuerpo { display: flex; flex: 1; flex-direction: column; gap: var(--mex-e2); padding: 1.25rem; }
+.mex-plato__cuerpo > * { margin: 0; }
+.mex-plato__linea { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--mex-e1) var(--mex-e3); }
+.mex-plato__linea > * { margin: 0; }
+.mex-pagina .mex-plato__nombre { flex: 1 1 8rem; min-width: 0; font-family: var(--mex-fuente-texto); font-size: 1.1875rem; font-weight: 700; line-height: 1.25; }
+.mex-plato__desc { font-size: var(--mex-t-s); line-height: 1.5; color: var(--mex-tinta); }
+
+/* ---------- Etiquetas y precios ---------- */
+.mex-etiquetas { display: flex; flex-wrap: wrap; gap: var(--mex-e2); }
+.mex-etiqueta {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.5rem;
+  padding-inline: var(--mex-e2);
+  border: 2px solid var(--mex-borde);
+  border-radius: var(--mex-r);
+  color: var(--mex-cafe);
+  font-size: var(--mex-t-xs);
+  font-weight: 600;
+  line-height: 1.2;
+}
+.mex-pagina .mex-etiqueta--agotado { border-color: var(--mex-cafe); background: var(--mex-cafe); color: var(--mex-crema); }
+.mex-precio { margin: 0; font-family: var(--mex-fuente-titulo); font-size: var(--mex-t-m); font-weight: 400; color: var(--mex-terracota-texto); white-space: nowrap; }
+.mex-precio__antes { margin-left: var(--mex-e2); font-family: var(--mex-fuente-texto); font-size: var(--mex-t-xs); font-weight: 400; color: var(--mex-tinta); text-decoration: line-through; }
+
+/* ---------- Galería ---------- */
+.mex-galeria { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 22rem)); justify-content: center; gap: var(--mex-e4); margin-top: var(--mex-e5); }
+.mex-galeria > li { min-width: 0; }
+.mex-pagina .mex-galeria__foto { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 16px; }
+#galeria h2 { text-align: center; }
+
+/* ---------- Horario y visita ---------- */
+.mex-visita { padding-block: var(--mex-e7); }
+.mex-dos { display: grid; gap: var(--mex-e6); }
+.mex-dos > * { min-width: 0; }
+.mex-visita .mex-titulo { font-size: clamp(1.75rem, 1.2rem + 2.2vw, 2.5rem); }
+.mex-horario { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--mex-e3) var(--mex-e5); max-width: 32rem; }
+.mex-horario dt { font-weight: 600; }
+.mex-horario dd { margin: 0; color: var(--mex-menta); }
+.mex-horario .mex-horario__hoy { color: var(--mex-blanco); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 0.3em; }
+.mex-horario dd.mex-horario__hoy { font-weight: 700; }
+.mex-direccion { max-width: 30rem; color: var(--mex-menta); }
+
+/* ---------- Reservas ---------- */
+#reservar { scroll-margin-top: 1rem; }
+.mex-reservar__bloque { padding: clamp(1.25rem, 0.5rem + 3vw, 2.5rem); border: var(--mex-borde-grueso) solid var(--mex-cafe); border-radius: 28px; background: var(--mex-blanco); color: var(--mex-cafe); }
+.mex-reservar__rejilla { display: grid; gap: var(--mex-e5); }
+.mex-reservar__rejilla > * { min-width: 0; }
+.mex-reservar .mex-titulo { margin: 0; }
+.mex-reserva { display: grid; gap: var(--mex-e4); }
+.mex-reserva__trampa { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.mex-campo { display: grid; gap: var(--mex-e1); min-width: 0; }
+.mex-campo__etiqueta { font-size: var(--mex-t-s); font-weight: 600; }
+.mex-campo__entrada {
+  width: 100%;
+  min-height: var(--mex-toque);
+  padding: var(--mex-e3);
+  border: 2px solid var(--mex-borde);
+  border-radius: var(--mex-r-campo);
+  background: var(--mex-blanco);
+  color: var(--mex-cafe);
+  font: 400 var(--mex-t-base)/1.3 var(--mex-fuente-texto);
+}
+.mex-campo__entrada::placeholder { color: var(--mex-placeholder); opacity: 1; }
+.mex-campo__area { min-height: 5rem; resize: vertical; }
+/* El envío del formulario usa el acento; al pasar se oscurece (subrayado incluido) */
+.mex-reserva__mensaje { padding: var(--mex-e4) var(--mex-e5); border: 2px solid var(--mex-cafe); border-radius: var(--mex-r-campo); background: var(--mex-crema); color: var(--mex-cafe); }
+.mex-reserva__mensaje[class~="error"] { border-color: var(--mex-error); color: var(--mex-error); font-weight: 700; }
+.mex-reserva__mensaje a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--mex-toque);
+  margin-top: var(--mex-e2);
+  padding: 0 var(--mex-e4);
+  border-radius: var(--mex-r);
+  background: var(--mex-cafe);
+  color: var(--mex-crema);
+  font-weight: 700;
+  text-decoration: none;
+}
+.mex-pagina .mex-reserva__mensaje a:hover { background: var(--mex-crema); color: var(--mex-cafe); outline: 2px solid var(--mex-cafe); }
+.mex-reservar__alterno { margin-top: var(--mex-e5); }
+.mex-reservar__alterno > p { font-weight: 600; }
+.mex-reserva small, .mex-reserva small a { color: var(--mex-cafe); }
+
+/* ---------- Menú ---------- */
+.mex-menu-cabeza { display: grid; gap: var(--mex-e3); justify-items: start; padding-block: var(--mex-e3) var(--mex-e6); }
+.mex-menu-cabeza > * { margin: 0; }
+.mex-pagina .mex-menu-cabeza h1 { font-size: clamp(2.25rem, 1.8rem + 2.5vw, 3.25rem); }
+.mex-idiomas { display: flex; flex-wrap: wrap; gap: var(--mex-e2); }
+.mex-idiomas__enlace {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--mex-toque);
+  min-height: var(--mex-toque);
+  padding-inline: var(--mex-e3);
+  border: 2px solid var(--mex-crema);
+  border-radius: var(--mex-r);
+  font-weight: 700;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+.mex-idiomas__enlace[aria-current="page"] { background: var(--mex-dorado); border-color: var(--mex-dorado); color: var(--mex-cafe); }
+.mex-pagina .mex-idiomas__enlace[aria-current="page"]:hover { color: var(--mex-cafe); }
+.mex-pagina .mex-idiomas__enlace:not([aria-current="page"]):hover { background: var(--mex-crema); color: var(--mex-cafe); text-decoration: none; }
+.mex-aviso { margin: 0 0 var(--mex-e5); padding: var(--mex-e3) var(--mex-e4); border: 2px solid var(--mex-cafe); border-radius: var(--mex-r-campo); background: var(--mex-blanco); color: var(--mex-cafe); }
+.mex-estado-menu { padding: var(--mex-e6) 0; }
+.mex-categorias { position: sticky; top: 0; z-index: 10; background: var(--mex-crema); }
+.mex-categorias__lista {
+  display: flex;
+  gap: var(--mex-e2);
+  width: 100%;
+  max-width: calc(var(--mex-ancho) + var(--mex-lateral) * 2);
+  margin-inline: auto;
+  padding: var(--mex-e3) var(--mex-lateral);
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.mex-categorias__enlace {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  min-height: var(--mex-toque);
+  padding: 0 var(--mex-e4);
+  border: 2px solid var(--mex-cafe);
+  border-radius: var(--mex-r);
+  background: var(--mex-blanco);
+  color: var(--mex-cafe);
+  font-size: var(--mex-t-s);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.mex-pagina .mex-categorias__enlace:hover { background: var(--mex-cafe); color: var(--mex-crema); text-decoration: none; }
+.mex-categorias__enlace[aria-current="true"],
+.mex-pagina .mex-categorias__enlace[aria-current="true"]:hover { border-color: var(--mex-acento); background: var(--mex-acento); color: var(--mex-texto-acento); font-weight: 700; }
+.mex-grupo { padding-top: var(--mex-e5); }
+.mex-pagina .mex-grupo__titulo { margin-bottom: var(--mex-e3); color: var(--mex-verde); font-size: var(--mex-t-l); }
+.mex-lista { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--mex-e3); }
+.mex-fila { display: flex; align-items: center; gap: var(--mex-e3); padding: var(--mex-e3); border-radius: 16px; background: var(--mex-blanco); color: var(--mex-cafe); }
+.mex-fila--variantes { align-items: flex-start; }
+.mex-pagina .mex-fila__foto { flex: none; width: 4.75rem; height: 4.75rem; border-radius: 12px; object-fit: cover; }
+.mex-fila--agotado .mex-fila__foto { filter: grayscale(0.85); }
+.mex-fila__cuerpo { flex: 1 1 auto; display: grid; gap: var(--mex-e1); min-width: 0; }
+.mex-fila__cuerpo > * { margin: 0; }
+.mex-fila__cabeza { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--mex-e1) var(--mex-e3); }
+.mex-fila__cabeza > * { margin: 0; }
+.mex-pagina .mex-fila__nombre { margin: 0; font-family: var(--mex-fuente-texto); font-size: 1rem; font-weight: 700; line-height: 1.25; }
+.mex-fila__desc { font-size: var(--mex-t-xs); line-height: 1.4; color: var(--mex-tinta); }
+.mex-variantes { display: grid; margin-top: var(--mex-e1); }
+.mex-variantes__fila { display: flex; align-items: center; gap: var(--mex-e3); min-height: 3.25rem; border-top: 1px dashed var(--mex-borde); }
+.mex-variantes__nombre { flex: 1 1 auto; min-width: 0; font-size: var(--mex-t-s); font-weight: 600; overflow-wrap: anywhere; }
+/* "+": café con texto crema; al pasar, el acento con su texto */
+.mex-mas {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: var(--mex-toque);
+  height: var(--mex-toque);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--mex-cafe);
+  color: var(--mex-crema);
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+}
+.mex-mas:hover { background: var(--mex-acento); color: var(--mex-texto-acento); }
+
+/* ---------- Pedido ---------- */
+.mex-barra {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 3.5rem;
+  margin: 0;
+  padding: var(--mex-e3) var(--mex-lateral) max(var(--mex-e4), env(safe-area-inset-bottom));
+  border: 0;
+  background: var(--mex-crema);
+  box-shadow: 0 -6px 18px color-mix(in srgb, var(--mex-cafe) 15%, var(--mex-transparente));
+  color: var(--mex-texto-acento);
+  font: 700 var(--mex-t-base)/1.2 var(--mex-fuente-texto);
+  cursor: pointer;
+}
+.mex-barra__interior {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--mex-e3);
+  width: 100%;
+  max-width: 40rem;
+  margin-inline: auto;
+  padding: var(--mex-e4) var(--mex-e5);
+  border-radius: var(--mex-r);
+  background: var(--mex-acento);
+}
+.mex-barra:hover .mex-barra__interior { background: var(--mex-acento-hover); text-decoration: underline; text-underline-offset: 0.3em; }
+.mex-barra:focus-visible { outline: 3px solid var(--mex-cafe); outline-offset: -6px; }
+.mex-barra__texto { flex: 1; text-align: left; }
+.mex-barra__cuenta {
+  display: grid;
+  place-items: center;
+  min-width: 1.75rem;
+  height: 1.75rem;
+  padding: 0 6px;
+  border-radius: var(--mex-r);
+  background: var(--mex-texto-acento);
+  color: var(--mex-acento);
+}
+.mex-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 7rem;
+  z-index: 50;
+  max-width: calc(100vw - 2 * var(--mex-e4));
+  margin: 0;
+  padding: var(--mex-e2) var(--mex-e4);
+  transform: translateX(-50%);
+  border-radius: var(--mex-r);
+  background: var(--mex-cafe);
+  color: var(--mex-crema);
+  font-weight: 600;
+  text-align: center;
+}
+.mex-pedido {
+  position: fixed;
+  inset: auto 0 0 0;
+  width: 100%;
+  max-width: none;
+  max-height: 92dvh;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-top: var(--mex-borde-grueso) solid var(--mex-cafe);
+  border-radius: var(--mex-r-tarjeta) var(--mex-r-tarjeta) 0 0;
+  background: var(--mex-blanco);
+  color: var(--mex-cafe);
+  overflow: hidden;
+}
+.mex-pedido[open] { display: flex; flex-direction: column; }
+.mex-pedido::backdrop { background: var(--mex-capa); }
+body:has(.mex-pedido[open]) { overflow: hidden; }
+.mex-pedido__cabecera { display: flex; align-items: center; justify-content: space-between; gap: var(--mex-e2); padding: var(--mex-e4) var(--mex-e5) var(--mex-e2); }
+.mex-pagina .mex-pedido__titulo { margin: 0; font-size: var(--mex-t-l); }
+.mex-pedido__cerrar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: var(--mex-toque);
+  height: var(--mex-toque);
+  border: 2px solid var(--mex-cafe);
+  border-radius: 50%;
+  background: var(--mex-transparente);
+  color: var(--mex-cafe);
+  cursor: pointer;
+}
+.mex-pedido__cerrar:hover { background: var(--mex-cafe); color: var(--mex-crema); }
+.mex-pedido__cuerpo { flex: 1 1 auto; overflow-y: auto; padding: var(--mex-e3) var(--mex-e5); }
+.mex-pedido__cuerpo .mex-campo { margin-top: var(--mex-e4); }
+.mex-pedido__vacio { color: var(--mex-tinta); }
+.mex-pedido__lista { display: grid; gap: var(--mex-e3); margin-bottom: var(--mex-e3); }
+.mex-linea { display: grid; gap: var(--mex-e2); padding-bottom: var(--mex-e3); border-bottom: 2px solid var(--mex-borde); list-style: none; }
+.mex-linea__fila { display: flex; align-items: center; justify-content: space-between; gap: var(--mex-e2); }
+.mex-pagina .mex-linea__nombre { min-width: 0; margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.mex-pagina .mex-linea__subtotal { flex: none; margin: 0; font-weight: 700; }
+.mex-linea__nota { flex: 1 1 auto; min-width: 0; }
+.mex-linea__cantidad { display: flex; flex: none; align-items: center; gap: var(--mex-e1); }
+.mex-pagina .mex-linea__numero { min-width: 2ch; margin: 0; text-align: center; font-weight: 700; }
+.mex-cantidad {
+  display: grid;
+  place-items: center;
+  width: var(--mex-toque);
+  height: var(--mex-toque);
+  padding: 0;
+  border: 2px solid var(--mex-cafe);
+  border-radius: 50%;
+  background: var(--mex-transparente);
+  color: var(--mex-cafe);
+  font-size: var(--mex-t-m);
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+}
+.mex-cantidad:hover { background: var(--mex-cafe); color: var(--mex-crema); }
+.mex-cantidad:disabled { opacity: 0.45; cursor: not-allowed; }
+.mex-entrega { min-width: 0; margin: 0; padding: 0; border: 0; }
+.mex-entrega legend { margin-bottom: var(--mex-e2); padding: 0; }
+.mex-entrega__opciones { display: flex; flex-wrap: wrap; gap: var(--mex-e2); }
+.mex-entrega__opcion {
+  display: inline-flex;
+  flex: 1 1 8rem;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mex-e2);
+  min-height: var(--mex-toque);
+  padding: var(--mex-e2) var(--mex-e3);
+  border: 2px solid var(--mex-borde);
+  border-radius: var(--mex-r-campo);
+  font-size: var(--mex-t-s);
+  font-weight: 600;
+  cursor: pointer;
+}
+.mex-entrega__opcion input { margin: 0; accent-color: var(--mex-verde); }
+.mex-entrega__opcion:has(input:checked) { border-color: var(--mex-verde); background: var(--mex-verde); color: var(--mex-blanco); font-weight: 700; }
+.mex-entrega__opcion:has(input:checked) input { accent-color: var(--mex-dorado); }
+.mex-entrega__opcion:has(input:focus-visible) { outline: 3px solid var(--mex-cafe); outline-offset: 2px; }
+.mex-pedido__pie { display: grid; gap: var(--mex-e2); padding: var(--mex-e3) var(--mex-e5) max(var(--mex-e4), env(safe-area-inset-bottom)); overflow-y: auto; border-top: 2px solid var(--mex-borde); }
+.mex-pagina .mex-pedido__total { display: flex; align-items: baseline; justify-content: space-between; gap: var(--mex-e2); margin: 0; font-size: var(--mex-t-m); font-weight: 700; }
+.mex-pagina .mex-pedido__nota { margin: 0; font-size: var(--mex-t-xs); color: var(--mex-tinta); }
+.mex-pedido__pie .mex-aviso { margin-bottom: 0; }
+.mex-pedido__botones { display: flex; flex-wrap: wrap; gap: var(--mex-e2); }
+.mex-pedido__enviar { flex: 1 1 auto; }
+
+/* ---------- Pie ---------- */
+.mex-pie { color: var(--mex-arena); }
+.mex-pie__contenido { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--mex-e3) var(--mex-e5); padding-block: var(--mex-e5); font-size: var(--mex-t-s); }
+.mex-pie__contenido > * { margin: 0; }
+.mex-pie__nombre { font-family: var(--mex-fuente-titulo); font-size: 1.125rem; font-weight: 400; color: var(--mex-crema); overflow-wrap: anywhere; }
+.mex-pie__lista { display: flex; flex-wrap: wrap; gap: 0 var(--mex-e4); }
+.mex-pie__lista a { display: inline-flex; align-items: center; min-height: var(--mex-toque); color: var(--mex-crema); }
+
+/* ---------- Ancho ---------- */
+@media (min-width: 40rem) {
+  .mex-reserva { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mex-campo--completo,
+  .mex-reserva__mensaje { grid-column: 1 / -1; }
+}
+@media (min-width: 48rem) {
+  .mex-dos { grid-template-columns: 1fr 1fr; gap: var(--mex-e7); }
+  .mex-nosotros { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: var(--mex-e6); }
+  .mex-reservar__rejilla { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: var(--mex-e6); }
+  .mex-pedido {
+    inset: 0;
+    width: min(34rem, calc(100vw - 2rem));
+    max-height: calc(100dvh - 2rem);
+    margin: auto;
+    border: var(--mex-borde-grueso) solid var(--mex-cafe);
+    border-radius: var(--mex-r-tarjeta);
+  }
+}
+@media (min-width: 60rem) {
+  .mex-portada__rejilla--foto { grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); gap: var(--mex-e7); }
+  .mex-portada__rejilla--foto .mex-portada__foto { justify-self: end; }
+}
+@media (max-width: 30rem) {
+  .mex-botones .mex-boton { flex: 1 1 100%; }
+  .mex-fila__foto { width: 3.5rem; height: 3.5rem; }
+}
+
+/* ---------- Movimiento ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+  .mex-boton,
+  .mex-mas,
+  .mex-cantidad,
+  .mex-barra__interior,
+  .mex-categorias__enlace { transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease; }
+}

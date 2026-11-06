@@ -136,7 +136,7 @@ class SitioJaponesTest extends TestCase
 
     public function test_el_catalogo_registra_la_plantilla_i_japones(): void
     {
-        $this->assertSame(['b', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'o'], array_keys(Catalogos::plantillasSitio()));
+        $this->assertSame(['b', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o'], array_keys(Catalogos::plantillasSitio()));
         $this->assertSame('Japonés', Catalogos::plantillasSitio()['i']['nombre']);
         $this->assertSame('i', AparienciaSitio::plantillaVigente('i'));
     }

@@ -136,7 +136,7 @@ class SitioCortesTest extends TestCase
 
     public function test_el_catalogo_registra_la_plantilla_k_cortes(): void
     {
-        $this->assertSame(['b', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'o'], array_keys(Catalogos::plantillasSitio()));
+        $this->assertSame(['b', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o'], array_keys(Catalogos::plantillasSitio()));
         $this->assertSame('Cortes premium', Catalogos::plantillasSitio()['k']['nombre']);
         $this->assertSame('k', AparienciaSitio::plantillaVigente('k'));
     }

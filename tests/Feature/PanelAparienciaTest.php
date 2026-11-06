@@ -327,6 +327,6 @@ class PanelAparienciaTest extends TestCase
      */
     public static function plantillasSinEstilo(): array
     {
-        return ['e' => ['e'], 'f' => ['f'], 'g' => ['g'], 'h' => ['h'], 'i' => ['i'], 'j' => ['j'], 'k' => ['k'], 'l' => ['l'], 'm' => ['m'], 'o' => ['o']];
+        return ['e' => ['e'], 'f' => ['f'], 'g' => ['g'], 'h' => ['h'], 'i' => ['i'], 'j' => ['j'], 'k' => ['k'], 'l' => ['l'], 'm' => ['m'], 'n' => ['n'], 'o' => ['o']];
     }
 }
