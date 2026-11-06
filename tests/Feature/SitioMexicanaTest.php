@@ -136,7 +136,7 @@ class SitioMexicanaTest extends TestCase
 
     public function test_el_catalogo_registra_la_plantilla_n_mexicana_colorida(): void
     {
-        $this->assertSame(['b', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n'], array_keys(Catalogos::plantillasSitio()));
+        $this->assertSame(['b', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o'], array_keys(Catalogos::plantillasSitio()));
         $this->assertSame('Mexicana colorida', Catalogos::plantillasSitio()['n']['nombre']);
         $this->assertSame('n', AparienciaSitio::plantillaVigente('n'));
     }
