@@ -335,7 +335,7 @@ class WebpImageServiceChallengerTest extends TestCase
 
     /**
      * Challenge 7: Boundary dimension 4096px (exact limit) is accepted and downscaled.
-     * Note: Decompressing 4096x2048 in GD requires ~32MB uncompressed canvas; requires 256M memory_limit.
+     * Note: Decompressing 4096x2048 in GD requires ~32MB uncompressed canvas; requires 512M memory_limit.
      */
     public function test_boundary_exact_4096px_is_accepted_and_downscaled(): void
     {
