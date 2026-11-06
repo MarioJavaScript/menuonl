@@ -217,7 +217,7 @@ class TextosPrePilotoTest extends TestCase
      */
     public static function plantillasConCajon(): array
     {
-        return ['plantilla E' => ['e'], 'plantilla F' => ['f'], 'plantilla G' => ['g'], 'plantilla H' => ['h'], 'plantilla I' => ['i'], 'plantilla J' => ['j'], 'plantilla K' => ['k'], 'plantilla L' => ['l'], 'plantilla M' => ['m']];
+        return ['plantilla E' => ['e'], 'plantilla F' => ['f'], 'plantilla G' => ['g'], 'plantilla H' => ['h'], 'plantilla I' => ['i'], 'plantilla J' => ['j'], 'plantilla K' => ['k'], 'plantilla L' => ['l'], 'plantilla M' => ['m'], 'plantilla P' => ['p']];
     }
 
     public function test_los_ajustes_del_panel_aclaran_que_los_pedidos_son_para_domicilio_o_recoger(): void
