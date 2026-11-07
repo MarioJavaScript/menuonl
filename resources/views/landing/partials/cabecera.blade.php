@@ -6,8 +6,10 @@
     </a>
     <nav class="site-nav" aria-label="Principal">
       <a href="{{ route('portada') }}#como-funciona">Cómo funciona</a>
+      <a href="{{ route('portada') }}#incluye">Beneficios</a>
       <a href="{{ route('portada') }}#planes">Planes</a>
       <a href="{{ route('portada') }}#preguntas">Preguntas</a>
+      <a href="{{ route('portada') }}#contacto">Contacto</a>
     </nav>
     @if ($url = $soporte->enlaceWhatsapp('Hola, quiero conocer '.config('app.name').' para mi restaurante.'))
 <a class="btn btn--primary btn--sm" href="{{ $url }}" rel="noopener noreferrer">
