@@ -8,7 +8,7 @@ la purga de Cloudflare al cambiar un menú o un plan (`PurgarCacheRestauranteJob
 |---|---|
 | `supervisor/menuonl-worker.conf` | Worker con Supervisor (2 procesos, reinicio automático). |
 | `systemd/menuonl-worker@.service` | El mismo worker con systemd (plantilla: una instancia por proceso). |
-| `desplegar.sh` | Ejemplo de la secuencia de despliegue, con `queue:restart` y la verificación final. |
+| `desplegar.sh` | Ejemplo de la secuencia de despliegue, con `queue:restart` y la verificación antes y después de `php artisan up`. |
 
 Usa **uno** de los dos (Supervisor o systemd), no ambos.
 
@@ -61,7 +61,7 @@ ya lo incluye. Los workers también se reinician solos cada hora (`--max-time=36
    php artisan menuonl:verificar-produccion
    ```
 
-   La línea `Worker de colas` debe salir `[OK]`. Si sale `[FALLA]`, no hay un worker procesando.
+   La línea `Worker de colas` debe salir `[OK]`. Si sale `[FALLA]`, no hay un worker procesando. Córrelo con el sitio arriba: durante `php artisan down` los workers no procesan trabajos, así que antes de `php artisan up` se usa `--sin-worker`.
 2. **El proceso:**
    - Supervisor: `sudo supervisorctl status` (deben estar `RUNNING`).
    - systemd: `systemctl status menuonl-worker@1` y `journalctl -u menuonl-worker@1 -n 50`.

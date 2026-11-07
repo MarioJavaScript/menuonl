@@ -117,16 +117,11 @@ class PortadaTest extends TestCase
             ->assertSee('href="'.route('terminos').'"', false);
     }
 
-    public function test_las_paginas_legales_son_de_relleno_y_no_se_indexan(): void
+    public function test_ninguna_pagina_publica_pide_no_indexarse(): void
     {
-        foreach (['/privacidad', '/terminos'] as $ruta) {
-            $this->get($ruta)
-                ->assertOk()
-                ->assertSee('<meta name="robots" content="noindex">', false)
-                ->assertSee('[PÁGINA POR ESCRIBIR]');
+        foreach (['/', '/privacidad', '/terminos'] as $ruta) {
+            $this->get($ruta)->assertOk()->assertDontSee('noindex', false);
         }
-
-        $this->get('/')->assertDontSee('noindex', false);
     }
 
     public function test_el_menu_de_ejemplo_usa_la_variable_si_es_ruta_relativa_o_url_propia(): void
@@ -180,13 +175,9 @@ class PortadaTest extends TestCase
         $this->get('/privacidad')->assertOk()->assertSee('Aviso de privacidad');
     }
 
-    public function test_la_portada_ya_no_muestra_marcadores_y_solo_quedan_las_paginas_legales(): void
+    public function test_ni_la_portada_ni_las_paginas_legales_muestran_marcadores(): void
     {
-        $pendientes = (new MarcadoresPendientes)->enPaginasPublicas();
-
-        $this->assertSame(['/privacidad', '/terminos'], array_keys($pendientes));
-        $this->assertSame(['[PÁGINA POR ESCRIBIR]'], $pendientes['/privacidad']);
-        $this->assertSame(['[PÁGINA POR ESCRIBIR]'], $pendientes['/terminos']);
+        $this->assertSame([], (new MarcadoresPendientes)->enPaginasPublicas());
         $this->get('/')->assertOk()->assertDontSee('class="mark"', false);
     }
 

@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Restaurante;
 use App\Services\ContactoSoporte;
+use App\Services\DatosLegales;
 use App\Services\MarcadoresPendientes;
 use App\Services\RespaldoService;
 use App\Services\SondaDeCola;
@@ -31,7 +32,7 @@ class VerificarProduccionMenuonl extends Command
      */
     private array $resultados = [];
 
-    public function handle(SondaDeCola $sonda, RespaldoService $respaldos): int
+    public function handle(SondaDeCola $sonda, RespaldoService $respaldos, DatosLegales $legales): int
     {
         $this->revisar('APP_ENV', config('app.env') === 'production', 'es "production"', 'es "'.config('app.env').'"; debe ser "production"');
         $this->revisar('APP_DEBUG', config('app.debug') === false, 'está apagado', 'está encendido; debe ser false (muestra errores internos)');
@@ -45,6 +46,7 @@ class VerificarProduccionMenuonl extends Command
 
         $this->revisar('SOPORTE_WHATSAPP', app(ContactoSoporte::class)->numero() !== null, 'está definida', 'falta o no es válida (10 a 15 dígitos, con lada); la portada no mostraría sus botones de WhatsApp y la pantalla de cuenta pausada no tendría el botón de soporte');
         $this->revisar('APP_LOCALE', config('app.locale') === 'es', 'es "es"', 'es "'.config('app.locale').'"; debe ser "es"');
+        $this->revisarDatosLegales($legales);
 
         $this->revisarWorker($sonda, in_array($cola, ['sync', 'null'], true));
         $this->avisos();
@@ -75,6 +77,18 @@ class VerificarProduccionMenuonl extends Command
         $ok
             ? $this->line("  <info>[OK]</info>     {$nombre} {$detalleOk}")
             : $this->line("  <error>[FALLA]</error>  {$nombre} {$detalleFalla}");
+    }
+
+    /**
+     * Each legal variable must be set: the pages omit a missing value, so nothing else would reveal it. Never prints the values.
+     */
+    private function revisarDatosLegales(DatosLegales $legales): void
+    {
+        $faltantes = $legales->faltantes();
+
+        foreach (DatosLegales::VARIABLES as $variable) {
+            $this->revisar($variable, ! in_array($variable, $faltantes, true), 'está definida', 'falta o no es válida; /privacidad y /terminos saldrían sin ese dato');
+        }
     }
 
     private function revisarWorker(SondaDeCola $sonda, bool $colaSincrona): void

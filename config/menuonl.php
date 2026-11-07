@@ -138,8 +138,9 @@ return [
     | Precios de la portada
     |--------------------------------------------------------------------------
     |
-    | Único lugar de los precios que muestra la portada (tarjetas de planes y preguntas frecuentes), en pesos por mes.
-    | La nota va debajo de los precios: aquí se escribe el aviso de IVA cuando esté confirmado.
+    | Único lugar de los precios que muestran la portada (tarjetas de planes y preguntas frecuentes) y los términos, en pesos
+    | por mes. La nota va debajo de los precios: aquí se escribe el aviso de IVA cuando esté confirmado. `nombres` son los que
+    | usan los términos; deben coincidir con los de PlanRestaurante (lang/es/panel.php), y una prueba lo vigila.
     |
     */
 
@@ -147,6 +148,29 @@ return [
         'lite' => 199,
         'aura' => 399,
         'nota' => 'Precios mensuales en pesos mexicanos.',
+        'nombres' => [
+            'lite' => 'Lite',
+            'aura' => 'Aura',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Datos legales del responsable
+    |--------------------------------------------------------------------------
+    |
+    | Para /privacidad y /terminos (App\Services\DatosLegales). Sin valor, la página omite el dato y
+    | `menuonl:verificar-produccion` falla. La fecha va como AAAA-MM-DD. `jurisdiccion` es el estado cuyos tribunales
+    | conocen de una controversia (términos).
+    |
+    */
+
+    'legal' => [
+        'responsable' => env('LEGAL_RESPONSABLE'),
+        'domicilio' => env('LEGAL_DOMICILIO'),
+        'correo_privacidad' => env('LEGAL_CORREO_PRIVACIDAD'),
+        'fecha_actualizacion' => env('LEGAL_FECHA_ACTUALIZACION'),
+        'jurisdiccion' => env('LEGAL_JURISDICCION'),
     ],
 
     /*

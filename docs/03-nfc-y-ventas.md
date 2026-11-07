@@ -27,7 +27,7 @@ Una etiqueta NFC (NTAG213/215) guarda la misma URL corta `/q/{codigo}` que el QR
 2. **Dolor a resolver:** no reimprimir menús al cambiar un precio, aparecer como abierto/cerrado y recibir pedidos por WhatsApp.
 3. **Planes:** Básico (menú + QR), Pro (pedidos, idiomas, NFC) y pago único por el kit físico (soportes NFC/QR). Fuera de la v1; al inicio se cobra manualmente.
 4. **Canales:** imprentas, agencias de diseño y repartidores de WhatsApp como revendedores con comisión.
-5. **Aviso de privacidad:** como no se guardan datos del comensal, basta uno simple.
+5. **Aviso de privacidad:** las reservas guardan el nombre, el teléfono y la nota del comensal, así que hace falta un aviso completo (`/privacidad`).
 
 ## Riesgos de negocio
 

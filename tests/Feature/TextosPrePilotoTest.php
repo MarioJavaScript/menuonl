@@ -6,6 +6,7 @@ use App\Filament\Pages\AjustesDeReservasYPedidos;
 use App\Models\Horario;
 use App\Models\Restaurante;
 use App\Models\Scopes\RestauranteScope;
+use App\Services\Catalogos;
 use App\Services\MarcadoresPendientes;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
@@ -119,6 +120,22 @@ class TextosPrePilotoTest extends TestCase
         $this->assertStringContainsString('id="form-reserva"', $html);
         $this->assertStringNotContainsString(route('privacidad'), $html);
         $this->assertStringNotContainsString('Aviso de privacidad', $html);
+    }
+
+    public function test_la_nota_de_la_reserva_sigue_disponible_y_pide_no_incluir_salud_ni_datos_de_otras_personas(): void
+    {
+        $this->privacidadPendiente(false);
+
+        foreach (array_keys(Catalogos::plantillasSitio()) as $plantilla) {
+            $restaurante = $this->restauranteDelSitio($plantilla);
+
+            $html = $this->get(route('sitio.publico', ['slug' => $restaurante->slug]))->assertOk()->getContent();
+
+            $this->assertStringContainsString('name="nota"', $html, "Plantilla {$plantilla}");
+            $this->assertStringContainsString('aria-describedby="rs-nota-ayuda"', $html, "Plantilla {$plantilla}");
+            $this->assertStringContainsString('<small id="rs-nota-ayuda">No incluyas datos de salud ni de otras personas.</small>', $html, "Plantilla {$plantilla}");
+            $this->assertStringNotContainsString('alergias', $html, "Plantilla {$plantilla}");
+        }
     }
 
     public function test_sin_reservas_activas_no_hay_formulario_ni_enlace(): void

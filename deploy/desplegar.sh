@@ -21,7 +21,12 @@ php artisan event:cache
 # Sin este paso siguen ejecutando el código viejo.
 php artisan queue:restart
 
+# Revisa la configuración antes de abrir el sitio. Si falla, set -e detiene el script y el sitio sigue en mantenimiento:
+# corrige el .env, corre config:cache, repite este comando y, si termina en cero, corre php artisan up (docs/despliegue.md, punto 3).
+# Va con --sin-worker porque durante el mantenimiento los workers no procesan trabajos y la sonda fallaría siempre.
+php artisan menuonl:verificar-produccion --sin-worker
+
 php artisan up
 
-# Falla (código distinto de cero) si la configuración de producción o el worker están mal.
+# Revisión completa, ahora sí con el worker. Si falla aquí, el sitio ya está arriba: solo el worker quedó sin confirmar.
 php artisan menuonl:verificar-produccion

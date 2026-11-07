@@ -271,12 +271,12 @@ class LandingNuevaTest extends TestCase
     {
         $this->assertStringContainsString('js/landing-criterio.js', $this->portada());
 
-        foreach (['/privacidad', '/terminos'] as $ruta) {
+        foreach (['/privacidad' => 'Aviso de privacidad', '/terminos' => 'Términos y condiciones'] as $ruta => $encabezado) {
             $html = (string) $this->get($ruta)
                 ->assertOk()
                 ->assertDontSee('landing-criterio', false)
                 ->assertDontSee('<canvas', false)
-                ->assertSee('[PÁGINA POR ESCRIBIR]')
+                ->assertSee('<h1>'.$encabezado.'</h1>', false)
                 ->getContent();
 
             $this->assertDoesNotMatchRegularExpression('#assets/(landing|escena)-[^"]*\.js#', $html);
