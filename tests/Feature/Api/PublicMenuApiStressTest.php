@@ -321,27 +321,28 @@ class PublicMenuApiStressTest extends TestCase
      */
     public function test_cors_preflight_and_unauthorized_origin_handling(): void
     {
+        config(['cors.allowed_origins' => ['https://cliente.example', 'https://otro.example']]);
         $restaurante = Restaurante::factory()->create();
 
-        // 1. Allowed origin localhost:3000 OPTIONS preflight
+        // 1. Allowed origin OPTIONS preflight
         $responseAllowed = $this->withHeaders([
-            'Origin' => 'http://localhost:3000',
+            'Origin' => 'https://cliente.example',
             'Access-Control-Request-Method' => 'GET',
             'Access-Control-Request-Headers' => 'Accept, Content-Type, Authorization',
         ])->options('/api/v1/menu/'.$restaurante->slug);
 
         $this->assertContains($responseAllowed->getStatusCode(), [200, 204]);
-        $responseAllowed->assertHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
+        $responseAllowed->assertHeader('Access-Control-Allow-Origin', 'https://cliente.example');
         $this->assertTrue($responseAllowed->headers->has('Access-Control-Allow-Methods'));
 
-        // 2. Allowed origin 127.0.0.1:3000
+        // 2. Second allowed origin
         $responseIp = $this->withHeaders([
-            'Origin' => 'http://127.0.0.1:3000',
+            'Origin' => 'https://otro.example',
             'Access-Control-Request-Method' => 'GET',
         ])->options('/api/v1/menu/'.$restaurante->slug);
 
         $this->assertContains($responseIp->getStatusCode(), [200, 204]);
-        $responseIp->assertHeader('Access-Control-Allow-Origin', 'http://127.0.0.1:3000');
+        $responseIp->assertHeader('Access-Control-Allow-Origin', 'https://otro.example');
 
         // 3. Unauthorized origin: should NOT receive Access-Control-Allow-Origin for that evil domain
         $responseEvil = $this->withHeaders([

@@ -7,9 +7,9 @@ return [
     | Cross-Origin Resource Sharing (CORS) Configuration
     |--------------------------------------------------------------------------
     |
-    | Here you may configure your settings for cross-origin resource sharing
-    | or "CORS". This determines what cross-origin operations may execute
-    | in web browsers. You are free to adjust these settings as needed.
+    | The panel and the public pages are same-origin, so no origin is allowed
+    | by default. Set FRONTEND_URL only if an external client must read the
+    | public API (/api/v1/menu/{slug}) from a browser.
     |
     | To learn more: https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
     |
@@ -19,13 +19,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => [
-        'http://localhost:3000',
-        'http://127.0.0.1:3000',
-        'http://localhost:3001',
-        'http://127.0.0.1:3001',
-        env('FRONTEND_URL', 'http://localhost:3000'),
-    ],
+    'allowed_origins' => array_values(array_filter([env('FRONTEND_URL')])),
 
     'allowed_origins_patterns' => [],
 
