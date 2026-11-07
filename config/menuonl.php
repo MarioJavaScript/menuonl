@@ -123,6 +123,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Etiquetas NFC en la portada
+    |--------------------------------------------------------------------------
+    |
+    | Apagado, la portada no menciona NFC en ningún lado (HTML, SEO, canvas, planes ni preguntas). Encendido, muestra los
+    | textos de QR + NFC. Solo afecta a la portada; un valor vacío o no reconocido cuenta como apagado.
+    |
+    */
+
+    'nfc_disponible' => filter_var(env('NFC_DISPONIBLE', false), FILTER_VALIDATE_BOOLEAN),
+
+    /*
+    |--------------------------------------------------------------------------
     | Precios de la portada
     |--------------------------------------------------------------------------
     |
