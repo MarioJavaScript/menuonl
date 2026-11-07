@@ -95,6 +95,7 @@ Se parte de `.env.example`. La columna "Producción" es el valor esperado; las m
 | `LEGAL_FECHA_ACTUALIZACION` | `AAAA-MM-DD`, p. ej. `2026-11-06` | **Obligatoria en producción.** Cámbiala cada vez que cambie el texto de las páginas legales. Sin ella o con otro formato, las páginas omiten la fecha y el comando falla. |
 | `LEGAL_JURISDICCION` | nombre del estado, entre comillas si lleva espacios | **Obligatoria en producción.** Estado cuyos tribunales cita `/terminos`. Sin ella, el texto dice "de México" y el comando falla. |
 | `MENU_DEMO_URL` | ruta relativa (`/la-esquina/menu`) o URL de tu propio dominio | Menú que enseña el botón "Ver un menú de ejemplo" de la portada. Cualquier otra cosa (otro dominio, usuario en la URL, espacios) se ignora. Vacía = el primer restaurante activo (el de muestra `la-esquina` si existe); sin ninguno, el botón no sale. |
+| `NFC_DISPONIBLE` | `true` o `false` | Opcional, por omisión `false`: la portada no menciona NFC en ningún lado. Enciéndela solo si ya ofreces las etiquetas. Con `config:cache` y Cloudflare, el cambio se ve tras `php artisan config:cache` y purgar `/`. |
 | `BACKUP_DISK`, `BACKUP_ACCESS_KEY_ID`, `BACKUP_SECRET_ACCESS_KEY`, `BACKUP_BUCKET`, `BACKUP_ENDPOINT`, `BACKUP_REGION`, `BACKUP_USE_PATH_STYLE_ENDPOINT` | bucket **privado** R2/B2 | Credenciales limitadas a ese bucket. |
 | `BACKUP_ARCHIVE_PASSWORD` | contraseña larga y aleatoria | Guardada **fuera** del servidor. Vacía = el respaldo se niega a correr. |
 | `BACKUP_RETENTION_DAYS`, `BACKUP_PREFIX`, `BACKUP_MYSQLDUMP_PATH`, `BACKUP_TIMEOUT_SECONDS` | 14 / `menuonl` / `mariadb-dump` si aplica / 1800 | |
@@ -279,13 +280,13 @@ Pendientes del ensayo: un respaldo con volumen real (miles de imágenes: tiempo,
 
 ### 5.1 Landing (`/`, `/privacidad`, `/terminos`)
 
-La portada es pública, sin sesión ni cookies, y manda `Cache-Control: public, max-age=300, stale-while-revalidate=600`. Sus recursos son del propio dominio: CSS compilado por Vite (`/build/*`, entrada `resources/css/landing.css`, con las fuentes latinas de `@fontsource`), `public/js/landing-reveal.js`, imágenes en `public/landing/img/` y `public/brand/`.
+La portada es pública, sin sesión ni cookies, y manda `Cache-Control: public, max-age=300, stale-while-revalidate=600`. Sus recursos son del propio dominio: CSS y JS compilados por Vite (`/build/*`, entradas `resources/css/landing.css` y `resources/js/landing.js`; la escena con three.js es un archivo aparte que solo se descarga en modo 3D), `public/js/landing-reveal.js`, `public/js/landing-criterio.js`, fuentes en `public/fonts/landing/`, imágenes en `public/landing/img/` y `public/brand/`.
 
 Reglas de Cloudflare (Caching → Cache Rules), en este orden:
 
 | Acción | Rutas |
 |---|---|
-| **Cachear** (respetar el `Cache-Control` del origen) | `/`, `/privacidad`, `/terminos`, `/build/*`, `/brand/*`, `/js/*`, `/landing/*` |
+| **Cachear** (respetar el `Cache-Control` del origen) | `/`, `/privacidad`, `/terminos`, `/build/*`, `/brand/*`, `/fonts/*`, `/js/*`, `/landing/*` |
 | **Bypass de caché** | `/admin*`, `/q/*`, `/livewire*`, `/api/*`, `/invitaciones/*` |
 
 No uses "Cache Everything" para todo el dominio. Tras cambiar el texto de la portada, purga `/`, `/privacidad` y `/terminos` (si no, tardan hasta 5 minutos más la ventana de revalidación en verse). Antes de abrir a clientes: `curl -sI https://dominio/` no debe mostrar `Set-Cookie`, y `menuonl:verificar-produccion` no debe avisar de marcadores pendientes.
@@ -346,7 +347,7 @@ Políticas por grupo (`app/Services/PoliticaDeContenido.php`):
 | Grupo | `script-src` | Notas |
 |---|---|---|
 | `/{slug}`, `/{slug}/menu`, `/q/*` (públicas) | `'self'` | **Sin `'unsafe-inline'` en scripts.** El único script en línea (apariencia clara/oscura) pasó a `public/js/apariencia.js`. Sin nonce a propósito: el HTML debe ser igual en cada petición para que Cloudflare lo cachee. `default-src` conserva `'unsafe-inline'` solo para estilos (hay unos 40 atributos `style=`). |
-| `/`, `/privacidad`, `/terminos` (`PoliticaDeContenido::LANDING`) | `'self'` | Landing: `default-src 'none'` y solo `'self'` en scripts, estilos, imágenes y fuentes; sin `unsafe-inline`, sin nonce, `connect-src`, `frame-src` y `form-action` en `'none'`. El JSON-LD es un dato, no un script. Los botones de WhatsApp son enlaces (navegación), no los afecta. |
+| `/`, `/privacidad`, `/terminos` (`PoliticaDeContenido::LANDING`) | `'self'` | Landing: `default-src 'none'` y solo `'self'` en scripts, estilos, imágenes y fuentes; sin `unsafe-inline`, sin nonce, `connect-src`, `frame-src` y `form-action` en `'none'`. El JSON-LD es un dato, no un script. Los botones de WhatsApp son enlaces (navegación), no los afecta. La escena 3D de la portada funciona con esta política sin cambios: no necesita `'unsafe-eval'` ni abrir `connect-src`. En local, Laravel Boost inyecta un script en línea que la CSP bloquea y deja un error en consola; no ocurre en producción, y se quita con `BOOST_BROWSER_LOGS_WATCHER=false`. |
 | `/invitaciones/*` (`PoliticaDeContenido::estricta()`) | `'self'` | Vite propio, sin scripts en línea. `connect-src 'self'`, `object-src 'none'`, `base-uri 'self'`. |
 | `/admin` (Filament y Livewire) | `'self' 'nonce-…' 'unsafe-eval'` | Nonce nuevo por petición (`Vite::useCspNonce()`); Filament y Livewire lo ponen a sus scripts en línea. Estilos: `'unsafe-inline'` y `fonts.bunny.net` (la tipografía por defecto de Filament). |
 

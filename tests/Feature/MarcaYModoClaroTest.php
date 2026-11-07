@@ -49,7 +49,7 @@ class MarcaYModoClaroTest extends TestCase
     {
         $this->get('/')
             ->assertOk()
-            ->assertSee('<title>'.self::MARCA.' | Menú digital con QR y NFC para restaurantes</title>', false)
+            ->assertSee('<title>'.self::MARCA.' | Menú digital con QR para restaurantes</title>', false)
             ->assertSee('&copy; '.date('Y').' '.self::MARCA, false)
             ->assertDontSee('MENUONL');
     }
