@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Jobs\LatidoColasJob;
+use App\Services\MarcadoresPendientes;
 use App\Services\SondaDeCola;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -28,6 +29,14 @@ class VerificarProduccionTest extends TestCase
         'mail.mailers.smtp.username' => 'usuario-smtp-secreto',
         'database.connections.mysql.password' => 'contrasena-bd-secreta',
         'services.cloudflare.api_token' => 'token-cloudflare-secreto',
+    ];
+
+    private const array DATOS_LEGALES = [
+        'menuonl.legal.responsable' => 'Responsable Privado SA',
+        'menuonl.legal.domicilio' => 'Calle Privada 123, Ciudad',
+        'menuonl.legal.correo_privacidad' => 'privacidad-secreta@ejemplo.com',
+        'menuonl.legal.fecha_actualizacion' => '2026-11-06',
+        'menuonl.legal.jurisdiccion' => 'Estado Privado',
     ];
 
     protected function tearDown(): void
@@ -62,6 +71,7 @@ class VerificarProduccionTest extends TestCase
             'queue.default' => 'database',
             'cache.default' => 'database',
             'menuonl.soporte_whatsapp' => '525512349988',
+            ...self::DATOS_LEGALES,
             ...self::SECRETOS,
         ]);
     }
@@ -98,6 +108,14 @@ class VerificarProduccionTest extends TestCase
             'whatsapp vacío' => ['menuonl.soporte_whatsapp', '', 'SOPORTE_WHATSAPP'],
             'whatsapp sin dígitos' => ['menuonl.soporte_whatsapp', 'sin-numero', 'SOPORTE_WHATSAPP'],
             'idioma en inglés' => ['app.locale', 'en', 'APP_LOCALE'],
+            'responsable ausente' => ['menuonl.legal.responsable', null, 'LEGAL_RESPONSABLE'],
+            'responsable con marcador' => ['menuonl.legal.responsable', '[POR COMPLETAR]', 'LEGAL_RESPONSABLE'],
+            'domicilio vacío' => ['menuonl.legal.domicilio', '   ', 'LEGAL_DOMICILIO'],
+            'correo ausente' => ['menuonl.legal.correo_privacidad', null, 'LEGAL_CORREO_PRIVACIDAD'],
+            'correo inválido' => ['menuonl.legal.correo_privacidad', 'no-es-correo', 'LEGAL_CORREO_PRIVACIDAD'],
+            'fecha ausente' => ['menuonl.legal.fecha_actualizacion', null, 'LEGAL_FECHA_ACTUALIZACION'],
+            'fecha con otro formato' => ['menuonl.legal.fecha_actualizacion', '06/11/2026', 'LEGAL_FECHA_ACTUALIZACION'],
+            'jurisdicción ausente' => ['menuonl.legal.jurisdiccion', null, 'LEGAL_JURISDICCION'],
         ];
     }
 
@@ -180,6 +198,33 @@ class VerificarProduccionTest extends TestCase
         $this->assertStringContainsString('comprobación omitida', $salida);
     }
 
+    public function test_sin_worker_sigue_fallando_si_la_configuracion_esta_mal(): void
+    {
+        $this->configurarProduccionCorrecta(['menuonl.legal.responsable' => null]);
+
+        [$codigo, $salida] = $this->ejecutar(['--sin-worker' => true]);
+
+        $this->assertSame(1, $codigo);
+        $this->assertMatchesRegularExpression('/\[FALLA\]\s+LEGAL_RESPONSABLE/', $salida);
+    }
+
+    public function test_el_despliegue_revisa_la_configuracion_antes_de_abrir_el_sitio_y_el_worker_despues(): void
+    {
+        $guion = (string) file_get_contents(base_path('deploy/desplegar.sh'));
+        $lineas = array_map('trim', preg_split('/\R/', $guion));
+
+        $abrir = array_search('php artisan up', $lineas, true);
+        $configuracion = array_search('php artisan menuonl:verificar-produccion --sin-worker', $lineas, true);
+        $completa = array_search('php artisan menuonl:verificar-produccion', $lineas, true);
+
+        $this->assertStringContainsString('set -euo pipefail', $guion, 'Sin esto, una falla no detiene el despliegue.');
+        $this->assertIsInt($abrir);
+        $this->assertIsInt($configuracion);
+        $this->assertIsInt($completa);
+        $this->assertLessThan($abrir, $configuracion, 'La configuración se revisa con el sitio aún en mantenimiento.');
+        $this->assertGreaterThan($abrir, $completa, 'En mantenimiento los workers no procesan: la sonda solo sirve con el sitio arriba.');
+    }
+
     public function test_si_no_se_puede_encolar_la_prueba_falla_con_un_mensaje_claro(): void
     {
         $this->app->instance(SondaDeCola::class, new class extends SondaDeCola
@@ -227,21 +272,38 @@ class VerificarProduccionTest extends TestCase
         }
     }
 
-    public function test_los_marcadores_pendientes_de_la_portada_se_avisan_sin_cambiar_el_codigo_de_salida(): void
+    public function test_las_paginas_publicas_ya_no_tienen_marcadores_que_avisar(): void
     {
         [$codigo, $salida] = $this->ejecutar();
 
         $this->assertSame(0, $codigo);
-        $this->assertDoesNotMatchRegularExpression('/\[AVISO\]\s+\/ aún muestra texto pendiente/', $salida);
-        $this->assertMatchesRegularExpression('/\[AVISO\]\s+\/privacidad aún muestra texto pendiente: \[PÁGINA POR ESCRIBIR\]/', $salida);
-        $this->assertMatchesRegularExpression('/\[AVISO\]\s+\/terminos aún muestra texto pendiente/', $salida);
+        $this->assertStringNotContainsString('aún muestra texto pendiente', $salida);
+        $this->assertStringContainsString('La portada y las páginas legales no tienen marcadores pendientes', $salida);
+    }
+
+    public function test_un_marcador_que_vuelva_a_una_pagina_publica_se_avisa_sin_cambiar_el_codigo_de_salida(): void
+    {
+        $this->app->instance(MarcadoresPendientes::class, new class extends MarcadoresPendientes
+        {
+            public function enPaginasPublicas(): array
+            {
+                return ['/terminos' => ['[PÁGINA POR ESCRIBIR]']];
+            }
+        });
+
+        [$codigo, $salida] = $this->ejecutar();
+
+        $this->assertSame(0, $codigo);
+        $this->assertMatchesRegularExpression('/\[AVISO\]\s+\/terminos aún muestra texto pendiente: \[PÁGINA POR ESCRIBIR\]/', $salida);
     }
 
     public function test_ninguna_salida_imprime_secretos_ni_valores_privados(): void
     {
-        $prohibidos = [...array_values(self::SECRETOS), '525512349988', 'menu-secreto.ejemplo.com'];
+        $prohibidos = [...array_values(self::SECRETOS), ...array_values(self::DATOS_LEGALES), '525512349988', 'menu-secreto.ejemplo.com'];
+        $legalesInvalidos = ['menuonl.legal.correo_privacidad' => 'correo-invalido-privado', 'menuonl.legal.fecha_actualizacion' => 'fecha-invalida-privada'];
+        $prohibidos = [...$prohibidos, ...array_values($legalesInvalidos)];
 
-        foreach ([[], ['app.env' => 'local', 'app.debug' => true, 'mail.default' => 'log', 'queue.default' => 'sync', 'menuonl.soporte_whatsapp' => null]] as $cambios) {
+        foreach ([[], $legalesInvalidos, ['app.env' => 'local', 'app.debug' => true, 'mail.default' => 'log', 'queue.default' => 'sync', 'menuonl.soporte_whatsapp' => null]] as $cambios) {
             $this->configurarProduccionCorrecta($cambios);
             [, $salida] = $this->ejecutar();
 

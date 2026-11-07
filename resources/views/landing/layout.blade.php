@@ -1,6 +1,7 @@
 {{--
     Página principal pública (docs/despliegue.md, "Landing"). Layout propio: sin menuonl.css, sin Tailwind y sin apariencia.js,
-    solo el CSS de landing.css (Vite) y un script clásico para el revelado. Sin cookies ni sesión; solo recursos del propio dominio.
+    solo el CSS de landing.css (Vite) y un script clásico para el revelado, que las páginas legales omiten con la sección `sin_revelado`.
+    Sin cookies ni sesión; solo recursos del propio dominio.
     Las dos variantes del logo van como <img> directos (color en la cabecera, negativo en el pie): aquí no hay modo oscuro.
 --}}
 @php
@@ -17,7 +18,9 @@
 @if ($hayBuild)
 @vite('resources/css/landing.css')
 @endif
+@sectionMissing('sin_revelado')
 <script src="{{ asset('js/landing-reveal.js').'?v='.filemtime(public_path('js/landing-reveal.js')) }}"></script>
+@endif
 <title>@yield('titulo')</title>
 @yield('meta')
 </head>

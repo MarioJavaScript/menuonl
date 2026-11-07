@@ -24,7 +24,7 @@
             <div class="jap-campo"><label class="jap-campo__etiqueta" for="rs-personas">Personas</label>
                 <select class="jap-campo__entrada" id="rs-personas" name="personas">@for ($n = 1; $n <= $maxPersonas; $n++)<option value="{{ $n }}" @selected($n === 2)>{{ $n }}</option>@endfor</select></div>
             <div class="jap-campo jap-campo--completo"><label class="jap-campo__etiqueta" for="rs-hora">Hora</label><select class="jap-campo__entrada" id="rs-hora" name="hora" required disabled><option value="">Primero elige la fecha</option></select></div>
-            <div class="jap-campo jap-campo--completo"><label class="jap-campo__etiqueta" for="rs-nota">Nota (opcional)</label><input class="jap-campo__entrada" id="rs-nota" name="nota" maxlength="255" placeholder="Aniversario, alergias, silla para bebé"></div>
+            <div class="jap-campo jap-campo--completo"><label class="jap-campo__etiqueta" for="rs-nota">Nota (opcional)</label><input class="jap-campo__entrada" id="rs-nota" name="nota" maxlength="255" placeholder="Aniversario, mesa cerca de la ventana" aria-describedby="rs-nota-ayuda">@include('sitio.partes.ayuda-nota')</div>
             <div class="jap-reserva__trampa" aria-hidden="true"><label>No llenar este campo<input name="sitio_web" tabindex="-1" autocomplete="off"></label></div>
             <input type="hidden" name="ts" value="{{ now()->timestamp }}">
             <button class="jap-boton jap-campo--completo" type="submit">Solicitar reserva</button>

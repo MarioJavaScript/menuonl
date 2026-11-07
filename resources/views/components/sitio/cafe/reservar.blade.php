@@ -26,7 +26,7 @@
             <div class="caf-campo"><label class="caf-campo__etiqueta" for="rs-personas">Personas</label>
                 <select class="caf-campo__entrada" id="rs-personas" name="personas">@for ($n = 1; $n <= $maxPersonas; $n++)<option value="{{ $n }}" @selected($n === 2)>{{ $n }}</option>@endfor</select></div>
             <div class="caf-campo caf-campo--completo"><label class="caf-campo__etiqueta" for="rs-hora">Hora</label><select class="caf-campo__entrada" id="rs-hora" name="hora" required disabled><option value="">Primero elige la fecha</option></select></div>
-            <div class="caf-campo caf-campo--completo"><label class="caf-campo__etiqueta" for="rs-nota">Nota (opcional)</label><input class="caf-campo__entrada" id="rs-nota" name="nota" maxlength="255" placeholder="Aniversario, alergias, silla para bebé"></div>
+            <div class="caf-campo caf-campo--completo"><label class="caf-campo__etiqueta" for="rs-nota">Nota (opcional)</label><input class="caf-campo__entrada" id="rs-nota" name="nota" maxlength="255" placeholder="Aniversario, mesa cerca de la ventana" aria-describedby="rs-nota-ayuda">@include('sitio.partes.ayuda-nota')</div>
             <div class="caf-reserva__trampa" aria-hidden="true"><label>No llenar este campo<input name="sitio_web" tabindex="-1" autocomplete="off"></label></div>
             <input type="hidden" name="ts" value="{{ now()->timestamp }}">
             <button class="caf-boton caf-campo--completo" type="submit">Solicitar reserva</button>

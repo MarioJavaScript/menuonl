@@ -89,6 +89,11 @@ Se parte de `.env.example`. La columna "Producción" es el valor esperado; las m
 | `TRUSTED_PROXIES` | rangos de Cloudflare (vienen en el ejemplo) | Vacía si **no** hay Cloudflare delante. Nunca `*` (se descarta). Revisar contra `cloudflare.com/ips-v4` e `ips-v6`. |
 | `CLOUDFLARE_ZONE_ID`, `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_DOMAIN` | reales | Token con permiso solo de "Purgar caché" en esa zona. Si faltan, la purga se omite con un `Log::info` (no falla). `CLOUDFLARE_DOMAIN` por defecto es `menuonl.com`. |
 | `SOPORTE_WHATSAPP` | solo dígitos con lada, p. ej. `5215512345678` | **Obligatoria en producción.** Entre 10 y 15 dígitos (con lada). Vacía o inválida = la portada no pinta sus botones de WhatsApp (ni el principal) y la pantalla de "Tu cuenta está fuera de servicio" no muestra el botón de soporte; `menuonl:verificar-produccion` falla. El número real va solo en el `.env` del servidor (H9), nunca en el repositorio. |
+| `LEGAL_RESPONSABLE` | nombre o razón social del responsable | **Obligatoria en producción.** Aparece en `/privacidad` y `/terminos`. Usa comillas si lleva espacios. Faltante o con un marcador como `[POR COMPLETAR]`, la página no lo muestra (usa `APP_NAME` en su lugar) y `menuonl:verificar-produccion` falla. |
+| `LEGAL_DOMICILIO` | domicilio del responsable | **Obligatoria en producción.** Va entre comillas. Sin ella, `/privacidad` omite la frase del domicilio y el comando falla. |
+| `LEGAL_CORREO_PRIVACIDAD` | correo válido | **Obligatoria en producción.** A donde llegan las solicitudes ARCO. Sin ella, las páginas remiten al contacto de soporte y el comando falla. |
+| `LEGAL_FECHA_ACTUALIZACION` | `AAAA-MM-DD`, p. ej. `2026-11-06` | **Obligatoria en producción.** Cámbiala cada vez que cambie el texto de las páginas legales. Sin ella o con otro formato, las páginas omiten la fecha y el comando falla. |
+| `LEGAL_JURISDICCION` | nombre del estado, entre comillas si lleva espacios | **Obligatoria en producción.** Estado cuyos tribunales cita `/terminos`. Sin ella, el texto dice "de México" y el comando falla. |
 | `MENU_DEMO_URL` | ruta relativa (`/la-esquina/menu`) o URL de tu propio dominio | Menú que enseña el botón "Ver un menú de ejemplo" de la portada. Cualquier otra cosa (otro dominio, usuario en la URL, espacios) se ignora. Vacía = el primer restaurante activo (el de muestra `la-esquina` si existe); sin ninguno, el botón no sale. |
 | `BACKUP_DISK`, `BACKUP_ACCESS_KEY_ID`, `BACKUP_SECRET_ACCESS_KEY`, `BACKUP_BUCKET`, `BACKUP_ENDPOINT`, `BACKUP_REGION`, `BACKUP_USE_PATH_STYLE_ENDPOINT` | bucket **privado** R2/B2 | Credenciales limitadas a ese bucket. |
 | `BACKUP_ARCHIVE_PASSWORD` | contraseña larga y aleatoria | Guardada **fuera** del servidor. Vacía = el respaldo se niega a correr. |
@@ -135,10 +140,23 @@ Orden recomendado para un despliegue (la primera vez y las siguientes). Idealmen
 3. [ ] `php artisan migrate --force`.
 4. [ ] `php artisan optimize:clear` seguido de `php artisan optimize` y `php artisan filament:optimize`.
 5. [ ] `php artisan queue:restart` (para que los workers carguen el código nuevo; `deploy/desplegar.sh` lo incluye).
-6. [ ] `php artisan up`.
-7. [ ] Recargar PHP-FPM si OPcache está con `validate_timestamps=0`.
-8. [ ] Humo: `/up` responde 200, `/admin/login` carga con estilos, un menú público abre, y el log no muestra errores nuevos.
-9. [ ] Si el despliegue cambió el logo o los favicons (`public/brand/*`, `public/favicon.*`): purgar en Cloudflare la caché de `/brand/*` y `/favicon*` (Caching, Purge by URL o por prefijo). Las páginas piden los iconos con `?v=` (fecha del archivo) para romper la caché del navegador, pero la ruta de la raíz (`/favicon.ico`, que algunos navegadores piden solos, sin `?v=`) solo se actualiza si se purga.
+6. [ ] `php artisan menuonl:verificar-produccion --sin-worker`. Si falla, el sitio se queda en mantenimiento (ver "Si la verificación falla durante el despliegue").
+7. [ ] `php artisan up`.
+8. [ ] `php artisan menuonl:verificar-produccion`, ahora con el worker.
+9. [ ] Recargar PHP-FPM si OPcache está con `validate_timestamps=0`.
+10. [ ] Humo: `/up` responde 200, `/admin/login` carga con estilos, un menú público abre, y el log no muestra errores nuevos.
+11. [ ] Si el despliegue cambió el logo o los favicons (`public/brand/*`, `public/favicon.*`): purgar en Cloudflare la caché de `/brand/*` y `/favicon*` (Caching, Purge by URL o por prefijo). Las páginas piden los iconos con `?v=` (fecha del archivo) para romper la caché del navegador, pero la ruta de la raíz (`/favicon.ico`, que algunos navegadores piden solos, sin `?v=`) solo se actualiza si se purga.
+
+### Si la verificación falla durante el despliegue
+
+`deploy/desplegar.sh` corre la verificación dos veces, porque los workers (sin `--force`) no procesan trabajos mientras el sitio está en mantenimiento:
+
+| Paso | Comando | Si falla |
+|---|---|---|
+| Antes de `php artisan up` | `menuonl:verificar-produccion --sin-worker` | El script se detiene y **el sitio sigue en mantenimiento**. Corrige el `.env`, corre `php artisan config:cache`, repite el comando y, si termina en cero, corre `php artisan up` y luego la verificación completa. |
+| Después de `php artisan up` | `menuonl:verificar-produccion` | El script termina en error, pero **el sitio ya está arriba**, porque la configuración ya pasó. Solo queda revisar el worker (`deploy/README.md`). |
+
+Define `LEGAL_*` en el `.env` del servidor **antes** del primer despliegue que incluya esta comprobación: si faltan, el sitio no sale de mantenimiento.
 
 ### Verificación final antes de abrir a clientes
 
@@ -162,11 +180,14 @@ Revisa la configuración de producción y dice con claridad qué está mal. Term
 | `QUEUE_CONNECTION` | es `sync` o `null` |
 | `SOPORTE_WHATSAPP` | falta o no tiene entre 10 y 15 dígitos (no imprime el número) |
 | `APP_LOCALE` | no es `es` |
+| `LEGAL_RESPONSABLE`, `LEGAL_DOMICILIO`, `LEGAL_CORREO_PRIVACIDAD`, `LEGAL_FECHA_ACTUALIZACION`, `LEGAL_JURISDICCION` | alguna falta, no es válida (correo o fecha `AAAA-MM-DD`) o sigue siendo un marcador (no imprime los valores) |
 | Worker de colas | encola un trabajo de prueba (`LatidoColasJob`) y ningún worker lo procesa en `--espera` segundos (15 por defecto); también falla si `CACHE_STORE` es `array` o `null`, porque entonces no se puede comprobar |
 
-Opciones: `--espera=30` (segundos de espera al worker) y `--sin-worker` (omite esa comprobación; no recomendado). Además avisa (`[AVISO]`, sin afectar el código de salida) si hay trabajos en `failed_jobs` y si el **último respaldo tiene más de 36 horas** (`BACKUP_MAX_AGE_HOURS`), no hay ninguno o no se puede leer el disco de respaldos. Es un aviso y no una falla porque en un servidor recién instalado todavía no hay respaldo; revísalo igual antes del primer cliente. Pruebas: `tests/Feature/VerificarProduccionTest.php`.
+Opciones: `--espera=30` (segundos de espera al worker) y `--sin-worker` (omite esa comprobación; se usa antes de `php artisan up`, porque en mantenimiento los workers no procesan, y en otro momento no se recomienda). Además avisa (`[AVISO]`, sin afectar el código de salida) si hay trabajos en `failed_jobs` y si el **último respaldo tiene más de 36 horas** (`BACKUP_MAX_AGE_HOURS`), no hay ninguno o no se puede leer el disco de respaldos. Es un aviso y no una falla porque en un servidor recién instalado todavía no hay respaldo; revísalo igual antes del primer cliente. Pruebas: `tests/Feature/VerificarProduccionTest.php`.
 
-También avisa (`[AVISO]`, sin fallar) si `/`, `/privacidad` o `/terminos` aún muestran texto pendiente: `[PRECIO]`, `[CONFIRMAR]`, `[CAPTURA DEL MENÚ]`, `[CAPTURA DEL PANEL]`, `[TESTIMONIO]`, `[NOMBRE Y RESTAURANTE]` o `[PÁGINA POR ESCRIBIR]` (lista en `App\Services\MarcadoresPendientes`). No publiques la landing mientras el comando los siga listando. Los precios de los planes (Lite y Aura) y su nota de impuestos se cambian solo en `config/menuonl.php`, clave `precios`; después del cambio corre `php artisan config:cache` y purga `/`.
+También avisa (`[AVISO]`, sin fallar) si `/`, `/privacidad` o `/terminos` aún muestran texto pendiente: `[PRECIO]`, `[CONFIRMAR]`, `[CAPTURA DEL MENÚ]`, `[CAPTURA DEL PANEL]`, `[TESTIMONIO]`, `[NOMBRE Y RESTAURANTE]` o `[PÁGINA POR ESCRIBIR]` (lista en `App\Services\MarcadoresPendientes`). No publiques la landing mientras el comando los siga listando. Los precios de los planes (Lite y Aura) y su nota de impuestos se cambian solo en `config/menuonl.php`, clave `precios`; después del cambio corre `php artisan config:cache` y purga `/` y `/terminos`, que también los muestra.
+
+Las páginas `/privacidad` y `/terminos` son un borrador pendiente de revisión legal, y su inventario de datos está en [legal/datos-personales.md](legal/datos-personales.md). Al cambiar `LEGAL_*`: `php artisan config:cache` y purga `/privacidad` y `/terminos`. Si faltan, `deploy/desplegar.sh` se detiene antes de `php artisan up` y el sitio sigue en mantenimiento (punto 3, "Si la verificación falla durante el despliegue"). Si aun así la página se llega a servir sin ellos, omite el dato faltante y no muestra marcadores.
 
 El comando lee la configuración **tal como la ve la aplicación**: si usas `config:cache`, corre `php artisan optimize` antes de verificar.
 
